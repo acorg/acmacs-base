@@ -12,10 +12,15 @@ failed()
 
 trap failed ERR
 
+NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
+
 SRC_DIR=$ACMACSD_ROOT/sources
+
+echo Updating locationdb
 if [ -d $SRC_DIR/locationdb ]; then
     cd $SRC_DIR/locationdb
     git pull
 else
     git clone git@github.com:acorg/locationdb.git $SRC_DIR/locationdb
 fi
+make -C $SRC_DIR/locationdb -j$NPROC install
