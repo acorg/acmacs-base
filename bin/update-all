@@ -12,6 +12,8 @@ failed()
 
 trap failed ERR
 
+$ACMACSD_ROOT/bin/update-acmacs-base
 $ACMACSD_ROOT/bin/update-3rd-party
 $ACMACSD_ROOT/bin/update-locationdb
 $ACMACSD_ROOT/bin/update-hidb
+$ACMACSD_ROOT/bin/update-ssm-report

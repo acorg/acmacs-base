@@ -1,0 +1,17 @@
+#! /bin/bash
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+cd $ACMACSD_ROOT/sources/acmacs-base
+git pull
+make
