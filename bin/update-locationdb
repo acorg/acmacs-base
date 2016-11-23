@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 if [ -z "$ACMACSD_ROOT" ]; then
     echo ACMACSD_ROOT not set >&2
     exit 1
