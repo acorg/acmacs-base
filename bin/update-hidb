@@ -1,0 +1,26 @@
+#! /bin/sh
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
+
+SRC_DIR=$ACMACSD_ROOT/sources
+
+echo Updating hidb
+if [ -d $SRC_DIR/hidb ]; then
+    cd $SRC_DIR/hidb
+    git pull
+else
+    git clone git@github.com:acorg/hidb.git $SRC_DIR/hidb
+fi
+make -C $SRC_DIR/hidb -j$NPROC install

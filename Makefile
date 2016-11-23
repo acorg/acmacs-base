@@ -2,7 +2,7 @@
 # Eugene Skepner 2016
 # ======================================================================
 
-SRC_DIR = $(ACMACSD_ROOT)/sources
+SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 # ----------------------------------------------------------------------
 
@@ -20,8 +20,8 @@ install-packages: install-acmacs-base install-3rd-party
 
 install-acmacs-base:
 	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
-	rsync -av $(SRC_DIR)/acmacs-base/bin/ $(ACMACSD_ROOT)/bin
-	rsync -av --exclude='__pycache__' $(SRC_DIR)/acmacs-base/py/ $(ACMACSD_ROOT)/py
+	ln -sf $(SRC_DIR)/acmacs-base/bin/* $(ACMACSD_ROOT)/bin
+	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(ACMACSD_ROOT)/py
 
 install-3rd-party:
 	$(ACMACSD_ROOT)/bin/update-3rd-party
