@@ -16,18 +16,14 @@ make-dirs:
 
 # ----------------------------------------------------------------------
 
-install-packages: install-acmacs-base install-pybind11 install-rapidjson
+install-packages: install-acmacs-base install-3rd-party
 
 install-acmacs-base:
 	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
+	rsync -av $(SRC_DIR)/acmacs-base/bin/ $(ACMACSD_ROOT)/bin
 
-install-pybind11:
-	if [ -d $(SRC_DIR)/pybind11 ]; then (cd $(SRC_DIR)/pybind11; git pull); else git clone https://github.com/pybind/pybind11.git $(SRC_DIR)/pybind11; fi
-	rsync -av $(SRC_DIR)/pybind11/include/ $(ACMACSD_ROOT)/include
-
-install-rapidjson:
-	if [ -d $(SRC_DIR)/rapidjson ]; then (cd $(SRC_DIR)/rapidjson; git pull); else git clone https://github.com/miloyip/rapidjson/ $(SRC_DIR)/rapidjson; fi
-	rsync -av $(SRC_DIR)/rapidjson/include/ $(ACMACSD_ROOT)/include
+install-3rd-party:
+	$(ACMACSD_ROOT)/bin/update-3rd-party
 
 # ----------------------------------------------------------------------
 

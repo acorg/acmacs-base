@@ -1,0 +1,22 @@
+#! /bin/sh
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+SRC_DIR=$ACMACSD_ROOT/sources
+if [ -d $SRC_DIR/pybind11 ]; then
+    cd $SRC_DIR/pybind11
+    git pull
+else
+    git clone https://github.com/pybind/pybind11.git $SRC_DIR/pybind11
+fi
+rsync -av $SRC_DIR/pybind11/include/ $ACMACSD_ROOT/include

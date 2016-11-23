@@ -1,0 +1,22 @@
+#! /bin/sh
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+SRC_DIR=$ACMACSD_ROOT/sources
+if [ -d $SRC_DIR/rapidjson ]; then
+    cd $SRC_DIR/rapidjson
+    git pull
+else
+    git clone https://github.com/pybind/rapidjson.git $SRC_DIR/rapidjson
+fi
+rsync -av $SRC_DIR/rapidjson/include/ $ACMACSD_ROOT/include

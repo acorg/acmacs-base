@@ -1,0 +1,21 @@
+#! /bin/sh
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+SRC_DIR=$ACMACSD_ROOT/sources
+if [ -d $SRC_DIR/locationdb ]; then
+    cd $SRC_DIR/locationdb
+    git pull
+else
+    git clone git@github.com:acorg/locationdb.git $SRC_DIR/locationdb
+fi
