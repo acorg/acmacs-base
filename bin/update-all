@@ -12,6 +12,12 @@ failed()
 
 trap failed ERR
 
-for P in acmacs-base 3rd-party locationdb hidb seqdb ssm-report; do
+if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
+    $ACMACSD_ROOT/bin/update-acmacs-base
+else
+    $(dirname $0)/update-acmacs-base
+fi
+
+for P in 3rd-party locationdb hidb seqdb ssm-report; do
     $ACMACSD_ROOT/bin/update-$P
 done
