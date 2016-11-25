@@ -8,6 +8,8 @@
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 
+#include "acmacs-base/read-file.hh"
+
 // ----------------------------------------------------------------------
 
 template <typename RW> class JsonWriterT : public RW
@@ -66,11 +68,17 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 
 // ----------------------------------------------------------------------
 
-template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent)
+template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent, bool insert_emacs_indent_hint)
 {
     JsonPrettyWriter writer(keyword);
     writer.SetIndent(' ', static_cast<unsigned int>(indent));
-    return writer << value;
+    writer << value;
+    std::string result = writer;
+    if (insert_emacs_indent_hint && result[0] == '{') {
+        const std::string ind(indent - 1, ' ');
+        result.insert(1, ind + "\"_\": \"-*- js-indent-level: " + std::to_string(indent) + " -*-\",");
+    }
+    return result;
 }
 
 template <typename V> inline std::string compact_json(const V& value, std::string keyword)
@@ -79,12 +87,19 @@ template <typename V> inline std::string compact_json(const V& value, std::strin
     return writer << value;
 }
 
-template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent)
+template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent, bool insert_emacs_indent_hint = true)
 {
     if (indent)
-        return pretty_json(value, keyword, indent);
+        return pretty_json(value, keyword, indent, insert_emacs_indent_hint);
     else
         return compact_json(value, keyword);
+}
+
+// ----------------------------------------------------------------------
+
+template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, bool insert_emacs_indent_hint = true)
+{
+    acmacs_base::write_file(filename, json(value, keyword, indent, insert_emacs_indent_hint));
 }
 
 // ----------------------------------------------------------------------
