@@ -22,11 +22,11 @@ template <typename RW> class JsonWriterT : public RW
     std::string mKeyword;
 };
 
-template <> inline JsonWriterT<rapidjson::PrettyWriter<rapidjson::StringBuffer>>::JsonWriterT(std::string aKeyword)
-    : rapidjson::PrettyWriter<rapidjson::StringBuffer>(mBuffer), mKeyword(aKeyword)
-{
-    SetIndent(' ', 1);
-}
+// template <> inline JsonWriterT<rapidjson::PrettyWriter<rapidjson::StringBuffer>>::JsonWriterT(std::string aKeyword)
+//     : rapidjson::PrettyWriter<rapidjson::StringBuffer>(mBuffer), mKeyword(aKeyword)
+// {
+//     SetIndent(' ', 1);
+// }
 
 typedef JsonWriterT<rapidjson::Writer<rapidjson::StringBuffer>> JsonWriter;
 typedef JsonWriterT<rapidjson::PrettyWriter<rapidjson::StringBuffer>> JsonPrettyWriter;
@@ -66,9 +66,10 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 
 // ----------------------------------------------------------------------
 
-template <typename V> inline std::string pretty_json(const V& value, std::string keyword)
+template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent)
 {
     JsonPrettyWriter writer(keyword);
+    writer.SetIndent(' ', static_cast<unsigned int>(indent));
     return writer << value;
 }
 
@@ -78,10 +79,10 @@ template <typename V> inline std::string compact_json(const V& value, std::strin
     return writer << value;
 }
 
-template <typename V> inline std::string json(const V& value, std::string keyword, bool pretty=true)
+template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent)
 {
-    if (pretty)
-        return pretty_json(value, keyword);
+    if (indent)
+        return pretty_json(value, keyword, indent);
     else
         return compact_json(value, keyword);
 }
