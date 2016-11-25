@@ -45,8 +45,24 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, _StartObject) { writer.StartObject(); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, _EndObject) { writer.EndObject(); return writer; }
 
+template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const char* s) { writer.String(s, static_cast<unsigned>(strlen(s))); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, std::string s) { writer.String(s.c_str(), static_cast<unsigned>(s.size())); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, int value) { writer.Int(value); return writer; }
+
+class JsonObjectKey
+{
+ public:
+    inline JsonObjectKey(const char* v) : value(v) {}
+    inline JsonObjectKey(std::string v) : value(v.c_str()) {}
+    inline operator const char*() const { return value; }
+
+ private:
+    const char* value;
+};
+
+template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, JsonObjectKey value) { writer.Key(value); return writer; }
+
+// ----------------------------------------------------------------------
 
 template <typename RW, typename T> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const std::vector<T>& list)
 {
