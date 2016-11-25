@@ -25,6 +25,7 @@ def backup_file(path :Path):
             newname = gen_name()
             if not newname.exists():
                 # path.rename(newname)
+                module_logger.debug('backup_file %s -> %s', path, newname)
                 shutil.copy(str(path), str(newname))
                 break
 
