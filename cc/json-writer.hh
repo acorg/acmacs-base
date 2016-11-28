@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
@@ -80,6 +81,16 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
     for (const auto& e: list_list_strings)
         writer << e;
     return writer << EndArray;
+}
+
+// ----------------------------------------------------------------------
+
+template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const std::map<std::string, std::vector<std::string>>& map_list_strings)
+{
+    writer << StartObject;
+    for (const auto& e: map_list_strings)
+        writer << JsonObjectKey(e.first) << e.second;
+    return writer << EndObject;
 }
 
 // ----------------------------------------------------------------------
