@@ -83,3 +83,6 @@ template <typename Collection> inline auto to_stream(const Collection& c, typena
 }
 
 // ----------------------------------------------------------------------
+/// Local Variables:
+/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
+/// End:

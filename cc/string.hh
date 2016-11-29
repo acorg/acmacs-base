@@ -129,3 +129,8 @@ namespace string
 // ----------------------------------------------------------------------
 
 } // namespace string
+
+// ----------------------------------------------------------------------
+/// Local Variables:
+/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
+/// End:
