@@ -23,6 +23,7 @@ def backup_file(path :Path):
 
         while True:
             newname = gen_name()
+            # module_logger.debug('backup_file %s %r', newname, newname.exists())
             if not newname.exists():
                 # path.rename(newname)
                 module_logger.debug('backup_file %s -> %s', path, newname)
