@@ -3,8 +3,9 @@
 # license.
 # ======================================================================
 
-import json
 import logging; module_logger = logging.getLogger(__name__)
+from pathlib import Path
+import json
 
 # ----------------------------------------------------------------------
 
@@ -80,6 +81,20 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
 # ----------------------------------------------------------------------
 
 loads = json.loads
+
+# ----------------------------------------------------------------------
+
+def read_json(path :Path):
+    from .files import read_text
+    return loads(read_text(path))
+
+# ----------------------------------------------------------------------
+
+def write_json(path :Path, data, indent=2, compact=True):
+    from .files import backup_file
+    backup_file(path)
+    with path.open("w") as f:
+        f.write(dumps(data, indent=indent, compact=compact, sort_keys=True) + "\n")
 
 # ======================================================================
 ### Local Variables:

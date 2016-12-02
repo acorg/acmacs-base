@@ -6,7 +6,6 @@
 import shutil
 from pathlib import Path
 import logging; module_logger = logging.getLogger(__name__)
-from . import json
 
 # ----------------------------------------------------------------------
 
@@ -43,7 +42,8 @@ def read_pydata(path :Path):
 # ----------------------------------------------------------------------
 
 def read_json(path :Path):
-    return json.loads(read_text(path))
+    from .json import loads
+    return loads(read_text(path))
 
 # ----------------------------------------------------------------------
 
