@@ -24,7 +24,7 @@ def dumps(data, separators=[',', ':'], indent=None, compact=True, sort_keys=Fals
     if indent is not None and compact:
         data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple)
     else:
-        data = json.dumps(data, separators=separators, indent=indent, default=serializable_to_json, sort_keys=sort_keys)
+        data = json.dumps(data, separators=separators, indent=indent, sort_keys=sort_keys)
     return data
 
 # ----------------------------------------------------------------------
