@@ -14,3 +14,4 @@ trap failed ERR
 
 $ACMACSD_ROOT/bin/update-pybind11
 $ACMACSD_ROOT/bin/update-rapidjson
+$ACMACSD_ROOT/bin/boost-spirit
