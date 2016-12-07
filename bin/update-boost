@@ -14,7 +14,7 @@ trap failed ERR
 
 SRC_DIR="$ACMACSD_ROOT/sources"
 PACKAGE_DIR="$SRC_DIR/boost"
-SUBMODULES=(assert concept_check config core detail function_types functional fusion integer iterator math move mpl optional predef preprocessor range regex smart_ptr spirit static_assert throw_exception type_index type_traits tti utility variant)
+SUBMODULES=(assert concept_check config core detail function_types functional fusion integer iterator math move mpl optional predef preprocessor range regex smart_ptr spirit static_assert throw_exception type_index type_traits typeof tti utility variant)
 INCLUDE="$ACMACSD_ROOT/include/boost"
 
 if [ -d "$PACKAGE_DIR" ]; then
