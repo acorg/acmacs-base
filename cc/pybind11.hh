@@ -17,6 +17,7 @@
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wcovered-switch-default"
+#pragma GCC diagnostic ignored "-Wclass-varargs"
 #endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
