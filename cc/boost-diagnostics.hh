@@ -1,5 +1,9 @@
 // No pragma once!!
 
+// for clang and gcc
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+// just for clang
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
@@ -13,7 +17,6 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wundef"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 // #pragma GCC diagnostic ignored "-Wexit-time-destructors"
 #endif
 
