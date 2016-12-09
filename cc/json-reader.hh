@@ -8,6 +8,8 @@
 
 #include "rapidjson/reader.h"
 
+#include "acmacs-base/read-file.hh"
+
 // ----------------------------------------------------------------------
 
 namespace json_reader
@@ -180,6 +182,23 @@ namespace json_reader
         Target& mTarget;
         std::stack<std::unique_ptr<HandlerBase<Target>>> mHandler;
     };
+
+// ----------------------------------------------------------------------
+
+    template <typename Target, typename RootHandler> inline void read_from_file(std::string aFilename, Target& aTarget)
+    {
+        const std::string buffer = aFilename == "-" ? acmacs_base::read_stdin() : acmacs_base::read_file(aFilename);
+        if (buffer[0] == '{') {
+            ReaderEventHandler<Target, RootHandler> handler{aTarget};
+            rapidjson::Reader reader;
+            rapidjson::StringStream stream{buffer.c_str()};
+            reader.Parse(stream, handler);
+            if (reader.HasParseError())
+                throw Error("cannot read " + aFilename + ": data parsing failed at pos " + std::to_string(reader.GetErrorOffset()) + ": " +  GetParseError_En(reader.GetParseErrorCode()) + "\n" + buffer.substr(reader.GetErrorOffset(), 50));
+        }
+        else
+            throw json_reader::Error("cannot read " + aFilename + ": unrecognized source format");
+    }
 
 // ----------------------------------------------------------------------
 
