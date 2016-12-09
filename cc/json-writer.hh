@@ -128,11 +128,12 @@ template <typename Key, typename Value> class _if_not_empty
         }
 
  private:
-    JsonObjectKey mKey;
+    Key mKey;
     Value mValue;
 };
 
 template <typename Key, typename Value> inline auto if_not_empty(Key&& key, Value&& value) { return _if_not_empty<Key, Value>(std::forward<Key>(key), std::forward<Value>(value)); }
+template <typename Value> inline auto if_not_empty(const char* key, Value&& value) { return _if_not_empty<JsonObjectKey, Value>(JsonObjectKey(key), std::forward<Value>(value)); }
 
 // ----------------------------------------------------------------------
 
@@ -149,11 +150,12 @@ template <typename Key, typename Value> class _if_non_negative
         }
 
  private:
-    JsonObjectKey mKey;
+    Key mKey;
     Value mValue;
 };
 
 template <typename Key, typename Value> inline auto if_non_negative(Key&& key, Value&& value) { return _if_non_negative<Key, Value>(std::forward<Key>(key), std::forward<Value>(value)); }
+template <typename Value> inline auto if_non_negative(const char* key, Value&& value) { return _if_non_negative<JsonObjectKey, Value>(JsonObjectKey(key), std::forward<Value>(value)); }
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
