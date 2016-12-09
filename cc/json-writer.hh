@@ -128,11 +128,32 @@ template <typename Key, typename Value> class _if_not_empty
         }
 
  private:
-    Key mKey;
+    JsonObjectKey mKey;
     Value mValue;
 };
 
 template <typename Key, typename Value> inline auto if_not_empty(Key&& key, Value&& value) { return _if_not_empty<Key, Value>(std::forward<Key>(key), std::forward<Value>(value)); }
+
+// ----------------------------------------------------------------------
+
+template <typename Key, typename Value> class _if_non_negative
+{
+ public:
+    inline _if_non_negative(Key&& key, Value&& value) : mKey(key), mValue(value) {}
+
+    template <typename RW> friend inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const _if_non_negative<Key, Value>& data)
+        {
+            if (data.mValue >= 0.0)
+                writer << data.mKey << data.mValue;
+            return writer;
+        }
+
+ private:
+    JsonObjectKey mKey;
+    Value mValue;
+};
+
+template <typename Key, typename Value> inline auto if_non_negative(Key&& key, Value&& value) { return _if_non_negative<Key, Value>(std::forward<Key>(key), std::forward<Value>(value)); }
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
