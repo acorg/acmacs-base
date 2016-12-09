@@ -7,6 +7,8 @@
 #include <stack>
 
 #include "rapidjson/reader.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/stringbuffer.h"
 
 #include "acmacs-base/read-file.hh"
 
