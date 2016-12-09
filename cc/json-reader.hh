@@ -100,7 +100,7 @@ namespace json_reader
     {
      public:
         inline MapListHandler(Target& aTarget, std::map<std::string, std::vector<std::string>>& aMap)
-            : HandlerBase<Target>(aTarget), mMap(aMap), mStarted(false) {}
+            : HandlerBase<Target>{aTarget}, mMap(aMap), mStarted(false) {}
 
         inline virtual HandlerBase<Target>* StartObject()
             {
@@ -122,6 +122,44 @@ namespace json_reader
         bool mStarted;
 
     }; // class MapListHandler
+
+// ----------------------------------------------------------------------
+
+    template <typename Target> class StringMappingHandler : public HandlerBase<Target>
+    {
+     public:
+        inline StringMappingHandler(Target& aTarget, std::vector<std::pair<std::string, std::string>>& aMapping)
+            : HandlerBase<Target>{aTarget}, mMapping(aMapping), mStarted(false) {}
+
+        inline virtual HandlerBase<Target>* StartObject()
+            {
+                if (mStarted)
+                    throw json_reader::Failure();
+                mStarted = true;
+                return nullptr;
+            }
+
+        inline virtual HandlerBase<Target>* Key(const char* str, rapidjson::SizeType length)
+            {
+                mKey.assign(str, length);
+                return nullptr;
+            }
+
+        inline virtual HandlerBase<Target>* String(const char* str, rapidjson::SizeType length)
+            {
+                if (mKey.empty())
+                    throw json_reader::Failure();
+                mMapping.emplace_back(mKey, std::string(str, length));
+                mKey.erase();
+                return nullptr;
+            }
+
+     private:
+        std::vector<std::pair<std::string, std::string>>& mMapping;
+        bool mStarted;
+        std::string mKey;
+
+    }; // class StringMappingHandler
 
 // ----------------------------------------------------------------------
 
