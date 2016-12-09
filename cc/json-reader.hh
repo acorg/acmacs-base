@@ -18,7 +18,7 @@ namespace json_reader
 {
     class Error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
-    class Failure : public std::exception { public: using std::exception::exception; };
+    class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
     class Pop : public std::exception { public: using std::exception::exception; };
 
 // ----------------------------------------------------------------------
@@ -29,35 +29,29 @@ namespace json_reader
         inline HandlerBase(Target& aTarget) : mTarget(aTarget), mIgnore(false) {}
         virtual ~HandlerBase() {}
 
-        inline virtual HandlerBase* StartObject() { std::cerr << "HandlerBase StartObject " << typeid(*this).name() << std::endl; throw Failure(); }
+        inline virtual HandlerBase* StartObject() { throw Failure(std::string("HandlerBase StartObject ") + typeid(*this).name()); }
         inline virtual HandlerBase* EndObject() { throw Pop(); }
-        inline virtual HandlerBase* StartArray() { throw Failure(); }
+        inline virtual HandlerBase* StartArray() { throw Failure(std::string("HandlerBase StartArray ") + typeid(*this).name()); }
         inline virtual HandlerBase* EndArray() { throw Pop(); }
-        inline virtual HandlerBase* Double(double d) { std::cerr << "Double: " << d << std::endl; throw Failure(); }
-        inline virtual HandlerBase* Int(int i) { std::cerr << "Int: " << i << std::endl; throw Failure(); }
-        inline virtual HandlerBase* Uint(unsigned u) { std::cerr << "Uint: " << u << std::endl; throw Failure(); }
+        inline virtual HandlerBase* Double(double d) { throw Failure("HandlerBase Double " + std::to_string(d)); }
+        inline virtual HandlerBase* Int(int i) { throw Failure("HandlerBase Int " + std::to_string(i)); }
+        inline virtual HandlerBase* Uint(unsigned u) { throw Failure("HandlerBase Uint " + std::to_string(u)); }
 
         inline virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
             {
-                if ((length == 1 && *str == '_') || (length > 0 && *str == '?')) {
+                if ((length == 1 && *str == '_') || (length > 0 && *str == '?'))
                     mIgnore = true;
-                }
-                else {
-                    std::cerr << "Key: \"" << std::string(str, length) << '"' << std::endl;
-                    throw Failure();
-                }
+                else
+                    throw Failure("HandlerBase Key: \"" + std::string(str, length) + "\"");
                 return nullptr;
             }
 
         inline virtual HandlerBase* String(const char* str, rapidjson::SizeType length)
             {
-                if (mIgnore) {
+                if (mIgnore)
                     mIgnore = false;
-                }
-                else {
-                    std::cerr << "String: \"" << std::string(str, length) << '"' << std::endl;
-                    throw Failure();
-                }
+                else
+                    throw Failure("HandlerBase String: \"" + std::string(str, length) + "\"");
                 return nullptr;
             }
 
@@ -222,7 +216,9 @@ namespace json_reader
                         return false;
                     mHandler.pop();
                 }
-                catch (Failure&) {
+                catch (Failure& err) {
+                    if (*err.what())
+                        std::cerr << "ERROR: " << err.what() << std::endl;
                     return false;
                 }
                 return true;
