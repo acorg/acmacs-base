@@ -68,6 +68,38 @@ namespace json_reader
 
 // ----------------------------------------------------------------------
 
+    template <typename Target, typename Element, typename ElementHandler> class ListHandler : public HandlerBase<Target>
+    {
+     public:
+        inline ListHandler(Target& aTarget, std::vector<Element>& aList)
+            : HandlerBase<Target>(aTarget), mList(aList), mStarted(false) {}
+
+        inline virtual HandlerBase<Target>* StartArray()
+            {
+                if (mStarted)
+                    throw Failure();
+                mStarted = true;
+                return nullptr;
+            }
+
+        inline virtual HandlerBase<Target>* StartObject()
+            {
+                if (!mStarted)
+                    throw Failure();
+                mList.emplace_back();
+                return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
+            }
+
+        inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
+
+     private:
+        std::vector<Element>& mList;
+        bool mStarted;
+
+    }; // class StringListHandler
+
+// ----------------------------------------------------------------------
+
     template <typename Target> class StringListHandler : public HandlerBase<Target>
     {
      public:
