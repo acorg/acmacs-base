@@ -96,6 +96,28 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 
 // ----------------------------------------------------------------------
 
+template <typename Key, typename Value> class _if_not_empty
+{
+ public:
+    inline _if_not_empty(Key&& key, Value&& value) : mKey(key), mValue(value) {}
+
+    template <typename RW> friend inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const _if_not_empty<Key, Value>& data)
+        {
+            if (!data.mValue.empty())
+                writer << data.mKey << data.mValue;
+            return writer;
+        }
+
+ private:
+    Key mKey;
+    Value mValue;
+};
+
+template <typename Key, typename Value> inline auto if_not_empty(Key&& key, Value&& value) { return _if_not_empty<Key, Value>(std::forward<Key>(key), std::forward<Value>(value)); }
+
+// ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+
 template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent, bool insert_emacs_indent_hint)
 {
     JsonPrettyWriter writer(keyword);
