@@ -96,6 +96,25 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 
 // ----------------------------------------------------------------------
 
+namespace json_writer { namespace _internal
+{
+      // void_t is a C++17 feature
+    template<class ...> using void_t = void; // http://stackoverflow.com/questions/26513095/void-t-can-implement-concepts
+    template <typename T, typename = void> struct castable_to_char : public std::false_type {};
+    template <typename T> struct castable_to_char<T, void_t<decltype(static_cast<char>(std::declval<T>()))>> : public std::true_type {};
+}}
+
+template <typename RW, typename Key, typename std::enable_if<json_writer::_internal::castable_to_char<Key>{}>::type* = nullptr>
+                     inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, Key key)
+{
+    const char k = static_cast<char>(key);
+    writer.Key(&k, 1, false);
+    return writer;
+}
+
+// ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+
 template <typename Key, typename Value> class _if_not_empty
 {
  public:
