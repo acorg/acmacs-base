@@ -31,5 +31,6 @@ else
     git clone git@github.com:acorg/$PACKAGE.git $SRC_DIR/$PACKAGE
 fi
 make -C $SRC_DIR/$PACKAGE clean
+make -C $SRC_DIR/$PACKAGE -j$NPROC test
 make -C $SRC_DIR/$PACKAGE -j$NPROC install
 echo "======================================================================"
