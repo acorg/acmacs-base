@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
 #include <algorithm>
 
 // ----------------------------------------------------------------------
@@ -28,13 +29,22 @@ inline std::string name_encode(std::string aName)
 
 // ----------------------------------------------------------------------
 
+namespace _internal
+{
+    inline std::string::value_type hexchar_to_num(std::string::value_type c)
+    {
+        return std::isdigit(c) ? c - '0' : ((c - 'A' + 10) & 0xF);
+    }
+}
+
 inline std::string name_decode(std::string aName)
 {
     std::string result(aName.size(), ' ');
     std::string::size_type output_pos = 0;
     for (auto src = aName.cbegin(); src != aName.cend(); ++src) {
-        if (*src == '%' && (aName.cend() - src) >= 3) {
-            result[output_pos++] = static_cast<std::string::value_type>(std::strtol(&*src + 1, nullptr, 16) & 0xFF);
+        if (*src == '%' && (aName.cend() - src) >= 3 && std::isxdigit(*(src+1)) && std::isxdigit(*(src+2))) {
+            using namespace _internal;
+            result[output_pos++] = static_cast<std::string::value_type>((hexchar_to_num(*(src+1)) << 4) | hexchar_to_num(*(src+2)));;
             src += 2;
         }
         else {
