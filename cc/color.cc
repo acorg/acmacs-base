@@ -70,7 +70,6 @@ namespace _internal
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
     const std::map<std::string, Color::value_type> sNameToColor = {
-#pragma GCC diagnostic pop
         {"transparent", 0xFF000000},
           // /usr/X11/share/X11/rgb.txt
         {"alice blue", 0xF0F8FF},
@@ -828,6 +827,7 @@ namespace _internal
         {"yellow4", 0x8B8B00},
         {"yellowgreen", 0x9ACD32}
     };
+#pragma GCC diagnostic pop
 } // namespace _internal
 
 // ----------------------------------------------------------------------
