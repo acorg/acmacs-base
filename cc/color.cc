@@ -826,7 +826,7 @@ namespace _internal
         {"yellow2", 0xEEEE00},
         {"yellow3", 0xCDCD00},
         {"yellow4", 0x8B8B00},
-        {"yellowgreen", 0x9ACD32},
+        {"yellowgreen", 0x9ACD32}
     };
 } // namespace _internal
 
