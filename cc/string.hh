@@ -81,6 +81,27 @@ namespace string
 
       // ----------------------------------------------------------------------
 
+    inline std::string replace(std::string source, std::string look_for, std::string replace_with)
+    {
+        std::string result;
+        std::string::size_type start = 0;
+        while (true) {
+            const auto pos = source.find(look_for, start);
+            if (pos != std::string::npos) {
+                result.append(source.begin() + static_cast<std::string::difference_type>(start), source.begin() + static_cast<std::string::difference_type>(pos));
+                result.append(replace_with);
+                start = pos + look_for.size();
+            }
+            else {
+                result.append(source.begin() + static_cast<std::string::difference_type>(start), source.end());
+                break;
+            }
+        }
+        return result;
+    }
+
+      // ----------------------------------------------------------------------
+
     inline std::string& lower(std::string& source)
     {
         std::transform(source.begin(), source.end(), source.begin(), ::tolower);
