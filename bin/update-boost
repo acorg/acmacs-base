@@ -14,7 +14,7 @@ trap failed ERR
 
 SRC_DIR="$ACMACSD_ROOT/sources"
 PACKAGE_DIR="$SRC_DIR/boost"
-SUBMODULES=(assert concept_check config core detail function_types functional fusion integer iterator locale math move mpl optional predef preprocessor range regex smart_ptr spirit static_assert throw_exception type_index type_traits typeof tti utility variant)
+SUBMODULES=(any array assert bind concept_check config container core detail "function" function_types functional fusion integer iterator lexical_cast locale math move mpl numeric optional predef preprocessor program_options range regex smart_ptr spirit static_assert tokenizer throw_exception type_index type_traits typeof tti utility variant)
 INCLUDE="$ACMACSD_ROOT/include/boost"
 
 if [ -d "$PACKAGE_DIR" ]; then
@@ -32,14 +32,24 @@ if [ ! -d "$INCLUDE" ]; then
 fi
 cd "$INCLUDE"
 for sub in "${SUBMODULES[@]}"; do
-    # "cp -as" can be used instead of the below but it is not available on macOS
-    srcdir="$SRC_DIR/boost/libs/$sub/include/boost"
-    for dirname in $(cd "$srcdir"; find . -type d -not -name .); do
-        if [ ! -d "$dirname" ]; then
-            mkdir "$dirname"
-        fi
+    # "cp -as" can be perhaps used instead of the below but it is not available on macOS
+    for srcdir in $(find "$SRC_DIR/boost/libs/$sub" -name boost -type d | grep include/boost); do # $SRC_DIR/boost/libs/$sub may contain sub-projects
+        for dirname in $(cd "$srcdir"; find . -type d -not -name .); do
+            if [ ! -d "$dirname" ]; then
+                mkdir "$dirname"
+            fi
+        done
+        for filename in $(cd "$srcdir"; find . -type f | cut -c 3-); do
+            ln -sf "$srcdir/$filename" "$filename"
+        done
     done
-    for filename in $(cd "$srcdir"; find . -type f | cut -c 3-); do
-        ln -sf "$srcdir/$filename" "$filename"
-    done
+done
+
+cd "$PACKAGE_DIR"
+git submodule update --init tools/build
+git submodule update --init tools/inspect
+./bootstrap.sh --with-libraries=program_options
+./b2
+for filename in $(cd "$SRC_DIR"/boost/stage/lib; find . -type f | cut -c 3-); do
+    ln -sf "$SRC_DIR/boost/stage/lib/$filename" "$ACMACSD_ROOT/lib/$filename"
 done
