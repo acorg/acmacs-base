@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <cstdint>
 
@@ -44,6 +45,11 @@ class Color
     value_type mColor; // 4 bytes, most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
 
 }; // class Color
+
+inline std::ostream& operator<<(std::ostream& out, Color c)
+{
+    return out << c.to_string();
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
