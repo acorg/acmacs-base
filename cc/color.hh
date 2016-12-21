@@ -38,6 +38,7 @@ class Color
 
     std::string to_string() const;
     void from_string(std::string aColor);
+    inline void from_string(const char* s, size_t len) { from_string(std::string(s, len)); }
 
     static const value_type DistinctColors[];
 

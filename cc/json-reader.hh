@@ -38,10 +38,11 @@ namespace json_reader
         inline virtual HandlerBase* Double(double d) { throw Failure("HandlerBase Double " + std::to_string(d)); }
         inline virtual HandlerBase* Int(int i) { throw Failure("HandlerBase Int " + std::to_string(i)); }
         inline virtual HandlerBase* Uint(unsigned u) { throw Failure("HandlerBase Uint " + std::to_string(u)); }
+        inline virtual HandlerBase* Bool(bool b) { throw Failure("HandlerBase Bool " + std::to_string(b)); }
 
         inline virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
             {
-                if ((length == 1 && *str == '_') || (length > 0 && *str == '?'))
+                if ((length == 1 && *str == '_') || (length > 0 && (*str == '?' || str[length - 1] == '?')))
                     mIgnore = true;
                 else
                     throw Failure("HandlerBase Key: \"" + std::string(str, length) + "\"");
@@ -242,11 +243,10 @@ namespace json_reader
         inline bool Int(int i) { return handler(&HandlerBase<Target>::Int, i); }
         inline bool Uint(unsigned u) { return handler(&HandlerBase<Target>::Uint, u); }
         inline bool Double(double d) { return handler(&HandlerBase<Target>::Double, d); }
-
-          // inline bool Bool(bool /*b*/) { return false; }
-          // inline bool Null() { std::cout << "Null()" << std::endl; return false; }
-          // inline bool Int64(int64_t i) { std::cout << "Int64(" << i << ")" << std::endl; return false; }
-          // inline bool Uint64(uint64_t u) { std::cout << "Uint64(" << u << ")" << std::endl; return false; }
+        inline bool Bool(bool b) { return handler(&HandlerBase<Target>::Bool, b); }
+        inline bool Null() { std::cerr << "ReaderEventHandler::Null()" << std::endl; return false; }
+        inline bool Int64(int64_t i) { std::cerr << "ReaderEventHandler::Int64(" << i << ")" << std::endl; return false; }
+        inline bool Uint64(uint64_t u) { std::cerr << "ReaderEventHandler::Uint64(" << u << ")" << std::endl; return false; }
 
      private:
         Target& mTarget;
