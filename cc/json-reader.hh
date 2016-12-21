@@ -35,10 +35,10 @@ namespace json_reader
         inline virtual HandlerBase* EndObject() { throw Pop(); }
         inline virtual HandlerBase* StartArray() { throw Failure(std::string("HandlerBase StartArray ") + typeid(*this).name()); }
         inline virtual HandlerBase* EndArray() { throw Pop(); }
-        inline virtual HandlerBase* Double(double d) { throw Failure("HandlerBase Double " + std::to_string(d)); }
-        inline virtual HandlerBase* Int(int i) { throw Failure("HandlerBase Int " + std::to_string(i)); }
-        inline virtual HandlerBase* Uint(unsigned u) { throw Failure("HandlerBase Uint " + std::to_string(u)); }
-        inline virtual HandlerBase* Bool(bool b) { throw Failure("HandlerBase Bool " + std::to_string(b)); }
+        inline virtual HandlerBase* Double(double d) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Double " + std::to_string(d)); }
+        inline virtual HandlerBase* Int(int i) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Int " + std::to_string(i)); }
+        inline virtual HandlerBase* Uint(unsigned u) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Uint " + std::to_string(u)); }
+        inline virtual HandlerBase* Bool(bool b) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Bool " + std::to_string(b)); }
 
         inline virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
             {
