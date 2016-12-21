@@ -49,6 +49,7 @@ template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writ
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, const char* s) { writer.String(s, static_cast<unsigned>(strlen(s))); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, std::string s) { writer.String(s.c_str(), static_cast<unsigned>(s.size())); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, int value) { writer.Int(value); return writer; }
+template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, size_t value) { writer.Uint64(value); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, bool value) { writer.Bool(value); return writer; }
 template <typename RW> inline JsonWriterT<RW>& operator <<(JsonWriterT<RW>& writer, double value) { writer.Double(value); return writer; }
 
