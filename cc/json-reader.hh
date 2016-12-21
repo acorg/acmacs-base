@@ -74,7 +74,7 @@ namespace json_reader
         inline virtual HandlerBase<Target>* StartArray()
             {
                 if (mStarted)
-                    throw Failure();
+                    throw Failure{};
                 mStarted = true;
                 return nullptr;
             }
@@ -82,7 +82,7 @@ namespace json_reader
         inline virtual HandlerBase<Target>* StartObject()
             {
                 if (!mStarted)
-                    throw Failure();
+                    throw Failure{};
                 mList.emplace_back();
                 return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
             }
