@@ -104,6 +104,32 @@ namespace acmacs_base
 
       // ----------------------------------------------------------------------
 
+    class TempFile
+    {
+     public:
+        inline TempFile()
+            : name("/tmp/AD.XXXXXXXX"), fd(mkstemp(name))
+            {
+                if (fd < 0)
+                    throw std::runtime_error(std::string("Cannot create temporary file using template ") + name + ": " + strerror(errno));
+            }
+
+        inline operator std::string() const { return name; }
+        inline operator int() const { return fd; }
+
+        inline ~TempFile()
+            {
+                unlink(name);
+            }
+
+     private:
+        char name[20];
+        int fd;
+
+    }; // class TempFile
+
+      // ----------------------------------------------------------------------
+
 }
 
 // ----------------------------------------------------------------------
