@@ -8,6 +8,12 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
+#include <cstdio>
+
+#pragma GCC diagnostic push
+#include "acmacs-base/boost-diagnostics.hh"
+#include "boost/filesystem.hpp"
+#pragma GCC diagnostic pop
 
 #include "acmacs-base/xz.hh"
 
@@ -79,6 +85,28 @@ namespace acmacs_base
 
       // ----------------------------------------------------------------------
 
+    inline void backup_file(std::string aFilename)
+    {
+        using namespace boost::filesystem;
+        path to_backup{aFilename};
+        if (exists(to_backup)) {
+            path backup_dir = to_backup.parent_path() / ".backup";
+            create_directory(backup_dir);
+
+            for (int version = 1; version < 1000; ++version) {
+                char infix[10];
+                std::sprintf(infix, ".~%03d~", version);
+                path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
+                if (!exists(new_name) || version == 999) {
+                    copy_file(to_backup, new_name, copy_option::overwrite_if_exists);
+                    break;
+                }
+            }
+        }
+    }
+
+      // ----------------------------------------------------------------------
+
     inline void write_file(std::string aFilename, std::string aData)
     {
         int f = -1;
@@ -91,6 +119,7 @@ namespace acmacs_base
         else {
             if (aFilename.size() > 3 && aFilename.substr(aFilename.size() - 3) == ".xz")
                 aData = xz_compress(aData);
+            backup_file(aFilename);
             f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
             if (f < 0)
                 throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
