@@ -53,3 +53,10 @@ git submodule update --init tools/inspect
 for filename in $(cd "$SRC_DIR"/boost/stage/lib; find . -type f | cut -c 3-); do
     ln -sf "$SRC_DIR/boost/stage/lib/$filename" "$ACMACSD_ROOT/lib/$filename"
 done
+if [ "$(uname)" == "Linux" ]; then
+    cd "$ACMACSD_ROOT/lib"
+    rm -f *.a
+    for libf in libboost*.so.*; do
+        ln -sf "$libf" "${libf%%.*}.so"
+    done
+fi
