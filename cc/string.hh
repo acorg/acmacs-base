@@ -17,6 +17,8 @@
 #include <cstring>
 #include <iterator>
 #include <utility>
+#include <initializer_list>
+#include <numeric>
 
 // ----------------------------------------------------------------------
 
@@ -57,23 +59,23 @@ namespace string
         }
     } // namespace _internal
 
-    inline std::string& strip(std::string& source)
-    {
-        auto be = _internal::strip_begin_end<std::string::iterator>(source);
-        source.erase(be.second, source.end()); // erase at the end first
-        source.erase(source.begin(), be.first); // invalidates be.second!
-        return source;
-    }
+    // inline std::string& strip(std::string& source)
+    // {
+    //     auto be = _internal::strip_begin_end<std::string::iterator>(source);
+    //     source.erase(be.second, source.end()); // erase at the end first
+    //     source.erase(source.begin(), be.first); // invalidates be.second!
+    //     return source;
+    // }
 
-    inline std::string strip(std::string&& source)
-    {
-        auto be = _internal::strip_begin_end<std::string::iterator>(source);
-        source.erase(be.second, source.end()); // erase at the end first
-        source.erase(source.begin(), be.first); // invalidates be.second!
-        return source;
-    }
+    // inline std::string strip(std::string&& source)
+    // {
+    //     auto be = _internal::strip_begin_end<std::string::iterator>(source);
+    //     source.erase(be.second, source.end()); // erase at the end first
+    //     source.erase(source.begin(), be.first); // invalidates be.second!
+    //     return source;
+    // }
 
-    inline std::string strip(const std::string& source)
+    inline std::string strip(std::string source)
     {
         auto be = _internal::strip_begin_end<std::string::const_iterator>(source);
         return std::string(be.first, be.second);
@@ -102,47 +104,60 @@ namespace string
 
       // ----------------------------------------------------------------------
 
-    inline std::string& lower(std::string& source)
-    {
-        std::transform(source.begin(), source.end(), source.begin(), ::tolower);
-        return source;
-    }
+    // inline std::string& lower(std::string& source)
+    // {
+    //     std::transform(source.begin(), source.end(), source.begin(), ::tolower);
+    //     return source;
+    // }
 
-    inline std::string lower(const std::string& source)
+    inline std::string lower(std::string source)
     {
         std::string result;
         std::transform(source.begin(), source.end(), std::back_inserter(result), ::tolower);
         return result;
     }
 
-    inline std::string& upper(std::string& source)
-    {
-        std::transform(source.begin(), source.end(), source.begin(), ::toupper);
-        return source;
-    }
+    // inline std::string& upper(std::string& source)
+    // {
+    //     std::transform(source.begin(), source.end(), source.begin(), ::toupper);
+    //     return source;
+    // }
 
-    inline std::string upper(const std::string& source)
+    inline std::string upper(std::string source)
     {
         std::string result;
         std::transform(source.begin(), source.end(), std::back_inserter(result), ::toupper);
         return result;
     }
 
-    inline std::string& capitalize(std::string& source)
-    {
-        if (!source.empty()) {
-            std::transform(source.begin(), source.begin() + 1, source.begin(), ::toupper);
-            std::transform(source.begin() + 1, source.end(), source.begin() + 1, ::tolower);
-        }
-        return source;
-    }
+    // inline std::string& capitalize(std::string& source)
+    // {
+    //     if (!source.empty()) {
+    //         std::transform(source.begin(), source.begin() + 1, source.begin(), ::toupper);
+    //         std::transform(source.begin() + 1, source.end(), source.begin() + 1, ::tolower);
+    //     }
+    //     return source;
+    // }
 
-    inline std::string capitalize(const std::string& source)
+    inline std::string capitalize(std::string source)
     {
         std::string result;
         if (!source.empty()) {
             std::transform(source.begin(), source.begin() + 1, std::back_inserter(result), ::toupper);
             std::transform(source.begin() + 1, source.end(), std::back_inserter(result), ::tolower);
+        }
+        return result;
+    }
+
+    inline std::string join(std::string separator, std::initializer_list<std::string> values)
+    {
+        const size_t resulting_size = std::accumulate(values.begin(), values.end(), separator.size() * (values.size() - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
+        std::string result;
+        result.reserve(resulting_size);
+        for (const auto& value: values) {
+            if (!result.empty())
+                result.append(separator);
+            result.append(value);
         }
         return result;
     }

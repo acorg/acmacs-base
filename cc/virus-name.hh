@@ -17,18 +17,18 @@ namespace virus_name
 
         const std::regex cdc{"^([A-Z][A-Z][A-Z]?) "};
 
-          // [1] - host, [2] - location, [3] - isolation-number (omitting leading zeros), [4] - century, [5] - year (2 last digit), [6] - reassortant and passage
-        const std::regex international{"^[AB][^/]*/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
+          // [1] - type+subtype, [2] - host, [3] - location, [4] - isolation-number (omitting leading zeros), [5] - century, [6] - year (2 last digit), [7] - reassortant and passage
+        const std::regex international{"^([AB][^/]*)/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
 
         inline std::string make_year(const std::smatch& m)
         {
             std::string year;
-            if (m[4].length())
-                year = m[4].str() + m[5].str();
-            else if (m[5].str()[0] > '2')
-                year = "19" + m[5].str();
+            if (m[5].length())
+                year = m[5].str() + m[6].str();
+            else if (m[6].str()[0] > '2')
+                year = "19" + m[6].str();
             else
-                year = "20" + m[5].str();
+                year = "20" + m[6].str();
             return year;
         }
 
@@ -41,6 +41,12 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
+    std::string normalize(std::string name);
+
+// ----------------------------------------------------------------------
+
+    std::string normalize(std::string name);
+
       // returned cdc abbreviation starts with #
     inline std::string location(std::string name)
     {
@@ -50,11 +56,26 @@ namespace virus_name
         if (std::regex_search(name, m, cdc))
             location = "#" + m[1].str();
         else if (std::regex_match(name, m, international))
-            location = m[2].str();
+            location = m[3].str();
         else
             throw Unrecognized{};
         return location;
     }
+
+// ----------------------------------------------------------------------
+
+    inline std::string virus_type(std::string name)
+    {
+        using namespace _internal;
+        std::string virus_type;
+        std::smatch m;
+        if (std::regex_match(name, m, international))
+            virus_type = m[1].str();
+        else
+            throw Unrecognized{};
+        return virus_type;
+
+    } // AntigenSerum::virus_type
 
 // ----------------------------------------------------------------------
 
@@ -73,16 +94,17 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
-    inline void split(std::string name, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
+    inline void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
     {
         using namespace _internal;
         std::smatch m;
         if (std::regex_match(name, m, international)) {
-            host = m[1].str();
-            location = m[2].str();
-            isolation = m[3].str();
+            virus_type = m[1].str();
+            host = m[2].str();
+            location = m[3].str();
+            isolation = m[4].str();
             year = make_year(m);
-            passage = m[6].str();
+            passage = m[7].str();
         }
         else
             throw Unrecognized{};
