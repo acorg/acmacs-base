@@ -17,6 +17,9 @@ namespace virus_name
             host = string::strip(host);
             location = string::strip(location);
             isolation = string::strip(isolation);
+            auto first_not_zero = isolation.find_first_not_of('0');
+            if (first_not_zero != std::string::npos)
+                isolation.erase(0, first_not_zero);
             year = string::strip(year);
             passage = string::strip(passage);
             if (host.empty())
