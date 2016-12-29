@@ -39,6 +39,7 @@ namespace json_reader
         inline virtual HandlerBase* Int(int i) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Int " + std::to_string(i)); }
         inline virtual HandlerBase* Uint(unsigned u) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Uint " + std::to_string(u)); }
         inline virtual HandlerBase* Bool(bool b) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Bool " + std::to_string(b)); }
+        inline virtual HandlerBase* Null() { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Null"); }
 
         inline virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
             {
@@ -65,11 +66,11 @@ namespace json_reader
 
 // ----------------------------------------------------------------------
 
-    template <typename Target, typename Element, typename ElementHandler> class ListHandler : public HandlerBase<Target>
+    template <typename Target> class GenericListHandler : public HandlerBase<Target>
     {
      public:
-        inline ListHandler(Target& aTarget, std::vector<Element>& aList)
-            : HandlerBase<Target>(aTarget), mList(aList), mStarted(false) {}
+        inline GenericListHandler(Target& aTarget)
+            : HandlerBase<Target>(aTarget), mStarted(false) {}
 
         inline virtual HandlerBase<Target>* StartArray()
             {
@@ -79,39 +80,44 @@ namespace json_reader
                 return nullptr;
             }
 
+        inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
+
+     protected:
+        inline bool started() const { return mStarted; }
+
+     private:
+        bool mStarted;
+
+    }; // class GenericListHandler
+
+// ----------------------------------------------------------------------
+
+    template <typename Target, typename Element, typename ElementHandler> class ListHandler : public GenericListHandler<Target>
+    {
+     public:
+        inline ListHandler(Target& aTarget, std::vector<Element>& aList)
+            : GenericListHandler<Target>(aTarget), mList(aList) {}
+
         inline virtual HandlerBase<Target>* StartObject()
             {
-                if (!mStarted)
+                if (!this->started())
                     throw Failure{};
                 mList.emplace_back();
                 return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
             }
 
-        inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
-
      private:
         std::vector<Element>& mList;
-        bool mStarted;
 
-    }; // class StringListHandler
+    }; // class ListHandler
 
 // ----------------------------------------------------------------------
 
-    template <typename Target> class StringListHandler : public HandlerBase<Target>
+    template <typename Target> class StringListHandler : public GenericListHandler<Target>
     {
      public:
         inline StringListHandler(Target& aTarget, std::vector<std::string>& aList)
-            : HandlerBase<Target>(aTarget), mList(aList), mStarted(false) {}
-
-        inline virtual HandlerBase<Target>* StartArray()
-            {
-                if (mStarted)
-                    throw Failure();
-                mStarted = true;
-                return nullptr;
-            }
-
-        inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
+            : GenericListHandler<Target>(aTarget), mList(aList) {}
 
         inline virtual HandlerBase<Target>* String(const char* str, rapidjson::SizeType length)
             {
@@ -121,9 +127,27 @@ namespace json_reader
 
      private:
         std::vector<std::string>& mList;
-        bool mStarted;
 
     }; // class StringListHandler
+
+// ----------------------------------------------------------------------
+
+    template <typename Target> class UintListHandler : public GenericListHandler<Target>
+    {
+     public:
+        inline UintListHandler(Target& aTarget, std::vector<size_t>& aList)
+            : GenericListHandler<Target>(aTarget), mList(aList) {}
+
+        inline virtual HandlerBase<Target>* Uint(unsigned u)
+            {
+                mList.push_back(u);
+                return nullptr;
+            }
+
+     private:
+        std::vector<size_t>& mList;
+
+    }; // class UintListHandler
 
 // ----------------------------------------------------------------------
 
@@ -244,7 +268,7 @@ namespace json_reader
         inline bool Uint(unsigned u) { return handler(&HandlerBase<Target>::Uint, u); }
         inline bool Double(double d) { return handler(&HandlerBase<Target>::Double, d); }
         inline bool Bool(bool b) { return handler(&HandlerBase<Target>::Bool, b); }
-        inline bool Null() { std::cerr << "ReaderEventHandler::Null()" << std::endl; return false; }
+        inline bool Null() { return handler(&HandlerBase<Target>::Null); }
         inline bool Int64(int64_t i) { std::cerr << "ReaderEventHandler::Int64(" << i << ")" << std::endl; return false; }
         inline bool Uint64(uint64_t u) { std::cerr << "ReaderEventHandler::Uint64(" << u << ")" << std::endl; return false; }
 
