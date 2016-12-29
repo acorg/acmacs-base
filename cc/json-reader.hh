@@ -151,6 +151,25 @@ namespace json_reader
 
 // ----------------------------------------------------------------------
 
+    template <typename Target> class DoubleListHandler : public GenericListHandler<Target>
+    {
+     public:
+        inline DoubleListHandler(Target& aTarget, std::vector<double>& aList)
+            : GenericListHandler<Target>(aTarget), mList(aList) {}
+
+        inline virtual HandlerBase<Target>* Double(double d)
+            {
+                mList.push_back(d);
+                return nullptr;
+            }
+
+     private:
+        std::vector<double>& mList;
+
+    }; // class DoubleListHandler
+
+// ----------------------------------------------------------------------
+
     template <typename Target> class MapListHandler : public HandlerBase<Target>
     {
      public:
