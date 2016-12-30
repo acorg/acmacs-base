@@ -69,8 +69,8 @@ namespace json_reader
     template <typename Target> class GenericListHandler : public HandlerBase<Target>
     {
      public:
-        inline GenericListHandler(Target& aTarget)
-            : HandlerBase<Target>(aTarget), mStarted(false) {}
+        inline GenericListHandler(Target& aTarget, size_t aExpectedSize)
+            : HandlerBase<Target>(aTarget), mStarted(false), mExpectedSize(aExpectedSize) {}
 
         inline virtual HandlerBase<Target>* StartArray()
             {
@@ -80,13 +80,22 @@ namespace json_reader
                 return nullptr;
             }
 
+        inline virtual HandlerBase<Target>* EndArray()
+            {
+                if (mExpectedSize && size() != mExpectedSize)
+                    throw Failure{"Unexpected resulting list size"};
+                throw Pop();
+            }
+
         inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
 
      protected:
         inline bool started() const { return mStarted; }
+        virtual size_t size() const = 0;
 
      private:
         bool mStarted;
+        size_t mExpectedSize;
 
     }; // class GenericListHandler
 
@@ -95,8 +104,8 @@ namespace json_reader
     template <typename Target, typename Element, typename ElementHandler> class ListHandler : public GenericListHandler<Target>
     {
      public:
-        inline ListHandler(Target& aTarget, std::vector<Element>& aList)
-            : GenericListHandler<Target>(aTarget), mList(aList) {}
+        inline ListHandler(Target& aTarget, std::vector<Element>& aList, size_t aExpectedSize = 0)
+            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
         inline virtual HandlerBase<Target>* StartObject()
             {
@@ -105,6 +114,9 @@ namespace json_reader
                 mList.emplace_back();
                 return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
             }
+
+     protected:
+        virtual inline size_t size() const { return mList.size(); }
 
      private:
         std::vector<Element>& mList;
@@ -116,14 +128,17 @@ namespace json_reader
     template <typename Target> class StringListHandler : public GenericListHandler<Target>
     {
      public:
-        inline StringListHandler(Target& aTarget, std::vector<std::string>& aList)
-            : GenericListHandler<Target>(aTarget), mList(aList) {}
+        inline StringListHandler(Target& aTarget, std::vector<std::string>& aList, size_t aExpectedSize = 0)
+            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
         inline virtual HandlerBase<Target>* String(const char* str, rapidjson::SizeType length)
             {
                 mList.emplace_back(str, length);
                 return nullptr;
             }
+
+     protected:
+        virtual inline size_t size() const { return mList.size(); }
 
      private:
         std::vector<std::string>& mList;
@@ -135,14 +150,17 @@ namespace json_reader
     template <typename Target> class UintListHandler : public GenericListHandler<Target>
     {
      public:
-        inline UintListHandler(Target& aTarget, std::vector<size_t>& aList)
-            : GenericListHandler<Target>(aTarget), mList(aList) {}
+        inline UintListHandler(Target& aTarget, std::vector<size_t>& aList, size_t aExpectedSize = 0)
+            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
         inline virtual HandlerBase<Target>* Uint(unsigned u)
             {
                 mList.push_back(u);
                 return nullptr;
             }
+
+     protected:
+        virtual inline size_t size() const { return mList.size(); }
 
      private:
         std::vector<size_t>& mList;
@@ -154,14 +172,17 @@ namespace json_reader
     template <typename Target> class DoubleListHandler : public GenericListHandler<Target>
     {
      public:
-        inline DoubleListHandler(Target& aTarget, std::vector<double>& aList)
-            : GenericListHandler<Target>(aTarget), mList(aList) {}
+        inline DoubleListHandler(Target& aTarget, std::vector<double>& aList, size_t aExpectedSize = 0)
+            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
         inline virtual HandlerBase<Target>* Double(double d)
             {
                 mList.push_back(d);
                 return nullptr;
             }
+
+     protected:
+        virtual inline size_t size() const { return mList.size(); }
 
      private:
         std::vector<double>& mList;
