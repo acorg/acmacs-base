@@ -83,7 +83,7 @@ namespace json_reader
         inline virtual HandlerBase<Target>* EndArray()
             {
                 if (mExpectedSize && size() != mExpectedSize)
-                    throw Failure{"Unexpected resulting list size"};
+                    throw Failure{"Unexpected resulting list size: " + std::to_string(size()) + " expected: " + std::to_string(mExpectedSize)};
                 throw Pop();
             }
 
