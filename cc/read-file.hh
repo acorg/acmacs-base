@@ -1,11 +1,9 @@
 #pragma once
 
 #include <string>
-#include <sys/stat.h>
 #include <iostream>
 #include <stdexcept>
 #include <fcntl.h>
-#include <unistd.h>
 #include <cerrno>
 #include <cstring>
 #include <cstdio>
@@ -23,22 +21,21 @@ namespace acmacs_base
 {
     inline bool file_exists(std::string aFilename)
     {
-        struct stat buffer;
-        return stat(aFilename.c_str(), &buffer) == 0;
+        return boost::filesystem::exists(aFilename);
     }
 
       // ----------------------------------------------------------------------
 
     inline std::string read_file(std::string aFilename)
     {
+        using namespace boost::filesystem;
         std::string buffer;
-        if (file_exists(aFilename)) {
+        if (exists(aFilename)) {
+            const auto size = file_size(aFilename);
             int f = open(aFilename.c_str(), O_RDONLY);
             if (f >= 0) {
-                struct stat st;
-                fstat(f, &st);
-                buffer.resize(static_cast<std::string::size_type>(st.st_size), ' '); // reserve space
-                if (read(f, &*buffer.begin(), static_cast<size_t>(st.st_size)) < 0)
+                buffer.resize(size, ' '); // reserve space
+                if (read(f, &*buffer.begin(), size) < 0)
                     throw std::runtime_error(std::string("Cannot read ") + aFilename + ": " + strerror(errno));
                 close(f);
             }
