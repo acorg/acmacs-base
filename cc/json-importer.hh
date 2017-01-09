@@ -1,5 +1,12 @@
 #pragma once
 
+#include <string>
+#include <vector>
+#include <map>
+#include <stack>
+#include <typeinfo>
+#include <functional>
+
 #include "rapidjson/reader.h"
 #include "rapidjson/error/en.h"
 
