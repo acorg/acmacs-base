@@ -10,6 +10,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "acmacs-base/read-file.hh"
+#include "acmacs-base/float.hh"
 
 // ----------------------------------------------------------------------
 // Forward declarations
@@ -129,6 +130,33 @@ namespace json_writer
 
     template <typename Key, typename Value> inline auto if_non_negative(Key&& aKey, Value&& aValue) { return _if_non_negative<Key, Value>(std::forward<Key>(aKey), std::forward<Value>(aValue)); }
     template <typename Value> inline auto if_non_negative(const char* aKey, Value&& aValue) { return _if_non_negative<key, Value>(key(aKey), std::forward<Value>(aValue)); }
+
+// ----------------------------------------------------------------------
+
+    template <typename Key, typename Value> class _if_not
+    {
+     public:
+        inline _if_not(Key&& aKey, Value&& aValue, bool aPred) : mKey(aKey), mValue(aValue), mPred(aPred) {}
+        inline _if_not(Key&& aKey, Value aValue, bool aPred) : mKey(aKey), mValue(aValue), mPred(aPred) {}
+
+        template <typename RW> friend inline writer<RW>& operator <<(writer<RW>& aWriter, const _if_not<Key, Value>& data)
+            {
+                if (!data.mPred)
+                    aWriter << data.mKey << data.mValue;
+                return aWriter;
+            }
+
+     private:
+        Key mKey;
+        Value mValue;
+        bool mPred;
+    };
+
+    template <typename Key> inline auto if_not_zero(Key&& aKey, double aValue) { return _if_not<Key, double>(std::forward<Key>(aKey), aValue, float_zero(aValue)); }
+    inline auto if_not_zero(const char* aKey, double aValue) { return _if_not<key, double>(key(aKey), aValue, float_zero(aValue)); }
+
+    template <typename Key> inline auto if_not_one(Key&& aKey, double aValue) { return _if_not<Key, double>(std::forward<Key>(aKey), aValue, float_equal(aValue, 1.0)); }
+    inline auto if_not_one(const char* aKey, double aValue) { return _if_not<key, double>(key(aKey), aValue, float_equal(aValue, 1.0)); }
 
 } // namespace json_writer
 
