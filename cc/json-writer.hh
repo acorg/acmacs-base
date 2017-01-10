@@ -158,6 +158,9 @@ namespace json_writer
     template <typename Key> inline auto if_not_one(Key&& aKey, double aValue) { return _if_not<Key, double>(std::forward<Key>(aKey), aValue, float_equal(aValue, 1.0)); }
     inline auto if_not_one(const char* aKey, double aValue) { return _if_not<key, double>(key(aKey), aValue, float_equal(aValue, 1.0)); }
 
+    template <typename Key, typename Value> inline auto if_not_equal(Key&& aKey, Value&& aValue, Value aEq) { return _if_not<Key, Value>(std::forward<Key>(aKey), aValue, aValue == aEq); }
+    template <typename Value> inline auto if_not_equal(const char* aKey, Value&& aValue, Value aEq) { return _if_not<key, Value>(key(aKey), aValue, aValue == aEq); }
+
 } // namespace json_writer
 
 // ----------------------------------------------------------------------
