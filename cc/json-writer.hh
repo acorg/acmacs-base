@@ -191,9 +191,9 @@ template <typename V> inline std::string json(const V& value, std::string keywor
 
 // ----------------------------------------------------------------------
 
-template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, bool insert_emacs_indent_hint = true)
+template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, bool insert_emacs_indent_hint = true, bool force_compression = false)
 {
-    acmacs_base::write_file(filename, json(value, keyword, indent, insert_emacs_indent_hint));
+    acmacs_base::write_file(filename, json(value, keyword, indent, insert_emacs_indent_hint), force_compression);
 }
 
 // ----------------------------------------------------------------------
