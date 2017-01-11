@@ -18,6 +18,6 @@ else
     $(dirname $0)/update-acmacs-base
 fi
 
-for P in 3rd-party locationdb acmacs-chart hidb seqdb acmacs-tree-maker signature-page ssm-report; do
+for P in 3rd-party locationdb hidb acmacs-chart seqdb acmacs-tree-maker signature-page ssm-report; do
     $ACMACSD_ROOT/bin/update-$P
 done
