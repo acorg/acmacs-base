@@ -149,7 +149,7 @@ namespace string
         return result;
     }
 
-    inline std::string join(std::string separator, std::initializer_list<std::string> values)
+    template <typename Collection> inline std::string join(std::string separator, const Collection& values)
     {
         const size_t resulting_size = std::accumulate(values.begin(), values.end(), separator.size() * (values.size() - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
         std::string result;
