@@ -151,13 +151,15 @@ namespace string
 
     template <typename Collection> inline std::string join(std::string separator, const Collection& values)
     {
-        const size_t resulting_size = std::accumulate(values.begin(), values.end(), separator.size() * (values.size() - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
         std::string result;
-        result.reserve(resulting_size);
-        for (const auto& value: values) {
-            if (!result.empty())
-                result.append(separator);
-            result.append(value);
+        if (!values.empty()) {
+            const size_t resulting_size = std::accumulate(values.begin(), values.end(), separator.size() * (values.size() - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
+            result.reserve(resulting_size);
+            for (const auto& value: values) {
+                if (!result.empty())
+                    result.append(separator);
+                result.append(value);
+            }
         }
         return result;
     }
