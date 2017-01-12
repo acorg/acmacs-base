@@ -149,19 +149,29 @@ namespace string
         return result;
     }
 
-    template <typename Collection> inline std::string join(std::string separator, const Collection& values)
+    template <typename Iterator> inline std::string join(std::string separator, Iterator first, Iterator last)
     {
         std::string result;
-        if (!values.empty()) {
-            const size_t resulting_size = std::accumulate(values.begin(), values.end(), separator.size() * (values.size() - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
+        if (first != last) {
+            const size_t resulting_size = std::accumulate(first, last, separator.size() * static_cast<size_t>(last - first - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
             result.reserve(resulting_size);
-            for (const auto& value: values) {
+            for ( ; first != last; ++first) {
                 if (!result.empty())
                     result.append(separator);
-                result.append(value);
+                result.append(*first);
             }
         }
         return result;
+    }
+
+    template <typename Collection> inline std::string join(std::string separator, const Collection& values)
+    {
+        return join(separator, std::begin(values), std::end(values));
+    }
+
+    inline std::string join(std::string separator, std::initializer_list<std::string>&& values)
+    {
+        return join(separator, std::begin(values), std::end(values));
     }
 
 // ----------------------------------------------------------------------
