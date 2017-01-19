@@ -53,7 +53,8 @@ install: check-acmacsd-root make-dirs install-packages
 
 make-dirs:
 	if [ ! -d $(ACMACSD_ROOT) ]; then mkdir $(ACMACSD_ROOT); fi
-	for d in bin lib include py data sources; do if [ ! -d $(ACMACSD_ROOT)/$$d ]; then mkdir $(ACMACSD_ROOT)/$$d; fi; done
+	for d in bin lib include include/acmacs-base py data sources; do if [ ! -d $(ACMACSD_ROOT)/$$d ]; then mkdir $(ACMACSD_ROOT)/$$d; fi; done
+	cd $(ACMACSD_ROOT)/include/acmacs-base && ln -sf ../../sources/acmacs-base/cc/*.hh .
 
 # ----------------------------------------------------------------------
 
