@@ -175,6 +175,12 @@ namespace string
         return join(separator, std::begin(values), std::end(values));
     }
 
+    inline std::string join(std::initializer_list<std::string>&& parts)
+        {
+            std::vector<std::string> p{parts};
+            return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
+        }
+
 // ----------------------------------------------------------------------
 
 } // namespace string
