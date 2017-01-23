@@ -120,18 +120,20 @@ namespace json_importer
             std::vector<Target>& mTarget;
         };
 
-        template <typename Target> class ArrayOfArrayElement
+        template <typename Target> class ArrayOfArrayElementTarget
         {
          public:
-            inline ArrayOfArrayElement(std::vector<std::vector<Target>>& aTarget) : mTarget(aTarget) {}
+            inline ArrayOfArrayElementTarget(Target& aTarget) : mTarget(aTarget) {}
               // inline void operator()(Target aValue) { mTarget.back().emplace_back(aValue); }
             template <typename ...Args> inline void operator()(Args ...args) { mTarget.back().emplace_back(args...); }
             inline size_t size() const { return mTarget.size(); }
             inline void clear() { mTarget.clear(); }
             inline void new_nested() { mTarget.emplace_back(); }
          private:
-            std::vector<std::vector<Target>>& mTarget;
+            Target& mTarget;
         };
+
+        template <typename Target> using ArrayOfArrayElement = ArrayOfArrayElementTarget<std::vector<std::vector<Target>>>;
 
     } // namespace storers
 
@@ -319,10 +321,10 @@ namespace json_importer
           // reader: ArrayOfArrayOfValues
           // ----------------------------------------------------------------------
 
-        template <typename Element, typename Storer> class ArrayOfArrayOfValues : public Storer
+        template <typename Target, typename Storer> class ArrayOfArrayOfValuesTarget : public Storer
         {
          public:
-            inline ArrayOfArrayOfValues(std::vector<std::vector<Element>>& aArray) : Storer(aArray), mNesting(0) {}
+            inline ArrayOfArrayOfValuesTarget(Target& aArray) : Storer(aArray), mNesting(0) {}
 
             inline virtual Base* StartArray()
                 {
@@ -357,7 +359,9 @@ namespace json_importer
          private:
             size_t mNesting;
 
-        }; // class ArrayOfValues<Element>
+        }; // class ArrayOfArrayOfValuesTarget<Target, Storer>
+
+        template <typename Element, typename Storer> using ArrayOfArrayOfValues = ArrayOfArrayOfValuesTarget<std::vector<std::vector<Element>>, Storer>;
 
           // ----------------------------------------------------------------------
           // reader: template helpers
@@ -438,6 +442,20 @@ namespace json_importer
                 virtual inline readers::Base* reader(Parent& parent)
                     {
                         return new ArrayOfValues<Element, Storer>(std::bind(mF, &parent)());
+                    }
+
+             private:
+                Func mF;
+            };
+
+            template <typename Parent, typename Target, typename Func, typename Storer>
+                class ArrayOfArrayOfValuesTargetAccessor : public Base<Parent>
+            {
+             public:
+                inline ArrayOfArrayOfValuesTargetAccessor(Func aF) : mF(aF) {}
+                virtual inline readers::Base* reader(Parent& parent)
+                    {
+                        return new ArrayOfArrayOfValuesTarget<Target, Storer>(std::bind(mF, &parent)());
                     }
 
              private:
@@ -599,6 +617,13 @@ namespace json_importer
     {
         using Storer = decltype(storers::type_detector<storers::ArrayOfArrayElement<Field>>(std::declval<Field>()));
         return std::make_shared<readers::makers::ArrayOfArrayOfValuesAccessor<Parent, Field, decltype(accessor), Storer>>(accessor);
+    }
+
+      // Array of array of double with inheritance
+    template <typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field& (Parent::*accessor)())
+    {
+        using Storer = decltype(storers::type_detector<storers::ArrayOfArrayElementTarget<Field>>(std::declval<double>()));
+        return std::make_shared<readers::makers::ArrayOfArrayOfValuesTargetAccessor<Parent, Field, decltype(accessor), Storer>>(accessor);
     }
 
       // Custom Storer (derived from storers::Base)
