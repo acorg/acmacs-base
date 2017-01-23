@@ -8,7 +8,7 @@ MAKEFLAGS = -w
 
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
-ACMACS_BASE_SOURCES = color.cc virus-name.cc
+ACMACS_BASE_SOURCES = virus-name.cc
 
 # ----------------------------------------------------------------------
 
