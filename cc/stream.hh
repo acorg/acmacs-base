@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <algorithm>
 
 // ----------------------------------------------------------------------
 
@@ -59,9 +60,10 @@ template <typename Value> inline std::ostream& operator << (std::ostream& out, c
 template <typename Collection> class to_stream_t
 {
  public:
-    typedef typename Collection::value_type value_type;
-    typedef typename Collection::const_iterator const_iterator;
-    typedef std::function<std::string(value_type)> transformer_t;
+    using value_type = typename Collection::value_type;
+    using const_iterator = typename Collection::const_iterator;
+    using transformer_t = typename std::function<std::string(value_type)>;
+
     inline to_stream_t(const_iterator first, const_iterator last, transformer_t transformer) : mFirst(first), mLast(last), mTransformer(transformer) {}
     inline friend std::ostream& operator << (std::ostream& out, const to_stream_t<Collection>& converter)
         {
