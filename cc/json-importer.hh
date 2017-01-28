@@ -380,6 +380,13 @@ namespace json_importer
             return new Value<Storer>(std::bind(setter, &target, std::placeholders::_1));
         }
 
+        template <typename T, typename V> inline Base* reader(V T::* setter, T& target)
+        {
+            auto store = [setter,&target](V value) { target.*setter = value; };
+            using Storer = decltype(storers::type_detector<decltype(store)>(std::declval<V>()));
+            return new Value<Storer>(store);
+        }
+
           //   // for readers::Object<> derivatives, e.g. return readers::reader<JsonReaderChart>(&Ace::chart, target());
           // template <template<typename> class Reader, typename Parent, typename Field> inline Base* reader(Field& (Parent::*accessor)(), Parent& parent)
           // {
@@ -416,6 +423,21 @@ namespace json_importer
 
              private:
                 Func mF;
+                data<Field>& mData;
+            };
+
+            template <typename Parent, typename Field>
+                class AccessorField : public Base<Parent>
+            {
+             public:
+                inline AccessorField(Field Parent::* aF, data<Field>& aData) : mF(aF), mData(aData) {}
+                virtual inline readers::Base* reader(Parent& parent)
+                    {
+                        return new DataRef<Field>(parent.*mF, mData);
+                    }
+
+             private:
+                Field Parent::* mF;
                 data<Field>& mData;
             };
 
@@ -573,6 +595,12 @@ namespace json_importer
         return std::make_shared<readers::makers::Setter<Parent, decltype(setter)>>(setter);
     }
 
+      // Field is a simple value set directly (e.g. double)
+    template <typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field Parent::*setter)
+    {
+        return std::make_shared<readers::makers::Setter<Parent, decltype(setter)>>(setter);
+    }
+
       // Field is a simple object set via setter: void ParentBase::setter(const Value& value)
       // Parent is derived from ParentBase, setter declared in ParentBase (and accessible in Parent)
       // must be specified as field<Parent>(&Parent::accessor)
@@ -586,6 +614,12 @@ namespace json_importer
     template <typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field& (Parent::*accessor)(), data<Field>& aData)
     {
         return std::make_shared<readers::makers::Accessor<Parent, Field, decltype(accessor)>>(accessor, aData);
+    }
+
+      // Field is an Object accessible directly
+    template <typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field Parent::*accessor, data<Field>& aData)
+    {
+        return std::make_shared<readers::makers::AccessorField<Parent, Field>>(accessor, aData);
     }
 
       // Array of Objects
