@@ -387,6 +387,13 @@ namespace json_importer
             return new Value<Storer>(store);
         }
 
+        template <typename T> inline Base* reader(std::string T::* setter, T& target)
+        {
+            auto store = [setter,&target](const char* str, size_t length) { (target.*setter).assign(str, length); };
+            using Storer = decltype(storers::type_detector<decltype(store)>(std::declval<std::string>()));
+            return new Value<Storer>(store);
+        }
+
           //   // for readers::Object<> derivatives, e.g. return readers::reader<JsonReaderChart>(&Ace::chart, target());
           // template <template<typename> class Reader, typename Parent, typename Field> inline Base* reader(Field& (Parent::*accessor)(), Parent& parent)
           // {
