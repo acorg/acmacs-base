@@ -76,6 +76,7 @@ namespace json_importer
          public:
             using Storer<F>::Storer;
             inline virtual Base* Uint(unsigned u) { return this->store(u); }
+            inline virtual Base* Int(int i) { if (i == -1) return this->store(static_cast<unsigned>(i)); else return Storer<F>::Int(i); } // to read -1 for some size_t fields
         };
 
         template <typename F> class Int_ : public Storer<F>
