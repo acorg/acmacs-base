@@ -67,6 +67,8 @@ namespace json_importer
          public:
             using Storer<F>::Storer;
             inline virtual Base* Double(double d) { return this->store(d); }
+            inline virtual Base* Int(int i) { return this->store(static_cast<double>(i)); }
+            inline virtual Base* Uint(unsigned u) { return this->store(static_cast<double>(u)); }
         };
 
         template <typename F> class Unsigned_ : public Storer<F>
@@ -519,6 +521,20 @@ namespace json_importer
                 Accessor mAccessor;
             };
 
+            template <typename Storer, typename Parent, typename Field>
+                class GenericAccessorField : public Base<Parent>
+            {
+             public:
+                using Accessor  = Field Parent::*;
+                inline GenericAccessorField(Accessor aAccessor) : mAccessor(aAccessor) {}
+                virtual inline readers::Base* reader(Parent& parent)
+                    {
+                        return new Storer(parent.*mAccessor);
+                    }
+             private:
+                Accessor mAccessor;
+            };
+
         } // namespace makers
 
           // ----------------------------------------------------------------------
@@ -672,6 +688,13 @@ namespace json_importer
     template <typename Storer, typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field& (Parent::*accessor)())
     {
         return std::make_shared<readers::makers::GenericAccessor<Storer, Parent, Field>>(accessor);
+    }
+
+      // Custom Storer (derived from storers::Base)
+      // must be specified as field<Storer, Parent, Field>(&Parent::field)
+    template <typename Storer, typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field Parent::*accessor)
+    {
+        return std::make_shared<readers::makers::GenericAccessorField<Storer, Parent, Field>>(accessor);
     }
 
       // ----------------------------------------------------------------------
