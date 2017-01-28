@@ -137,6 +137,36 @@ namespace json_importer
 
         template <typename Target> using ArrayOfArrayElement = ArrayOfArrayElementTarget<std::vector<std::vector<Target>>>;
 
+          // ----------------------------------------------------------------------
+          // storer ignoring value
+          // ----------------------------------------------------------------------
+
+        class Ignore : public Base
+        {
+         public:
+            inline Ignore() : mNesting(0) {}
+
+            inline void pop() { if (mNesting == 0) throw Pop(); }
+            inline void decr() { --mNesting; pop(); }
+
+            inline virtual Base* StartObject() { ++mNesting; return nullptr; }
+            inline virtual Base* EndObject() { decr(); return nullptr; }
+            inline virtual Base* StartArray() { ++mNesting; return nullptr; }
+            inline virtual Base* EndArray() { decr(); return nullptr; }
+            inline virtual Base* Key(const char*, rapidjson::SizeType) { return nullptr; }
+            inline virtual Base* String(const char*, rapidjson::SizeType) { pop(); return nullptr; }
+            inline virtual Base* Int(int) { pop(); return nullptr; }
+            inline virtual Base* Uint(unsigned) { pop(); return nullptr; }
+            inline virtual Base* Double(double) { pop(); return nullptr; }
+            inline virtual Base* Bool(bool) { pop(); return nullptr; }
+            inline virtual Base* Null() { pop(); return nullptr; }
+            inline virtual Base* Int64(int64_t) { pop(); return nullptr; }
+            inline virtual Base* Uint64(uint64_t) { pop(); return nullptr; }
+
+         private:
+            size_t mNesting;
+        };
+
     } // namespace storers
 
       // ----------------------------------------------------------------------
@@ -160,8 +190,10 @@ namespace json_importer
                         throw Failure(typeid(*this).name() + std::string(": unexpected Key event"));
                     Base* r = match_key(str, length);
                     if (!r) {
-                          // support for keys starting or ending with ? and "_"
-                        r = Base::Key(str, length);
+                        if (length > 0 && (str[0] == '?' || str[length - 1] == '?'))
+                            r = new storers::Ignore{}; // support for keys starting or ending with ? and "_"
+                        else
+                            r = Base::Key(str, length);
                     }
                       // else
                       //     std::cerr << "readers::Object " << std::string(str, length) << " -> PUSH " << typeid(*r).name() << std::endl;
