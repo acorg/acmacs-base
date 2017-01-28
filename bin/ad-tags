@@ -1,0 +1,16 @@
+#! /bin/sh
+
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+cd $ACMACSD_ROOT &&
+(find sources -name "*.py" -o -name "*.cc" -o -name "*.hh") | etags --output TAGS -
+cat >>TAGS <<EOF
+
+auto-revert,46
+Local Variables:
+eval: (auto-revert-mode)
+End:
+EOF
