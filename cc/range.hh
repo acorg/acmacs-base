@@ -5,6 +5,8 @@
 #include <limits>
 #include <functional>
 
+#include "acmacs-base/stream.hh"
+
 // ----------------------------------------------------------------------
 
 namespace _acmacs_base_internal
@@ -22,7 +24,8 @@ namespace _acmacs_base_internal
           // inline input_iterator operator++(int) { input_iterator result = *this; ++(*this); return result; }
         inline bool operator==(const input_iterator& other) const { return current == other.current; }
         inline bool operator!=(const input_iterator& other) const { return !(*this == other); }
-        inline T operator*() const { return current; }
+        inline const T& operator*() const { return current; }
+        inline T& operator*() { return current; }
 
      private:
         T current;
@@ -132,14 +135,19 @@ class IndexGenerator
 
     using iterator = _acmacs_base_internal::input_iterator<size_t, IndexGenerator::increment>;
 
-    inline iterator begin() { return {mFirst, mIncrement}; }
-    inline iterator end() { return {}; }
+    inline iterator begin() const { return {mFirst, mIncrement}; }
+    inline iterator end() const { return {}; }
 
  private:
     size_t mFirst;
     increment mIncrement;
 
 }; // class IndexGenerator
+
+inline std::ostream& operator << (std::ostream& out, const IndexGenerator& aGen)
+{
+    return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:

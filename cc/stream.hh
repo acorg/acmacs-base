@@ -67,6 +67,7 @@ template <typename Collection> class to_stream_t
     using transformer_t = typename std::function<std::string(value_type)>;
 
     inline to_stream_t(const_iterator first, const_iterator last, transformer_t transformer) : mFirst(first), mLast(last), mTransformer(transformer) {}
+
     inline friend std::ostream& operator << (std::ostream& out, const to_stream_t<Collection>& converter)
         {
             if ((converter.mLast - converter.mFirst) > 1)
@@ -85,6 +86,11 @@ template <typename Collection> class to_stream_t
 template <typename Collection> inline auto to_stream(const Collection& c, typename to_stream_t<Collection>::transformer_t transformer)
 {
     return to_stream_t<Collection>(c.begin(), c.end(), transformer);
+}
+
+template <typename Collection> inline auto to_stream(const Collection& c)
+{
+    return to_stream_t<Collection>(c.begin(), c.end(), std::to_string);
 }
 
 // ----------------------------------------------------------------------
