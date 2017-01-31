@@ -10,22 +10,6 @@
 
 // ----------------------------------------------------------------------
 
-template <typename Key, typename Value> inline std::ostream& operator << (std::ostream& out, const std::map<Key, Value>& aCollection)
-{
-    out << '{';
-    bool sep = false;
-    for (const auto& e: aCollection) {
-        if (sep)
-            out << ", ";
-        else
-            sep = true;
-        out << '<' << e.first << ">: <" << e.second << '>';
-    }
-    return out << '}';
-}
-
-// ----------------------------------------------------------------------
-
 namespace stream_internal
 {
     template <typename Collection> inline std::ostream& write_to_stream(std::ostream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
@@ -55,6 +39,22 @@ template <typename Value> inline std::ostream& operator << (std::ostream& out, c
 template <typename Value> inline std::ostream& operator << (std::ostream& out, const std::set<Value>& aCollection)
 {
     return stream_internal::write_to_stream(out, aCollection, "{", "}", ", ");
+}
+
+// ----------------------------------------------------------------------
+
+template <typename Key, typename Value> inline std::ostream& operator << (std::ostream& out, const std::map<Key, Value>& aCollection)
+{
+    out << '{';
+    bool sep = false;
+    for (const auto& e: aCollection) {
+        if (sep)
+            out << ", ";
+        else
+            sep = true;
+        out << '<' << e.first << ">: <" << e.second << '>';
+    }
+    return out << '}';
 }
 
 // ----------------------------------------------------------------------
