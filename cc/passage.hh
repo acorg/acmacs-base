@@ -8,19 +8,34 @@
 
 namespace passage
 {
+    namespace _internal
+    {
+        constexpr const char* re_nimr_isolate = R"#(( (ISOLATE|CLONE) [0-9\-]+)*)#"; // NIMR isolate and/or clone, NIMR H1pdm has CLONE 38-32
+        constexpr const char* re_niid_plus_number = R"#(( *\+[1-9])?)#"; // NIID has +1 at the end of passage
+        constexpr const char* re_passage_date = R"#(( \([12][0129][0-9][0-9]-[01][0-9]-[0-3][0-9]\))?$)#"; // passage date
+    }
+
     inline bool is_egg(std::string aPassage)
     {
 #include "acmacs-base/global-constructors-push.hh"
-        static std::regex egg_passage{
-            R"#(E(\?|[0-9][0-9]?))#"  // passage
-                    R"#(( (ISOLATE|CLONE) [0-9\-]+)*)#"         // NIMR isolate and/or clone, NIMR H1pdm has CLONE 38-32
-                    R"#(( *\+[1-9])?)#"         // NIID has +1 at the end of passage
-                    R"#(( \([12][0129][0-9][0-9]-[01][0-9]-[0-3][0-9]\))?$)#" // passage date
-                    };
+        using namespace _internal;
+        static std::regex egg_passage{std::string(R"#(E(\?|[0-9][0-9]?))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date};
 #include "acmacs-base/diagnostics-pop.hh"
         return std::regex_search(aPassage, egg_passage);
 
     } // is_egg
+
+// ----------------------------------------------------------------------
+
+    inline bool is_cell(std::string aPassage)
+    {
+#include "acmacs-base/global-constructors-push.hh"
+        using namespace _internal;
+        static std::regex cell_passage{std::string(R"#((MDCK|SIAT|MK|CKC|CEK|CACO|LLC|LLK|PRMK|MEK|C)(\?|[0-9][0-9]?))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date};
+#include "acmacs-base/diagnostics-pop.hh"
+        return std::regex_search(aPassage, cell_passage);
+
+    } // is_cell
 
 // ----------------------------------------------------------------------
 
@@ -38,7 +53,7 @@ namespace passage
 
     inline CellOrEgg cell_or_egg(std::string aPassage)
     {
-        return is_egg(aPassage) ? CellOrEgg::Egg : CellOrEgg::Cell;
+        return is_egg(aPassage) ? CellOrEgg::Egg : (is_cell(aPassage) ? CellOrEgg::Cell : CellOrEgg::CellAndEgg); // OR is CellAndEgg
     }
 
     inline CellOrEgg cell_or_egg(const std::vector<std::string>& variants)
