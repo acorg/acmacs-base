@@ -2,6 +2,8 @@
 
 #include <regex>
 
+#include "acmacs-base/stream.hh"
+
 // ----------------------------------------------------------------------
 
 namespace passage
@@ -29,7 +31,38 @@ namespace passage
         else
             return aPassage;
     }
-}
+
+// ----------------------------------------------------------------------
+
+    enum class CellOrEgg {Unknown, Cell, Egg, CellAndEgg};
+
+    inline CellOrEgg cell_or_egg(std::string aPassage)
+    {
+        return is_egg(aPassage) ? CellOrEgg::Egg : CellOrEgg::Cell;
+    }
+
+    inline CellOrEgg cell_or_egg(const std::vector<std::string>& variants)
+    {
+        CellOrEgg r = CellOrEgg::Unknown;
+        for (const auto& passage: variants) {
+            CellOrEgg p = cell_or_egg(passage);
+            if (r == CellOrEgg::Unknown)
+                r = p;
+            else if (p != r) {
+                r = CellOrEgg::CellAndEgg;
+                break;
+            }
+        }
+        return r;
+    }
+
+    inline bool match_cell_egg(CellOrEgg a, CellOrEgg b)
+    {
+        return a == b || a == CellOrEgg::CellAndEgg || b == CellOrEgg::CellAndEgg;
+
+    }
+
+} // namespace passage
 
 // ----------------------------------------------------------------------
 /// Local Variables:
