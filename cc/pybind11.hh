@@ -8,6 +8,7 @@
 #pragma GCC diagnostic ignored "-Wcovered-switch-default"
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdocumentation"
+#pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wexit-time-destructors"
 // #pragma GCC diagnostic ignored "-Wextra-semi"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
