@@ -68,7 +68,7 @@ namespace passage
                 break;
             }
         }
-        return r;
+        return r == CellOrEgg::Unknown ? CellOrEgg::CellAndEgg : r; // unknown (or no passage) gives CellOrEgg::CellAndEgg to match anything
     }
 
     inline bool match_cell_egg(CellOrEgg a, CellOrEgg b)
