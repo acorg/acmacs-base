@@ -166,6 +166,9 @@ namespace json_writer
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
+// to allow writer << func(writer, data) where func returns writer
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::writer<RW>&) { return aWriter; }
+
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartArray) { aWriter.StartArray(); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndArray) { aWriter.EndArray(); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartObject) { aWriter.StartObject(); return aWriter; }
