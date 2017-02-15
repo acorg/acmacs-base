@@ -31,7 +31,7 @@ namespace passage
     {
 #include "acmacs-base/global-constructors-push.hh"
         using namespace _internal;
-        static std::regex cell_passage{std::string(R"#((MDCK|SIAT|MK|CKC|CEK|CACO|LLC|LLK|PRMK|MEK|C)(\?|[0-9][0-9]?))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date};
+        static std::regex cell_passage{std::string(R"#((MDCK|SIAT|QMC|MK|CKC|CEK|CACO|LLC|LLK|PRMK|MEK|C)(\?|[0-9][0-9]?))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date};
 #include "acmacs-base/diagnostics-pop.hh"
         return std::regex_search(aPassage, cell_passage);
 
