@@ -49,6 +49,24 @@ namespace string
 
       // ----------------------------------------------------------------------
 
+    inline std::string first_letter_of_words(std::string s)
+    {
+        std::string result;
+        bool add = true;
+        for (char c: s) {
+            if (c == ' ') {
+                add = true;
+            }
+            else if (add) {
+                result.push_back(c);
+                add = false;
+            }
+        }
+        return result;
+    }
+
+      // ----------------------------------------------------------------------
+
     namespace _internal {
         template <typename InputIterator, typename Source> inline std::pair<InputIterator, InputIterator> strip_begin_end(Source& source)
         {
