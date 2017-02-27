@@ -165,6 +165,23 @@ inline int months_between_dates(const std::pair<Date, Date>& aDates)
 }
 
 // ----------------------------------------------------------------------
+
+inline std::string time_format(std::string aFormat, std::time_t aTime)
+{
+    constexpr const size_t buffer_size = 100;
+    char buffer[buffer_size + 1];
+    const auto output_length = std::strftime(buffer, buffer_size, aFormat.c_str(), std::localtime(&aTime));
+    if (!output_length)
+        throw std::runtime_error("Increase buffer size in time_format?");
+    return {buffer, output_length};
+}
+
+inline std::string time_format(std::string aFormat)
+{
+    return time_format(aFormat, std::time(nullptr));
+}
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
