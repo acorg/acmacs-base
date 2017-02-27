@@ -27,3 +27,15 @@ inline float_zero(T x, int ulp=1)
 }
 
 // ----------------------------------------------------------------------
+
+inline std::string double_to_string(double value)
+{
+    constexpr const size_t buffer_size = 100;
+    char buffer[buffer_size + 1];
+    const int written = snprintf(buffer, buffer_size, "%.32g", value);
+    if (written < 0 && static_cast<size_t>(written) >= buffer_size)
+        throw std::runtime_error("double_to_string internal error");
+    return {buffer, static_cast<size_t>(written)};
+}
+
+// ----------------------------------------------------------------------
