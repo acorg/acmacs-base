@@ -52,31 +52,46 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
             r = symbol
         return r
 
+    def make_one_line(data):
+        if isinstance(data, set):
+            s = json.dumps(sorted(data), sort_keys=True, cls=JSONEncoder)
+        else:
+            s = json.dumps(data, sort_keys=True, cls=JSONEncoder)
+        return s
+
+    def make_object(data):
+        if toplevel:
+            r = ["{{{:<{}s}\"_\":\"-*- js-indent-level: {} -*-\",".format("", indent_increment - 1, indent_increment)]
+        else:
+            r = ["{"]
+        for no, k in enumerate(sorted(data), start=1):
+            comma = "," if no < len(data) else ""
+            r.append("{:{}s}{}: {}{}".format("", indent, json.dumps(k, cls=JSONEncoder), _json_dumps(data[k], indent + indent_increment, indent_increment, simple=simple, toplevel=False), comma))
+        r.append(end("}", indent))
+        return r
+
+    # --------------------------------------------------
+
     if indent_increment is None:
         indent_increment = indent
-    r = []
     if simple(data):
-        if isinstance(data, set):
-            r.append(json.dumps(sorted(data), sort_keys=True, cls=JSONEncoder))
-        else:
-            r.append(json.dumps(data, sort_keys=True, cls=JSONEncoder))
+        s = make_one_line(data)
     else:
+        r = []
         if isinstance(data, dict):
-            if toplevel:
-                r.append("{{{:<{}s}\"_\":\"-*- js-indent-level: {} -*-\",".format("", indent_increment - 1, indent_increment))
-            else:
-                r.append("{")
-            for no, k in enumerate(sorted(data), start=1):
-                comma = "," if no < len(data) else ""
-                r.append("{:{}s}{}: {}{}".format("", indent, json.dumps(k, cls=JSONEncoder), _json_dumps(data[k], indent + indent_increment, indent_increment, simple=simple, toplevel=False), comma))
-            r.append(end("}", indent))
+            r.extend(make_object(data))
         elif isinstance(data, (tuple, list)):
             r.append("[")
             for no, v in enumerate(data, start=1):
                 comma = "," if no < len(data) else ""
                 r.append("{:{}s}{}{}".format("", indent, _json_dumps(v, indent + indent_increment, indent_increment, simple=simple, toplevel=False), comma))
             r.append(end("]", indent))
-    return "\n".join(r)
+        else:
+            raise ValueError("Cannot serialize: {!r}".format(data))
+        s = "\n".join(r)
+        if "\n" in s and len(s) < 200:
+            s = make_one_line(data)
+    return s
 
 # ----------------------------------------------------------------------
 
