@@ -68,6 +68,7 @@ namespace json_writer
         inline key(std::string v) : value(v) {}
         inline key(char v) : value(1, v) {}
         inline operator const char*() const { return value.c_str(); }
+        inline const char* as_char_ptr() const { return value.c_str(); }
 
      private:
         std::string value;
@@ -181,7 +182,7 @@ template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, bool value) { aWriter.Bool(value); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, double value) { aWriter.Double(value); return aWriter; }
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::key value) { aWriter.Key(value); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::key value) { aWriter.Key(value.as_char_ptr()); return aWriter; }
 
 template <typename RW, typename T> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<T>& aList)
 {
