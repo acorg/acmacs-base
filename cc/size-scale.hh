@@ -3,6 +3,8 @@
 #include <cmath>
 #include <limits>
 
+#include "float.hh"
+
 // ----------------------------------------------------------------------
 
 namespace _acmacs_base_internal
@@ -13,6 +15,7 @@ namespace _acmacs_base_internal
         inline SizeScale() : mValue(0) {}
         inline explicit SizeScale(double aValue) : mValue(aValue) {}
           // inline SizeScale(const SizeScale& a) = default;
+        inline bool operator==(SizeScale a) const { return float_equal(mValue, a.mValue); }
         inline SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
         inline double value() const { return mValue; }
         inline SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
