@@ -22,6 +22,8 @@ namespace _acmacs_base_internal
         inline SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
         inline SizeScale& operator *= (double a) { mValue *= a; return *this; }
         inline SizeScale operator - () const { return SizeScale{- mValue}; }
+        inline SizeScale operator - (const SizeScale& a) const { return SizeScale{mValue - a.mValue}; }
+        inline SizeScale operator + (const SizeScale& a) const { return SizeScale{mValue + a.mValue}; }
         inline bool empty() const { return std::isnan(mValue); }
         static SizeScale make_empty() { return SizeScale(std::numeric_limits<double>::quiet_NaN()); }
 
