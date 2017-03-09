@@ -24,6 +24,7 @@ class Color
 
     inline bool operator == (const Color& aColor) const { return mColor == aColor.mColor; }
     inline bool operator != (const Color& aColor) const { return ! operator==(aColor); }
+    inline bool operator < (const Color& aColor) const { return mColor < aColor.mColor; }
 
     inline double alpha() const { return double(0xFF - ((mColor >> 24) & 0xFF)) / 255.0; }
     inline double red() const { return double((mColor >> 16) & 0xFF) / 255.0; }
