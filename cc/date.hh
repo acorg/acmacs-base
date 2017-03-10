@@ -11,8 +11,11 @@
 class Date
 {
  public:
+    enum Today { Today };
+
     inline Date() { reset(); }
     inline Date(std::string aText) : Date() { parse(aText); }
+    inline Date(enum Today) { time_t now = std::time(nullptr); mTime = *std::localtime(&now); }
       // inline Date& operator =(const Date&) = default;
     inline Date& operator =(std::string aText) { if (!aText.empty()) parse(aText); return *this; }
 
