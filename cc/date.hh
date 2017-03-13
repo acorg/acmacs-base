@@ -1,10 +1,15 @@
 #pragma once
 
-#include <ctime>
+// #include <ctime>
 #include <string>
-#include <stdexcept>
+#include <locale>
 #include <iostream>
-#include <vector>
+
+#pragma GCC diagnostic push
+#include "acmacs-base/boost-diagnostics.hh"
+#include "boost/date_time/gregorian/gregorian.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 
@@ -13,125 +18,49 @@ class Date
  public:
     enum Today { Today };
 
-    inline Date() { reset(); }
-    inline Date(std::string aText) : Date() { parse(aText); }
-    inline Date(enum Today) { time_t now = std::time(nullptr); mTime = *std::localtime(&now); }
-      // inline Date& operator =(const Date&) = default;
-    inline Date& operator =(std::string aText) { if (!aText.empty()) parse(aText); return *this; }
+    inline Date() : mDate() {}
+    inline Date(enum Today) : mDate(boost::gregorian::day_clock::local_day()) {}
+    inline Date(std::string aText) : mDate(boost::gregorian::from_string(aText)) {}
+    inline Date(boost::gregorian::date aBoostDate) : mDate(aBoostDate) {}
+    inline static Date today() { return Today; }
+    inline static Date months_ago(int number_of_months) { return Date(Today).decrement_month(number_of_months); }
+    inline static Date years_ago(int number_of_years) { return Date(Today).decrement_month(number_of_years * 12); }
 
-    inline bool operator < (const Date& d) const { return year() == d.year() ? (month() == d.month() ? day() < d.day() : month() < d.month()) : year() < d.year(); }
-    inline bool operator == (const Date& d) const { return year() == d.year() && month() == d.month() && day() == d.day(); }
-    inline bool operator >= (const Date& d) const { return operator==(d) || !operator<(d); }
+    inline Date& operator =(std::string aText) { if (!aText.empty()) mDate = boost::gregorian::from_string(aText); return *this; }
 
-    inline bool empty() const { return mTime.tm_year == 0; }
-    inline operator bool() const { return !operator==(Date()); }
-    inline int year() const { return mTime.tm_year; }
-    inline int month() const { return mTime.tm_mon; }
-    inline int day() const { return mTime.tm_mday; }
+    inline bool operator < (const Date& d) const { return mDate < d.mDate; }
+    inline bool operator == (const Date& d) const { return mDate == d.mDate; }
+    inline bool operator >= (const Date& d) const { return mDate >= d.mDate; }
 
-    inline void reset()
-        {
-            mTime.tm_sec = mTime.tm_min = mTime.tm_hour = 0;
-            mTime.tm_year = mTime.tm_mon = 0;
-            mTime.tm_mday = 1;
-        }
+    inline bool empty() const { return mDate.is_not_a_date(); }
+    inline operator bool() const { return !mDate.is_not_a_date(); }
+    inline int year() const { return mDate.year(); }
+    inline int month() const { return mDate.month(); }
+    inline int day() const { return mDate.day(); }
 
-    inline void parse(std::string aText)
-        {
-            reset();
-            if (aText.size() == 10) {
-                strptime(aText.c_str(), "%Y-%m-%d", &mTime);
-            }
-            else if (aText.size() == 7) {
-                strptime(aText.c_str(), "%Y-%m", &mTime);
-            }
-            else if (!aText.empty()) {
-                throw std::runtime_error(std::string("cannot parse date from ") + aText);
-            }
-        }
-
-    inline std::string display() const
-        {
-            char buf[16];
-            std::strftime(buf, sizeof(buf), "%Y-%m-%d", &mTime);
-            return buf;
-        }
-
+    inline std::string display() const { return to_iso_extended_string(mDate); }
     inline operator std::string() const { return display(); }
 
-    // inline std::string month_year() const
-    //     {
-    //         char buf[8];
-    //         std::strftime(buf, sizeof(buf), "%b %y", &mTime);
-    //         return buf;
-    //     }
+      // returns date for the 1st day of the year-month stored in this
+    inline Date beginning_of_month() const { return boost::gregorian::date(mDate.year(), mDate.month(), 1); }
 
-    // if this different from a date that was reset
+    inline Date& increment_month(int number_of_months = 1) { mDate += boost::gregorian::months(number_of_months); return *this; }
+    inline Date& decrement_month(int number_of_months = 1) { mDate -= boost::gregorian::months(number_of_months); return *this; }
 
-    inline std::string month_3() const
-        {
-            char buf[4];
-            std::strftime(buf, sizeof(buf), "%b", &mTime);
-            return buf;
-        }
-
-    inline std::string year_2() const
-        {
-            char buf[3];
-            std::strftime(buf, sizeof(buf), "%y", &mTime);
-            return buf;
-        }
-
-    inline void assign_and_remove_day(const Date& d)
-        {
-            *this = d;
-            mTime.tm_mday = 1;
-        }
-
-    inline Date remove_day() const
-        {
-            Date r;
-            r.assign_and_remove_day(*this);
-            return r;
-        }
-
-    inline void assign_and_subtract_months(const Date& d, size_t months)
-        {
-            *this = d;
-            int full_years = static_cast<int>(months / 12);
-            int m = static_cast<int>(months % 12);
-            if (m > mTime.tm_mon) {
-                ++full_years;
-                m -= 12;
-            }
-            mTime.tm_mon -= m;
-            mTime.tm_year -= full_years;
-        }
-
-    inline void increment_month()
-        {
-            if (mTime.tm_mon < 11) {
-                ++mTime.tm_mon;
-            }
-            else {
-                mTime.tm_mon = 0;
-                ++mTime.tm_year;
-            }
-        }
-
-    inline void decrement_month()
-        {
-            if (mTime.tm_mon > 0) {
-                --mTime.tm_mon;
-            }
-            else {
-                mTime.tm_mon = 11;
-                --mTime.tm_year;
-            }
-        }
+    inline std::string month_3() const { return format("%b"); }
+    inline std::string year_2() const { return format("%y"); }
+    inline std::string month3_year2() const { return format("%b %y"); }
 
  private:
-    std::tm mTime;
+    boost::gregorian::date mDate;
+
+    inline std::string format(const char* fmt) const
+        {
+            std::ostringstream stream;
+            stream.imbue(std::locale(std::locale::classic(), new boost::gregorian::date_facet(fmt)));
+            stream << mDate;
+            return stream.str();
+        }
 
 }; // class Date
 
@@ -148,15 +77,16 @@ inline std::ostream& operator << (std::ostream& out, const Date& aDate)
 inline int months_between_dates(const Date& a, const Date& b)
 {
     int months = 0;
-    if (b < a) {
-        months = - months_between_dates(b, a);
-    }
-    else {
-        if (a.year() == b.year()) {
-            months = b.month() - a.month();
+    if (a && b) {
+        if (b < a) {
+            months = - months_between_dates(b, a);
         }
         else {
-            months = 12 - a.month() + b.month() + (b.year() - a.year() - 1) * 12;
+            Date aa = a;
+            while (aa < b) {
+                aa.increment_month(1);
+                ++months;
+            }
         }
     }
     return months;
@@ -169,19 +99,15 @@ inline int months_between_dates(const std::pair<Date, Date>& aDates)
 
 // ----------------------------------------------------------------------
 
-inline std::string time_format(std::string aFormat, std::time_t aTime)
+inline std::string time_format(std::string aFormat, std::time_t aTime = 0)
 {
-    constexpr const size_t buffer_size = 100;
-    char buffer[buffer_size + 1];
-    const auto output_length = std::strftime(buffer, buffer_size, aFormat.c_str(), std::localtime(&aTime));
-    if (!output_length)
-        throw std::runtime_error("Increase buffer size in time_format?");
-    return {buffer, output_length};
-}
-
-inline std::string time_format(std::string aFormat)
-{
-    return time_format(aFormat, std::time(nullptr));
+    std::ostringstream stream;
+    stream.imbue(std::locale(std::locale::classic(), new boost::posix_time::time_facet(aFormat.c_str())));
+    if (aTime == 0)
+        stream << boost::posix_time::second_clock::local_time();
+    else
+        stream << boost::posix_time::from_time_t(aTime);
+    return stream.str();
 }
 
 // ----------------------------------------------------------------------

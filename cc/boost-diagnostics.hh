@@ -5,6 +5,7 @@
 
 // just for clang
 #ifdef __clang__
+#pragma GCC diagnostic ignored "-Wcovered-switch-default"
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
 #pragma GCC diagnostic ignored "-Wdocumentation"

@@ -14,7 +14,7 @@ trap failed ERR
 
 SRC_DIR="$ACMACSD_ROOT/sources"
 PACKAGE_DIR="$SRC_DIR/boost"
-SUBMODULES=(any array assert bind concept_check config container core date_time detail filesystem "function" function_types functional fusion integer io iterator lexical_cast locale math move mpl numeric optional predef preprocessor program_options range regex smart_ptr spirit static_assert system tokenizer throw_exception type_index type_traits typeof tti utility variant)
+SUBMODULES=(algorithm any array assert bind concept_check config container core date_time detail filesystem "function" function_types functional fusion integer io iterator lexical_cast locale math move mpl numeric optional predef preprocessor program_options range regex smart_ptr spirit static_assert system tokenizer throw_exception type_index type_traits typeof tti utility variant)
 INCLUDE="$ACMACSD_ROOT/include/boost"
 
 if [ -d "$PACKAGE_DIR" ]; then
@@ -48,7 +48,7 @@ done
 cd "$PACKAGE_DIR"
 git submodule update --init tools/build
 git submodule update --init tools/inspect
-./bootstrap.sh --with-libraries=program_options,filesystem
+./bootstrap.sh --with-libraries=date_time,filesystem,program_options
 ./b2 cxxflags="-std=c++14 -DBOOST_NO_CXX11_SCOPED_ENUMS"
 for filename in $(cd "$SRC_DIR"/boost/stage/lib; find . -type f | cut -c 3-); do
     ln -sf "$SRC_DIR/boost/stage/lib/$filename" "$ACMACSD_ROOT/lib/$filename"
