@@ -25,6 +25,7 @@ class Date
     inline static Date today() { return Today; }
     inline static Date months_ago(int number_of_months) { return Date(Today).decrement_month(number_of_months); }
     inline static Date years_ago(int number_of_years) { return Date(Today).decrement_month(number_of_years * 12); }
+    inline static Date weeks_ago(int number_of_weeks) { return Date(Today).decrement_week(number_of_weeks); }
 
     inline Date& operator =(std::string aText) { if (!aText.empty()) mDate = boost::gregorian::from_string(aText); return *this; }
 
@@ -44,10 +45,14 @@ class Date
       // returns date for the 1st day of the year-month stored in this
     inline Date beginning_of_month() const { return boost::gregorian::date(mDate.year(), mDate.month(), 1); }
     inline Date beginning_of_year() const { return boost::gregorian::date(mDate.year(), 1, 1); }
+    inline Date beginning_of_week() const { return boost::gregorian::first_day_of_the_week_before(boost::gregorian::Monday).get_date(mDate); }
 
     inline Date& increment_month(int number_of_months = 1) { mDate += boost::gregorian::months(number_of_months); return *this; }
     inline Date& decrement_month(int number_of_months = 1) { mDate -= boost::gregorian::months(number_of_months); return *this; }
     inline Date& increment_year(int number_of_years = 1) { mDate += boost::gregorian::years(number_of_years); return *this; }
+    inline Date& decrement_year(int number_of_years = 1) { mDate -= boost::gregorian::years(number_of_years); return *this; }
+    inline Date& increment_week(int number_of_weeks = 1) { mDate += boost::gregorian::weeks(number_of_weeks); return *this; }
+    inline Date& decrement_week(int number_of_weeks = 1) { mDate -= boost::gregorian::weeks(number_of_weeks); return *this; }
 
     inline std::string month_3() const { return format("%b"); }
     inline std::string year_2() const { return format("%y"); }
@@ -123,6 +128,32 @@ inline int years_between_dates(const Date& a, const Date& b)
 inline int years_between_dates(const std::pair<Date, Date>& aDates)
 {
     return years_between_dates(aDates.first, aDates.second);
+}
+
+// ----------------------------------------------------------------------
+
+// returns negative if b is earlier than a
+inline int weeks_between_dates(const Date& a, const Date& b)
+{
+    int weeks = 0;
+    if (a && b) {
+        if (b < a) {
+            weeks = - weeks_between_dates(b, a);
+        }
+        else {
+            Date aa = a;
+            while (aa < b) {
+                aa.increment_week(1);
+                ++weeks;
+            }
+        }
+    }
+    return weeks;
+}
+
+inline int weeks_between_dates(const std::pair<Date, Date>& aDates)
+{
+    return weeks_between_dates(aDates.first, aDates.second);
 }
 
 // ----------------------------------------------------------------------

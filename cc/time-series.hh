@@ -29,7 +29,7 @@ class MonthlyTimeSeries
     inline MonthlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_month()), mEnd(aEnd.beginning_of_month()) {}
     inline MonthlyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_month()), mEnd(Date(aEnd).beginning_of_month()) {}
 
-    inline int number_of_month() const { return months_between_dates(mStart, mEnd); }
+    inline int number_of_months() const { return months_between_dates(mStart, mEnd); }
 
     class Iterator : public TimeSeriesIterator
     {
@@ -49,7 +49,7 @@ class MonthlyTimeSeries
 
     friend inline std::ostream& operator << (std::ostream& out, const MonthlyTimeSeries& aTS)
         {
-            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_month() << " months)";
+            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_months() << " months)";
         }
 
 }; // class MonthlyTimeSeries
@@ -63,7 +63,7 @@ class YearlyTimeSeries
     inline YearlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_year()), mEnd(aEnd.beginning_of_year()) {}
     inline YearlyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_year()), mEnd(Date(aEnd).beginning_of_year()) {}
 
-    inline int number_of_year() const { return years_between_dates(mStart, mEnd); }
+    inline int number_of_years() const { return years_between_dates(mStart, mEnd); }
 
     class Iterator : public TimeSeriesIterator
     {
@@ -83,10 +83,44 @@ class YearlyTimeSeries
 
     friend inline std::ostream& operator << (std::ostream& out, const YearlyTimeSeries& aTS)
         {
-            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_year() << " years)";
+            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_years() << " years)";
         }
 
 }; // class YearlyTimeSeries
+
+// ----------------------------------------------------------------------
+
+class WeeklyTimeSeries
+{
+ public:
+    inline WeeklyTimeSeries() {}
+    inline WeeklyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_week()), mEnd(aEnd.beginning_of_week()) {}
+    inline WeeklyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_week()), mEnd(Date(aEnd).beginning_of_week()) {}
+
+    inline int number_of_weeks() const { return weeks_between_dates(mStart, mEnd); }
+
+    class Iterator : public TimeSeriesIterator
+    {
+     public:
+        Iterator& operator++() { mDate.increment_week(); return *this; }
+
+     private:
+        friend class WeeklyTimeSeries;
+        inline Iterator(const Date& d) : TimeSeriesIterator(d) {}
+    };
+
+    inline Iterator begin() const { return mStart; }
+    inline Iterator end() const { return mEnd; }
+
+ private:
+    Date mStart, mEnd;
+
+    friend inline std::ostream& operator << (std::ostream& out, const WeeklyTimeSeries& aTS)
+        {
+            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_weeks() << " weeks)";
+        }
+
+}; // class WeeklyTimeSeries
 
 // ----------------------------------------------------------------------
 /// Local Variables:
