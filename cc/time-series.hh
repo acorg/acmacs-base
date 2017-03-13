@@ -25,7 +25,7 @@ class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, D
 class MonthlyTimeSeries
 {
  public:
-    inline MonthlyTimeSeries() {}
+    // inline MonthlyTimeSeries() {}
     inline MonthlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_month()), mEnd(aEnd.beginning_of_month()) {}
     inline MonthlyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_month()), mEnd(Date(aEnd).beginning_of_month()) {}
 
@@ -59,7 +59,7 @@ class MonthlyTimeSeries
 class YearlyTimeSeries
 {
  public:
-    inline YearlyTimeSeries() {}
+    // inline YearlyTimeSeries() {}
     inline YearlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_year()), mEnd(aEnd.beginning_of_year()) {}
     inline YearlyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_year()), mEnd(Date(aEnd).beginning_of_year()) {}
 
@@ -93,7 +93,7 @@ class YearlyTimeSeries
 class WeeklyTimeSeries
 {
  public:
-    inline WeeklyTimeSeries() {}
+    // inline WeeklyTimeSeries() {}
     inline WeeklyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_week()), mEnd(aEnd.beginning_of_week()) {}
     inline WeeklyTimeSeries(std::string aStart, std::string aEnd) : mStart(Date(aStart).beginning_of_week()), mEnd(Date(aEnd).beginning_of_week()) {}
 
