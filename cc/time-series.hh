@@ -10,9 +10,18 @@
 class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, Date, const Date*, Date>
 {
  public:
+    inline TimeSeriesIterator(const TimeSeriesIterator&) = default;
+    virtual ~TimeSeriesIterator();
+
     bool operator==(const TimeSeriesIterator& other) const { return mDate == other.mDate; }
     bool operator!=(const TimeSeriesIterator& other) const {return !(*this == other);}
+    TimeSeriesIterator& operator++() { mDate = next(); return *this; }
     reference operator*() const { return mDate; }
+    pointer operator->() const { return &mDate; }
+
+    virtual Date next() const = 0;
+    virtual std::string numeric_name() const = 0;
+    virtual std::string text_name() const { return numeric_name(); }
 
  protected:
     inline TimeSeriesIterator(const Date& d) : mDate(d) {}
@@ -34,7 +43,9 @@ class MonthlyTimeSeries
     class Iterator : public TimeSeriesIterator
     {
      public:
-        Iterator& operator++() { mDate.increment_month(); return *this; }
+        virtual inline Date next() const { return mDate.next_month(); }
+        virtual std::string numeric_name() const { return mDate.year4_month2(); }
+        virtual std::string text_name() const { return mDate.monthtext_year(); }
 
      private:
         friend class MonthlyTimeSeries;
@@ -68,7 +79,8 @@ class YearlyTimeSeries
     class Iterator : public TimeSeriesIterator
     {
      public:
-        Iterator& operator++() { mDate.increment_year(); return *this; }
+        virtual inline Date next() const { return mDate.next_year(); }
+        virtual std::string numeric_name() const { return mDate.year_4(); }
 
      private:
         friend class YearlyTimeSeries;
@@ -102,7 +114,8 @@ class WeeklyTimeSeries
     class Iterator : public TimeSeriesIterator
     {
      public:
-        Iterator& operator++() { mDate.increment_week(); return *this; }
+        virtual inline Date next() const { return mDate.next_week(); }
+        virtual std::string numeric_name() const { return mDate.display(); }
 
      private:
         friend class WeeklyTimeSeries;

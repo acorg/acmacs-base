@@ -54,8 +54,13 @@ class Date
     inline Date& increment_week(int number_of_weeks = 1) { mDate += boost::gregorian::weeks(number_of_weeks); return *this; }
     inline Date& decrement_week(int number_of_weeks = 1) { mDate -= boost::gregorian::weeks(number_of_weeks); return *this; }
 
+    inline Date next_month() const { return mDate + boost::gregorian::months(1); }
+    inline Date next_year() const { return mDate + boost::gregorian::years(1); }
+    inline Date next_week() const { return mDate + boost::gregorian::weeks(1); }
+
     inline std::string month_3() const { return format("%b"); }
     inline std::string year_2() const { return format("%y"); }
+    inline std::string year_4() const { return format("%Y"); }
     inline std::string month3_year2() const { return format("%b %y"); }
     inline std::string monthtext_year() const { return format("%B %Y"); }
     inline std::string year4_month2() const { return format("%Y-%m"); }
