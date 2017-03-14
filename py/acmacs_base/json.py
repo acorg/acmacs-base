@@ -19,12 +19,14 @@ def _json_simple(d):
 
 # ----------------------------------------------------------------------
 
-def dumps(data, separators=[',', ':'], indent=None, compact=True, sort_keys=False, simple=_json_simple):
+def dumps(data, separators=[',', ': '], indent=None, compact=True, sort_keys=False, simple=_json_simple):
     # module_logger.info('json.dumps: {!r}'.format(data))
     if indent is not None and compact:
         data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple)
     else:
         data = json.dumps(data, separators=separators, indent=indent, sort_keys=sort_keys)
+        if indent:
+            data = "{{{:<{}s}\"_\":\"-*- js-indent-level: {} -*-\",".format("", indent - 1, indent) + data[1:]
     return data
 
 # ----------------------------------------------------------------------
