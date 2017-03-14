@@ -2,6 +2,10 @@
 
 // ----------------------------------------------------------------------
 
+// forward decalration as a workaround for bugs in pybind11 stl_bind.h introduced on 2017-03-14
+namespace pybind11 {}
+namespace py = pybind11;
+
 #pragma GCC diagnostic push
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wclass-varargs"
