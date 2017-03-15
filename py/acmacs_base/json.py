@@ -12,17 +12,17 @@ import json
 def _json_simple(d):
     r = True
     if isinstance(d, dict):
-        r = not any(isinstance(v, (list, tuple, set, dict)) for v in d.values()) and len(d) < 10
+        r = not any(isinstance(v, (list, tuple, set, dict)) for v in d.values()) and len(d) < 17
     elif isinstance(d, (tuple, list)):
         r = not any(isinstance(v, (list, tuple, set, dict)) for v in d)
     return r
 
 # ----------------------------------------------------------------------
 
-def dumps(data, separators=[',', ': '], indent=None, compact=True, sort_keys=False, simple=_json_simple):
+def dumps(data, separators=[',', ': '], indent=None, compact=True, sort_keys=False, simple=_json_simple, one_line_max_width=200):
     # module_logger.info('json.dumps: {!r}'.format(data))
     if indent is not None and compact:
-        data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple)
+        data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple, one_line_max_width=one_line_max_width)
     else:
         data = json.dumps(data, separators=separators, indent=indent, sort_keys=sort_keys)
         if indent:
@@ -44,7 +44,7 @@ class JSONEncoder (json.JSONEncoder):
 
 # ----------------------------------------------------------------------
 
-def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, toplevel=True):
+def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, toplevel=True, one_line_max_width=200):
     """More compact dumper with wide lines."""
 
     def end(symbol, indent):
@@ -91,7 +91,7 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
         else:
             raise ValueError("Cannot serialize: {!r}".format(data))
         s = "\n".join(r)
-        if "\n" in s and len(s) < 200:
+        if "\n" in s and len(s) < one_line_max_width:
             s = make_one_line(data)
     return s
 
