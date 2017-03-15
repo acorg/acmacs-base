@@ -110,8 +110,8 @@ def read_json(path :Path):
 def write_json(path :Path, data, indent=2, compact=True):
     from .files import backup_file
     backup_file(path)
-    with path.open("w") as f:
-        f.write(dumps(data, indent=indent, compact=compact, sort_keys=True) + "\n")
+    from .files import write_binary
+    write_binary(path=path, data=(dumps(data, indent=indent, compact=compact, sort_keys=True) + "\n").encode("utf-8"))
 
 # ======================================================================
 ### Local Variables:
