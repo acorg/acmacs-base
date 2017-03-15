@@ -37,7 +37,7 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
-    class Unrecognized : public std::exception {};
+    class Unrecognized : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
 // ----------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ namespace virus_name
         else if (std::regex_match(name, m, international))
             location = m[3].str();
         else
-            throw Unrecognized{};
+            throw Unrecognized{"No location in " + name};
         return location;
     }
 
@@ -72,7 +72,7 @@ namespace virus_name
         if (std::regex_match(name, m, international))
             virus_type = m[1].str();
         else
-            throw Unrecognized{};
+            throw Unrecognized{"No virus_type in " + name};
         return virus_type;
 
     } // AntigenSerum::virus_type
@@ -87,7 +87,7 @@ namespace virus_name
         if (std::regex_match(name, m, international))
             year = make_year(m);
         else
-            throw Unrecognized{};
+            throw Unrecognized{"No year in " + name};
         return year;
 
     } // AntigenSerum::year
@@ -107,7 +107,7 @@ namespace virus_name
             passage = m[7].str();
         }
         else
-            throw Unrecognized{};
+            throw Unrecognized{"Cannot split " + name};
     }
 
 }
