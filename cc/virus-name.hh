@@ -96,19 +96,38 @@ namespace virus_name
 
     inline void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
     {
-        using namespace _internal;
         std::smatch m;
-        if (std::regex_match(name, m, international)) {
+        if (std::regex_match(name, m, _internal::international)) {
             virus_type = m[1].str();
             host = m[2].str();
             location = m[3].str();
             isolation = m[4].str();
-            year = make_year(m);
+            year = _internal::make_year(m);
             passage = m[7].str();
         }
         else
             throw Unrecognized{"Cannot split " + name};
     }
+
+// ----------------------------------------------------------------------
+
+      // Extracts virus name without passage, reassortant, extra,
+      // etc. and calculates match threshold (to use with
+      // acmacs_chart::Antigens::find_by_name_matching), match threshold is a square
+      // of virus name length.
+    inline size_t match_threshold(std::string name)
+    {
+        size_t result = 0;
+        std::smatch m;
+        if (std::regex_match(name, m, _internal::international)) {
+              // find end of year (m[6])
+            const auto end_of_year_offset = static_cast<size_t>(m[6].second - name.begin());
+            result = end_of_year_offset * end_of_year_offset;
+        }
+        return result;
+    }
+
+// ----------------------------------------------------------------------
 
 }
 
