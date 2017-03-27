@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <regex>
+#include <iostream>
 
 // ----------------------------------------------------------------------
 
@@ -17,8 +18,13 @@ namespace virus_name
 
         const std::regex cdc{"^([A-Z][A-Z][A-Z]?) "};
 
+        constexpr const char* re_international_name = "^(?:([AB][^/]*)/)?(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)";
+        constexpr const char* re_reassortant_passage = "(?:(?:\\s+|__)(.+))?";
+
           // [1] - type+subtype, [2] - host, [3] - location, [4] - isolation-number (omitting leading zeros), [5] - century, [6] - year (2 last digit), [7] - reassortant and passage
-        const std::regex international{"^([AB][^/]*)/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
+          // const std::regex international{"^([AB][^/]*)/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
+        const std::regex international{std::string(re_international_name) + re_reassortant_passage + "$"};
+        const std::regex international_name{re_international_name};
 
         inline std::string make_year(const std::smatch& m)
         {
@@ -119,10 +125,11 @@ namespace virus_name
     {
         size_t result = 0;
         std::smatch m;
-        if (std::regex_match(name, m, _internal::international)) {
+        if (std::regex_search(name, m, _internal::international_name)) {
               // find end of year (m[6])
             const auto end_of_year_offset = static_cast<size_t>(m[6].second - name.begin());
             result = end_of_year_offset * end_of_year_offset;
+              // std::cerr << "INFO: match_threshold: end_of_year_offset:" << end_of_year_offset << " name:" << name << std::endl;
         }
         return result;
     }
