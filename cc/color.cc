@@ -70,6 +70,143 @@ void Color::from_string(std::string aColor)
 
 // ----------------------------------------------------------------------
 
+struct HSV;
+
+struct RGB {
+    inline RGB(Color c) : r(c.red()), g(c.green()), b(c.blue()) {}
+    RGB(const HSV& hsv);
+    double r;       // percent
+    double g;       // percent
+    double b;       // percent
+};
+
+struct HSV {
+    HSV(const RGB& rgb);
+    inline void light(double value) { s /= value; }
+    double h;       // angle in degrees
+    double s;       // percent
+    double v;       // percent
+};
+
+// http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
+RGB::RGB(const HSV& hsv)
+{
+    if (hsv.s <= 0.0) {       // < is bogus, just shuts up warnings
+        r = hsv.v;
+        g = hsv.v;
+        b = hsv.v;
+    }
+    else {
+        double hh = hsv.h;
+        if (hh >= 360.0)
+            hh = 0.0;
+        hh /= 60.0;
+        double ff = hh - long(hh);
+        double p = hsv.v * (1.0 - hsv.s);
+        double q = hsv.v * (1.0 - (hsv.s * ff));
+        double t = hsv.v * (1.0 - (hsv.s * (1.0 - ff)));
+
+        switch(long(hh)) {
+          case 0:
+              r = hsv.v;
+              g = t;
+              b = p;
+              break;
+          case 1:
+              r = q;
+              g = hsv.v;
+              b = p;
+              break;
+          case 2:
+              r = p;
+              g = hsv.v;
+              b = t;
+              break;
+          case 3:
+              r = p;
+              g = q;
+              b = hsv.v;
+              break;
+          case 4:
+              r = t;
+              g = p;
+              b = hsv.v;
+              break;
+          case 5:
+          default:
+              r = hsv.v;
+              g = p;
+              b = q;
+              break;
+        }
+    }
+}
+
+inline std::ostream& operator << (std::ostream& out, const RGB& rgb)
+{
+    return out << rgb.r << ':' << rgb.g << ':' << rgb.b;
+}
+
+HSV::HSV(const RGB& rgb)
+{
+    double min = rgb.r < rgb.g ? rgb.r : rgb.g;
+    min = min  < rgb.b ? min  : rgb.b;
+
+    double max = rgb.r > rgb.g ? rgb.r : rgb.g;
+    max = max  > rgb.b ? max  : rgb.b;
+
+    v = max;
+    double delta = max - min;
+    if (delta < 0.00001) {
+        s = 0;
+        h = 0; // undefined, maybe nan?
+    }
+    else if (max > 0.0) { // NOTE: if Max is == 0, this divide would cause a crash
+        s = delta / max;                  // s
+        if (rgb.r >= max) {                           // > is bogus, just keeps compilor happy
+            h = (rgb.g - rgb.b) / delta;        // between yellow & magenta
+        }
+        else {
+            if (rgb.g >= max)
+                h = 2.0 + (rgb.b - rgb.r) / delta;  // between cyan & yellow
+            else
+                h = 4.0 + (rgb.r - rgb.g) / delta;  // between magenta & cyan
+        }
+        h *= 60.0;                              // degrees
+        if (h < 0.0)
+            h += 360.0;
+    }
+    else {
+          // if max is 0, then r = g = b = 0
+          // s = 0, v is undefined
+        s = 0.0;
+        h = 0.0; // NAN;                            // its now undefined
+    }
+}
+
+void Color::light(double value)
+{
+    if ((mColor & 0xFF000000) == 0) {
+        if (mColor == 0) {
+              // special case for black
+            HSV hsv = RGB(0xFF0000);
+            hsv.light(value);
+            RGB rgb(hsv);
+            mColor = (unsigned(rgb.b * 255) << 16) | (unsigned(rgb.b * 255) << 8) | unsigned(rgb.b * 255);
+        }
+        else {
+            HSV hsv = RGB(mColor);
+            hsv.light(value);
+            RGB rgb(hsv);
+              // std::cerr << std::hex << mColor << "  " << std::dec << RGB(mColor) << " --> " << rgb << std::endl;
+            mColor = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
+        }
+    }
+
+} // Color::light
+
+// ----------------------------------------------------------------------
+
 //   // http://stackoverflow.com/questions/470690/how-to-automatically-generate-n-distinct-colors (search for kellysMaxContrastSet)
 // const Color::value_type Color::DistinctColors[] = {
 //     0xA6BDD7, //Very Light Blue

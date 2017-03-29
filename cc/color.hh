@@ -37,6 +37,8 @@ class Color
 
     inline bool empty() const { return mColor == NoChange; }
 
+    void light(double value);
+
     // inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((int(aTransparency * 255.0) & 0xFF) << 24); }
 
     inline operator std::string() const { return to_string(); }
