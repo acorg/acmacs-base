@@ -23,6 +23,9 @@ class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, D
     virtual std::string numeric_name() const = 0;
     virtual std::string text_name() const { return numeric_name(); }
 
+    std::string first_date() const { return mDate.year4_month2_day2(); }
+    std::string after_last_date() const { return next().year4_month2_day2(); }
+
  protected:
     inline TimeSeriesIterator(const Date& d) : mDate(d) {}
     Date mDate;
