@@ -96,8 +96,9 @@ inline int months_between_dates(const Date& a, const Date& b)
         if (b < a) {
             months = - months_between_dates(b, a);
         }
-        else {
+        else if (a < b) {
             Date aa = a;
+            aa.increment_month(1);
             while (aa < b) {
                 aa.increment_month(1);
                 ++months;
