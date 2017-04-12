@@ -278,6 +278,8 @@ namespace _internal
 #endif
     const std::map<std::string, Color::value_type> sNameToColor = {
         {"transparent", 0xFF000000},
+        {"black", 0x000000},
+        {"white", 0xFFFFFF},
           // /usr/X11/share/X11/rgb.txt
         {"alice blue", 0xF0F8FF},
         {"aliceblue", 0xF0F8FF},
@@ -303,7 +305,6 @@ namespace _internal
         {"bisque2", 0xEED5B7},
         {"bisque3", 0xCDB79E},
         {"bisque4", 0x8B7D6B},
-        {"black", 0x000000},
         {"blanched almond", 0xFFEBCD},
         {"blanchedalmond", 0xFFEBCD},
         {"blue", 0x0000FF},
@@ -576,7 +577,7 @@ namespace _internal
         {"grey0", 0x000000},
         {"grey1", 0x030303},
         {"grey10", 0x1A1A1A},
-        {"grey100", 0xFFFFFF},
+          //{"grey100", 0xFFFFFF},
         {"grey11", 0x1C1C1C},
         {"grey12", 0x1F1F1F},
         {"grey13", 0x212121},
@@ -1023,7 +1024,6 @@ namespace _internal
         {"wheat2", 0xEED8AE},
         {"wheat3", 0xCDBA96},
         {"wheat4", 0x8B7E66},
-        {"white", 0xFFFFFF},
         {"white smoke", 0xF5F5F5},
         {"whitesmoke", 0xF5F5F5},
         {"yellow", 0xFFFF00},
