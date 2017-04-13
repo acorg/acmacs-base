@@ -23,6 +23,7 @@ namespace json_importer
          protected:
             class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
             class Pop : public std::exception { public: using std::exception::exception; };
+            class Pop2 : public std::exception { public: using std::exception::exception; };
             friend class json_importer::EventHandler;
 
          public:
@@ -600,6 +601,14 @@ namespace json_importer
                         mHandler.emplace(new_handler);
                 }
                 catch (readers::Base::Pop&) {
+                    if (mHandler.empty())
+                        return false;
+                    mHandler.pop();
+                }
+                catch (readers::Base::Pop2&) {
+                    if (mHandler.empty())
+                        return false;
+                    mHandler.pop();
                     if (mHandler.empty())
                         return false;
                     mHandler.pop();
