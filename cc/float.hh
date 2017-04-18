@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
 #include <cmath>
 #include <limits>
 #include <type_traits>
 #include <algorithm>
+#include <stdexcept>
 
 // ----------------------------------------------------------------------
 
