@@ -59,4 +59,11 @@ if [ "$(uname)" == "Linux" ]; then
     for libf in libboost*.so.*; do
         ln -sf "$libf" "${libf%%.*}.so"
     done
+elif [ "$(uname)" == "Darwin" ]; then
+    cd "$ACMACSD_ROOT/lib"
+    rm -f *.a
+    for library in libboost_*.dylib; do
+        /usr/bin/install_name_tool -id "$ACMACSD_ROOT/lib/$library" "$library"
+        /usr/bin/install_name_tool -change libboost_system.dylib "$ACMACSD_ROOT/lib/libboost_system.dylib" "$library"
+    done
 fi
