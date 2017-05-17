@@ -5,6 +5,7 @@
 
 // just for clang
 #ifdef __clang__
+#pragma GCC diagnostic ignored "-Wcomma"
 #pragma GCC diagnostic ignored "-Wcovered-switch-default"
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
@@ -22,6 +23,7 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 #pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wundefined-func-template"
 #endif
 
 // ----------------------------------------------------------------------
