@@ -12,12 +12,14 @@ failed()
 
 trap failed ERR
 
+$ACMACSD_ROOT/sources/acmacs-base/bin/update-3rd-party
+
 if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
     $ACMACSD_ROOT/bin/update-acmacs-base
 else
     $(dirname $0)/update-acmacs-base
 fi
 
-for P in 3rd-party locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc; do
+for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc; do
     $ACMACSD_ROOT/bin/update-$P
 done
