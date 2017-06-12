@@ -10,6 +10,11 @@
 
 // ----------------------------------------------------------------------
 
+template <typename V1, typename V2> inline std::ostream& operator << (std::ostream& out, const std::pair<V1, V2>& aPair)
+{
+    return out << '(' << aPair.first << ", " << aPair.second << ')';
+}
+
 namespace stream_internal
 {
     template <typename Collection> inline std::ostream& write_to_stream(std::ostream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
