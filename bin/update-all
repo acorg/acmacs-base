@@ -12,6 +12,8 @@ failed()
 
 trap failed ERR
 
+export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
+
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-3rd-party
 
 if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
