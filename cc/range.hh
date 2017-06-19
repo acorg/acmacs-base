@@ -5,6 +5,7 @@
 #include <limits>
 #include <functional>
 
+#include "acmacs-base/config.hh"
 #include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
@@ -44,7 +45,7 @@ template <typename T> class Range
     {
      public:
         inline increment() {}
-        inline increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) throw std::runtime_error("Invalid range with step 0"); }
+        inline increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
         inline void operator()(T& current)
             {
                 if (current != _acmacs_base_internal::input_iterator<T, increment>::End) {

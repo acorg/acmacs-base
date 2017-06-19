@@ -7,6 +7,8 @@
 #include <typeinfo>
 #include <functional>
 
+#include "acmacs-base/config.hh"
+
 #include "rapidjson/reader.h"
 #include "rapidjson/error/en.h"
 
