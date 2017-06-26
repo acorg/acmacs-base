@@ -6,11 +6,16 @@
 #include <stack>
 #include <typeinfo>
 #include <functional>
+#include <iostream>
 
 #include "acmacs-base/config.hh"
+#define NO_EXCEPTIONS
 
+#pragma GCC diagnostic push
+#include "acmacs-base/rapidjson-diagnostics.hh"
 #include "rapidjson/reader.h"
 #include "rapidjson/error/en.h"
+#pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 
@@ -22,37 +27,94 @@ namespace json_importer
 
         class Base
         {
-         protected:
-            class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
-            class Pop : public std::exception { public: using std::exception::exception; };
-            class Pop2 : public std::exception { public: using std::exception::exception; };
-            friend class json_importer::EventHandler;
-
          public:
             virtual ~Base() {}
 
-            inline virtual Base* StartObject() { throw Failure(typeid(*this).name() + std::string("::StartObject")); }
-            inline virtual Base* EndObject() { throw Failure(typeid(*this).name() + std::string("::EndObject")); } // { throw Pop(); }
-            inline virtual Base* StartArray() { throw Failure(typeid(*this).name() + std::string("::StartArray")); }
-            inline virtual Base* EndArray() { throw Failure(typeid(*this).name() + std::string("::EndArray")); } // { throw Pop(); }
-            inline virtual Base* Key(const char* str, rapidjson::SizeType length) { throw Failure(typeid(*this).name() + std::string("::Key \"") + std::string(str, length) + "\""); }
-            inline virtual Base* String(const char* str, rapidjson::SizeType length) { throw Failure(typeid(*this).name() + std::string("::String \"") + std::string(str, length) + "\""); }
-            inline virtual Base* Int(int i) { throw Failure(typeid(*this).name() + std::string("::Int ") + std::to_string(i)); }
-            inline virtual Base* Uint(unsigned u) { throw Failure(typeid(*this).name() + std::string("::Uint ") + std::to_string(u)); }
-            inline virtual Base* Double(double d) { throw Failure(typeid(*this).name() + std::string("::Double ") + std::to_string(d)); }
-            inline virtual Base* Bool(bool b) { throw Failure(typeid(*this).name() + std::string("::Bool ") + std::to_string(b)); }
-            inline virtual Base* Null() { throw Failure(typeid(*this).name() + std::string("::Null")); }
-            inline virtual Base* Int64(int64_t i) { throw Failure(typeid(*this).name() + std::string("::Int64 ") + std::to_string(i)); }
-            inline virtual Base* Uint64(uint64_t u) { throw Failure(typeid(*this).name() + std::string("::Uint64 ") + std::to_string(u)); }
-        };
+            virtual Base* StartObject();
+            virtual Base* EndObject();
+            virtual Base* StartArray();
+            virtual Base* EndArray();
+            virtual Base* Key(const char* str, rapidjson::SizeType length);
+            virtual Base* String(const char* str, rapidjson::SizeType length);
+            virtual Base* Int(int i);
+            virtual Base* Uint(unsigned u);
+            virtual Base* Double(double d);
+            virtual Base* Bool(bool b);
+            virtual Base* Null();
+            virtual Base* Int64(int64_t i);
+            virtual Base* Uint64(uint64_t u);
+
+        }; // class Base
+
+        namespace _i {
+
+            class Msg : public Base
+            {
+             public:
+                enum Tag { Failure, Pop, Pop2 };
+                static Msg sMsg;
+                inline void failure(std::string aMessage) { mTag = Failure; mMessage = aMessage; }
+                inline void pop() { mTag = Pop; }
+                inline void pop2() { mTag = Pop2; }
+                inline void report() const { if (mTag == Failure && !mMessage.empty()) std::cerr << "ERROR: " << mMessage << std::endl; }
+                inline bool is_failure() const { return mTag == Failure; }
+                inline bool is_pop() const { return mTag == Pop; }
+                inline bool is_pop2() const { return mTag == Pop2; }
+
+             private:
+                inline Msg() : mTag(Failure) {}
+                Tag mTag;
+                std::string mMessage;
+            };
+
+#ifdef NO_EXCEPTIONS
+            inline Msg* failure(std::string aMessage) { Msg::sMsg.failure(aMessage); return &Msg::sMsg; }
+            inline Msg* pop() { Msg::sMsg.pop(); return &Msg::sMsg; }
+            inline Msg* pop2() { Msg::sMsg.pop2(); return &Msg::sMsg; }
+
+            inline bool failure(Base* ptr, bool report = true)
+            {
+                const auto* msg = dynamic_cast<Msg*>(ptr);
+                const bool result = msg && msg->is_failure();
+                if (result && report)
+                    msg->report();
+                return result;
+            }
+            inline bool pop(Base* ptr) { return ptr && dynamic_cast<Msg*>(ptr) && dynamic_cast<Msg*>(ptr)->is_pop(); }
+            inline bool pop2(Base* ptr) { return ptr && dynamic_cast<Msg*>(ptr) && dynamic_cast<Msg*>(ptr)->is_pop2(); }
+#else
+            class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
+            class Pop : public std::exception { public: using std::exception::exception; };
+            class Pop2 : public std::exception { public: using std::exception::exception; };
+
+            inline Msg* failure(std::string aMessage) { throw Failure(aMessage); }
+            inline Msg* pop() { throw Pop(); }
+            inline Msg* pop2() { throw Pop2(); }
+#endif
+
+        } // namespace _i
+
+        inline Base* Base::StartObject() { return _i::failure(typeid(*this).name() + std::string("::StartObject")); }
+        inline Base* Base::EndObject() { return _i::failure(typeid(*this).name() + std::string("::EndObject")); } // { throw Pop(); }
+        inline Base* Base::StartArray() { return _i::failure(typeid(*this).name() + std::string("::StartArray")); }
+        inline Base* Base::EndArray() { return _i::failure(typeid(*this).name() + std::string("::EndArray")); } // { throw Pop(); }
+        inline Base* Base::Key(const char* str, rapidjson::SizeType length) { return _i::failure(typeid(*this).name() + std::string("::Key \"") + std::string(str, length) + "\""); }
+        inline Base* Base::String(const char* str, rapidjson::SizeType length) { return _i::failure(typeid(*this).name() + std::string("::String \"") + std::string(str, length) + "\""); }
+        inline Base* Base::Int(int i) { return _i::failure(typeid(*this).name() + std::string("::Int ") + std::to_string(i)); }
+        inline Base* Base::Uint(unsigned u) { return _i::failure(typeid(*this).name() + std::string("::Uint ") + std::to_string(u)); }
+        inline Base* Base::Double(double d) { return _i::failure(typeid(*this).name() + std::string("::Double ") + std::to_string(d)); }
+        inline Base* Base::Bool(bool b) { return _i::failure(typeid(*this).name() + std::string("::Bool ") + std::to_string(b)); }
+        inline Base* Base::Null() { return _i::failure(typeid(*this).name() + std::string("::Null")); }
+        inline Base* Base::Int64(int64_t i) { return _i::failure(typeid(*this).name() + std::string("::Int64 ") + std::to_string(i)); }
+        inline Base* Base::Uint64(uint64_t u) { return _i::failure(typeid(*this).name() + std::string("::Uint64 ") + std::to_string(u)); }
 
         template <typename F> class Storer : public Base
         {
          public:
             inline Storer(F aStorage) : mStorage(aStorage) {}
          protected:
-            inline virtual void pop() {}
-            template <typename ...Args> inline Base* store(Args... args) { mStorage(args...); pop(); return nullptr; }
+            inline virtual Base* pop() { return nullptr; }
+            template <typename ...Args> inline Base* store(Args... args) { mStorage(args...); return pop(); }
             inline F& storage() { return mStorage; }
          private:
             F mStorage;
@@ -150,22 +212,22 @@ namespace json_importer
          public:
             inline Ignore() : mNesting(0) {}
 
-            inline void pop() { if (mNesting == 0) throw Pop(); }
-            inline void decr() { --mNesting; pop(); }
+            inline Base* pop() { if (mNesting == 0) return _i::pop(); else return nullptr; }
+            inline Base* decr() { --mNesting; return pop(); }
 
             inline virtual Base* StartObject() { ++mNesting; return nullptr; }
-            inline virtual Base* EndObject() { decr(); return nullptr; }
+            inline virtual Base* EndObject() { return decr(); }
             inline virtual Base* StartArray() { ++mNesting; return nullptr; }
-            inline virtual Base* EndArray() { decr(); return nullptr; }
+            inline virtual Base* EndArray() { return decr(); }
             inline virtual Base* Key(const char*, rapidjson::SizeType) { return nullptr; }
-            inline virtual Base* String(const char*, rapidjson::SizeType) { pop(); return nullptr; }
-            inline virtual Base* Int(int) { pop(); return nullptr; }
-            inline virtual Base* Uint(unsigned) { pop(); return nullptr; }
-            inline virtual Base* Double(double) { pop(); return nullptr; }
-            inline virtual Base* Bool(bool) { pop(); return nullptr; }
-            inline virtual Base* Null() { pop(); return nullptr; }
-            inline virtual Base* Int64(int64_t) { pop(); return nullptr; }
-            inline virtual Base* Uint64(uint64_t) { pop(); return nullptr; }
+            inline virtual Base* String(const char*, rapidjson::SizeType) { return pop(); }
+            inline virtual Base* Int(int) { return pop(); }
+            inline virtual Base* Uint(unsigned) { return pop(); }
+            inline virtual Base* Double(double) { return pop(); }
+            inline virtual Base* Bool(bool) { return pop(); }
+            inline virtual Base* Null() { return pop(); }
+            inline virtual Base* Int64(int64_t) { return pop(); }
+            inline virtual Base* Uint64(uint64_t) { return pop(); }
 
          private:
             size_t mNesting;
@@ -191,7 +253,7 @@ namespace json_importer
             inline virtual Base* Key(const char* str, rapidjson::SizeType length)
                 {
                     if (!mStarted)
-                        throw Failure(typeid(*this).name() + std::string(": unexpected Key event"));
+                        return storers::_i::failure(typeid(*this).name() + std::string(": unexpected Key event"));
                     Base* r = match_key(str, length);
                     if (!r) {
                         if (length > 0 && (str[0] == '?' || str[length - 1] == '?'))
@@ -207,14 +269,14 @@ namespace json_importer
             inline virtual Base* StartObject()
                 {
                     if (mStarted)
-                        throw Failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
+                        return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
                     mStarted = true;
                     return nullptr;
                 }
 
             inline virtual Base* EndObject()
                 {
-                    throw Pop();
+                    return storers::_i::pop();
                 }
 
          protected:
@@ -236,7 +298,7 @@ namespace json_importer
          public:
             using ValueStorer::ValueStorer;
          protected:
-            inline virtual void pop() { throw storers::Base::Pop(); }
+            inline virtual Base* pop() { return storers::_i::pop(); }
         };
 
           // ----------------------------------------------------------------------
@@ -299,7 +361,7 @@ namespace json_importer
             inline virtual Base* StartArray()
                 {
                     if (mStarted)
-                        throw Failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
+                        return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
                     mStarted = true;
                     mArray.clear(); // erase all old elements
                     return nullptr;
@@ -308,13 +370,13 @@ namespace json_importer
             inline virtual Base* EndArray()
                 {
                       // std::cerr << "EndArray of " << typeid(Element).name() << " elements:" << mArray.size() << std::endl;
-                    throw Pop();
+                    return storers::_i::pop();
                 }
 
             inline virtual Base* StartObject()
                 {
                     if (!mStarted)
-                        throw Failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
+                        return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
                     mArray.emplace_back();
                     return new DataRef<Element>(mArray.back(), mData, true);
                 }
@@ -338,7 +400,7 @@ namespace json_importer
             inline virtual Base* StartArray()
                 {
                     if (mStarted)
-                        throw Base::Failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
+                        return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
                     mStarted = true;
                     mArray.clear(); // erase all old elements
                     return nullptr;
@@ -346,7 +408,7 @@ namespace json_importer
 
             inline virtual Base* EndArray()
                 {
-                    throw Base::Pop();
+                    return storers::_i::pop();
                 }
 
          private:
@@ -374,7 +436,7 @@ namespace json_importer
                           this->storage().new_nested();
                           break;
                       default:
-                          throw Base::Failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
+                          return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
                     }
                     ++mNesting;
                     return nullptr;
@@ -384,11 +446,11 @@ namespace json_importer
                 {
                     switch (mNesting) {
                       case 1:
-                          throw Base::Pop();
+                          return storers::_i::pop();
                       case 2:
                           break;
                       default:
-                          throw Base::Failure(typeid(*this).name() + std::string(": internal, EndArray event with nesting ") + std::to_string(mNesting));
+                          return storers::_i::failure(typeid(*this).name() + std::string(": internal, EndArray event with nesting ") + std::to_string(mNesting));
                     }
                     --mNesting;
                     return nullptr;
@@ -595,6 +657,32 @@ namespace json_importer
             }
 
      private:
+#ifdef NO_EXCEPTIONS
+        template <typename... Args> inline bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
+            {
+                auto new_handler = ((*mHandler.top()).*aHandler)(args...);
+                if (storers::_i::failure(new_handler)) {
+                    return false;
+                }
+                else if (storers::_i::pop(new_handler)) {
+                    if (mHandler.empty())
+                        return false;
+                    mHandler.pop();
+                }
+                else if (storers::_i::pop2(new_handler)) {
+                    if (mHandler.empty())
+                        return false;
+                    mHandler.pop();
+                    if (mHandler.empty())
+                        return false;
+                    mHandler.pop();
+                }
+                else if (new_handler) {
+                    mHandler.emplace(new_handler);
+                }
+                return true;
+            }
+#else
         template <typename... Args> inline bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
             {
                 try {
@@ -602,12 +690,12 @@ namespace json_importer
                     if (new_handler)
                         mHandler.emplace(new_handler);
                 }
-                catch (readers::Base::Pop&) {
+                catch (storers::_i::Pop&) {
                     if (mHandler.empty())
                         return false;
                     mHandler.pop();
                 }
-                catch (readers::Base::Pop2&) {
+                catch (storers::_i::Pop2&) {
                     if (mHandler.empty())
                         return false;
                     mHandler.pop();
@@ -615,7 +703,7 @@ namespace json_importer
                         return false;
                     mHandler.pop();
                 }
-                catch (readers::Base::Failure& err) {
+                catch (storers::_i::Failure& err) {
                     if (*err.what())
                         std::cerr << "ERROR: " << err.what() << std::endl;
                     return false;
@@ -626,6 +714,7 @@ namespace json_importer
                   // }
                 return true;
             }
+#endif
 
      public:
         inline bool StartObject() { return handler(&readers::Base::StartObject); }
@@ -749,10 +838,12 @@ namespace json_importer
         rapidjson::Reader reader;
         rapidjson::StringStream ss(aSource.c_str());
         reader.Parse(ss, handler);
+#ifndef NO_EXCEPTIONS
         if (reader.HasParseError())
             throw std::runtime_error("json_importer failed at " + std::to_string(reader.GetErrorOffset()) + ": "
                                      +  GetParseError_En(reader.GetParseErrorCode()) + "\n"
                                      + aSource.substr(reader.GetErrorOffset(), 50));
+#endif
     }
 
       // ----------------------------------------------------------------------
