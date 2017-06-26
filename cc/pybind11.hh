@@ -17,12 +17,14 @@ namespace py = pybind11;
 // #pragma GCC diagnostic ignored "-Wextra-semi"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 // #pragma GCC diagnostic ignored "-Wmissing-noreturn"
+#pragma GCC diagnostic ignored "-Wnested-anon-types"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wrange-loop-analysis"
 #pragma GCC diagnostic ignored "-Wreserved-id-macro" // in Python.h
 #pragma GCC diagnostic ignored "-Wshadow"
 // #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
 #endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
