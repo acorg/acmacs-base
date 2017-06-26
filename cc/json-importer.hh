@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include "acmacs-base/config.hh"
-#define NO_EXCEPTIONS
 
 #pragma GCC diagnostic push
 #include "acmacs-base/rapidjson-diagnostics.hh"
@@ -74,14 +73,14 @@ namespace json_importer
 
             inline bool failure(Base* ptr, bool report = true)
             {
-                const auto* msg = dynamic_cast<Msg*>(ptr);
+                const auto* msg = DYNAMIC_CAST(Msg*, ptr);
                 const bool result = msg && msg->is_failure();
                 if (result && report)
                     msg->report();
                 return result;
             }
-            inline bool pop(Base* ptr) { return ptr && dynamic_cast<Msg*>(ptr) && dynamic_cast<Msg*>(ptr)->is_pop(); }
-            inline bool pop2(Base* ptr) { return ptr && dynamic_cast<Msg*>(ptr) && dynamic_cast<Msg*>(ptr)->is_pop2(); }
+            inline bool pop(Base* ptr) { const auto* msg = DYNAMIC_CAST(Msg*, ptr); return msg && msg->is_pop(); }
+            inline bool pop2(Base* ptr) { const auto* msg = DYNAMIC_CAST(Msg*, ptr); return msg && msg->is_pop2(); }
 #else
             class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
             class Pop : public std::exception { public: using std::exception::exception; };
@@ -166,12 +165,14 @@ namespace json_importer
           // They are never called but used by field(std::vector<Field>& (Parent::*accessor)()) and reader(void(T::*setter)(V), T& target) functions below to infer of the storer's type
           // ----------------------------------------------------------------------
 
-        template <typename F> inline Unsigned_<F> type_detector(size_t) { throw std::exception{}; }
-        template <typename F> inline Unsigned_<F> type_detector(unsigned) { throw std::exception{}; }
-        template <typename F> inline Int_<F> type_detector(int) { throw std::exception{}; }
-        template <typename F> inline Double_<F> type_detector(double) { throw std::exception{}; }
-        template <typename F> inline Bool_<F> type_detector(bool) { throw std::exception{}; }
-        template <typename F> inline StringLength<F> type_detector(std::string) { throw std::exception{}; }
+#ifndef __CHEERP_CLIENT__       // cheerp
+        template <typename F> inline Unsigned_<F> type_detector(size_t) { THROW(std::exception{}, 0); }
+#endif
+        template <typename F> inline Unsigned_<F> type_detector(unsigned) { THROW(std::exception{}, 0); }
+        template <typename F> inline Int_<F> type_detector(int) { THROW(std::exception{}, 0); }
+        template <typename F> inline Double_<F> type_detector(double) { THROW(std::exception{}, 0); }
+        template <typename F> inline Bool_<F> type_detector(bool) { THROW(std::exception{}, 0); }
+        template <typename F> inline StringLength<F> type_detector(std::string) { THROW(std::exception{}, 0); }
 
           // ----------------------------------------------------------------------
           // to be used as template parameter F for the above to store Array values
