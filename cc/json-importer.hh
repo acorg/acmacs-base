@@ -838,12 +838,12 @@ namespace json_importer
         rapidjson::Reader reader;
         rapidjson::StringStream ss(aSource.c_str());
         reader.Parse(ss, handler);
-#ifndef NO_EXCEPTIONS
-        if (reader.HasParseError())
-            throw std::runtime_error("json_importer failed at " + std::to_string(reader.GetErrorOffset()) + ": "
-                                     +  GetParseError_En(reader.GetParseErrorCode()) + "\n"
-                                     + aSource.substr(reader.GetErrorOffset(), 50));
-#endif
+        if (reader.HasParseError()) {
+            const auto message = "json_importer failed at " + std::to_string(reader.GetErrorOffset()) + ": "
+                    +  GetParseError_En(reader.GetParseErrorCode()) + "\n"
+                    + aSource.substr(reader.GetErrorOffset(), 50);
+            THROW_OR_CERR(std::runtime_error(message));
+        }
     }
 
       // ----------------------------------------------------------------------

@@ -14,12 +14,14 @@
 
 #define THROW(exc, cheerp_result) return (cheerp_result);
 #define THROW_OR_VOID(exc) return;
+#define THROW_OR_CERR(exc) std::cerr << "ERROR: " << (exc).what() << std::endl; return;
 
           // ----------------------------------------------------------------------
 #else
 #define ACMACSD_FILESYSTEM
 #define THROW(exc, cheerp_result) throw (exc);
 #define THROW_OR_VOID(exc) throw (exc);
+#define THROW_OR_CERR(exc) throw (exc);
 #endif
 
 // ----------------------------------------------------------------------
