@@ -15,3 +15,5 @@ trap failed ERR
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-pybind11
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-rapidjson
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-boost
+$ACMACSD_ROOT/sources/acmacs-base/bin/update-uWebSockets
+

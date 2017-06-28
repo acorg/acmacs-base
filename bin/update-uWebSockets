@@ -1,0 +1,37 @@
+#! /bin/bash
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+SRC_DIR=$ACMACSD_ROOT/sources
+if [ -d $SRC_DIR/uWebSockets ]; then
+    cd $SRC_DIR/uWebSockets
+    git pull
+else
+    git clone https://github.com/uNetworking/uWebSockets.git $SRC_DIR/uWebSockets
+fi
+case $(uname -s) in
+    Darwin)
+        for pkg in openssl libuv; do #  zlib
+            brew list "$pkg" >/dev/null 2>&1 || brew install "$pkg"
+        done
+        make -C $SRC_DIR/uWebSockets CPP_OSX="-undefined dynamic_lookup -I/usr/local/include -I/usr/local/opt/openssl/include"
+        ln -sf $SRC_DIR/uWebSockets/libuWS.dylib $ACMACSD_ROOT/lib
+        ;;
+    Linux)
+        make -C $SRC_DIR/uWebSockets
+        ln -sf $SRC_DIR/uWebSockets/libuWS.so $ACMACSD_ROOT/lib
+        ;;
+    *)
+        ;;
+esac
+rsync -av $SRC_DIR/uWebSockets/src/*.h $ACMACSD_ROOT/include/uWS/
