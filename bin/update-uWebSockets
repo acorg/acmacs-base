@@ -26,6 +26,7 @@ case $(uname -s) in
         done
         make -C $SRC_DIR/uWebSockets CPP_OSX="-undefined dynamic_lookup -I/usr/local/include -I/usr/local/opt/openssl/include"
         ln -sf $SRC_DIR/uWebSockets/libuWS.dylib $ACMACSD_ROOT/lib
+        /usr/bin/install_name_tool -id $ACMACSD_ROOT/lib/libuWS.dylib $ACMACSD_ROOT/lib/libuWS.dylib
         ;;
     Linux)
         make -C $SRC_DIR/uWebSockets
