@@ -7,6 +7,7 @@
 #include <typeinfo>
 #include <functional>
 #include <iostream>
+#include <memory>
 
 #include "acmacs-base/config.hh"
 
