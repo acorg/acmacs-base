@@ -19,6 +19,8 @@
 #include <utility>
 #include <initializer_list>
 #include <numeric>
+#include <sstream>
+#include <iomanip>
 
 // ----------------------------------------------------------------------
 
@@ -196,10 +198,18 @@ namespace string
     }
 
     inline std::string join(std::initializer_list<std::string>&& parts)
-        {
-            std::vector<std::string> p{parts};
-            return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
-        }
+    {
+        std::vector<std::string> p{parts};
+        return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
+    }
+
+    template <typename T> inline std::string to_hex_string(const T* aPtr)
+    {
+        std::stringstream stream;
+        const void* value = reinterpret_cast<const void*>(aPtr);
+        stream << value; // std::setfill('0') << std::setw(sizeof(value)*2) << std::hex << value;
+        return stream.str();
+    }
 
 // ----------------------------------------------------------------------
 
