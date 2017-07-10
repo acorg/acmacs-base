@@ -22,6 +22,6 @@ else
     $(dirname $0)/update-acmacs-base
 fi
 
-for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc acmacs-webserver; do
+for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc acmacs-webserver acmacs-api; do
     $ACMACSD_ROOT/bin/update-$P
 done
