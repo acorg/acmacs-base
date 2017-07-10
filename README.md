@@ -2,6 +2,10 @@
 
 Scripts and utilities for acmacs-d modules
 
+# Requirements
+
+- CMake 3.2 or later
+
 # Usage
 
 Upon cloning set ACMACSD\_ROOT environment variable and run bin/update-all.

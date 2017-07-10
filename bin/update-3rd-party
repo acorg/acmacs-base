@@ -17,3 +17,5 @@ $ACMACSD_ROOT/sources/acmacs-base/bin/update-rapidjson
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-boost
 # $ACMACSD_ROOT/sources/acmacs-base/bin/update-uWebSockets
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-websocketpp
+$ACMACSD_ROOT/sources/acmacs-base/bin/update-mongo-c-driver
+$ACMACSD_ROOT/sources/acmacs-base/bin/update-mongo-cxx-driver

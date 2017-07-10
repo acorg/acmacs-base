@@ -1,0 +1,42 @@
+#! /bin/bash
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
+
+# http://mongoc.org/libmongoc/current/installing.html
+
+VERSION=1.6.3
+
+SRC_DIR="$ACMACSD_ROOT/sources"
+cd "$SRC_DIR"
+/usr/bin/curl -L -s https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION/mongo-c-driver-$VERSION.tar.gz | tar xzf -
+cd mongo-c-driver-$VERSION
+./configure --disable-automatic-init-and-cleanup --prefix="$ACMACSD_ROOT"
+make -j$NPROC
+make install
+
+# ----------------------------------------------------------------------
+# SRC_DIR="$ACMACSD_ROOT/sources"
+# MONGO_CXX_SRC="$SRC_DIR/mongo-c-driver"
+# if [ -d "$MONGO_CXX_SRC" ]; then
+#     cd "$MONGO_CXX_SRC"
+#     git pull
+# else
+#     git clone https://github.com/mongodb/mongo-c-driver.git "$MONGO_CXX_SRC"
+# fi
+# cd "$MONGO_CXX_SRC"
+# git checkout 1.6.3
+# ./autogen.sh --with-libbson=bundled --prefix="$ACMACSD_ROOT"
+# make -j$NPROC
+# make install
