@@ -7,15 +7,15 @@
 // clang 8.1 on macOS 10.12
 namespace std
 {
-    template <typename _DelimT> class ostream_joiner
+    template <typename Stream, typename _DelimT> class ostream_joiner
     {
      public:
-        inline ostream_joiner(ostream& __os, const _DelimT& __delimiter)
+        inline ostream_joiner(Stream& __os, const _DelimT& __delimiter)
               // noexcept(is_nothrow_copy_constructible_v<_DelimT>)
             : _M_out(std::addressof(__os)), _M_delim(__delimiter)
             { }
 
-        inline ostream_joiner(ostream& __os, _DelimT&& __delimiter)
+        inline ostream_joiner(Stream& __os, _DelimT&& __delimiter)
               // noexcept(is_nothrow_move_constructible_v<_DelimT>)
             : _M_out(std::addressof(__os)), _M_delim(std::move(__delimiter))
             { }
@@ -34,13 +34,13 @@ namespace std
         ostream_joiner& operator++(int) noexcept { return *this; }
 
      private:
-        ostream* _M_out;
+        Stream* _M_out;
         _DelimT _M_delim;
         bool _M_first = true;
     };
 
   /// Object generator for ostream_joiner.
-    template <typename _DelimT> inline ostream_joiner<decay_t<_DelimT>> make_ostream_joiner(ostream& __os, _DelimT&& __delimiter)
+    template <typename Stream, typename _DelimT> inline ostream_joiner<Stream, decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
     {
         return { __os, std::forward<_DelimT>(__delimiter) };
     }

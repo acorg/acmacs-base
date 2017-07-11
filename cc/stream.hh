@@ -20,11 +20,16 @@ template <typename V1, typename V2> inline std::ostream& operator << (std::ostre
 
 namespace stream_internal
 {
-    template <typename Collection> inline std::ostream& write_to_stream(std::ostream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
+    template <typename Iterator> inline std::ostream& write_to_stream(std::ostream& out, Iterator first, Iterator last, std::string prefix, std::string suffix, std::string separator)
     {
         out << prefix;
-        std::copy(std::begin(aCollection), std::end(aCollection), std::make_ostream_joiner(out, separator));
+        std::copy(first, last, std::make_ostream_joiner(out, separator));
         return out << suffix;
+    }
+
+    template <typename Collection> inline std::ostream& write_to_stream(std::ostream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
+    {
+        return write_to_stream(out, std::begin(aCollection), std::end(aCollection), prefix, suffix, separator);
     }
 }
 
