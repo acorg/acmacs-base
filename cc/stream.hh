@@ -1,12 +1,15 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <set>
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <iterator>
+
+#include "acmacs-base/iterator.hh"
 
 // ----------------------------------------------------------------------
 
@@ -20,14 +23,7 @@ namespace stream_internal
     template <typename Collection> inline std::ostream& write_to_stream(std::ostream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
     {
         out << prefix;
-        bool sep = false;
-        for (const auto& item: aCollection) {
-            if (sep)
-                out << separator;
-            else
-                sep = true;
-            out << item;
-        }
+        std::copy(std::begin(aCollection), std::end(aCollection), std::make_ostream_joiner(out, separator));
         return out << suffix;
     }
 }
@@ -51,14 +47,15 @@ template <typename Value> inline std::ostream& operator << (std::ostream& out, c
 template <typename Key, typename Value> inline std::ostream& operator << (std::ostream& out, const std::map<Key, Value>& aCollection)
 {
     out << '{';
-    bool sep = false;
-    for (const auto& e: aCollection) {
-        if (sep)
-            out << ", ";
-        else
-            sep = true;
-        out << '<' << e.first << ">: <" << e.second << '>';
-    }
+    std::transform(std::begin(aCollection), std::end(aCollection), std::make_ostream_joiner(out, ", "), [](const auto& elt) { std::ostringstream os; os << '<' << elt.first << ">: <" << elt.second << '>'; return os.str(); });
+    // bool sep = false;
+    // for (const auto& e: aCollection) {
+    //     if (sep)
+    //         out << ", ";
+    //     else
+    //         sep = true;
+    //     out << '<' << e.first << ">: <" << e.second << '>';
+    // }
     return out << '}';
 }
 
