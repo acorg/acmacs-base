@@ -38,6 +38,7 @@ template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, size_t);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, bool);
 template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<Value>& aList);
+template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::set<Value>& aList);
 template <typename RW, typename Value> json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::map<std::string, Value>& map_value);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, json_writer::key);
 
@@ -216,6 +217,11 @@ template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, double value) { aWriter.Double(value); return aWriter; }
 
 template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<Value>& aList)
+{
+    return json_writer::write_list(aWriter, aList);
+}
+
+template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::set<Value>& aList)
 {
     return json_writer::write_list(aWriter, aList);
 }
