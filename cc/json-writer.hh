@@ -180,6 +180,16 @@ namespace json_writer
         return aWriter;
     }
 
+    template <typename RW, typename List> inline writer<RW>& write_list(writer<RW>& aWriter, List&& aList)
+    {
+          // start_array and end_array do not work here due to namespace issue (in clang only?)
+        aWriter.StartArray();
+        for (auto& e: aList)
+            aWriter << e;
+        aWriter.EndArray();
+        return aWriter;
+    }
+
     template <typename RW, typename Object> inline writer<RW>& write_object(writer<RW>& aWriter, const Object& aObject)
     {
           // start_object and end_object do not work here due to namespace issue (in clang only?)
@@ -228,16 +238,22 @@ template <typename RW, typename Key, typename std::enable_if<ad_sfinae::castable
 
 namespace json_writer
 {
-    template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent, bool insert_emacs_indent_hint)
+    inline void insert_emacs_indent_hint(std::string& aJson, size_t aIndent)
+    {
+        if (aJson[0] == '{') {
+            const std::string ind(aIndent - 1, ' ');
+            aJson.insert(1, ind + "\"_\": \"-*- js-indent-level: " + std::to_string(aIndent) + " -*-\",");
+        }
+    }
+
+    template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent, bool emacs_indent_hint)
     {
         writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>> aWriter(keyword);
         aWriter.SetIndent(' ', static_cast<unsigned int>(indent));
         aWriter << value;
         std::string result = aWriter;
-        if (insert_emacs_indent_hint && result[0] == '{') {
-            const std::string ind(indent - 1, ' ');
-            result.insert(1, ind + "\"_\": \"-*- js-indent-level: " + std::to_string(indent) + " -*-\",");
-        }
+        if (emacs_indent_hint)
+            insert_emacs_indent_hint(result, indent);
         return result;
     }
 
