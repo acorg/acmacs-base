@@ -13,6 +13,7 @@
 template <typename Stream, typename V1, typename V2> Stream& operator << (Stream& out, const std::pair<V1, V2>& aPair);
 
 #include "acmacs-base/iterator.hh"
+#include "acmacs-base/sfinae.hh"
 
 // ----------------------------------------------------------------------
 // to work with std::copy, std::transform, operators << have to be declared in the namespace std
@@ -31,7 +32,8 @@ namespace stream_internal
         return out << suffix;
     }
 
-    template <typename Stream, typename Collection> inline Stream& write_to_stream(Stream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
+    template <typename Stream, typename Collection, typename = std::enable_if<ad_sfinae::is_std_container<Collection>::value>>
+                      inline Stream& write_to_stream(Stream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
     {
         return write_to_stream(out, std::begin(aCollection), std::end(aCollection), prefix, suffix, separator);
     }
@@ -57,14 +59,6 @@ template <typename Stream, typename Key, typename Value> inline Stream& operator
 {
     out << '{';
     std::transform(std::begin(aCollection), std::end(aCollection), polyfill::make_ostream_joiner(out, ", "), [](const auto& elt) { std::ostringstream os; os << '<' << elt.first << ">: <" << elt.second << '>'; return os.str(); });
-    // bool sep = false;
-    // for (const auto& e: aCollection) {
-    //     if (sep)
-    //         out << ", ";
-    //     else
-    //         sep = true;
-    //     out << '<' << e.first << ">: <" << e.second << '>';
-    // }
     return out << '}';
 }
 

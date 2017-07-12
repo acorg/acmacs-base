@@ -37,7 +37,9 @@ template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, int);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, size_t);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, bool);
-template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, const std::map<std::string, std::vector<std::string>>&);
+template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<Value>& aList);
+//$ template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, const std::map<std::string, std::vector<std::string>>&);
+template <typename RW, typename Value> json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::map<std::string, Value>& map_value);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, json_writer::key);
 
 // ======================================================================
@@ -81,23 +83,22 @@ namespace json_writer
      private:
         std::string value;
     };
+}
 
 // ----------------------------------------------------------------------
 
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartArray) { aWriter.StartArray(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndArray) { aWriter.EndArray(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartObject) { aWriter.StartObject(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndObject) { aWriter.EndObject(); return aWriter; }
 
-// ----------------------------------------------------------------------
-
-    // namespace _internal
-    // {
-    //       // void_t is a C++17 feature
-    //     template<class ...> using void_t = void; // http://stackoverflow.com/questions/26513095/void-t-can-implement-concepts
-    //     template <typename T, typename = void> struct castable_to_char : public std::false_type {};
-    //     template <typename T> struct castable_to_char<T, void_t<decltype(static_cast<char>(std::declval<T>()))>> : public std::true_type {};
-    // }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::key value) { aWriter.Key(value.as_char_ptr()); return aWriter; }
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
+namespace json_writer
+{
     template <typename Key, typename Value> class _if_not_empty
     {
      public:
@@ -170,6 +171,26 @@ namespace json_writer
     template <typename Key, typename Value> inline auto if_not_equal(Key&& aKey, Value&& aValue, Value aEq) { return _if_not<Key, Value>(std::forward<Key>(aKey), aValue, aValue == aEq); }
     template <typename Value> inline auto if_not_equal(const char* aKey, Value&& aValue, Value aEq) { return _if_not<key, Value>(key(aKey), aValue, aValue == aEq); }
 
+    template <typename RW, typename List> inline writer<RW>& write_list(writer<RW>& aWriter, const List& aList)
+    {
+          // start_array and end_array do not work here due to namespace issue (in clang only?)
+        aWriter.StartArray();
+        for (const auto& e: aList)
+            aWriter << e;
+        aWriter.EndArray();
+        return aWriter;
+    }
+
+    template <typename RW, typename Object> inline writer<RW>& write_object(writer<RW>& aWriter, const Object& aObject)
+    {
+          // start_object and end_object do not work here due to namespace issue (in clang only?)
+        aWriter.StartObject();
+        for (const auto& e: aObject)
+            aWriter << json_writer::key(e.first) << e.second;
+        aWriter.EndObject();
+        return aWriter;
+    }
+
 } // namespace json_writer
 
 // ----------------------------------------------------------------------
@@ -178,11 +199,6 @@ namespace json_writer
 // to allow writer << func(writer, data) where func returns writer
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::writer<RW>&) { return aWriter; }
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartArray) { aWriter.StartArray(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndArray) { aWriter.EndArray(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartObject) { aWriter.StartObject(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndObject) { aWriter.EndObject(); return aWriter; }
-
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const char* s) { aWriter.String(s, static_cast<unsigned>(strlen(s))); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, std::string s) { aWriter.String(s.c_str(), static_cast<unsigned>(s.size())); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, int value) { aWriter.Int(value); return aWriter; }
@@ -190,30 +206,46 @@ template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, bool value) { aWriter.Bool(value); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, double value) { aWriter.Double(value); return aWriter; }
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::key value) { aWriter.Key(value.as_char_ptr()); return aWriter; }
-
-template <typename RW, typename T> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<T>& aList)
+template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<Value>& aList)
 {
-    aWriter << json_writer::start_array;
-    for (const auto& e: aList)
-        aWriter << e;
-    return aWriter << json_writer::end_array;
+    return json_writer::write_list(aWriter, aList);
+//$     aWriter << json_writer::start_array;
+//$     for (const auto& e: aList)
+//$         aWriter << e;
+//$     return aWriter << json_writer::end_array;
 }
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<std::vector<std::string>>& list_list_strings)
-{
-    aWriter << json_writer::start_array;
-    for (const auto& e: list_list_strings)
-        aWriter << e;
-    return aWriter << json_writer::end_array;
-}
+//$ template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<std::vector<std::string>>& list_list_strings)
+//$ {
+//$     aWriter << json_writer::start_array;
+//$     for (const auto& e: list_list_strings)
+//$         aWriter << e;
+//$     return aWriter << json_writer::end_array;
+//$ }
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::map<std::string, std::vector<std::string>>& map_list_strings)
+//$ template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::vector<Value>& list_value)
+//$ {
+//$     aWriter << json_writer::start_array;
+//$     for (const auto& e: list_value)
+//$         aWriter << e;
+//$     return aWriter << json_writer::end_array;
+//$ }
+
+//$ template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::map<std::string, std::vector<std::string>>& map_list_strings)
+//$ {
+//$     aWriter << json_writer::start_object;
+//$     for (const auto& e: map_list_strings)
+//$         aWriter << json_writer::key(e.first) << e.second;
+//$     return aWriter << json_writer::end_object;
+//$ }
+
+template <typename RW, typename Value> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const std::map<std::string, Value>& map_value)
 {
-    aWriter << json_writer::start_object;
-    for (const auto& e: map_list_strings)
-        aWriter << json_writer::key(e.first) << e.second;
-    return aWriter << json_writer::end_object;
+    return json_writer::write_object(aWriter, map_value);
+//$     aWriter << json_writer::start_object;
+//$     for (const auto& e: map_value)
+//$         aWriter << json_writer::key(e.first) << e.second;
+//$     return aWriter << json_writer::end_object;
 }
 
 template <typename RW, typename Key, typename std::enable_if<ad_sfinae::castable_to_char<Key>{}>::type* = nullptr>

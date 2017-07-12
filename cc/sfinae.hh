@@ -34,6 +34,18 @@ namespace ad_sfinae
 
 // ----------------------------------------------------------------------
 
+    // template <typename T, typename = void> struct is_list : std::false_type { };
+
+    // template <typename T> struct is_list<T,
+    //                                      void_t<decltype(std::begin(std::declval<T&>())),
+    //                                             decltype(std::end(std::declval<T&>())),
+    //                                             decltype(std::declval<T&>().operator[](static_cast<size_t>(0))),
+    //                                             typename T::value_type
+    //                                             >>
+    //     : std::true_type { };
+
+// ----------------------------------------------------------------------
+
 } // namespace ad_sfinae
 
 // ----------------------------------------------------------------------
