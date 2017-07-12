@@ -11,6 +11,11 @@ namespace std
     template <typename Stream, typename _DelimT> class ostream_joiner
     {
      public:
+        using value_type = void;
+        using difference_type = void;
+        using pointer = void;
+        using reference = void;
+
         inline ostream_joiner(Stream& __os, const _DelimT& __delimiter)
               // noexcept(is_nothrow_copy_constructible_v<_DelimT>)
             : _M_out(std::addressof(__os)), _M_delim(__delimiter)
