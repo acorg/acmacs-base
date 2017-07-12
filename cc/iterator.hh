@@ -3,7 +3,8 @@
 // ----------------------------------------------------------------------
 // polyfill for std::ostream_joiner of c++17
 
-#if __cplusplus <= 201500
+// #if __cplusplus <= 201500
+
 // clang 8.1 on macOS 10.12
 namespace std
 {
@@ -39,21 +40,20 @@ namespace std
         bool _M_first = true;
     };
 
-  /// Object generator for ostream_joiner.
     template <typename Stream, typename _DelimT> inline ostream_joiner<Stream, decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
     {
         return { __os, std::forward<_DelimT>(__delimiter) };
     }
 }
 
-#else
-// gcc 6.2+
-#include <experimental/iterator>
-namespace std
-{
-    template<typename _DelimT> using ostream_joiner = experimental::fundamentals_v2::ostream_joiner<_DelimT>;
-}
-#endif
+// #else
+// // gcc 6.2+
+// #include <experimental/iterator>
+// namespace std
+// {
+//     template<typename _DelimT> using ostream_joiner = experimental::fundamentals_v2::ostream_joiner<_DelimT>;
+// }
+// #endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:
