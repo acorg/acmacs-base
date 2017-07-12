@@ -1,0 +1,19 @@
+#! /bin/bash
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
+
+for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc acmacs-webserver acmacs-api; do
+    $ACMACSD_ROOT/bin/update-$P
+done

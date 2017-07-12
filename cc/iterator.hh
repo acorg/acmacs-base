@@ -6,14 +6,14 @@
 // #if __cplusplus <= 201500
 
 // clang 8.1 on macOS 10.12
-namespace std
+namespace polyfill
 {
-    template <typename Stream, typename _DelimT, typename _CharT = char, typename _Traits = char_traits<_CharT>> class ostream_joiner
+    template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> class ostream_joiner
     {
      public:
-        using char_type = _CharT;
-        using traits_type = _Traits;
-        using iterator_category = output_iterator_tag;
+        using char_type = typename Stream::char_type; // _CharT;
+        using traits_type = typename Stream::traits_type; //_Traits;
+        using iterator_category = std::output_iterator_tag;
 
         using value_type = void;
         using difference_type = void;
@@ -49,11 +49,12 @@ namespace std
         bool _M_first = true;
     };
 
-    template <typename Stream, typename _DelimT, typename _CharT = char, typename _Traits = char_traits<_CharT>> inline ostream_joiner<Stream, decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
+    template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> inline ostream_joiner<Stream, std::decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
     {
         return { __os, std::forward<_DelimT>(__delimiter) };
     }
-}
+
+} // namespace polyfill
 
 // #else
 // // gcc 6.2+
