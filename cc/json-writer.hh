@@ -303,13 +303,15 @@ namespace json_writer
     template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent)
     {
         pretty aWriter{keyword, indent};
-        return aWriter << value << finalize;
+        aWriter << value;
+        return aWriter << finalize;
     }
 
     template <typename V> inline std::string compact_json(const V& aValue, std::string keyword)
     {
         compact aWriter{keyword};
-        return aWriter << aValue;
+        aWriter << aValue;
+        return aWriter << finalize;
     }
 
     template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent)
