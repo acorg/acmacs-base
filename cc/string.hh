@@ -203,6 +203,16 @@ namespace string
         return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
     }
 
+    template <typename T, typename = std::enable_if<std::is_integral<T>::value>> inline std::string to_hex_string(T aValue, bool aShowBase, bool aUppercase = true)
+    {
+        std::stringstream stream;
+        stream << std::setfill('0') << std::setw(sizeof(aValue)*2) << std::hex;
+        stream << (aShowBase ? std::showbase : std::noshowbase);
+        stream << (aUppercase ? std::uppercase : std::nouppercase);
+        stream << aValue;
+        return stream.str();
+    }
+
     template <typename T> inline std::string to_hex_string(const T* aPtr)
     {
         std::stringstream stream;
