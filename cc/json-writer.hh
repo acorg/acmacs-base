@@ -51,7 +51,7 @@ namespace json_writer
     {
      public:
         inline writer(std::string aKeyword) : RW(mBuffer), mKeyword(aKeyword) {}
-        inline operator std::string() const { return mBuffer.GetString(); }
+        inline std::string to_string() const { return mBuffer.GetString(); }
         inline std::string keyword() const { return mKeyword; }
 
      private:
@@ -245,35 +245,77 @@ template <typename RW, typename Key, typename std::enable_if<ad_sfinae::castable
 
 namespace json_writer
 {
+    enum _Finalize { finalize };
+
+    class pretty;
+}
+
+std::string operator << (json_writer::pretty& aWriter, json_writer::_Finalize);
+
+namespace json_writer
+{
     inline void insert_emacs_indent_hint(std::string& aJson, size_t aIndent)
     {
-        if (aJson[0] == '{') {
+        if (aJson.size() > 2 && aJson[0] == '{') {
             const std::string ind(aIndent - 1, ' ');
             aJson.insert(1, ind + "\"_\": \"-*- js-indent-level: " + std::to_string(aIndent) + " -*-\",");
         }
     }
 
-    template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent, bool emacs_indent_hint)
+    using compact = writer<rapidjson::Writer<rapidjson::StringBuffer>>;
+
+    class pretty : public writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>
     {
-        writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>> aWriter(keyword);
-        aWriter.SetIndent(' ', static_cast<unsigned int>(indent));
-        aWriter << value;
-        std::string result = aWriter;
-        if (emacs_indent_hint)
-            insert_emacs_indent_hint(result, indent);
-        return result;
+     public:
+        inline pretty(std::string keyword, size_t indent = 1) : writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>{keyword}, mIndent{indent}
+            {
+                SetIndent(' ', static_cast<unsigned int>(indent));
+            }
+
+        inline size_t indent() const { return mIndent; }
+        inline operator std::string() { return *this << finalize; }
+
+     private:
+        size_t mIndent;
+
+    }; // class pretty
+
+} // namespace json_writer
+
+// ----------------------------------------------------------------------
+
+inline std::string operator << (json_writer::compact& aWriter, json_writer::_Finalize)
+{
+    return aWriter.to_string();
+}
+
+inline std::string operator << (json_writer::pretty& aWriter, json_writer::_Finalize)
+{
+    std::string result = aWriter.to_string();
+    json_writer::insert_emacs_indent_hint(result, aWriter.indent());
+    return result;
+}
+
+// ----------------------------------------------------------------------
+
+namespace json_writer
+{
+    template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent)
+    {
+        pretty aWriter{keyword, indent};
+        return aWriter << value << finalize;
     }
 
     template <typename V> inline std::string compact_json(const V& aValue, std::string keyword)
     {
-        writer<rapidjson::Writer<rapidjson::StringBuffer>> aWriter(keyword);
+        compact aWriter{keyword};
         return aWriter << aValue;
     }
 
-    template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent, bool insert_emacs_indent_hint = true)
+    template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent)
     {
         if (indent)
-            return pretty_json(value, keyword, indent, insert_emacs_indent_hint);
+            return pretty_json(value, keyword, indent);
         else
             return compact_json(value, keyword);
     }
