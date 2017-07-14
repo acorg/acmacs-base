@@ -11,6 +11,7 @@
 
 // forward for polyfill::make_ostream_joiner
 template <typename Stream, typename V1, typename V2> Stream& operator << (Stream& out, const std::pair<V1, V2>& aPair);
+template <typename Stream, typename Value> Stream& operator << (Stream& out, const std::vector<Value>& aCollection);
 
 #include "acmacs-base/iterator.hh"
 #include "acmacs-base/sfinae.hh"
