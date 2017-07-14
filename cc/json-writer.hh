@@ -325,9 +325,11 @@ namespace json_writer
       // ----------------------------------------------------------------------
 
 #ifdef ACMACSD_FILESYSTEM
-    template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, bool insert_emacs_indent_hint = true, bool force_compression = false)
+    using acmacs_base::ForceCompression;
+
+    template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, ForceCompression force_compression = ForceCompression::No)
     {
-        acmacs_base::write_file(filename, json(value, keyword, indent, insert_emacs_indent_hint), force_compression);
+        acmacs_base::write_file(filename, json(value, keyword, indent), force_compression);
     }
 #endif
 

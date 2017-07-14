@@ -14,8 +14,7 @@ trap failed ERR
 
 export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
 
-$ACMACSD_ROOT/sources/acmacs-base/bin/update-3rd-party
-
+# Makefile in acmacs-base also updates external packages
 if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
     $ACMACSD_ROOT/bin/update-acmacs-base
 else
