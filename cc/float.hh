@@ -41,3 +41,6 @@ inline std::string double_to_string(double value)
 }
 
 // ----------------------------------------------------------------------
+/// Local Variables:
+/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
+/// End:
