@@ -827,7 +827,7 @@ namespace json_importer
 
       // Custom Storer (derived from storers::Base)
       // must be specified as field<Storer, Parent, Field>(&Parent::field)
-    template <typename Storer, typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field Parent::*accessor)
+    template <typename Storer, typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(Field Parent::*accessor, typename std::enable_if<std::is_base_of<storers::Base, Storer>::value>::type* = nullptr)
     {
         return std::make_shared<readers::makers::GenericAccessorField<Storer, Parent, Field>>(accessor);
     }
