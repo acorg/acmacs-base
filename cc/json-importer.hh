@@ -786,7 +786,7 @@ namespace json_importer
         return std::make_shared<readers::makers::ArrayOfObjectsAccessor<Parent, Field, decltype(accessor)>>(accessor, aData);
     }
 
-      // Array of values
+      // Array of values (via accessor function)
     template <typename Parent, typename Field> inline std::shared_ptr<readers::makers::Base<Parent>> field(std::vector<Field>& (Parent::*accessor)())
     {
         using Storer = decltype(storers::type_detector<storers::ArrayElement<Field>>(std::declval<Field>()));
