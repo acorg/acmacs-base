@@ -71,9 +71,36 @@ namespace json_importer
 
     }; // class Object
 
+} // namespace json_importer
+
 // ----------------------------------------------------------------------
 
-} // namespace json_importer
+namespace json_object_internal
+{
+    inline std::string make_value(std::string value) { return "\"" + value + "\""; }
+    inline std::string make_value(const char* value) { return std::string{"\""} + value + "\""; }
+    inline std::string make_value(bool value) { return value ? "true" : "false"; }
+    inline std::string make_value(std::nullptr_t) { return "null"; }
+    template <typename Value> inline typename std::enable_if<std::numeric_limits<Value>::is_integer, std::string>::type make_value(Value value) { return std::to_string(value); }
+    template <typename Value> inline typename std::enable_if<std::is_floating_point<Value>::value, std::string>::type make_value(Value value) { return double_to_string(value); }
+
+    template <typename Value> inline std::string add(std::string target, std::string key, Value value)
+    {
+        std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
+        result += "\"" + key + "\":" + make_value(value) + "}";
+        return result;
+    }
+
+    template <typename Value, typename ... Args> inline std::string add(std::string target, std::string key, Value value, Args ... args)
+    {
+        return add(add(target, key, value), args ...);
+    }
+}
+
+template <typename ... Args> inline std::string json_object(Args ... args)
+{
+    return json_object_internal::add(std::string{}, args ...);
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
