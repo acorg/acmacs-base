@@ -75,9 +75,16 @@ namespace json_importer
 
 // ----------------------------------------------------------------------
 
+class json_raw : public std::string
+{
+ public:
+    using std::string::string;
+};
+
 namespace json_object_internal
 {
     inline std::string make_value(std::string value) { return "\"" + value + "\""; }
+    inline std::string make_value(json_raw value) { return value; }
     inline std::string make_value(const char* value) { return std::string{"\""} + value + "\""; }
     inline std::string make_value(bool value) { return value ? "true" : "false"; }
     inline std::string make_value(std::nullptr_t) { return "null"; }
