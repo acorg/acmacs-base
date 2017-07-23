@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "acmacs-base/float.hh"
+
 // ----------------------------------------------------------------------
 
 class RapidjsonAssert : public std::exception { public: using std::exception::exception; };
