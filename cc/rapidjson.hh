@@ -93,22 +93,37 @@ namespace json_object_internal
     template <typename Value> inline typename std::enable_if<std::numeric_limits<Value>::is_integer, std::string>::type make_value(Value value) { return std::to_string(value); }
     template <typename Value> inline typename std::enable_if<std::is_floating_point<Value>::value, std::string>::type make_value(Value value) { return double_to_string(value); }
 
-    template <typename Value> inline std::string add(std::string target, std::string key, Value value)
+    template <typename Value> inline std::string append(std::string target, std::string key, Value value)
     {
         std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
         result += "\"" + key + "\":" + make_value(value) + "}";
         return result;
     }
 
-    template <typename Value, typename ... Args> inline std::string add(std::string target, std::string key, Value value, Args ... args)
+    template <typename Value, typename ... Args> inline std::string append(std::string target, std::string key, Value value, Args ... args)
     {
-        return add(add(target, key, value), args ...);
+        return append(append(target, key, value), args ...);
+    }
+
+    inline std::string join(std::string left, std::string right)
+    {
+        if (left.size() < 3)
+            return right;
+        else if (right.size() < 3)
+            return left;
+        else
+            return left.substr(0, left.size() - 1) + "," + right.substr(1);
     }
 }
 
 template <typename ... Args> inline std::string json_object(Args ... args)
 {
-    return json_object_internal::add(std::string{}, args ...);
+    return json_object_internal::append(std::string{}, args ...);
+}
+
+template <typename ... Args> inline std::string json_object_prepend(std::string target, Args ... args)
+{
+    return json_object_internal::join(json_object(args ...), target);
 }
 
 // ----------------------------------------------------------------------
