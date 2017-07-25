@@ -27,6 +27,8 @@ class RapidjsonAssert : public std::exception { public: using std::exception::ex
 
 namespace json_importer
 {
+    using ConstArray = rapidjson::Value::ConstArray;
+
     template <typename Value> Value get(const rapidjson::Value& aValue, const char* aName);
 
     template<> inline std::string get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetString(); }
@@ -34,13 +36,16 @@ namespace json_importer
     template<> inline unsigned get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetUint(); }
     template<> inline int get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetInt(); }
 
-    template<> inline rapidjson::Value::ConstArray get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetArray(); }
+    template<> inline ConstArray get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetArray(); }
+
+    inline const char* get_string(const rapidjson::Value& aValue) { return aValue.GetString(); }
 
     template<> inline std::vector<std::string> get(const rapidjson::Value& aValue, const char* aName)
     {
         std::vector<std::string> result;
-        const auto value = get<rapidjson::Value::ConstArray>(aValue, aName);
-        std::transform(value.begin(), value.end(), std::back_inserter(result), [](const auto& elt) { return elt.GetString(); });
+        const auto value = get<ConstArray>(aValue, aName);
+          //std::transform(value.begin(), value.end(), std::back_inserter(result), [](const auto& elt) { return elt.GetString(); });
+        std::transform(value.begin(), value.end(), std::back_inserter(result), &get_string);
         return result;
     }
 
@@ -67,6 +72,7 @@ namespace json_importer
         template <typename Value> inline Value get(const char* aName, const Value& aDefault) const { return json_importer::get(mDoc, aName, aDefault); }
 
         inline std::string get_string(const char* aName) const { return get(aName, std::string{}); }
+        inline json_importer::ConstArray get_array(const char* aName) const { return json_importer::get<json_importer::ConstArray>(mDoc, aName); } // throws RapidjsonAssert
 
      private:
         rapidjson::Document mDoc;
