@@ -50,20 +50,12 @@ namespace json_writer
     template <typename RW> class writer : public RW // JsonWriterT
     {
      public:
-        inline writer(std::string aKeyword) : RW(mBuffer), mKeyword(aKeyword) {}
+        inline writer() : RW(mBuffer) {}
         inline std::string to_string() const { return mBuffer.GetString(); }
-        inline std::string keyword() const { return mKeyword; }
 
      private:
         rapidjson::StringBuffer mBuffer;
-        std::string mKeyword;
     };
-
-      // template <> inline writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>::writer(std::string aKeyword)
-      //     : rapidjson::PrettyWriter<rapidjson::StringBuffer>(mBuffer), mKeyword(aKeyword)
-      // {
-      //     SetIndent(' ', 1);
-      // }
 
       // ----------------------------------------------------------------------
 
@@ -267,7 +259,7 @@ namespace json_writer
     class pretty : public writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>
     {
      public:
-        inline pretty(std::string keyword, size_t indent = 1) : writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>{keyword}, mIndent{indent}
+        inline pretty(size_t indent = 1) : writer<rapidjson::PrettyWriter<rapidjson::StringBuffer>>{}, mIndent{indent}
             {
                 SetIndent(' ', static_cast<unsigned int>(indent));
             }
@@ -300,26 +292,26 @@ inline std::string operator << (json_writer::pretty& aWriter, json_writer::_Fina
 
 namespace json_writer
 {
-    template <typename V> inline std::string pretty_json(const V& value, std::string keyword, size_t indent)
+    template <typename V> inline std::string pretty_json(const V& value, size_t indent)
     {
-        pretty aWriter{keyword, indent};
+        pretty aWriter{indent};
         aWriter << value;
         return aWriter << finalize;
     }
 
-    template <typename V> inline std::string compact_json(const V& aValue, std::string keyword)
+    template <typename V> inline std::string compact_json(const V& aValue)
     {
-        compact aWriter{keyword};
+        compact aWriter;
         aWriter << aValue;
         return aWriter << finalize;
     }
 
-    template <typename V> inline std::string json(const V& value, std::string keyword, size_t indent)
+    template <typename V> inline std::string json(const V& value, size_t indent)
     {
         if (indent)
-            return pretty_json(value, keyword, indent);
+            return pretty_json(value, indent);
         else
-            return compact_json(value, keyword);
+            return compact_json(value);
     }
 
       // ----------------------------------------------------------------------
@@ -327,9 +319,9 @@ namespace json_writer
 #ifdef ACMACSD_FILESYSTEM
     using acmacs_base::ForceCompression;
 
-    template <typename V> inline void export_to_json(const V& value, std::string keyword, std::string filename, size_t indent, ForceCompression force_compression = ForceCompression::No)
+    template <typename V> inline void export_to_json(const V& value, std::string filename, size_t indent, ForceCompression force_compression = ForceCompression::No)
     {
-        acmacs_base::write_file(filename, json(value, keyword, indent), force_compression);
+        acmacs_base::write_file(filename, json(value, indent), force_compression);
     }
 #endif
 
