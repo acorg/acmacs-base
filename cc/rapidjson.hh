@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "acmacs-base/float.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -39,6 +40,8 @@ namespace json_importer
     template<> inline ConstArray get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetArray(); }
 
     inline const char* get_string(const rapidjson::Value& aValue) { return aValue.GetString(); }
+    inline std::string get_string_uppercase(const rapidjson::Value& aValue) { return string::upper(aValue.GetString()); }
+    inline std::string get_string_lowercase(const rapidjson::Value& aValue) { return string::lower(aValue.GetString()); }
 
     template<> inline std::vector<std::string> get(const rapidjson::Value& aValue, const char* aName)
     {
