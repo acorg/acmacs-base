@@ -80,7 +80,8 @@ namespace json_importer
 class json_raw : public std::string
 {
  public:
-    using std::string::string;
+    inline json_raw(const std::string& src) : std::string{src} {}
+    inline json_raw(std::string&& src) : std::string{std::move(src)} {}
 };
 
 namespace json_object_internal
