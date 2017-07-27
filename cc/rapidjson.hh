@@ -36,6 +36,7 @@ namespace json_importer
     template<> inline size_t get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetUint(); }
     template<> inline unsigned get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetUint(); }
     template<> inline int get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetInt(); }
+    template<> inline bool get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetBool(); }
 
     template<> inline ConstArray get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetArray(); }
 
@@ -134,6 +135,37 @@ template <typename ... Args> inline std::string json_object(Args ... args)
 template <typename ... Args> inline std::string json_object_prepend(std::string target, Args ... args)
 {
     return json_object_internal::join(json_object(args ...), target);
+}
+
+namespace json_array_internal
+{
+    template <typename Value> inline std::string append(std::string target, Value value)
+    {
+        std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"["};
+        result += json_object_internal::make_value(value) + "]";
+        return result;
+    }
+
+    template <typename Value, typename ... Args> inline std::string append(std::string target, Value value, Args ... args)
+    {
+        return append(append(target, value), args ...);
+    }
+
+}
+
+template <typename ... Args> inline std::string json_array(Args ... args)
+{
+    return json_array_internal::append(std::string{}, args ...);
+}
+
+template <typename ... Args> inline std::string json_array_append(std::string target, Args ... args)
+{
+    return json_object_internal::join(target, json_array(args ...));
+}
+
+template <typename ... Args> inline std::string json_array_prepend(std::string target, Args ... args)
+{
+    return json_object_internal::join(json_array(args ...), target);
 }
 
 // ----------------------------------------------------------------------
