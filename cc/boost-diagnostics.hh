@@ -24,6 +24,8 @@
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
+#else // g++-7
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough" // boost/asio
 #endif
 
 // ----------------------------------------------------------------------
