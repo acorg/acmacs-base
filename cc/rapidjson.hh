@@ -127,6 +127,11 @@ namespace json_object_internal
     }
 }
 
+template <typename Value> inline std::string json_value(Value value)
+{
+    return json_object_internal::make_value(value);
+}
+
 template <typename ... Args> inline std::string json_object(Args ... args)
 {
     return json_object_internal::append(std::string{}, args ...);
