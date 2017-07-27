@@ -12,16 +12,7 @@ ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc
 
 # ----------------------------------------------------------------------
 
-CLANG = $(shell if g++ --version 2>&1 | grep -i llvm >/dev/null; then echo Y; else echo N; fi)
-ifeq ($(CLANG),Y)
-  WEVERYTHING = -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded
-  WARNINGS = -Wno-weak-vtables # -Wno-padded
-  STD = c++14
-else
-  WEVERYTHING = -Wall -Wextra
-  WARNINGS =
-  STD = c++14
-endif
+include Makefile.g++
 
 # -fvisibility=hidden and -flto make resulting lib smaller (pybind11) but linking is much slower
 OPTIMIZATION = -O3 #-fvisibility=hidden -flto
@@ -68,6 +59,8 @@ install-acmacs-base: $(ACMACS_BASE_LIB)
 	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(ACMACSD_ROOT)/py
 	if [ ! -d $(ACMACSD_ROOT)/include/acmacs-base ]; then mkdir $(ACMACSD_ROOT)/include/acmacs-base; fi
 	ln -sf $(abspath cc)/*.hh $(ACMACSD_ROOT)/include/acmacs-base
+	if [ ! -d $(ACMACSD_ROOT)/share ]; then mkdir $(ACMACSD_ROOT)/share; fi
+	ln -sf $(abspath .)/Makefile.* $(ACMACSD_ROOT)/share
 
 install-3rd-party:
 	$(ACMACSD_ROOT)/bin/update-3rd-party
@@ -79,7 +72,7 @@ install-3rd-party:
 # ----------------------------------------------------------------------
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
-	g++ -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+	$(GXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 clean:
 	rm -rf $(DIST) $(BUILD)/*.o $(BUILD)/*.d
@@ -91,7 +84,7 @@ distclean: clean
 
 $(BUILD)/%.o: cc/%.cc | $(BUILD)
 	@echo $<
-	@g++ $(CXXFLAGS) -c -o $@ $<
+	@$(GXX) $(CXXFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
 
