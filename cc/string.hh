@@ -29,6 +29,13 @@ namespace string
 
 // ----------------------------------------------------------------------
 
+    using std::to_string;
+
+    inline std::string to_string(const std::string& src) { return src; }
+    inline std::string to_string(const char* src) { return src; }
+
+// ----------------------------------------------------------------------
+
     enum class Split { RemoveEmpty, KeepEmpty };
 
       // http://stackoverflow.com/questions/236129/split-a-string-in-c
@@ -177,10 +184,11 @@ namespace string
               // const size_t resulting_size = std::accumulate(first, last, separator.size() * static_cast<size_t>(last - first - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
               // result.reserve(resulting_size);
             for ( ; first != last; ++first) {
-                if (!first->empty()) {
+                const auto f_s = to_string(*first);
+                if (!f_s.empty()) {
                     if (!result.empty())
                         result.append(separator);
-                    result.append(*first);
+                    result.append(f_s);
                 }
             }
         }
