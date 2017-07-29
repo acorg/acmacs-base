@@ -7,19 +7,13 @@
 
 #include "acmacs-base/config.hh"
 
-#pragma GCC diagnostic push
-#include "acmacs-base/rapidjson-diagnostics.hh"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/stringbuffer.h"
-#pragma GCC diagnostic pop
-
 #ifdef ACMACSD_FILESYSTEM
 #include "acmacs-base/read-file.hh"
 #endif
 #include "acmacs-base/float.hh"
 #include "acmacs-base/sfinae.hh"
+#define RAPIDJSON_ACCESS_WRITER 1
+#include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
 // Forward declarations

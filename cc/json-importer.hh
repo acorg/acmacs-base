@@ -10,12 +10,7 @@
 #include <memory>
 
 #include "acmacs-base/config.hh"
-
-#pragma GCC diagnostic push
-#include "acmacs-base/rapidjson-diagnostics.hh"
-#include "rapidjson/reader.h"
-#include "rapidjson/error/en.h"
-#pragma GCC diagnostic pop
+#include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
 

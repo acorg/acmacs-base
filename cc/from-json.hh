@@ -7,28 +7,7 @@
 #include <algorithm>
 
 #include "acmacs-base/string.hh"
-
-// ----------------------------------------------------------------------
-
-namespace from_json
-{
-    class rapidjson_assert : public std::exception { public: using std::exception::exception; };
-}
-
-#ifdef RAPIDJSON_ASSERT
-#undef RAPIDJSON_ASSERT
-#endif
-#define RAPIDJSON_ASSERT(x) {if (!(x)) throw from_json::rapidjson_assert{}; }
-
-// ----------------------------------------------------------------------
-
-#pragma GCC diagnostic push
-#include "acmacs-base/rapidjson-diagnostics.hh"
-#include "rapidjson/reader.h"
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/istreamwrapper.h"
-#pragma GCC diagnostic pop
+#include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
 

@@ -8,11 +8,8 @@
 #include <typeinfo>
 #include <memory>
 
-#include "rapidjson/reader.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/stringbuffer.h"
-
 #include "acmacs-base/read-file.hh"
+#include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
 
