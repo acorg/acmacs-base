@@ -21,7 +21,8 @@ template <typename Stream, typename Value> Stream& operator << (Stream& out, con
 
 template <typename Stream, typename V1, typename V2> inline Stream& operator << (Stream& out, const std::pair<V1, V2>& aPair)
 {
-    return out << '(' << aPair.first << ", " << aPair.second << ')';
+    out << '(' << aPair.first << ", " << aPair.second << ')';
+    return out;
 }
 
 namespace stream_internal
@@ -30,7 +31,8 @@ namespace stream_internal
     {
         out << prefix;
         std::copy(first, last, polyfill::make_ostream_joiner(out, separator));
-        return out << suffix;
+        out << suffix;
+        return out;
     }
 
     template <typename Stream, typename Collection, typename = std::enable_if<ad_sfinae::is_std_container<Collection>::value>>
