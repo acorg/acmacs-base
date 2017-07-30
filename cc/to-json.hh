@@ -33,16 +33,28 @@ namespace to_json
         template <typename Value> inline typename std::enable_if<std::numeric_limits<Value>::is_integer, std::string>::type make_value(Value value) { return std::to_string(value); }
         template <typename Value> inline typename std::enable_if<std::is_floating_point<Value>::value, std::string>::type make_value(Value value) { return double_to_string(value); }
 
-        template <typename Value> inline std::string object_append(std::string target, std::string key, Value value)
-        {
-            std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
-            result += "\"" + key + "\":" + make_value(value) + "}";
-            return result;
-        }
+        // template <typename Value> inline std::string object_append(std::string target, std::string key, Value value)
+        // {
+        //     std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
+        //     result += "\"" + key + "\":" + make_value(value) + "}";
+        //     return result;
+        // }
+
+        // template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value value, Args ... args)
+        // {
+        //     return object_append(object_append(target, key, value), args ...);
+        // }
 
         template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value value, Args ... args)
         {
-            return object_append(object_append(target, key, value), args ...);
+            if constexpr (sizeof...(args) == 0) {
+                    std::string result = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
+                    result += "\"" + key + "\":" + make_value(value) + "}";
+                    return result;
+                }
+            else {
+                return object_append(object_append(target, key, value), args ...);
+            }
         }
 
         inline std::string join(std::string left, std::string right)
