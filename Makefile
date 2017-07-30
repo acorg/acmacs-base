@@ -47,6 +47,8 @@ make-dirs:
 	for d in bin lib include include/acmacs-base py data sources; do if [ ! -d $(ACMACSD_ROOT)/$$d ]; then mkdir $(ACMACSD_ROOT)/$$d; fi; done
 	cd $(ACMACSD_ROOT)/include/acmacs-base && ln -sf ../../sources/acmacs-base/cc/*.hh .
 
+test:
+
 # ----------------------------------------------------------------------
 
 install-packages: install-acmacs-base install-3rd-party
