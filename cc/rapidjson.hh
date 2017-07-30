@@ -25,11 +25,9 @@ namespace from_json
 #include "rapidjson/error/en.h"
 #include "rapidjson/istreamwrapper.h"
 
-#ifdef RAPIDJSON_ACCESS_WRITER
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
-#endif
 
 #pragma GCC diagnostic pop
 

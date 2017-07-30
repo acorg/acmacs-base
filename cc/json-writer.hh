@@ -12,7 +12,6 @@
 #endif
 #include "acmacs-base/float.hh"
 #include "acmacs-base/sfinae.hh"
-#define RAPIDJSON_ACCESS_WRITER 1
 #include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
