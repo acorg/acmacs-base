@@ -55,7 +55,13 @@ namespace from_json
      public:
         inline object(std::string aSrc) { mDoc.Parse(aSrc.c_str(), aSrc.size()); }
         inline object(object&& aSrc) : mDoc{std::move(aSrc.mDoc)} {}
-        inline object(std::istream&& aInput) { if (!aInput) throw std::runtime_error{"cannot read json input"}; rapidjson::IStreamWrapper wrapper{aInput}; mDoc.ParseStream(wrapper); }
+        inline object(std::istream&& aInput, std::string aFilename = "istream")
+            {
+                if (!aInput)
+                    throw std::runtime_error{"cannot read json input from " + aFilename };
+                rapidjson::IStreamWrapper wrapper{aInput};
+                mDoc.ParseStream(wrapper);
+            }
         virtual inline ~object() {}
 
         template <typename Value> inline Value get(const char* aName) const { return from_json::get<Value>(mDoc, aName); }
@@ -63,6 +69,16 @@ namespace from_json
 
         inline std::string get_string(const char* aName) const { return get(aName, std::string{}); }
         inline ConstArray get_array(const char* aName) const { return from_json::get<ConstArray>(mDoc, aName); } // throws rapidjson_assert
+
+        // inline const rapidjson::Document& doc() const { return mDoc; }
+
+        inline std::string to_json() const
+            {
+                rapidjson::StringBuffer buffer;
+                rapidjson::Writer<decltype(buffer)> writer(buffer);
+                mDoc.Accept(writer);
+                return buffer.GetString();
+            }
 
      private:
         rapidjson::Document mDoc;

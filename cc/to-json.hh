@@ -34,6 +34,7 @@ namespace to_json
             else if constexpr (std::is_same<std::nullptr_t, T>::value) { return "null"; }
             else if constexpr (std::numeric_limits<T>::is_integer)     { return std::to_string(value); }
             else if constexpr (std::is_floating_point<T>::value)       { return double_to_string(value); }
+            else                                                       { return std::to_string(value); }
         }
 
         // inline std::string make_value(std::string value) { return "\"" + value + "\""; }
