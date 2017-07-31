@@ -22,6 +22,9 @@ namespace to_json
         inline raw(std::string&& src) : std::string{std::move(src)} {}
     };
 
+    enum undefined_t { undefined };
+    enum null_t { null };
+
 // ----------------------------------------------------------------------
 
     template <typename T> inline std::string value(T&& aValue)
@@ -31,6 +34,8 @@ namespace to_json
         else if constexpr (std::is_same<const char*, std::decay_t<T>>::value)    { return std::string{"\""} + aValue + "\""; }
         else if constexpr (std::is_same<bool, std::decay_t<T>>::value)           { return aValue ? "true" : "false"; }
         else if constexpr (std::is_same<std::nullptr_t, std::decay_t<T>>::value) { return "null"; }
+        else if constexpr (std::is_same<null_t, std::decay_t<T>>::value)         { return "null"; }
+        else if constexpr (std::is_same<undefined_t, std::decay_t<T>>::value)    { return "undefined"; }
         else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer)     { return std::to_string(aValue); }
         else if constexpr (std::is_floating_point<std::decay_t<T>>::value)       { return double_to_string(aValue); }
         else                                                                     { static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?"); /* compilation fails trying to instantiate this type */ }
@@ -74,10 +79,26 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
-
     template <typename ... Args> inline std::string object(Args&& ... args)
     {
         return internal::object_append(std::string{}, std::forward<Args>(args) ...);
+    }
+
+      // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
+    template <typename Iterator, typename UnaryOperation, typename = decltype(*std::declval<Iterator&>(), void(), ++std::declval<Iterator&>(), void())>
+        inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op)
+    {
+        std::string target;
+        for (; first != last; ++first) {
+            const auto [key, value] = unary_op(*first);
+            internal::object_append(target, key, value);
+        }
+        return target;
+    }
+
+    template <typename ... Args> inline std::string object_append(std::string target, Args&& ... args)
+    {
+        return internal::join(target, object(std::forward<Args>(args) ...));
     }
 
     template <typename ... Args> inline std::string object_prepend(std::string target, Args&& ... args)
