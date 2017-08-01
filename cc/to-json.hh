@@ -105,7 +105,7 @@ namespace to_json
     template <typename Iterator, typename UnaryOperation, typename = if_iterator<Iterator>>
         inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op)
     {
-        std::string target;
+        std::string target = "{}";
         for (; first != last; ++first) {
             const auto [key, value] = unary_op(*first);
             target = internal::object_append(target, key, value);
@@ -116,7 +116,7 @@ namespace to_json
     template <typename Iterator, typename = if_iterator<Iterator>, typename = enable_if_not_const_char_ptr<Iterator>>
         inline std::string object(Iterator first, Iterator last)
     {
-        std::string target;
+        std::string target = "{}";
         for (; first != last; ++first) {
             const auto [key, value] = *first;
             target = internal::object_append(target, key, value);
@@ -149,7 +149,7 @@ namespace to_json
     template <typename Iterator, typename = if_iterator<Iterator>>
         inline std::string array(Iterator first, Iterator last)
     {
-        std::string target;
+        std::string target = "[]";
         for (; first != last; ++first) {
             target = internal::array_append(target, *first);
         }
