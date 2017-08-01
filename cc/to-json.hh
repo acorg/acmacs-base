@@ -3,13 +3,14 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <typeinfo>
 
 // ----------------------------------------------------------------------
 
 #include "acmacs-base/float.hh"
-#include "acmacs-base/rapidjson.hh"
+#include "acmacs-base/stream.hh" // for debugging
 
 // ----------------------------------------------------------------------
 
@@ -27,11 +28,26 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
+    template <typename T1, typename T2> using is_same_ = std::is_same<T1, std::decay_t<T2>>;
+
+    template <typename T> static inline constexpr bool is_const_char_ptr_v = is_same_<const char*, T>::value;
+    template <typename T> static inline constexpr bool is_string_v = is_same_<std::string, T>::value;
+    template <typename T> static inline constexpr bool is_raw_v = is_same_<raw, T>::value;
+
+      // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
+    template <typename T> using if_iterator = decltype(*std::declval<T&>(), void(), ++std::declval<T&>(), void());
+
+    template <typename T> using enable_if_not_const_char_ptr = std::enable_if_t<!is_const_char_ptr_v<T>>;
+
+// ----------------------------------------------------------------------
+
+    template <typename T> inline std::string value(const std::vector<T>& aVector);
+
     template <typename T> inline std::string value(T&& aValue)
     {
-        if constexpr      (std::is_same<std::string, std::decay_t<T>>::value)    { return "\"" + aValue + "\""; }
-        else if constexpr (std::is_same<to_json::raw, std::decay_t<T>>::value)   { return aValue; }
-        else if constexpr (std::is_same<const char*, std::decay_t<T>>::value)    { return std::string{"\""} + aValue + "\""; }
+        if constexpr      (is_string_v<T>)                                       { return "\"" + aValue + "\""; }
+        else if constexpr (is_raw_v<T>)                                          { return aValue; }
+        else if constexpr (is_const_char_ptr_v<T>)                               { return std::string{"\""} + aValue + "\""; }
         else if constexpr (std::is_same<bool, std::decay_t<T>>::value)           { return aValue ? "true" : "false"; }
         else if constexpr (std::is_same<std::nullptr_t, std::decay_t<T>>::value) { return "null"; }
         else if constexpr (std::is_same<null_t, std::decay_t<T>>::value)         { return "null"; }
@@ -48,7 +64,8 @@ namespace to_json
         template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value&& aValue, Args&& ... args)
         {
             if constexpr (sizeof...(args) == 0) {
-                    return (target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"}) + "\"" + key + "\":" + value(std::forward<Value>(aValue)) + "}";
+                    const auto prefix = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
+                    return prefix + "\"" + key + "\":" + value(std::forward<Value>(aValue)) + "}";
                 }
             else {
                 return object_append(object_append(target, key, std::forward<Value>(aValue)), std::forward<Args>(args) ...);
@@ -68,7 +85,8 @@ namespace to_json
         template <typename Value, typename ... Args> inline std::string array_append(std::string target, Value&& aValue, Args&& ... args)
         {
             if constexpr (sizeof...(args) == 0) {
-                    return (target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"["}) + value(std::forward<Value>(aValue)) + "]";
+                    const auto prefix = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"["};
+                    return prefix + value(std::forward<Value>(aValue)) + "]";
                 }
             else {
                 return array_append(array_append(target, std::forward<Value>(aValue)), std::forward<Args>(args) ...);
@@ -84,16 +102,31 @@ namespace to_json
         return internal::object_append(std::string{}, std::forward<Args>(args) ...);
     }
 
-      // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
-    template <typename Iterator, typename UnaryOperation, typename = decltype(*std::declval<Iterator&>(), void(), ++std::declval<Iterator&>(), void())>
+    template <typename Iterator, typename UnaryOperation, typename = if_iterator<Iterator>>
         inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op)
     {
         std::string target;
         for (; first != last; ++first) {
             const auto [key, value] = unary_op(*first);
-            internal::object_append(target, key, value);
+            target = internal::object_append(target, key, value);
         }
         return target;
+    }
+
+    template <typename Iterator, typename = if_iterator<Iterator>, typename = enable_if_not_const_char_ptr<Iterator>>
+        inline std::string object(Iterator first, Iterator last)
+    {
+        std::string target;
+        for (; first != last; ++first) {
+            const auto [key, value] = *first;
+            target = internal::object_append(target, key, value);
+        }
+        return target;
+    }
+
+    template <typename Value> inline std::string object(const std::map<std::string, Value>& aMap)
+    {
+        return object(std::begin(aMap), std::end(aMap));
     }
 
     template <typename ... Args> inline std::string object_append(std::string target, Args&& ... args)
@@ -113,6 +146,16 @@ namespace to_json
         return internal::array_append(std::string{}, std::forward<Args>(args) ...);
     }
 
+    template <typename Iterator, typename = if_iterator<Iterator>>
+        inline std::string array(Iterator first, Iterator last)
+    {
+        std::string target;
+        for (; first != last; ++first) {
+            target = internal::array_append(target, *first);
+        }
+        return target;
+    }
+
     template <typename ... Args> inline std::string array_append(std::string target, Args&& ... args)
     {
         return internal::join(target, array(std::forward<Args>(args) ...));
@@ -121,6 +164,11 @@ namespace to_json
     template <typename ... Args> inline std::string array_prepend(std::string target, Args&& ... args)
     {
         return internal::join(array(std::forward<Args>(args) ...), target);
+    }
+
+    template <typename T> inline std::string value(const std::vector<T>& aVector)
+    {
+        return array(std::begin(aVector), std::end(aVector));
     }
 
 // ----------------------------------------------------------------------
