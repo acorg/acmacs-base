@@ -2,21 +2,28 @@
 # Eugene Skepner 2017
 # ======================================================================
 
+CLANG4_EXE = /usr/local/opt/llvm/bin/clang++
 CLANG = $(shell if g++ --version 2>&1 | grep -i llvm >/dev/null; then echo Y; else echo N; fi)
-GXX7 = $(shell if g++-7 --version >/dev/null; then echo Y; else echo N; fi)
-ifeq ($(CLANG),Y)
+CLANG4 = $(shell if [ -x $(CLANG4_EXE) ]; then echo Y; else echo N; fi)
+GCC7 = $(shell if g++-7 --version >/dev/null; then echo Y; else echo N; fi)
+ifeq ($(CLANG4),Y)
   WEVERYTHING = -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded
   WARNINGS = -Wno-weak-vtables # -Wno-padded
   STD = c++1z
-  GXX = g++
+  CXX = $(CLANG4_EXE)
+else ifeq ($(CLANG),Y)
+  WEVERYTHING = -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded
+  WARNINGS = -Wno-weak-vtables # -Wno-padded
+  STD = c++1z
+  CXX = g++
 else
   WEVERYTHING = -Wall -Wextra
   WARNINGS =
-  ifeq ($(GXX7),Y)
-    GXX = g++-7
+  ifeq ($(GCC7),Y)
+    CXX = g++-7
     STD = c++17
   else
-    GXX = g++
+    CXX = g++
     STD = c++1z
   endif
 endif

@@ -74,7 +74,7 @@ install-3rd-party:
 # ----------------------------------------------------------------------
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
-	$(GXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+	$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 clean:
 	rm -rf $(DIST) $(BUILD)/*.o $(BUILD)/*.d
@@ -86,7 +86,7 @@ distclean: clean
 
 $(BUILD)/%.o: cc/%.cc | $(BUILD)
 	@echo $<
-	@$(GXX) $(CXXFLAGS) -c -o $@ $<
+	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
 
