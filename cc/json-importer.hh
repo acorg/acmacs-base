@@ -161,7 +161,7 @@ namespace json_importer
           // They are never called but used by field(std::vector<Field>& (Parent::*accessor)()) and reader(void(T::*setter)(V), T& target) functions below to infer of the storer's type
           // ----------------------------------------------------------------------
 
-#ifndef __CHEERP_CLIENT__       // cheerp
+#ifdef ACMACS_TARGET_OS
         template <typename F> inline Unsigned_<F> type_detector(size_t) { THROW(std::exception{}, 0); }
 #endif
         template <typename F> inline Unsigned_<F> type_detector(unsigned) { THROW(std::exception{}, 0); }

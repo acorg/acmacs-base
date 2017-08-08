@@ -1,5 +1,9 @@
 #pragma once
 
+#include "acmacs-base/config.hh"
+
+#ifdef ACMACS_TARGET_OS
+
 #include <iostream>
 #include <sstream>
 #include <map>
@@ -100,6 +104,8 @@ template <typename Stream, typename Key, typename Value> inline Stream& operator
 // {
 //     return to_stream_t<Stream, Collection>(c.begin(), c.end(), std::to_string);
 // }
+
+#endif // ACMACS_TARGET_OS
 
 // ----------------------------------------------------------------------
 /// Local Variables:

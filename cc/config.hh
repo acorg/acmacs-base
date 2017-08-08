@@ -1,6 +1,18 @@
 #pragma once
 
-#ifdef __CHEERP_CLIENT__       // cheerp
+// ----------------------------------------------------------------------
+
+#ifdef __CHEERP_CLIENT__
+#define ACMACS_TARGET_BROWSER 1
+#else
+#define ACMACS_TARGET_OS 1
+#endif
+
+// ----------------------------------------------------------------------
+// Browser
+// ----------------------------------------------------------------------
+
+#ifdef ACMACS_TARGET_BROWSER
 #undef ACMACSD_FILESYSTEM
 #define NO_EXCEPTIONS
 #define DYNAMIC_CAST(Target,Source) ((Target)(Source))
@@ -17,8 +29,13 @@ template <typename T> s_typeid_simulation_for_cheerp typeid_simulation_for_cheer
 #define THROW_OR_VOID(exc) return;
 #define THROW_OR_CERR(exc) std::cerr << "ERROR: " << (exc).what() << std::endl; return;
 
-          // ----------------------------------------------------------------------
-#else
+#endif
+
+// ----------------------------------------------------------------------
+// OS
+// ----------------------------------------------------------------------
+
+#ifdef ACMACS_TARGET_OS
 #define ACMACSD_FILESYSTEM
 #define DYNAMIC_CAST(Target,Source) dynamic_cast<Target>(Source)
 #define THROW(exc, cheerp_result) throw (exc);

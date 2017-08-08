@@ -1,6 +1,6 @@
 #pragma once
 
-#include "acmacs-base/target.hh"
+#include "acmacs-base/config.hh"
 
 // ----------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ namespace log_internal
     }
 }
 
-template <typename ... Args> inline void log(Args&& ... rest) { log_internal::write(std::cout, "INFO: ", rest ...); }
+template <typename ... Args> inline void log(Args ... rest) { log_internal::write(std::cout, "INFO: ", rest ...); }
 template <typename ... Args> inline void log_error(Args ... rest) { log_internal::write(std::cerr, "ERROR: ", rest ...); }
 template <typename ... Args> inline void log_warning(Args ... rest) { log_internal::write(std::cerr, "WARNING: ", rest ...); }
 
