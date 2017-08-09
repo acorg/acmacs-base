@@ -4,7 +4,7 @@
 #include <regex>
 #include <iostream>
 
-#include "acmacs-base/config.hh"
+#include "acmacs-base/throw.hh"
 
 // ----------------------------------------------------------------------
 

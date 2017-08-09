@@ -5,7 +5,7 @@
 #include <limits>
 #include <functional>
 
-#include "acmacs-base/config.hh"
+#include "acmacs-base/throw.hh"
 #include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
@@ -145,10 +145,12 @@ class IndexGenerator
 
 }; // class IndexGenerator
 
+#ifdef ACMACS_TARGET_OS
 inline std::ostream& operator << (std::ostream& out, const IndexGenerator& aGen)
 {
     return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
 }
+#endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -9,7 +9,7 @@
 #include <iostream>
 #include <memory>
 
-#include "acmacs-base/config.hh"
+#include "acmacs-base/throw.hh"
 #include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
