@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "acmacs-base/config.hh"
+
 // ----------------------------------------------------------------------
 
 // http://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
@@ -30,6 +32,7 @@ inline float_zero(T x, int ulp=1)
 
 // ----------------------------------------------------------------------
 
+#ifdef ACMACS_TARGET_OS
 inline std::string double_to_string(double value)
 {
     constexpr const size_t buffer_size = 100;
@@ -39,6 +42,7 @@ inline std::string double_to_string(double value)
         throw std::runtime_error("double_to_string internal error");
     return {buffer, static_cast<size_t>(written)};
 }
+#endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:
