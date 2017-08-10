@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------
 
 #ifdef ACMACS_TARGET_BROWSER
-#undef ACMACSD_FILESYSTEM
 #define NO_EXCEPTIONS
 #define DYNAMIC_CAST(Target,Source) ((Target)(Source))
 #define union struct
@@ -30,7 +29,6 @@ template <typename T> s_typeid_simulation_for_cheerp typeid_simulation_for_cheer
 // ----------------------------------------------------------------------
 
 #ifdef ACMACS_TARGET_OS
-#define ACMACSD_FILESYSTEM
 #define DYNAMIC_CAST(Target,Source) dynamic_cast<Target>(Source)
 #define THROW(exc, cheerp_result) throw (exc)
 #define THROW_OR_VOID(exc) throw (exc)

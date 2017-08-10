@@ -9,6 +9,16 @@
 #endif
 
 // ----------------------------------------------------------------------
+
+#ifdef ACMACS_TARGET_BROWSER
+#undef ACMACSD_FILESYSTEM
+#endif
+
+#ifdef ACMACS_TARGET_OS
+#define ACMACSD_FILESYSTEM
+#endif
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
