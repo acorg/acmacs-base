@@ -1,0 +1,19 @@
+# -*- Makefile -*-
+# Eugene Skepner 2017
+# ======================================================================
+
+clean:
+	rm -rf $(DIST) $(BUILD) dist build
+
+$(DIST):
+	mkdir -p $(DIST)
+	ln -sf $(DIST) dist
+
+$(BUILD):
+	mkdir -p $(BUILD)
+	ln -sf $(BUILD) build
+
+# ======================================================================
+### Local Variables:
+### eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
+### End:
