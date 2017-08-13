@@ -13,6 +13,7 @@ ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc
 # ----------------------------------------------------------------------
 
 include Makefile.g++
+include Makefile.dist-build.vars
 
 # -fvisibility=hidden and -flto make resulting lib smaller (pybind11) but linking is much slower
 OPTIMIZATION = -O3 #-fvisibility=hidden -flto
@@ -30,11 +31,6 @@ ACMACS_BASE_LDLIBS = # -L$(LIB_DIR)
 # PYTHON_LD_LIB = $$($(PYTHON_CONFIG) --ldflags | sed -E 's/-Wl,-stack_size,[0-9]+//')
 
 # PKG_INCLUDES = $$($(PYTHON_CONFIG) --includes)
-
-# ----------------------------------------------------------------------
-
-BUILD = build
-DIST = $(abspath dist)
 
 # ----------------------------------------------------------------------
 
@@ -76,12 +72,6 @@ install-3rd-party:
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
 	$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
-clean:
-	rm -rf $(DIST) $(BUILD)/*.o $(BUILD)/*.d
-
-distclean: clean
-	rm -rf $(BUILD)
-
 # ----------------------------------------------------------------------
 
 $(BUILD)/%.o: cc/%.cc | $(BUILD)
@@ -98,11 +88,7 @@ endif
 check-python:
 	@printf 'import sys\nif sys.version_info < (3, 5):\n print("Python 3.5 is required")\n exit(1)' | python3
 
-$(DIST):
-	mkdir -p $(DIST)
-
-$(BUILD):
-	mkdir -p $(BUILD)
+include Makefile.dist-build.rules
 
 .PHONY: check-acmacsd-root check-python
 
