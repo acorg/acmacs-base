@@ -2,8 +2,12 @@
 #include <iomanip>
 #include <map>
 
-#include "color.hh"
+#include "acmacs-base/throw.hh"
+#include "acmacs-base/color.hh"
+
+#ifdef ACMACS_TARGET_OS
 #include "acmacs-base/string.hh"
+#endif
 
 // ----------------------------------------------------------------------
 
@@ -14,6 +18,7 @@ namespace _internal
 
 // ----------------------------------------------------------------------
 
+#ifdef ACMACS_TARGET_OS
 std::string Color::to_string() const
 {
     using namespace _internal;
@@ -28,16 +33,20 @@ std::string Color::to_string() const
     return result;
 
 } // Color::to_string
+#endif
 
 // ----------------------------------------------------------------------
 
+#ifdef ACMACS_TARGET_OS
 std::string Color::to_hex_string() const
 {
     std::stringstream s;
     s << '#' << std::hex << std::setw(6) << std::setfill('0') << mColor;
     return s.str();
 
+
 } // Color::to_hex_string
+#endif
 
 // ----------------------------------------------------------------------
 
@@ -55,7 +64,7 @@ void Color::from_string(std::string aColor)
               mColor = v;
               break;
           default:
-              throw std::invalid_argument("cannot read Color from " + aColor);
+              THROW_OR_CERR(std::invalid_argument("cannot read Color from " + aColor));
         }
     }
     else {
@@ -63,7 +72,7 @@ void Color::from_string(std::string aColor)
         if (e != sNameToColor.end())
             mColor = e->second;
         else
-            throw std::invalid_argument("cannot read Color from " + aColor);
+            THROW_OR_CERR(std::invalid_argument("cannot read Color from " + aColor));
     }
 
 } // Color::from_string
