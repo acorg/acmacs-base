@@ -49,6 +49,11 @@ const Aspect AspectNormal{1.0};
 
 #include "acmacs-base/diagnostics-pop.hh"
 
+inline Rotation RotationDegrees(double aAngle)
+{
+    return Rotation{aAngle * M_PI / 180.0};
+}
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
