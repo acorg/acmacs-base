@@ -8,8 +8,7 @@
 #include "acmacs-base/config.hh"
 
 #ifdef ACMACS_TARGET_BROWSER
-#include "asm.hh"
-#include "string-client.hh"
+#error Not supported in cheerp client! include client/color.hh
 #endif
 
 // ----------------------------------------------------------------------
@@ -22,10 +21,8 @@ class Color
 
     inline Color() : mColor(0xFF00FF) {}
     template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr inline Color(Uint aColor) : mColor(static_cast<uint32_t>(aColor)) {}
-#ifdef ACMACS_TARGET_OS
     inline Color(std::string aColor) { from_string(aColor); }
     inline Color& operator=(std::string aColor) { from_string(aColor); return *this; }
-#endif
     inline Color(const char* aColor) { from_string(aColor); }
       // inline Color(const Color&) = default;
       // inline Color& operator=(const Color& aSrc) = default;
@@ -51,18 +48,10 @@ class Color
     // inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((int(aTransparency * 255.0) & 0xFF) << 24); }
 
     void from_string(std::string aColor);
-#ifdef ACMACS_TARGET_OS
     inline operator std::string() const { return to_string(); }
     std::string to_string() const;
     std::string to_hex_string() const;
     inline void from_string(const char* s, size_t len) { from_string(std::string(s, len)); }
-#endif
-#ifdef ACMACS_TARGET_BROWSER
-    inline client::String* to_String() const { return to_hex_String(); }
-    inline std::string to_string() const { return static_cast<std::string>(*to_hex_String()); }
-    inline client::String* to_hex_String() const { return concat("#", client::to_hex_string(mColor, 6)); }
-    inline std::string to_hex_string() const { return static_cast<std::string>(*to_hex_String()); }
-#endif
 
     static const value_type DistinctColors[];
     static std::vector<std::string> distinct_colors();

@@ -4,10 +4,7 @@
 
 #include "acmacs-base/throw.hh"
 #include "acmacs-base/color.hh"
-
-#ifdef ACMACS_TARGET_OS
 #include "acmacs-base/string.hh"
-#endif
 
 // ----------------------------------------------------------------------
 
@@ -18,7 +15,6 @@ namespace _internal
 
 // ----------------------------------------------------------------------
 
-#ifdef ACMACS_TARGET_OS
 std::string Color::to_string() const
 {
     using namespace _internal;
@@ -33,11 +29,9 @@ std::string Color::to_string() const
     return result;
 
 } // Color::to_string
-#endif
 
 // ----------------------------------------------------------------------
 
-#ifdef ACMACS_TARGET_OS
 std::string Color::to_hex_string() const
 {
     std::stringstream s;
@@ -46,7 +40,6 @@ std::string Color::to_hex_string() const
 
 
 } // Color::to_hex_string
-#endif
 
 // ----------------------------------------------------------------------
 
