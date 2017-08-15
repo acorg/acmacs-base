@@ -21,6 +21,7 @@ template <typename T> s_typeid_simulation_for_cheerp typeid_simulation_for_cheer
 #define THROW(exc, cheerp_result) log_warning("THROW: ", (exc).what()); return (cheerp_result)
 #define THROW_OR_VOID(exc) return
 #define THROW_OR_CERR(exc) log_error("ERROR: ", (exc).what()); return
+#define THROW_OR_CERR_NO_RETURN(exc) log_error("ERROR: ", (exc).what())
 //#define THROW_OR_CERR_WITHOUT_RETURN(exc) log_error("ERROR: ", (exc).what())
 #endif
 
@@ -33,6 +34,7 @@ template <typename T> s_typeid_simulation_for_cheerp typeid_simulation_for_cheer
 #define THROW(exc, cheerp_result) throw (exc)
 #define THROW_OR_VOID(exc) throw (exc)
 #define THROW_OR_CERR(exc) throw (exc)
+#define THROW_OR_CERR_NO_RETURN(exc) throw (exc)
 //#define THROW_OR_CERR_WITHOUT_RETURN(exc) throw (exc)
 #endif
 
