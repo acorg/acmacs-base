@@ -61,7 +61,7 @@ class Color
 
 }; // class Color
 
-const Color ColorNoChange{Color::NoChange};
+constexpr const Color ColorNoChange{Color::NoChange};
 
 inline std::ostream& operator<<(std::ostream& out, Color c)
 {
