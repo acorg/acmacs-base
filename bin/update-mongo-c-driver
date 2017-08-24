@@ -1,16 +1,6 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
-
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
+source $(dirname $0)/__3rd-party-setup
+src_dir mongo-c-driver
 
 NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
 
@@ -18,13 +8,14 @@ NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu;
 
 VERSION=1.6.3
 
-SRC_DIR="$ACMACSD_ROOT/sources"
 cd "$SRC_DIR"
-/usr/bin/curl -L -s https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION/mongo-c-driver-$VERSION.tar.gz | tar xzf -
-cd mongo-c-driver-$VERSION
-./configure --disable-automatic-init-and-cleanup --prefix="$ACMACSD_ROOT"
-make -j$NPROC
-make install
+if [[ ! -d mongo-c-driver-$VERSION ]]; then
+    /usr/bin/curl -L -s https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION/mongo-c-driver-$VERSION.tar.gz | tar xzf -
+    cd mongo-c-driver-$VERSION
+    ./configure --disable-automatic-init-and-cleanup --prefix="$AD_DIR"
+    make -j$NPROC
+    make install
+fi
 
 # ----------------------------------------------------------------------
 # SRC_DIR="$ACMACSD_ROOT/sources"

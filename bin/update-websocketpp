@@ -1,22 +1,10 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
-
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
-
-SRC_DIR=$ACMACSD_ROOT/sources
-if [ -d $SRC_DIR/websocketpp ]; then
-    cd $SRC_DIR/websocketpp
+source $(dirname $0)/__3rd-party-setup
+src_dir websocketpp
+if [[ -d "$PACKAGE_DIR" ]]; then
+    cd "$PACKAGE_DIR"
     git pull
 else
-    git clone https://github.com/zaphoyd/websocketpp.git $SRC_DIR/websocketpp
+    git clone https://github.com/zaphoyd/websocketpp.git "$PACKAGE_DIR"
 fi
-rsync -av $SRC_DIR/websocketpp/websocketpp $ACMACSD_ROOT/include
+( cd $AD_DIR/include && ln -s "$PACKAGE_DIR"/websocketpp . )

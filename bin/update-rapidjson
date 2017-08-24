@@ -1,22 +1,11 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
+source $(dirname $0)/__3rd-party-setup
+src_dir rapidjson
 
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
-
-SRC_DIR=$ACMACSD_ROOT/sources
-if [ -d $SRC_DIR/rapidjson ]; then
-    cd $SRC_DIR/rapidjson
+if [[ -d "$PACKAGE_DIR" ]]; then
+    cd "$PACKAGE_DIR"
     git pull
 else
-    git clone https://github.com/miloyip/rapidjson $SRC_DIR/rapidjson
+    git clone https://github.com/miloyip/rapidjson "$PACKAGE_DIR"
 fi
-rsync -av $SRC_DIR/rapidjson/include/ $ACMACSD_ROOT/include
+( cd $AD_DIR/include && ln -s "$PACKAGE_DIR"/include/* . )

@@ -1,43 +1,32 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
-
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
+source $(dirname $0)/__3rd-party-setup
+src_dir mongo-cxx-driver
 
 NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
 
 # https://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/installation/
 
-export PKG_CONFIG_PATH="$ACMACSD_ROOT"/lib/pkgconfig
+export PKG_CONFIG_PATH="$AD_DIR"/lib/pkgconfig
+# MONGO_CXX_SRC="$SRC_DIR/mongo-cxx-driver"
 
-SRC_DIR="$ACMACSD_ROOT/sources"
-MONGO_CXX_SRC="$SRC_DIR/mongo-cxx-driver"
-if [ -d "$MONGO_CXX_SRC" ]; then
-    cd "$MONGO_CXX_SRC"
+if [[ -d "$PACKAGE_DIR" ]]; then
+    cd "$PACKAGE_DIR"
     git pull
 else
-    git clone https://github.com/mongodb/mongo-cxx-driver.git --branch releases/stable --depth 1 "$MONGO_CXX_SRC"
+    git clone https://github.com/mongodb/mongo-cxx-driver.git --branch releases/stable --depth 1 "$PACKAGE_DIR"
 fi
-cd "$MONGO_CXX_SRC"/build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ACMACSD_ROOT" ..
+cd "$PACKAGE_DIR"/build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$AD_DIR" ..
 # -DBSONCXX_POLY_USE_BOOST=1
 # Only for MNMLSTC polyfill (default on Linux and macos
 # make EP_mnmlstc_core
 make -j$NPROC
 make install
 if [ "$(uname)" == "Darwin" ]; then
-    cd "$ACMACSD_ROOT/lib"
+    cd "$AD_DIR/lib"
     rm -f *.a
     for library in libbsoncxx._noabi.dylib libmongocxx._noabi.dylib; do
-        /usr/bin/install_name_tool -id "$ACMACSD_ROOT/lib/$library" "$library"
+        /usr/bin/install_name_tool -id "$AD_DIR/lib/$library" "$library"
     done
-    /usr/bin/install_name_tool -change "@rpath/libbsoncxx._noabi.dylib" "$ACMACSD_ROOT/lib/libbsoncxx._noabi.dylib" "libmongocxx._noabi.dylib"
+    /usr/bin/install_name_tool -change "@rpath/libbsoncxx._noabi.dylib" "$AD_DIR/lib/libbsoncxx._noabi.dylib" "libmongocxx._noabi.dylib"
 fi

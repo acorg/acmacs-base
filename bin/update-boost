@@ -1,23 +1,11 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
+source $(dirname $0)/__3rd-party-setup
+src_dir boost
 
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
-
-SRC_DIR="$ACMACSD_ROOT/sources"
-PACKAGE_DIR="$SRC_DIR/boost"
 SUBMODULES=(algorithm any array asio assert bind concept_check config container core date_time detail filesystem "function" function_types functional fusion integer io iterator lexical_cast locale math move mpl numeric optional predef preprocessor program_options range regex smart_ptr spirit static_assert system tokenizer throw_exception type_index type_traits typeof tti utility variant)
-INCLUDE="$ACMACSD_ROOT/include/boost"
+INCLUDE="$AD_DIR/include/boost"
 
-if [ -d "$PACKAGE_DIR" ]; then
+if [[ -d "$PACKAGE_DIR" ]]; then
     cd "$PACKAGE_DIR"
     git pull
 else
@@ -33,7 +21,7 @@ fi
 cd "$INCLUDE"
 for sub in "${SUBMODULES[@]}"; do
     # "cp -as" can be perhaps used instead of the below but it is not available on macOS
-    for srcdir in $(find "$SRC_DIR/boost/libs/$sub" -name boost -type d | grep include/boost); do # $SRC_DIR/boost/libs/$sub may contain sub-projects
+    for srcdir in $(find "$PACKAGE_DIR/libs/$sub" -name boost -type d | grep include/boost); do # $PACKAGE_DIR/libs/$sub may contain sub-projects
         for dirname in $(cd "$srcdir"; find . -type d -not -name .); do
             if [ ! -d "$dirname" ]; then
                 mkdir "$dirname"
@@ -50,20 +38,20 @@ git submodule update --init tools/build
 git submodule update --init tools/inspect
 ./bootstrap.sh --with-libraries=date_time,filesystem,program_options
 ./b2 cxxflags="-std=c++14 -DBOOST_NO_CXX11_SCOPED_ENUMS"
-for filename in $(cd "$SRC_DIR"/boost/stage/lib; find . -type f | cut -c 3-); do
-    ln -sf "$SRC_DIR/boost/stage/lib/$filename" "$ACMACSD_ROOT/lib/$filename"
+for filename in $(cd "$PACKAGE_DIR/stage/lib"; find . -type f | cut -c 3-); do
+    ln -sf "$PACKAGE_DIR/stage/lib/$filename" "$AD_DIR/lib/$filename"
 done
 if [ "$(uname)" == "Linux" ]; then
-    cd "$ACMACSD_ROOT/lib"
+    cd "$AD_DIR/lib"
     rm -f *.a
     for libf in libboost*.so.*; do
         ln -sf "$libf" "${libf%%.*}.so"
     done
 elif [ "$(uname)" == "Darwin" ]; then
-    cd "$ACMACSD_ROOT/lib"
+    cd "$AD_DIR/lib"
     rm -f *.a
     for library in libboost_*.dylib; do
-        /usr/bin/install_name_tool -id "$ACMACSD_ROOT/lib/$library" "$library"
-        /usr/bin/install_name_tool -change libboost_system.dylib "$ACMACSD_ROOT/lib/libboost_system.dylib" "$library"
+        /usr/bin/install_name_tool -id "$AD_DIR/lib/$library" "$library"
+        /usr/bin/install_name_tool -change libboost_system.dylib "$AD_DIR/lib/libboost_system.dylib" "$library"
     done
 fi

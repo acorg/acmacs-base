@@ -1,0 +1,14 @@
+#! /bin/bash
+source $(dirname $0)/__3rd-party-setup
+src_dir "$1"
+
+for d in bin lib include include/acmacs-base py data sources; do
+    if [ ! -d "$AD_DIR/$d" ]; then
+        mkdir "$AD_DIR/$d"
+    fi
+done
+
+if [[ "$1" == "acmacs-base" ]]; then
+    cd "$AD_DIR/include/$1"
+    ln -sf "$ACMACSD_ROOT"/sources/acmacs-base/cc/*.hh .
+fi
