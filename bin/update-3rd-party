@@ -1,16 +1,7 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
+source $(dirname $0)/__setup
 
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
+$ACMACSD_ROOT/sources/acmacs-base/bin/__setup_dirs
 
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-pybind11
 $ACMACSD_ROOT/sources/acmacs-base/bin/update-rapidjson

@@ -31,10 +31,14 @@ function src_dir()
 
     EXTERN_SRC_DIR="$BUILD_ROOT"/sources
     if [[ ! -d "$EXTERN_SRC_DIR" ]]; then mkdir -p "$EXTERN_SRC_DIR"; fi
-    EXTERN_PACKAGE_DIR="$EXTERN_SRC_DIR"/$package
+    if [[ -n "$package" ]]; then
+        EXTERN_PACKAGE_DIR="$EXTERN_SRC_DIR"/"$package"
+    fi
 
     ACMACS_SRC_DIR="$ACMACSD_ROOT"/sources
-    ACMACS_PACKAGE_DIR="$ACMACS_SRC_DIR"/$package
+    if [[ -n "$package" ]]; then
+        ACMACS_PACKAGE_DIR="$ACMACS_SRC_DIR"/"$package"
+    fi
 }
 
 # ----------------------------------------------------------------------
