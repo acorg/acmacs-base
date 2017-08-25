@@ -1,23 +1,8 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
-
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
-
-export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
-
-NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
+source $(dirname $0)/__setup
 
 for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page acmacs-whocc acmacs-webserver acmacs-api; do
-    SRC_DIR=$ACMACSD_ROOT/sources/$P
-    make -C $SRC_DIR clean
-    make -C $SRC_DIR -j$NPROC OPTIMIZATION=
+    src_dir "$P"
+    make -C "ACMACS_PACKAGE_DIR" clean
+    make -C "$ACMACS_PACKAGE_DIR" -j$NPROC OPTIMIZATION=
 done

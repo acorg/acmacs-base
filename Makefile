@@ -18,12 +18,11 @@ include Makefile.dist-build.vars
 # -fvisibility=hidden and -flto make resulting lib smaller (pybind11) but linking is much slower
 OPTIMIZATION = -O3 #-fvisibility=hidden -flto
 PROFILE = # -pg
-CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) -Icc -I$(BUILD)/include -I$(ACMACSD_ROOT)/include $(PKG_INCLUDES)
+CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
-LIB_DIR = $(ACMACSD_ROOT)/lib
 ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
-ACMACS_BASE_LDLIBS = # -L$(LIB_DIR)
+ACMACS_BASE_LDLIBS = # -L$(AD_LIB)
 
 # PYTHON_VERSION = $(shell python3 -c 'import sys; print("{0.major}.{0.minor}".format(sys.version_info))')
 # PYTHON_CONFIG = python$(PYTHON_VERSION)-config
@@ -36,28 +35,25 @@ ACMACS_BASE_LDLIBS = # -L$(LIB_DIR)
 
 all: check-python install
 
-install: check-acmacsd-root make-dirs install-packages
+install: check-acmacsd-root make-dirs install-acmacs-base
 
 make-dirs:
-	@#if [ ! -d $(ACMACSD_ROOT) ]; then mkdir $(ACMACSD_ROOT); fi
 	bin/__setup_dirs acmacs-base
 
 test:
 
 # ----------------------------------------------------------------------
 
-install-packages: install-acmacs-base install-3rd-party
-
 install-acmacs-base: $(ACMACS_BASE_LIB)
-	ln -sf $(ACMACS_BASE_LIB) $(ACMACSD_ROOT)/lib
-	if [ $$(uname) = "Darwin" ]; then /usr/bin/install_name_tool -id $(ACMACSD_ROOT)/lib/$(notdir $(ACMACS_BASE_LIB)) $(ACMACSD_ROOT)/lib/$(notdir $(ACMACS_BASE_LIB)); fi
+	ln -sf $(ACMACS_BASE_LIB) $(AD_LIB)
+	if [ $$(uname) = "Darwin" ]; then /usr/bin/install_name_tool -id $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)) $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)); fi
 	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
-	ln -sf $(SRC_DIR)/acmacs-base/bin/* $(ACMACSD_ROOT)/bin
-	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(ACMACSD_ROOT)/py
-	if [ ! -d $(ACMACSD_ROOT)/include/acmacs-base ]; then mkdir $(ACMACSD_ROOT)/include/acmacs-base; fi
-	ln -sf $(abspath cc)/*.hh $(ACMACSD_ROOT)/include/acmacs-base
-	if [ ! -d $(ACMACSD_ROOT)/share ]; then mkdir $(ACMACSD_ROOT)/share; fi
-	ln -sf $(abspath .)/Makefile.* $(ACMACSD_ROOT)/share
+	ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
+	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(AD_PY)
+	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
+	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
+	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
+	ln -sf $(abspath .)/Makefile.* $(AD_SHARE)
 
 install-3rd-party:
 	$(ACMACSD_ROOT)/bin/update-3rd-party
@@ -79,17 +75,7 @@ $(BUILD)/%.o: cc/%.cc | $(BUILD)
 
 # ----------------------------------------------------------------------
 
-check-acmacsd-root:
-ifndef ACMACSD_ROOT
-	$(error ACMACSD_ROOT is not set)
-endif
-
-check-python:
-	@printf 'import sys\nif sys.version_info < (3, 5):\n print("Python 3.5 is required")\n exit(1)' | python3
-
 include Makefile.dist-build.rules
-
-.PHONY: check-acmacsd-root check-python
 
 # ======================================================================
 ### Local Variables:

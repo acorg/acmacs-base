@@ -1,0 +1,56 @@
+# -*- Shell-script -*-
+# source it
+
+if [ -z "$ACMACSD_ROOT" ]; then
+    echo ACMACSD_ROOT not set >&2
+    exit 1
+fi
+
+failed()
+{
+    echo "FAILED" >&2
+    exit 1
+}
+
+trap failed ERR
+
+# ----------------------------------------------------------------------
+
+NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
+
+# ----------------------------------------------------------------------
+
+function src_dir()
+{
+    local package="$1"
+    if [[ -f /r/ramdisk-id ]]; then
+        BUILD_ROOT=/r/AD
+    else
+        BUILD_ROOT="$ACMACSD_ROOT"
+    fi
+
+    EXTERN_SRC_DIR="$BUILD_ROOT"/sources
+    if [[ ! -d "$EXTERN_SRC_DIR" ]]; then mkdir -p "$EXTERN_SRC_DIR"; fi
+    EXTERN_PACKAGE_DIR="$EXTERN_SRC_DIR"/$package
+
+    ACMACS_SRC_DIR="$ACMACSD_ROOT"/sources
+    ACMACS_PACKAGE_DIR="$ACMACS_SRC_DIR"/$package
+}
+
+# ----------------------------------------------------------------------
+
+function clone_or_pull()
+{
+    local package_dir="$1"
+    shift
+    local clone_args="$@"
+
+    echo Updating in "$package_dir"
+    if [[ -d "$package_dir" ]]; then
+        ( cd "$package_dir" && git pull )
+    else
+        git clone $clone_args "$package_dir"
+    fi
+}
+
+# ----------------------------------------------------------------------

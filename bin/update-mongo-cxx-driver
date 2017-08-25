@@ -1,32 +1,24 @@
 #! /bin/bash
-source $(dirname $0)/__3rd-party-setup
+source $(dirname $0)/__setup
 src_dir mongo-cxx-driver
-
-NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
-
+clone_or_pull "$EXTERN_PACKAGE_DIR" "https://github.com/mongodb/mongo-cxx-driver.git" --branch releases/stable --depth 1
 # https://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/installation/
 
-export PKG_CONFIG_PATH="$AD_DIR"/lib/pkgconfig
+export PKG_CONFIG_PATH="$BUILD_ROOT"/lib/pkgconfig
 # MONGO_CXX_SRC="$SRC_DIR/mongo-cxx-driver"
 
-if [[ -d "$PACKAGE_DIR" ]]; then
-    cd "$PACKAGE_DIR"
-    git pull
-else
-    git clone https://github.com/mongodb/mongo-cxx-driver.git --branch releases/stable --depth 1 "$PACKAGE_DIR"
-fi
-cd "$PACKAGE_DIR"/build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$AD_DIR" ..
+cd "$EXTERN_PACKAGE_DIR"/build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$BUILD_ROOT" ..
 # -DBSONCXX_POLY_USE_BOOST=1
 # Only for MNMLSTC polyfill (default on Linux and macos
 # make EP_mnmlstc_core
 make -j$NPROC
 make install
 if [ "$(uname)" == "Darwin" ]; then
-    cd "$AD_DIR/lib"
+    cd "$BUILD_ROOT/lib"
     rm -f *.a
     for library in libbsoncxx._noabi.dylib libmongocxx._noabi.dylib; do
-        /usr/bin/install_name_tool -id "$AD_DIR/lib/$library" "$library"
+        /usr/bin/install_name_tool -id "$BUILD_ROOT/lib/$library" "$library"
     done
-    /usr/bin/install_name_tool -change "@rpath/libbsoncxx._noabi.dylib" "$AD_DIR/lib/libbsoncxx._noabi.dylib" "libmongocxx._noabi.dylib"
+    /usr/bin/install_name_tool -change "@rpath/libbsoncxx._noabi.dylib" "$BUILD_ROOT/lib/libbsoncxx._noabi.dylib" "libmongocxx._noabi.dylib"
 fi

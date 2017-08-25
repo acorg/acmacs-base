@@ -1,11 +1,5 @@
 #! /bin/bash
-source $(dirname $0)/__3rd-party-setup
+source $(dirname $0)/__setup
 src_dir pybind11
-
-if [[ -d "$PACKAGE_DIR" ]]; then
-    cd "$PACKAGE_DIR"
-    git pull
-else
-    git clone https://github.com/pybind/pybind11.git "$PACKAGE_DIR"
-fi
-( cd $AD_DIR/include && ln -s "$PACKAGE_DIR"/include/* . )
+clone_or_pull "$EXTERN_PACKAGE_DIR" "https://github.com/pybind/pybind11.git"
+( cd "$BUILD_ROOT/include" && ln -sf "$EXTERN_PACKAGE_DIR"/include/* . )

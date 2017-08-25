@@ -1,36 +1,21 @@
 #! /bin/bash
-if [ -z "$ACMACSD_ROOT" ]; then
-    echo ACMACSD_ROOT not set >&2
-    exit 1
-fi
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <package-name>" >&2
+source $(dirname $0)/__setup
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <package-name> [<pre-build-step>]" >&2
     exit 2
 fi
-
-failed()
-{
-    echo "FAILED" >&2
-    exit 1
-}
-
-trap failed ERR
-
-NPROC=$(if [ "$(uname -s)" = "Darwin" ]; then /usr/sbin/sysctl -n hw.logicalcpu; else /usr/bin/nproc; fi)
-
-SRC_DIR=$ACMACSD_ROOT/sources
-
 PACKAGE="$1"
+PRE_BUILD_STEP="$2"
 
 echo "======================================================================"
 echo Updating $PACKAGE
-if [ -d $SRC_DIR/$PACKAGE ]; then
-    cd $SRC_DIR/$PACKAGE
-    git pull
-else
-    git clone git@github.com:acorg/$PACKAGE.git $SRC_DIR/$PACKAGE
+src_dir "$PACKAGE"
+clone_or_pull "$ACMACS_PACKAGE_DIR" "git@github.com:acorg/$PACKAGE.git"
+
+if [[ -n "$PRE_BUILD_STEP" ]]; then
+    $PRE_BUILD_STEP
 fi
-make -C $SRC_DIR/$PACKAGE clean
-make -C $SRC_DIR/$PACKAGE -j$NPROC install
-make -C $SRC_DIR/$PACKAGE -j$NPROC test
+make -C "$ACMACS_PACKAGE_DIR" clean
+make -C "$ACMACS_PACKAGE_DIR" -j$NPROC install
+make -C "$ACMACS_PACKAGE_DIR" -j$NPROC test
 echo "======================================================================"
