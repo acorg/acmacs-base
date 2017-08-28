@@ -42,9 +42,11 @@ namespace rjson
     {
      public:
         inline std::string to_string() const { return double_to_string(mValue); }
+        inline operator double() const { return mValue; }
 
      private:
-        number(std::string_view&& aData);
+        inline number(std::string_view&& aData) : mValue{std::stod(static_cast<std::string>(aData))} {}
+
         double mValue;
 
         friend class implementation::NumberHandler;
@@ -54,9 +56,12 @@ namespace rjson
     {
      public:
         inline std::string to_string() const { return std::to_string(mValue); }
+        inline operator double() const { return mValue; }
+        inline operator long() const { return mValue; }
 
      private:
-        integer(std::string_view&& aData);
+        inline integer(std::string_view&& aData) : mValue{std::stol(static_cast<std::string>(aData))} {}
+
         long mValue;
 
         friend class implementation::NumberHandler;

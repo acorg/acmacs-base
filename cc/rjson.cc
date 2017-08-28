@@ -215,7 +215,7 @@ class ToplevelHandler : public SymbolHandler
                   case '"':
                       result = std::make_unique<StringHandler>(aParser);
                       break;
-                  case '-': case '.':
+                  case '-': case '+': case '.':
                   case '0': case '1': case '2': case '3': case '4': case '5':
                   case '6': case '7': case '8': case '9':
                       result = std::make_unique<NumberHandler>(aParser);
@@ -303,20 +303,6 @@ inline rjson::value Parser::result() const
 } // Parser::result
 
 }
-
-// ----------------------------------------------------------------------
-
-rjson::number::number(std::string_view&& aData)
-    : mValue{std::stod(static_cast<std::string>(aData))}
-{
-} // rjson::number::number
-
-// ----------------------------------------------------------------------
-
-rjson::integer::integer(std::string_view&& aData)
-    : mValue{std::stol(static_cast<std::string>(aData))}
-{
-} // rjson::integer::integer
 
 // ----------------------------------------------------------------------
 
