@@ -62,7 +62,7 @@ namespace rjson
         inline std::string to_string() const { return "null"; }
     };
 
-    class value : public std::variant<object, array, string, integer, number, boolean, null>
+    class value : public std::variant<null, object, array, string, integer, number, boolean> // null must be the first alternative, it is the default value
     {
      public:
         std::string to_string() const

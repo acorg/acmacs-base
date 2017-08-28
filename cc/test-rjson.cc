@@ -19,7 +19,7 @@ int main()
         std::cout << '%' << src << "%\n";
         try {
             auto val = rjson::parse(src);
-            std::cout << val.to_string() << "\n\n";
+            std::cout << "RESULT: " << val.to_string() << "\n\n";
         }
         catch (rjson::Error& err) {
             std::cerr << "ERROR: " << err.what() << '\n';

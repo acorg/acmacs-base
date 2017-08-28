@@ -34,7 +34,7 @@ class Parser
 
     void parse();
 
-    inline const rjson::value& result() const { return mResult; }
+    rjson::value result() const;
     inline size_t pos() const { return mPos; }
     inline size_t line() const { return mLine; }
     inline size_t column() const { return mColumn; }
@@ -43,7 +43,6 @@ class Parser
 
  private:
     std::string_view mSource;
-    rjson::value mResult;
     size_t mPos, mLine, mColumn;
     std::stack<std::unique_ptr<SymbolHandler>> mHandlers;
 
@@ -73,6 +72,7 @@ class SymbolHandler
         }
 
     virtual rjson::value value() const { const rjson::value v{rjson::null{}}; return v; }
+    virtual void subvalue(rjson::value&& /*aSubvalue*/) {}
 
 }; // class SymbolHandler
 
@@ -145,7 +145,6 @@ class ToplevelHandler : public SymbolHandler
                 switch (aSymbol) {
                   case '"':
                       result = std::make_unique<StringHandler>(aParser);
-                      mValueRead = true;
                       break;
                   default:
                       result = SymbolHandler::handle(aSymbol, aParser);
@@ -155,8 +154,17 @@ class ToplevelHandler : public SymbolHandler
             return result;
         }
 
+    void subvalue(rjson::value&& aSubvalue) override
+        {
+            mValue = aSubvalue;
+            mValueRead = true;
+        }
+
+    rjson::value value() const override { return mValue; }
+
  private:
     bool mValueRead = false;
+    rjson::value mValue;
 
 }; // class ToplevelHandler
 
@@ -181,8 +189,9 @@ void Parser::parse()
                 this->mHandlers.push(std::forward<T>(arg));
             }
             else if constexpr (std::is_same_v<T, StateTransitionPop>) {
-                std::cout << "POP: " << mHandlers.top()->value().to_string() << '\n';
+                auto value = mHandlers.top()->value();
                 this->mHandlers.pop();
+                mHandlers.top()->subvalue(std::move(value));
                 }
         }, handling_result);
         ++mPos;
@@ -190,6 +199,14 @@ void Parser::parse()
     }
 
 } // Parser::parse
+
+// ----------------------------------------------------------------------
+
+inline rjson::value Parser::result() const
+{
+    return mHandlers.top()->value();
+
+} // Parser::result
 
 // ----------------------------------------------------------------------
 
