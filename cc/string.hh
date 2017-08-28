@@ -211,13 +211,23 @@ namespace string
         return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
     }
 
-    template <typename T, typename = std::enable_if<std::is_integral<T>::value>> inline std::string to_hex_string(T aValue, bool aShowBase, bool aUppercase = true)
+    enum ShowBase { NotShowBase, ShowBase };
+    enum OutputCase { Uppercase, Lowercase };
+
+    template <typename T, typename = std::enable_if<std::is_integral<T>::value>> inline std::string to_hex_string(T aValue, enum ShowBase aShowBase, OutputCase aOutputCase = Uppercase)
     {
         std::stringstream stream;
-        stream << std::setfill('0') << std::setw(sizeof(aValue)*2) << std::hex;
-        stream << (aShowBase ? std::showbase : std::noshowbase);
-        stream << (aUppercase ? std::uppercase : std::nouppercase);
-        stream << aValue;
+          // stream << (aShowBase == ShowBase ? std::showbase : std::noshowbase);
+        if (aShowBase == ShowBase)
+            stream << "0x";
+        stream << std::setfill('0') << std::setw(sizeof(aValue)*2) << std::hex << std::noshowbase;
+        stream << (aOutputCase == Uppercase ? std::uppercase : std::nouppercase);
+        if constexpr (std::is_same<T, char>::value || std::is_same<T, unsigned char>::value) {
+                stream << static_cast<unsigned>(aValue);
+            }
+        else {
+            stream << aValue;
+        }
         return stream.str();
     }
 

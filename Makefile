@@ -9,6 +9,7 @@ MAKEFLAGS = -w
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc
+TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 
 # ----------------------------------------------------------------------
 
@@ -40,7 +41,8 @@ install: check-acmacsd-root make-dirs install-acmacs-base
 make-dirs:
 	bin/__setup_dirs acmacs-base
 
-test:
+test: $(DIST)/test-rjson
+	test/test
 
 # ----------------------------------------------------------------------
 
@@ -66,6 +68,9 @@ install-3rd-party:
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
 	$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+
+$(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 # ----------------------------------------------------------------------
 
