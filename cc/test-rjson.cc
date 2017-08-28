@@ -5,7 +5,7 @@
 
 // ----------------------------------------------------------------------
 
-static const std::pair<const char*, const char*> sSource[] = {
+static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSource[] = {
     {R"(
           "Altogether elsewhere, \"vast\""  )", R"("Altogether elsewhere, \"vast\"")"},
     {R"(  2017)", R"(2017)"},
@@ -20,6 +20,11 @@ static const std::pair<const char*, const char*> sSource[] = {
     {R"( false)", R"(false)"},
     {R"(null)", R"(null)"},
     {R"( { "a" : "b"}  )", R"({"a":"b"})"},
+    {R"({x"a" : "b"}  )", rjson::Error(1, 2, "unexpected symbol: x (0x78)")},
+    {R"({"a","b"})", rjson::Error(1, 5, "unexpected symbol: , (0x2C)")},
+    // {R"( { "a" : 1234}  )", R"({"a":1234})"},
+    // {R"( { "a" : -1234}  )", R"({"a":-1234})"},
+    // {R"( { "a" : 12.34}  )", R"({"a":12.34})"},
 };
 
 // ----------------------------------------------------------------------
@@ -28,20 +33,40 @@ int main()
 {
     int exit_code = 0;
 
-
     for (auto [to_parse, expected]: sSource) {
+        const auto& to_parse_ref = to_parse; // to capture by lambda below, cannot capture to_parse (bug in llvm 4.0.1?)
         try {
               // std::cout << '%' << to_parse << "%\n";
             const auto val = rjson::parse(to_parse);
             const auto result = val.to_string();
-            if (result != expected) {
-                std::cerr << "ERROR: parsing %" << to_parse << "%\n  --> %" << result << "%\n  expected: %" << expected << "%\n\n";
-                exit_code = 1;
-            }
+            std::visit([&](auto&& aExpected) {
+                using T = std::decay_t<decltype(aExpected)>;
+                if constexpr (std::is_same_v<T, const char*>) {
+                    if (result != aExpected) {
+                        std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> %" << result << "%\n  expected: %" << aExpected << "%\n\n";
+                        exit_code = 1;
+                    }
+                }
+                else {
+                    std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> %" << result << "%\n  expected: %" << aExpected.what() << "%\n\n";
+                    exit_code = 1;
+                }
+            }, expected);
         }
         catch (rjson::Error& err) {
-            std::cerr << "ERROR: parsing %" << to_parse << "%\n  --> " << err.what() << "\n  expected: %" << expected << "%\n\n";
-            exit_code = 2;
+            std::visit([&](auto&& aExpected) {
+                using T = std::decay_t<decltype(aExpected)>;
+                if constexpr (std::is_same_v<T, const char*>) {
+                    std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> " << err.what() << "\n  expected: %" << aExpected << "%\n\n";
+                    exit_code = 2;
+                }
+                else {
+                    if (std::string{err.what()} != aExpected.what()) {
+                        std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> %" << err.what() << "%\n  expected: %" << aExpected.what() << "%\n\n";
+                        exit_code = 2;
+                    }
+                }
+            }, expected);
         }
     }
     return exit_code;
