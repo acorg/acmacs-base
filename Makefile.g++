@@ -21,7 +21,7 @@ else
   WARNINGS =
   ifeq ($(GCC7),Y)
     CXX = g++-7
-    STD = c++17
+    STD = c++1z
   else
     CXX = g++
     STD = c++1z

@@ -4,22 +4,28 @@
 #include <variant>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "float.hh"
 
 // ----------------------------------------------------------------------
-
 
 namespace rjson
 {
     namespace implementation { class NumberHandler; }
 
     class value;
+    class string;
 
     class object
     {
      public:
-        inline std::string to_string() const { return "{}"; }
+        std::string to_string() const;
+
+        void insert(value&& aKey, value&& aValue);
+
+     private:
+        std::vector<std::pair<string, value>> mContent;
     };
 
     class array
@@ -92,7 +98,7 @@ namespace rjson
         using value_base::operator=;
         using value_base::value_base;
 
-        std::string to_string() const
+        inline std::string to_string() const
             {
                 return std::visit([](auto&& arg) -> std::string { return arg.to_string(); }, *this);
             }
@@ -105,7 +111,7 @@ namespace rjson
             : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + aMessage} //, mLine{aLine}, mColumn{aColumn}
             {}
 
-        const char* what() const noexcept override { return mMessage.c_str(); }
+        inline const char* what() const noexcept override { return mMessage.c_str(); }
 
      private:
         std::string mMessage;
@@ -114,6 +120,13 @@ namespace rjson
     }; // class Error
 
     value parse(std::string aData);
+
+      // ----------------------------------------------------------------------
+
+    inline void object::insert(value&& aKey, value&& aValue)
+    {
+        mContent.emplace_back(std::get<rjson::string>(aKey), aValue);
+    }
 
 } // namespace rjson
 

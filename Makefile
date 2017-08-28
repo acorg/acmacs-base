@@ -41,8 +41,12 @@ install: check-acmacsd-root make-dirs install-acmacs-base
 make-dirs:
 	bin/__setup_dirs acmacs-base
 
+ifeq ($(GCC7),Y)
+test:
+else
 test: $(DIST)/test-rjson
 	test/test
+endif
 
 # ----------------------------------------------------------------------
 
