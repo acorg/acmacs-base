@@ -77,7 +77,7 @@ class SymbolHandler
             return StateTransitionNone{};
         }
 
-    virtual rjson::value value() const { const rjson::value v{rjson::null{}}; return v; }
+    virtual rjson::value value() const { return rjson::null{}; }
     virtual void subvalue(rjson::value&& /*aSubvalue*/) {}
     // virtual void complete(Parser& /*aParser*/) {}
 
@@ -124,8 +124,7 @@ class StringHandler : public SymbolHandler
 
     rjson::value value() const override
         {
-            const rjson::value v{rjson::string{mParser.view(mBegin, mEnd)}};
-            return v;
+            return rjson::string{mParser.view(mBegin, mEnd)};
         }
 
  private:
@@ -135,10 +134,6 @@ class StringHandler : public SymbolHandler
 }; // class StringHandler
 
 // ----------------------------------------------------------------------
-
-class NumberExponentHandler : public SymbolHandler
-{
-}; // class NumberExponentHandler
 
 class NumberHandler : public SymbolHandler
 {
@@ -152,18 +147,25 @@ class NumberHandler : public SymbolHandler
             switch (aSymbol) {
               case '0': case '1': case '2': case '3': case '4': case '5':
               case '6': case '7': case '8': case '9':
+                  mSignAllowed = false;
                   break;
               case '.':
+                  if (mExponent)
+                      result = SymbolHandler::handle(aSymbol, aParser);
                   mInteger = false;
+                  mSignAllowed = false;
                   break;
               case 'e':
               case 'E':
                   mInteger = false;
-                  result = std::make_unique<NumberExponentHandler>();
+                  mExponent = true;
+                  mSignAllowed = true;
                   break;
               case '-':
-                  if (aParser.pos() != mBegin)
+              case '+':
+                  if (!mSignAllowed)
                       result = SymbolHandler::handle(aSymbol, aParser);
+                  mSignAllowed = false;
                   break;
               default:
                   result = StateTransitionPop{};
@@ -176,12 +178,10 @@ class NumberHandler : public SymbolHandler
 
     rjson::value value() const override
         {
-            rjson::value v;
             if (mInteger)
-                v = rjson::integer{mParser.view(mBegin, mEnd)};
+                return rjson::integer{mParser.view(mBegin, mEnd)};
             else
-                v = rjson::number{mParser.view(mBegin, mEnd)};
-            return v;
+                return rjson::number{mParser.view(mBegin, mEnd)};
         }
 
     // void complete(Parser& aParser) override
@@ -193,6 +193,8 @@ class NumberHandler : public SymbolHandler
  private:
     Parser& mParser;
     size_t mBegin, mEnd;
+    bool mSignAllowed = true;
+    bool mExponent = false;
     bool mInteger = true;
 
 }; // class NumberHandler
@@ -213,7 +215,7 @@ class ToplevelHandler : public SymbolHandler
                   case '"':
                       result = std::make_unique<StringHandler>(aParser);
                       break;
-                  case '-':
+                  case '-': case '.':
                   case '0': case '1': case '2': case '3': case '4': case '5':
                   case '6': case '7': case '8': case '9':
                       result = std::make_unique<NumberHandler>(aParser);

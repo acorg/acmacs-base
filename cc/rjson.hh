@@ -79,10 +79,14 @@ namespace rjson
         inline std::string to_string() const { return "null"; }
     };
 
-    class value : public std::variant<null, object, array, string, integer, number, boolean> // null must be the first alternative, it is the default value
+    using value_base = std::variant<null, object, array, string, integer, number, boolean>; // null must be the first alternative, it is the default value;
+
+    class value : public value_base
     {
      public:
-        using std::variant<null, object, array, string, integer, number, boolean>::operator=;
+        using value_base::operator=;
+        using value_base::value_base;
+
         std::string to_string() const
             {
                 return std::visit([](auto&& arg) -> std::string { return arg.to_string(); }, *this);
