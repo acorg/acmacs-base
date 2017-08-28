@@ -5,10 +5,15 @@
 #include <string>
 #include <string_view>
 
+#include "float.hh"
+
 // ----------------------------------------------------------------------
+
 
 namespace rjson
 {
+    namespace implementation { class NumberHandler; }
+
     class value;
 
     class object
@@ -36,13 +41,25 @@ namespace rjson
     class number
     {
      public:
-        inline std::string to_string() const { return "<number>"; }
+        inline std::string to_string() const { return double_to_string(mValue); }
+
+     private:
+        number(std::string_view&& aData);
+        double mValue;
+
+        friend class implementation::NumberHandler;
     };
 
-    class integer : public number
+    class integer
     {
      public:
-        inline std::string to_string() const { return "<integer>"; }
+        inline std::string to_string() const { return std::to_string(mValue); }
+
+     private:
+        integer(std::string_view&& aData);
+        long mValue;
+
+        friend class implementation::NumberHandler;
     };
 
     class boolean
@@ -65,6 +82,7 @@ namespace rjson
     class value : public std::variant<null, object, array, string, integer, number, boolean> // null must be the first alternative, it is the default value
     {
      public:
+        using std::variant<null, object, array, string, integer, number, boolean>::operator=;
         std::string to_string() const
             {
                 return std::visit([](auto&& arg) -> std::string { return arg.to_string(); }, *this);
