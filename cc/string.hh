@@ -222,7 +222,7 @@ namespace string
             stream << "0x";
         stream << std::setfill('0') << std::setw(sizeof(aValue)*2) << std::hex << std::noshowbase;
         stream << (aOutputCase == Uppercase ? std::uppercase : std::nouppercase);
-        if constexpr (std::is_same<T, char>::value || std::is_same<T, unsigned char>::value) {
+        if constexpr (std::is_same_v<T, char> || std::is_same_v<T, unsigned char>) {
                 stream << static_cast<unsigned>(aValue);
             }
         else {
