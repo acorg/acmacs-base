@@ -34,6 +34,8 @@ static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSo
     {R"( { "a" : true}  )", R"({"a":true})"},
     {R"( { "a" : false}  )", R"({"a":false})"},
     {R"( { "a" : null}  )", R"({"a":null})"},
+    {R"( { "a" : null,}  )", rjson::Error(1, 15, "unexpected } -- did you forget to remove last comma?")},
+    {R"( { "a" : null "b": false}  )", rjson::Error(1, 15, "unexpected \" -- did you forget comma?")},
     {R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )", R"({"a":{"b":1,"c":"c","sub":{"xsub":false},"d":null}})"},
 };
 

@@ -42,7 +42,18 @@ class Parser
     inline size_t column() const { return mColumn; }
     inline std::string_view::value_type previous() const { if (mPos) return mSource[mPos - 1]; throw rjson::Error(line(), pos(), "internal: no previous at the beginning of parsing"); }
     inline std::string_view view(size_t aBegin, size_t aEnd) const { return {mSource.data() + aBegin, aEnd - aBegin}; }
-    inline void back() { if (!mPos) throw rjson::Error(line(), pos(), "internal: cannot back at the beginning of parsing"); --mPos; }
+
+    inline void back()
+        {
+            if (!mPos)
+                throw rjson::Error(line(), pos(), "internal: cannot back at the beginning of parsing");
+            --mPos;
+            --mColumn;
+            if (mColumn == 0)
+                --mLine;
+            // std::cerr << "BACK " << mLine << ':' << mColumn << ' ' << mPos << '\n';
+        }
+
     inline void newline() { ++mLine; mColumn = 0; }
 
  private:
@@ -64,6 +75,11 @@ class SymbolHandler
     [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
         {
             throw rjson::Error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string(1, aSymbol) + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+        }
+
+    [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const
+        {
+            throw rjson::Error(aParser.line(), aParser.column(), std::move(aMessage));
         }
 
     [[noreturn]] inline void internal_error(Parser& aParser) const
@@ -282,7 +298,7 @@ class BoolNullHandler : public SymbolHandler
 class ObjectHandler : public SymbolHandler
 {
  private:
-    enum class Expected { Key, Value, Colon, Comma };
+    enum class Expected { Key, KeyAfterComma, Value, Colon, Comma };
 
  public:
     inline ObjectHandler() {}
@@ -297,6 +313,8 @@ class ObjectHandler : public SymbolHandler
                     case Expected::Comma:
                         result = StateTransitionPop{};
                         break;
+                    case Expected::KeyAfterComma:
+                        error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget to remove last comma?");
                     case Expected::Value:
                     case Expected::Colon:
                         unexpected(aSymbol, aParser);
@@ -304,7 +322,7 @@ class ObjectHandler : public SymbolHandler
                   break;
               case ',':
                   if (mExpected == Expected::Comma)
-                      mExpected = Expected::Key;
+                      mExpected = Expected::KeyAfterComma;
                   else
                       unexpected(aSymbol, aParser);
                   break;
@@ -319,10 +337,12 @@ class ObjectHandler : public SymbolHandler
               case '"':
                   switch (mExpected) {
                     case Expected::Key:
+                    case Expected::KeyAfterComma:
                     case Expected::Value:
                         result = std::make_unique<StringHandler>(aParser);
                         break;
                     case Expected::Comma:
+                        error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget comma?");
                     case Expected::Colon:
                         unexpected(aSymbol, aParser);
                   }
@@ -341,6 +361,7 @@ class ObjectHandler : public SymbolHandler
             // std::cerr << "ObjectHandler::subvalue " << aSubvalue.to_string() << '\n';
             switch (mExpected) {
               case Expected::Key:
+              case Expected::KeyAfterComma:
                   mKey = aSubvalue;
                   mExpected = Expected::Colon;
                   break;
@@ -468,6 +489,7 @@ void Parser::parse()
 {
     for (mPos = 0; mPos < mSource.size(); ++mPos, ++mColumn) {
         auto symbol = mSource[mPos];
+          // std::cerr << "HANDLE " << symbol << ' ' << mLine << ':' << mColumn << '\n';
         auto handling_result = mHandlers.top()->handle(symbol, *this);
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -498,6 +520,7 @@ inline rjson::value Parser::result() const
 
 rjson::value rjson::parse(std::string aData)
 {
+      // std::cerr << "PARSE %" << aData << "%\n";
     implementation::Parser parser{aData};
     parser.parse();
     return parser.result();

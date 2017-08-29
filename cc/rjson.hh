@@ -107,8 +107,12 @@ namespace rjson
     class Error : public std::exception
     {
      public:
-        inline Error(size_t aLine, size_t aColumn, std::string aMessage)
-            : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + aMessage} //, mLine{aLine}, mColumn{aColumn}
+        // inline Error(size_t aLine, size_t aColumn, std::string aMessage)
+        //     : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + aMessage} //, mLine{aLine}, mColumn{aColumn}
+        //     {}
+
+        inline Error(size_t aLine, size_t aColumn, std::string&& aMessage)
+            : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
             {}
 
         inline const char* what() const noexcept override { return mMessage.c_str(); }
