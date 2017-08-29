@@ -418,7 +418,7 @@ class ArrayHandler : public SymbolHandler
               case ',':
                   switch (mExpected) {
                     case Expected::Value:
-                        error(aParser, "unexpected comma right after the beginning of an array"); // never comes here (processed by ValueHandler)
+                        error(aParser, "unexpected comma right after the beginning of an array");
                     case Expected::Comma:
                         mExpected = Expected::ValueAfterComma;
                         break;
@@ -426,11 +426,14 @@ class ArrayHandler : public SymbolHandler
                         error(aParser, "unexpected comma -- two successive commas?");
                   }
                   break;
+              case ' ': case '\n': case '\t':
+                  break;
               default:
                   switch (mExpected) {
                     case Expected::Value:
                     case Expected::ValueAfterComma:
                         result = std::make_unique<ValueHandler>();
+                        aParser.back();
                         mExpected = Expected::Comma;
                         break;
                     case Expected::Comma:

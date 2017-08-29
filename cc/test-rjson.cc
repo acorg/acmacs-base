@@ -41,12 +41,12 @@ static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSo
     {R"( { "a" : null  ,  ,  "b": false}  )", rjson::Error(1, 19, "unexpected comma -- two successive commas?")},
     {R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )", R"({"a":{"b":1,"c":"c","sub":{"xsub":false},"d":null}})"},
     {R"([])", R"([])"},
-    {R"([  ,  ])", rjson::Error(1, 4, "unexpected symbol: , (0x2C)")},
+    {R"([  ,  ])", rjson::Error(1, 4, "unexpected comma right after the beginning of an array")},
     {R"(["a"])", R"(["a"])"},
     {R"(["a",1])", R"(["a",1])"},
     {R"([true,false,null,"aaa"])", R"([true,false,null,"aaa"])"},
     {R"( [ 1   ,   2   ,  true  , { "a" : null}  ]  )", R"([1,2,true,{"a":null}])"},
-    {R"( {"array":[ 1   ,   2   ,  true  , { "a" : null}  ], "another":[]}  )", R"([1,2,true,{"a":null}])"},
+    {R"( {"array":[ 1   ,   2   ,  true  , { "a" : null}  ], "another":[]}  )", R"({"array":[1,2,true,{"a":null}],"another":[]})"},
 };
 
 #pragma GCC diagnostic pop
