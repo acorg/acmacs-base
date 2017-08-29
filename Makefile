@@ -41,12 +41,8 @@ install: check-acmacsd-root make-dirs install-acmacs-base
 make-dirs:
 	bin/__setup_dirs acmacs-base
 
-ifeq ($(GCC7),Y)
-test:
-else
 test: $(DIST)/test-rjson
 	test/test
-endif
 
 # ----------------------------------------------------------------------
 
@@ -79,7 +75,7 @@ $(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST
 # ----------------------------------------------------------------------
 
 $(BUILD)/%.o: cc/%.cc | $(BUILD)
-	@echo $<
+	@echo $(CXX_NAME) $<
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------

@@ -102,11 +102,10 @@ namespace rjson
      public:
         using value_base::operator=;
         using value_base::value_base;
+        inline value(const value&) = default; // gcc7 wants this, otherwise it is deleted
+        inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
 
-        inline std::string to_string() const
-            {
-                return std::visit([](auto&& arg) -> std::string { return arg.to_string(); }, *this);
-            }
+        std::string to_string() const;
     };
 
     class Error : public std::exception
@@ -143,6 +142,24 @@ namespace rjson
     }
 
 } // namespace rjson
+
+// ----------------------------------------------------------------------
+
+#if __GNUC__ == 7
+namespace std
+{
+      // gcc 7.2 wants those, if we derive from std::variant
+    template<> struct variant_size<rjson::value> : variant_size<rjson::value_base> {};
+    template<size_t _Np> struct variant_alternative<_Np, rjson::value> : variant_alternative<_Np, rjson::value_base> {};
+}
+#endif
+
+// ----------------------------------------------------------------------
+
+inline std::string rjson::value::to_string() const
+{
+    return std::visit([](auto&& arg) -> std::string { return arg.to_string(); }, *this);
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
