@@ -5,6 +5,12 @@
 
 // ----------------------------------------------------------------------
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#endif
+
 static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSource[] = {
     {R"(
           "Altogether elsewhere, \"vast\""  )", R"("Altogether elsewhere, \"vast\"")"},
@@ -22,10 +28,16 @@ static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSo
     {R"( { "a" : "b"}  )", R"({"a":"b"})"},
     {R"({x"a" : "b"}  )", rjson::Error(1, 2, "unexpected symbol: x (0x78)")},
     {R"({"a","b"})", rjson::Error(1, 5, "unexpected symbol: , (0x2C)")},
-    // {R"( { "a" : 1234}  )", R"({"a":1234})"},
-    // {R"( { "a" : -1234}  )", R"({"a":-1234})"},
-    // {R"( { "a" : 12.34}  )", R"({"a":12.34})"},
+    {R"( { "a" :   1234   }  )", R"({"a":1234})"},
+    {R"( { "a" : -1234}  )", R"({"a":-1234})"},
+    {R"( { "a" : 12.34}  )", R"({"a":12.33999999999999985789145284798})"},
+    {R"( { "a" : true}  )", R"({"a":true})"},
+    {R"( { "a" : false}  )", R"({"a":false})"},
+    {R"( { "a" : null}  )", R"({"a":null})"},
+    {R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )", R"({"a":{"b":1,"c":"c","sub":{"xsub":false},"d":null}})"},
 };
+
+#pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 

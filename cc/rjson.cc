@@ -100,6 +100,30 @@ class SymbolHandler
 
 // ----------------------------------------------------------------------
 
+class ValueHandler : public SymbolHandler
+{
+ public:
+    HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
+
+    void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
+        {
+            mValue = aSubvalue;
+            mValueRead = true;
+        }
+
+    rjson::value value() const override { return mValue; }
+
+ protected:
+    bool value_read() const { return mValueRead; }
+
+ private:
+    bool mValueRead = false;
+    rjson::value mValue;
+
+}; // class ValueHandler
+
+// ----------------------------------------------------------------------
+
 class StringEscapeHandler : public SymbolHandler
 {
  public:
@@ -285,8 +309,10 @@ class ObjectHandler : public SymbolHandler
                       unexpected(aSymbol, aParser);
                   break;
               case ':':
-                  if (mExpected == Expected::Colon)
+                  if (mExpected == Expected::Colon) {
                       mExpected = Expected::Value;
+                      result = std::make_unique<ValueHandler>();
+                  }
                   else
                       unexpected(aSymbol, aParser);
                   break;
@@ -357,62 +383,64 @@ class ArrayHandler : public SymbolHandler
 
 // ----------------------------------------------------------------------
 
-class ToplevelHandler : public SymbolHandler
+class ToplevelHandler : public ValueHandler
 {
  public:
     HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
         {
-            HandlingResult result = StateTransitionNone{};
-            if (mValueRead) {
+            HandlingResult result;
+            if (value_read())
                 result = SymbolHandler::handle(aSymbol, aParser);
-            }
-            else {
-                switch (aSymbol) {
-                  case '"':
-                      result = std::make_unique<StringHandler>(aParser);
-                      break;
-                  case '-': case '+': case '.':
-                  case '0': case '1': case '2': case '3': case '4': case '5':
-                  case '6': case '7': case '8': case '9':
-                      result = std::make_unique<NumberHandler>(aParser);
-                      aParser.back();
-                      break;
-                  case 't':
-                      result = std::make_unique<BoolNullHandler>("rue", rjson::boolean{true});
-                      break;
-                  case 'f':
-                      result = std::make_unique<BoolNullHandler>("alse", rjson::boolean{false});
-                      break;
-                  case 'n':
-                      result = std::make_unique<BoolNullHandler>("ull", rjson::null{});
-                      break;
-                  case '{':
-                      result = std::make_unique<ObjectHandler>();
-                      break;
-                  case '[':
-                      result = std::make_unique<ArrayHandler>();
-                      break;
-                  default:
-                      result = SymbolHandler::handle(aSymbol, aParser);
-                      break;
-                }
-            }
+            else
+                result = ValueHandler::handle(aSymbol, aParser);
             return result;
         }
 
-    void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
-        {
-            mValue = aSubvalue;
-            mValueRead = true;
+}; //class ToplevelHandler
+
+// ----------------------------------------------------------------------
+
+HandlingResult ValueHandler::handle(std::string_view::value_type aSymbol, Parser& aParser)
+{
+    HandlingResult result = StateTransitionNone{};
+    if (value_read()) {
+        aParser.back();
+        result = StateTransitionPop{};
+    }
+    else {
+        switch (aSymbol) {
+          case '"':
+              result = std::make_unique<StringHandler>(aParser);
+              break;
+          case '-': case '+': case '.':
+          case '0': case '1': case '2': case '3': case '4': case '5':
+          case '6': case '7': case '8': case '9':
+              result = std::make_unique<NumberHandler>(aParser);
+              aParser.back();
+              break;
+          case 't':
+              result = std::make_unique<BoolNullHandler>("rue", rjson::boolean{true});
+              break;
+          case 'f':
+              result = std::make_unique<BoolNullHandler>("alse", rjson::boolean{false});
+              break;
+          case 'n':
+              result = std::make_unique<BoolNullHandler>("ull", rjson::null{});
+              break;
+          case '{':
+              result = std::make_unique<ObjectHandler>();
+              break;
+          case '[':
+              result = std::make_unique<ArrayHandler>();
+              break;
+          default:
+              result = SymbolHandler::handle(aSymbol, aParser);
+              break;
         }
+    }
+    return result;
 
-    rjson::value value() const override { return mValue; }
-
- private:
-    bool mValueRead = false;
-    rjson::value mValue;
-
-}; // class ToplevelHandler
+} // ValueHandler::handle
 
 // ----------------------------------------------------------------------
 
