@@ -31,7 +31,12 @@ namespace rjson
     class array
     {
      public:
-        inline std::string to_string() const { return "[]"; }
+        std::string to_string() const;
+
+        void insert(value&& aValue);
+
+     private:
+        std::vector<value> mContent;
     };
 
     class string
@@ -130,6 +135,11 @@ namespace rjson
     inline void object::insert(value&& aKey, value&& aValue)
     {
         mContent.emplace_back(std::get<rjson::string>(aKey), aValue);
+    }
+
+    inline void array::insert(value&& aValue)
+    {
+        mContent.push_back(std::move(aValue));
     }
 
 } // namespace rjson

@@ -27,7 +27,9 @@ static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSo
     {R"(null)", R"(null)"},
     {R"( { "a" : "b"}  )", R"({"a":"b"})"},
     {R"({x"a" : "b"}  )", rjson::Error(1, 2, "unexpected symbol: x (0x78)")},
-    {R"({"a","b"})", rjson::Error(1, 5, "unexpected symbol: , (0x2C)")},
+    {R"({"a","b"})", rjson::Error(1, 5, "unexpected comma, colon is expected there")},
+    {R"({"a":,"b"})", rjson::Error(1, 6, "unexpected symbol: , (0x2C)")},
+    {R"({,})", rjson::Error(1, 2, "unexpected comma right after the beginning of an object")},
     {R"( { "a" :   1234   }  )", R"({"a":1234})"},
     {R"( { "a" : -1234}  )", R"({"a":-1234})"},
     {R"( { "a" : 12.34}  )", R"({"a":12.33999999999999985789145284798})"},
@@ -36,7 +38,15 @@ static const std::pair<const char*, std::variant<const char*, rjson::Error>> sSo
     {R"( { "a" : null}  )", R"({"a":null})"},
     {R"( { "a" : null,}  )", rjson::Error(1, 15, "unexpected } -- did you forget to remove last comma?")},
     {R"( { "a" : null "b": false}  )", rjson::Error(1, 15, "unexpected \" -- did you forget comma?")},
+    {R"( { "a" : null  ,  ,  "b": false}  )", rjson::Error(1, 19, "unexpected comma -- two successive commas?")},
     {R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )", R"({"a":{"b":1,"c":"c","sub":{"xsub":false},"d":null}})"},
+    {R"([])", R"([])"},
+    {R"([  ,  ])", rjson::Error(1, 4, "unexpected symbol: , (0x2C)")},
+    {R"(["a"])", R"(["a"])"},
+    {R"(["a",1])", R"(["a",1])"},
+    {R"([true,false,null,"aaa"])", R"([true,false,null,"aaa"])"},
+    {R"( [ 1   ,   2   ,  true  , { "a" : null}  ]  )", R"([1,2,true,{"a":null}])"},
+    {R"( {"array":[ 1   ,   2   ,  true  , { "a" : null}  ], "another":[]}  )", R"([1,2,true,{"a":null}])"},
 };
 
 #pragma GCC diagnostic pop

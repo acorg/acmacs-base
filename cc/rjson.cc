@@ -321,10 +321,19 @@ class ObjectHandler : public SymbolHandler
                   }
                   break;
               case ',':
-                  if (mExpected == Expected::Comma)
-                      mExpected = Expected::KeyAfterComma;
-                  else
-                      unexpected(aSymbol, aParser);
+                  switch (mExpected) {
+                    case Expected::Comma:
+                        mExpected = Expected::KeyAfterComma;
+                        break;
+                    case Expected::Key:
+                        error(aParser, "unexpected comma right after the beginning of an object");
+                    case Expected::KeyAfterComma:
+                        error(aParser, "unexpected comma -- two successive commas?");
+                    case Expected::Value:
+                        error(aParser, "unexpected comma after colon"); // never comes here (processed by ValueHandler)
+                    case Expected::Colon:
+                        error(aParser, "unexpected comma, colon is expected there");
+                  }
                   break;
               case ':':
                   if (mExpected == Expected::Colon) {
@@ -386,19 +395,62 @@ class ObjectHandler : public SymbolHandler
 
 class ArrayHandler : public SymbolHandler
 {
+ private:
+    enum class Expected { Value, ValueAfterComma, Comma };
+
  public:
     inline ArrayHandler() {}
 
     HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
         {
             HandlingResult result = StateTransitionNone{};
+            switch (aSymbol) {
+              case ']':
+                  switch (mExpected) {
+                    case Expected::Value:
+                    case Expected::Comma:
+                        result = StateTransitionPop{};
+                        break;
+                    case Expected::ValueAfterComma:
+                        error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget to remove last comma?");
+                  }
+                  break;
+              case ',':
+                  switch (mExpected) {
+                    case Expected::Value:
+                        error(aParser, "unexpected comma right after the beginning of an array"); // never comes here (processed by ValueHandler)
+                    case Expected::Comma:
+                        mExpected = Expected::ValueAfterComma;
+                        break;
+                    case Expected::ValueAfterComma:
+                        error(aParser, "unexpected comma -- two successive commas?");
+                  }
+                  break;
+              default:
+                  switch (mExpected) {
+                    case Expected::Value:
+                    case Expected::ValueAfterComma:
+                        result = std::make_unique<ValueHandler>();
+                        mExpected = Expected::Comma;
+                        break;
+                    case Expected::Comma:
+                        error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget comma?");
+                  }
+                  break;
+            }
             return result;
         }
 
     rjson::value value() const override { return mValue; }
 
+    void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
+        {
+            mValue.insert(std::move(aSubvalue));
+        }
+
  private:
     rjson::array mValue;
+    Expected mExpected = Expected::Value;
 
 }; //class ArrayHandler
 
@@ -532,7 +584,7 @@ rjson::value rjson::parse(std::string aData)
 std::string rjson::object::to_string() const
 {
     std::string result(1, '{');
-    for (auto [key, val]: mContent) {
+    for (const auto& [key, val]: mContent) {
         result.append(key.to_string());
         result.append(1, ':');
         result.append(val.to_string());
@@ -547,6 +599,21 @@ std::string rjson::object::to_string() const
 } // rjson::object::to_string
 
 // ----------------------------------------------------------------------
+
+std::string rjson::array::to_string() const
+{
+    std::string result(1, '[');
+    for (const auto& val: mContent) {
+        result.append(val.to_string());
+        result.append(1, ',');
+    }
+    if (result.back() == ',')
+        result.back() = ']';
+    else
+        result.append(1, ']');
+    return result;
+
+} // rjson::array::to_string
 
 
 // ----------------------------------------------------------------------
