@@ -35,7 +35,7 @@ namespace rjson::implementation
     class Parser
     {
      public:
-        Parser(std::string_view&& aSource);
+        Parser(rjson::value_parsed& aValue);
 
         void parse();
 
@@ -113,7 +113,6 @@ namespace rjson::implementation
 
         virtual rjson::value value() const { return rjson::null{}; }
         virtual void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
-          // virtual void complete(Parser& /*aParser*/) {}
 
     }; // class SymbolHandler
 
@@ -122,6 +121,9 @@ namespace rjson::implementation
     class ValueHandler : public SymbolHandler
     {
      public:
+        inline ValueHandler() : mValue{mBuffer} {}
+        inline ValueHandler(rjson::value& aBuffer) : mValue{aBuffer} {}
+
         HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
 
         void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
@@ -137,7 +139,8 @@ namespace rjson::implementation
 
      private:
         bool mValueRead = false;
-        rjson::value mValue;
+        rjson::value mBuffer;
+        rjson::value& mValue;
 
     }; // class ValueHandler
 
@@ -241,12 +244,6 @@ namespace rjson::implementation
                 else
                     return rjson::number{mParser.view(mBegin, mEnd)};
             }
-
-          // void complete(Parser& aParser) override
-          //     {
-          //         if (mEnd == 0)
-          //             mEnd = aParser.pos();
-          //     }
 
      private:
         Parser& mParser;
@@ -465,6 +462,8 @@ namespace rjson::implementation
     class ToplevelHandler : public ValueHandler
     {
      public:
+        using ValueHandler::ValueHandler;
+
         HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result;
@@ -536,18 +535,16 @@ rjson::implementation::HandlingResult rjson::implementation::ValueHandler::handl
 
 // ----------------------------------------------------------------------
 
-rjson::implementation::Parser::Parser(std::string_view&& aSource)
-    : mSource{std::move(aSource)}, mPos{0}, mLine{1}, mColumn{1}
+rjson::implementation::Parser::Parser(rjson::value_parsed& aValue)
+    : mSource{aValue.buffer()}, mPos{0}, mLine{1}, mColumn{1}
 {
-    mHandlers.emplace(new ToplevelHandler);
-
-} // rjson::implementation::Parser::Parser
+    mHandlers.emplace(new ToplevelHandler{aValue});
+}
 
 // ----------------------------------------------------------------------
 
 void rjson::implementation::Parser::pop()
 {
-      // mHandlers.top()->complete(*this);
     auto value = mHandlers.top()->value();
     mHandlers.pop();
     mHandlers.top()->subvalue(std::move(value), *this);
@@ -587,22 +584,29 @@ inline rjson::value rjson::implementation::Parser::result() const
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse(std::string aData)
+inline rjson::value_parsed::value_parsed(std::string aJsonData)
+    : mBuffer{aJsonData}
 {
-      // std::cerr << "PARSE %" << aData << "%\n";
-    implementation::Parser parser{aData};
+    implementation::Parser parser{*this};
     parser.parse();
-    return parser.result();
 
-} // rjson::parse
+} // rjson::value_parsed::value_parsed
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_file(std::string aFilename)
+rjson::value_parsed rjson::value_parsed::parse_file(fs::path aFilename)
 {
-    return parse(acmacs_base::read_file(aFilename));
+    return value_parsed{acmacs_base::read_file(aFilename)};
 
-} // rjson::parse_file
+} // rjson::value_parsed::parse_file
+
+// ----------------------------------------------------------------------
+
+rjson::value_parsed rjson::value_parsed::parse_string(std::string aJsonData)
+{
+    return value_parsed{aJsonData};
+
+} // rjson::value_parsed::parse_string
 
 // ----------------------------------------------------------------------
 

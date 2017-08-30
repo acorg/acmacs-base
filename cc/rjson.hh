@@ -7,7 +7,8 @@
 #include <vector>
 #include <iostream>
 
-#include "float.hh"
+#include "acmacs-base/float.hh"
+#include "acmacs-base/filesystem.hh"
 
 // ----------------------------------------------------------------------
 
@@ -22,9 +23,13 @@ namespace rjson
      public:
         inline string(std::string_view&& aData) : mData{std::move(aData)} {}
         inline string(std::string aData) : mBuffer{aData}, mData(mBuffer.data(), mBuffer.size()) {}
+        inline string(const char* aData) : mBuffer{aData}, mData(mBuffer) {}
+        inline string(string&& aSource) : mBuffer{aSource.mData}, mData(mBuffer) { std::cerr << "rjson::string move constructor" << '\n'; }
+        inline string(const string& aSource) : mBuffer{aSource.mData}, mData(mBuffer) { std::cerr << "rjson::string copy constructor" << '\n'; }
         inline std::string to_json() const { using namespace std::literals; return "\""s + static_cast<std::string>(mData) + "\""; }
         inline operator std::string() const { return mBuffer; }
-        inline string& operator=(std::string aSrc) { mBuffer = aSrc; mData = mBuffer; /* std::string_view(mBuffer.data(), mBuffer.size()); */ return *this; }
+        inline string& operator=(std::string aSrc) { mBuffer = aSrc; mData = mBuffer; return *this; }
+        inline string& operator=(const string& aSrc) { std::cerr << "rjson::string copy assignment" << '\n'; mBuffer = aSrc.mData; mData = mBuffer; return *this; }
         inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
         inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
 
@@ -127,6 +132,21 @@ namespace rjson
         std::string to_json() const;
     };
 
+    class value_parsed : public value
+    {
+     public:
+        inline value_parsed(value&& aSource) : value{std::move(aSource)} {}
+        static value_parsed parse_file(fs::path aFilename);
+        static value_parsed parse_string(std::string aJsonData);
+
+        const std::string& buffer() const { return mBuffer; }
+
+     private:
+        value_parsed(std::string aJsonData);
+
+        std::string mBuffer;
+    };
+
     class Error : public std::exception
     {
      public:
@@ -146,38 +166,13 @@ namespace rjson
 
     }; // class Error
 
-    value parse(std::string aData);
-    value parse_file(std::string aFilename);
-
-      // ----------------------------------------------------------------------
-
-    inline void object::insert(value&& aKey, value&& aValue)
-    {
-        mContent.emplace_back(std::get<rjson::string>(aKey), aValue);
-    }
-
-    inline value& object::get_ref(std::string aKey, value&& aDefault)
-    {
-        auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
-        if (found == std::end(mContent)) {
-            std::cerr << "object::get_ref: not found: " << aKey << ' ' << to_json() << '\n';
-            return mContent.emplace_back(std::move(aKey), std::move(aDefault)).second;
-        }
-        else {
-            std::cerr << "object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
-            return found->second;
-        }
-    }
-
-      // ----------------------------------------------------------------------
-
-    inline void array::insert(value&& aValue)
-    {
-        mContent.push_back(std::move(aValue));
-    }
+    inline value_parsed parse_string(std::string aJsonData) { return value_parsed::parse_string(aJsonData); }
+    inline value_parsed parse_file(std::string aFilename) { return value_parsed::parse_file(aFilename); }
 
 } // namespace rjson
 
+// ----------------------------------------------------------------------
+// gcc-7 support
 // ----------------------------------------------------------------------
 
 #if __GNUC__ == 7
@@ -190,10 +185,44 @@ namespace std
 #endif
 
 // ----------------------------------------------------------------------
+// inline
+// ----------------------------------------------------------------------
 
-inline std::string rjson::value::to_json() const
+namespace rjson
 {
-    return std::visit([](auto&& arg) -> std::string { return arg.to_json(); }, *this);
+    inline void object::insert(value&& aKey, value&& aValue)
+    {
+        mContent.emplace_back(std::get<rjson::string>(aKey), aValue);
+    }
+
+    inline value& object::get_ref(std::string aKey, value&& aDefault)
+    {
+        auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
+        if (found == std::end(mContent)) {
+            std::cerr << "DEBUG: object::get_ref: not found: " << aKey << ' ' << to_json() << " default:" << aDefault.to_json() << '\n';
+            auto& val = mContent.emplace_back(std::move(aKey), std::move(aDefault)).second;
+            return val;
+              //return get_ref(aKey, std::move(aDefault));
+        }
+        else {
+            std::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
+            return found->second;
+        }
+    }
+
+      // ----------------------------------------------------------------------
+
+    inline void array::insert(value&& aValue)
+    {
+        mContent.push_back(std::move(aValue));
+    }
+
+      // ----------------------------------------------------------------------
+
+    inline std::string value::to_json() const
+    {
+        return std::visit([](auto&& arg) -> std::string { return arg.to_json(); }, *this);
+    }
 }
 
 // ----------------------------------------------------------------------
