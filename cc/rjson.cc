@@ -370,7 +370,7 @@ namespace rjson::implementation
 
         void subvalue(rjson::value&& aSubvalue, Parser& aParser) override
             {
-                  // std::cerr << "ObjectHandler::subvalue " << aSubvalue.to_string() << '\n';
+                  // std::cerr << "ObjectHandler::subvalue " << aSubvalue.to_json() << '\n';
                 switch (mExpected) {
                   case Expected::Key:
                   case Expected::KeyAfterComma:
@@ -606,13 +606,13 @@ rjson::value rjson::parse_file(std::string aFilename)
 
 // ----------------------------------------------------------------------
 
-std::string rjson::object::to_string() const
+std::string rjson::object::to_json() const
 {
     std::string result(1, '{');
     for (const auto& [key, val]: mContent) {
-        result.append(key.to_string());
+        result.append(key.to_json());
         result.append(1, ':');
-        result.append(val.to_string());
+        result.append(val.to_json());
         result.append(1, ',');
     }
     if (result.back() == ',')
@@ -621,15 +621,15 @@ std::string rjson::object::to_string() const
         result.append(1, '}');
     return result;
 
-} // rjson::object::to_string
+} // rjson::object::to_json
 
 // ----------------------------------------------------------------------
 
-std::string rjson::array::to_string() const
+std::string rjson::array::to_json() const
 {
     std::string result(1, '[');
     for (const auto& val: mContent) {
-        result.append(val.to_string());
+        result.append(val.to_json());
         result.append(1, ',');
     }
     if (result.back() == ',')
@@ -638,7 +638,7 @@ std::string rjson::array::to_string() const
         result.append(1, ']');
     return result;
 
-} // rjson::array::to_string
+} // rjson::array::to_json
 
 
 // ----------------------------------------------------------------------

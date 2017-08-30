@@ -62,7 +62,7 @@ int main()
         try {
               // std::cout << '%' << to_parse << "%\n";
             const auto val = rjson::parse(to_parse);
-            const auto result = val.to_string();
+            const auto result = val.to_json();
             std::visit([&](auto&& aExpected) {
                 using T = std::decay_t<decltype(aExpected)>;
                 if constexpr (std::is_same_v<T, const char*>) {
