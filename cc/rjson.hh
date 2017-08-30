@@ -39,6 +39,7 @@ namespace rjson
         inline boolean(bool aValue) : mValue{aValue} {}
         inline std::string to_json() const { return mValue ? "true" : "false"; }
         inline operator bool() const { return mValue; }
+        inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
 
      private:
         bool mValue;
@@ -56,6 +57,7 @@ namespace rjson
      public:
         inline std::string to_json() const { return mValue; } // { return double_to_string(mValue); }
         inline operator double() const { return std::stod(mValue); } // { return mValue; }
+        inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
 
      private:
         inline number(std::string_view&& aData) : mValue{aData} {} // mValue{std::stod(static_cast<std::string>(aData))} {}
@@ -72,6 +74,7 @@ namespace rjson
         inline std::string to_json() const { return mValue; } // { return std::to_string(mValue); }
         inline operator double() const { return std::stod(mValue); } // { return mValue; }
         inline operator long() const { return std::stol(mValue); } // { return mValue; }
+        inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
 
      private:
         inline integer(std::string_view&& aData) : mValue{aData} {} // mValue{std::stol(static_cast<std::string>(aData))} {}
