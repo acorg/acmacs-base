@@ -23,7 +23,7 @@ CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WEVERYTHING) $
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
 ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
-ACMACS_BASE_LDLIBS = # -L$(AD_LIB)
+ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) # -L$(AD_LIB)
 
 # PYTHON_VERSION = $(shell python3 -c 'import sys; print("{0.major}.{0.minor}".format(sys.version_info))')
 # PYTHON_CONFIG = python$(PYTHON_VERSION)-config

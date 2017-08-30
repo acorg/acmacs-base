@@ -128,6 +128,7 @@ namespace rjson
     }; // class Error
 
     value parse(std::string aData);
+    value parse_file(std::string aFilename);
 
       // ----------------------------------------------------------------------
 

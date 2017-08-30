@@ -12,6 +12,7 @@ ifeq ($(CLANG4),Y)
   STD = c++1z
   CXX = $(CLANG4_EXE)
   CXX_NAME =   "clang++-4  "
+  FS_LIB = -L/usr/local/opt/llvm/lib -lc++experimental
 else ifeq ($(CLANG),Y)
   WEVERYTHING = -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded
   WARNINGS = -Wno-weak-vtables # -Wno-padded
@@ -25,6 +26,7 @@ else
     CXX = g++-7
     STD = c++1z
     CXX_NAME = "g++-7      "
+    FS_LIB = -lstdc++fs
   else
     CXX = g++
     STD = c++1z

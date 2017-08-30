@@ -4,15 +4,12 @@
 #include <iostream>
 #include <stdexcept>
 #include <fcntl.h>
+#include <unistd.h>
 #include <cerrno>
 #include <cstring>
 #include <cstdio>
 
-#pragma GCC diagnostic push
-#include "acmacs-base/boost-diagnostics.hh"
-#include "boost/filesystem.hpp"
-#pragma GCC diagnostic pop
-
+#include "acmacs-base/filesystem.hh"
 #include "acmacs-base/xz.hh"
 
 // ----------------------------------------------------------------------
@@ -21,21 +18,20 @@ namespace acmacs_base
 {
     inline bool file_exists(std::string aFilename)
     {
-        return boost::filesystem::exists(aFilename);
+        return fs::exists(aFilename);
     }
 
       // ----------------------------------------------------------------------
 
     inline std::string read_file(std::string aFilename)
     {
-        using namespace boost::filesystem;
         std::string buffer;
-        if (exists(aFilename)) {
-            const auto size = file_size(aFilename);
-            int f = open(aFilename.c_str(), O_RDONLY);
+        if (fs::exists(aFilename)) {
+            const auto size = fs::file_size(aFilename);
+            int f = ::open(aFilename.c_str(), O_RDONLY);
             if (f >= 0) {
                 buffer.resize(size, ' '); // reserve space
-                if (read(f, &*buffer.begin(), size) < 0)
+                if (::read(f, &*buffer.begin(), size) < 0)
                     throw std::runtime_error(std::string("Cannot read ") + aFilename + ": " + strerror(errno));
                 close(f);
             }
@@ -84,18 +80,17 @@ namespace acmacs_base
 
     inline void backup_file(std::string aFilename)
     {
-        using namespace boost::filesystem;
-        path to_backup{aFilename};
-        if (exists(to_backup)) {
-            path backup_dir = to_backup.parent_path() / ".backup";
+        fs::path to_backup{aFilename};
+        if (fs::exists(to_backup)) {
+            fs::path backup_dir = to_backup.parent_path() / ".backup";
             create_directory(backup_dir);
 
             for (int version = 1; version < 1000; ++version) {
                 char infix[10];
                 std::sprintf(infix, ".~%03d~", version);
-                path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
-                if (!exists(new_name) || version == 999) {
-                    copy_file(to_backup, new_name, copy_option::overwrite_if_exists);
+                fs::path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
+                if (!fs::exists(new_name) || version == 999) {
+                    fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
                     break;
                 }
             }
@@ -147,7 +142,7 @@ namespace acmacs_base
 
         inline ~TempFile()
             {
-                unlink(name);
+                fs::remove(name);
             }
 
      private:

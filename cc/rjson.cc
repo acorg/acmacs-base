@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "string.hh"
+#include "read-file.hh"
 #include "rjson.hh"
 
 // ----------------------------------------------------------------------
@@ -594,6 +595,14 @@ rjson::value rjson::parse(std::string aData)
     return parser.result();
 
 } // rjson::parse
+
+// ----------------------------------------------------------------------
+
+rjson::value rjson::parse_file(std::string aFilename)
+{
+    return parse(acmacs_base::read_file(aFilename));
+
+} // rjson::parse_file
 
 // ----------------------------------------------------------------------
 
