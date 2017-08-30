@@ -184,13 +184,11 @@ namespace rjson
     {
         auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
         if (found == std::end(mContent)) {
-            std::cerr << "DEBUG: object::get_ref: not found: " << aKey << ' ' << to_json() << " default:" << aDefault.to_json() << '\n';
-            auto& val = mContent.emplace_back(std::move(aKey), std::move(aDefault)).second;
-            return val;
-              //return get_ref(aKey, std::move(aDefault));
+              // std::cerr << "DEBUG: object::get_ref: not found: " << aKey << ' ' << to_json() << " default:" << aDefault.to_json() << '\n';
+            return mContent.emplace_back(std::move(aKey), std::move(aDefault)).second;
         }
         else {
-            std::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
+              // std::d::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
             return found->second;
         }
     }
