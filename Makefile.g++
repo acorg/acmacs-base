@@ -11,24 +11,24 @@ ifeq ($(CLANG4),Y)
   WARNINGS = -Wno-weak-vtables # -Wno-padded
   STD = c++1z
   CXX = $(CLANG4_EXE)
-  CXX_NAME = clang++-4
+  CXX_NAME =   "clang++-4   "
 else ifeq ($(CLANG),Y)
   WEVERYTHING = -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded
   WARNINGS = -Wno-weak-vtables # -Wno-padded
   STD = c++1z
   CXX = g++
-  CXX_NAME = clang++
+  CXX_NAME =   "clang++     "
 else
   WEVERYTHING = -Wall -Wextra
   WARNINGS =
   ifeq ($(GCC7),Y)
     CXX = g++-7
     STD = c++1z
-    CXX_NAME = g++-7
+    CXX_NAME = "g++-7      "
   else
     CXX = g++
     STD = c++1z
-    CXX_NAME = g++
+    CXX_NAME = "g++        "
   endif
 endif
 

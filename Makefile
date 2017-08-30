@@ -8,7 +8,7 @@ MAKEFLAGS = -w
 
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
-ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc
+ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc rjson.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 
 # ----------------------------------------------------------------------
@@ -81,6 +81,9 @@ $(BUILD)/%.o: cc/%.cc | $(BUILD)
 # ----------------------------------------------------------------------
 
 include Makefile.dist-build.rules
+
+RTAGS_TARGET = $(ACMACS_BASE_LIB)
+include Makefile.rtags
 
 # ======================================================================
 ### Local Variables:
