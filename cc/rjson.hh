@@ -54,13 +54,14 @@ namespace rjson
     class number
     {
      public:
-        inline std::string to_json() const { return double_to_string(mValue); }
-        inline operator double() const { return mValue; }
+        inline std::string to_json() const { return mValue; } // { return double_to_string(mValue); }
+        inline operator double() const { return std::stod(mValue); } // { return mValue; }
 
      private:
-        inline number(std::string_view&& aData) : mValue{std::stod(static_cast<std::string>(aData))} {}
+        inline number(std::string_view&& aData) : mValue{aData} {} // mValue{std::stod(static_cast<std::string>(aData))} {}
 
-        double mValue;
+          // double mValue;
+        std::string mValue;
 
         friend class implementation::NumberHandler;
     };
@@ -68,14 +69,15 @@ namespace rjson
     class integer
     {
      public:
-        inline std::string to_json() const { return std::to_string(mValue); }
-        inline operator double() const { return mValue; }
-        inline operator long() const { return mValue; }
+        inline std::string to_json() const { return mValue; } // { return std::to_string(mValue); }
+        inline operator double() const { return std::stod(mValue); } // { return mValue; }
+        inline operator long() const { return std::stol(mValue); } // { return mValue; }
 
      private:
-        inline integer(std::string_view&& aData) : mValue{std::stol(static_cast<std::string>(aData))} {}
+        inline integer(std::string_view&& aData) : mValue{aData} {} // mValue{std::stol(static_cast<std::string>(aData))} {}
 
-        long mValue;
+          // long mValue;
+        std::string mValue;
 
         friend class implementation::NumberHandler;
     };
