@@ -21,21 +21,16 @@ namespace rjson
     class string
     {
      public:
-        inline string(std::string_view&& aData) : mData{std::move(aData)} {}
-        inline string(std::string aData) : mBuffer{aData}, mData(mBuffer.data(), mBuffer.size()) {}
-        inline string(const char* aData) : mBuffer{aData}, mData(mBuffer) {}
-        inline string(string&& aSource) : mBuffer{aSource.mData}, mData(mBuffer) { std::cerr << "rjson::string move constructor" << '\n'; }
-        inline string(const string& aSource) : mBuffer{aSource.mData}, mData(mBuffer) { std::cerr << "rjson::string copy constructor" << '\n'; }
-        inline std::string to_json() const { using namespace std::literals; return "\""s + static_cast<std::string>(mData) + "\""; }
-        inline operator std::string() const { return mBuffer; }
-        inline string& operator=(std::string aSrc) { mBuffer = aSrc; mData = mBuffer; return *this; }
-        inline string& operator=(const string& aSrc) { std::cerr << "rjson::string copy assignment" << '\n'; mBuffer = aSrc.mData; mData = mBuffer; return *this; }
+        inline string(std::string aData) : mData{aData} {}
+        inline string(const char* aData) : mData{aData} {}
+        inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
+        inline operator std::string() const { return mData; }
+        inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
         inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
         inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
 
      private:
-        std::string mBuffer;    // in case there is no external buffer
-        std::string_view mData;
+        std::string mData;
     };
 
     class boolean
@@ -132,21 +127,6 @@ namespace rjson
         std::string to_json() const;
     };
 
-    class value_parsed : public value
-    {
-     public:
-        inline value_parsed(value&& aSource) : value{std::move(aSource)} {}
-        static value_parsed parse_file(fs::path aFilename);
-        static value_parsed parse_string(std::string aJsonData);
-
-        const std::string& buffer() const { return mBuffer; }
-
-     private:
-        value_parsed(std::string aJsonData);
-
-        std::string mBuffer;
-    };
-
     class Error : public std::exception
     {
      public:
@@ -166,8 +146,8 @@ namespace rjson
 
     }; // class Error
 
-    inline value_parsed parse_string(std::string aJsonData) { return value_parsed::parse_string(aJsonData); }
-    inline value_parsed parse_file(std::string aFilename) { return value_parsed::parse_file(aFilename); }
+    value parse_string(std::string aJsonData);
+    value parse_file(std::string aFilename);
 
 } // namespace rjson
 
