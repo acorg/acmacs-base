@@ -140,9 +140,9 @@ namespace rjson
                 return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
             }
 
-        template <typename F> inline F get_field(std::string aFieldName, F&& aDefaultValue)
+        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
             {
-                using type = typename implementation::content_type<F>::type;
+                using type = typename implementation::content_type<std::decay_t<F>>::type;
                 return std::get<type>(get_ref(aFieldName, std::forward<value>(aDefaultValue)));
             }
 
@@ -153,6 +153,24 @@ namespace rjson
 
         std::string to_json() const;
     };
+
+      // ----------------------------------------------------------------------
+
+    template <typename FValue> class field_get_set
+    {
+     public:
+        inline field_get_set(std::string aFieldName, FValue&& aDefault) : mFieldName{aFieldName}, mDefault{std::move(aDefault)} {}
+        inline operator FValue() const { return mContainer->get_field(mFieldName, mDefault); }
+        inline void operator = (FValue&& aValue) { mContainer->set_field(mFieldName, std::forward<FValue>(aValue)); }
+        inline void container(value* aContainer) { mContainer = aContainer; }
+
+     private:
+        mutable value* mContainer = nullptr;
+        std::string mFieldName;
+        FValue mDefault;
+    };
+
+      // ----------------------------------------------------------------------
 
     class Error : public std::exception
     {
@@ -246,6 +264,11 @@ namespace rjson
 inline std::ostream& operator<<(std::ostream& out, const rjson::value& aValue)
 {
     return out << aValue.to_json();
+}
+
+template <typename FValue> inline std::ostream& operator<<(std::ostream& out, const rjson::field_get_set<FValue>& aValue)
+{
+    return out << static_cast<FValue>(aValue);
 }
 
 // ----------------------------------------------------------------------
