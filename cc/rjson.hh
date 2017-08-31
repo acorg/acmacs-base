@@ -95,6 +95,7 @@ namespace rjson
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
+        void set_field(std::string aKey, value&& aValue);
 
      private:
         std::vector<std::pair<string, value>> mContent;
@@ -110,6 +111,16 @@ namespace rjson
      private:
         std::vector<value> mContent;
     };
+
+    namespace implementation
+    {
+        template <typename F> struct content_type;
+        template <> struct content_type<double> { using type = rjson::number; };
+        template <> struct content_type<long> { using type = rjson::integer; };
+        template <> struct content_type<int> { using type = rjson::integer; };
+        template <> struct content_type<bool> { using type = rjson::boolean; };
+        template <> struct content_type<std::string> { using type = rjson::string; };
+    }
 
     using value_base = std::variant<null, object, array, string, integer, number, boolean>; // null must be the first alternative, it is the default value;
 
@@ -127,6 +138,17 @@ namespace rjson
         inline value& get_ref(std::string aKey, value&& aDefault)
             {
                 return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
+            }
+
+        template <typename F> inline F get_field(std::string aFieldName, F&& aDefaultValue)
+            {
+                using type = typename implementation::content_type<F>::type;
+                return std::get<type>(get_ref(aFieldName, std::forward<value>(aDefaultValue)));
+            }
+
+        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+            {
+                std::get<object>(*this).set_field(aFieldName, std::forward<value>(aValue));
             }
 
         std::string to_json() const;
@@ -185,11 +207,22 @@ namespace rjson
         auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
         if (found == std::end(mContent)) {
               // std::cerr << "DEBUG: object::get_ref: not found: " << aKey << ' ' << to_json() << " default:" << aDefault.to_json() << '\n';
-            return mContent.emplace_back(std::move(aKey), std::move(aDefault)).second;
+            return mContent.emplace_back(std::move(aKey), std::forward<value>(aDefault)).second;
         }
         else {
               // std::d::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
             return found->second;
+        }
+    }
+
+    inline void object::set_field(std::string aKey, value&& aValue)
+    {
+        auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
+        if (found == std::end(mContent)) {
+            mContent.emplace_back(std::move(aKey), std::forward<value>(aValue));
+        }
+        else {
+            found->second = std::forward<value>(aValue);
         }
     }
 
