@@ -38,6 +38,8 @@ all: check-python install
 
 install: check-acmacsd-root make-dirs install-acmacs-base
 
+lib: $(ACMACS_BASE_LIB)
+
 make-dirs:
 	bin/__setup_dirs acmacs-base
 
@@ -46,7 +48,7 @@ test: $(DIST)/test-rjson
 
 # ----------------------------------------------------------------------
 
-install-acmacs-base: $(ACMACS_BASE_LIB)
+install-acmacs-base: lib
 	ln -sf $(ACMACS_BASE_LIB) $(AD_LIB)
 	if [ $$(uname) = "Darwin" ]; then /usr/bin/install_name_tool -id $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)) $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)); fi
 	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
