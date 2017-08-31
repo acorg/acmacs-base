@@ -56,9 +56,10 @@ namespace rjson
     class number
     {
      public:
+        inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
+        inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; } // { return double_to_string(mValue); }
         inline operator double() const { return std::stod(mValue); } // { return mValue; }
-        inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
 
      private:
         inline number(std::string_view&& aData) : mValue{aData} {} // mValue{std::stod(static_cast<std::string>(aData))} {}
@@ -72,10 +73,11 @@ namespace rjson
     class integer
     {
      public:
+        inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; } // { return std::to_string(mValue); }
         inline operator double() const { return std::stod(mValue); } // { return mValue; }
         inline operator long() const { return std::stol(mValue); } // { return mValue; }
-        inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
 
      private:
         inline integer(std::string_view&& aData) : mValue{aData} {} // mValue{std::stol(static_cast<std::string>(aData))} {}
@@ -143,13 +145,14 @@ namespace rjson
 
         template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
             {
-                using type = typename implementation::content_type<std::decay_t<F>>::type;
-                return std::get<type>(get_ref(aFieldName, std::forward<value>(aDefaultValue)));
+                using rjson_type = typename implementation::content_type<std::decay_t<F>>::type;
+                return std::get<rjson_type>(get_ref(aFieldName, rjson_type{std::forward<F>(aDefaultValue)}));
             }
 
         template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
             {
-                std::get<object>(*this).set_field(aFieldName, std::forward<value>(aValue));
+                using rjson_type = typename implementation::content_type<std::decay_t<F>>::type;
+                std::get<object>(*this).set_field(aFieldName, rjson_type{std::forward<F>(aValue)});
             }
 
         std::string to_json() const;
@@ -163,7 +166,7 @@ namespace rjson
         inline void use_json(value& aData) { mData = &aData; }
         inline operator value&() { assert(mData); return *mData; }
         inline operator const value&() const { assert(mData); return *mData; }
-        inline std::string json() const { return static_cast<const value&>(*this).to_json(); }
+        inline std::string to_json() const { return static_cast<const value&>(*this).to_json(); }
 
      private:
         mutable value* mData = nullptr;
@@ -241,7 +244,7 @@ namespace rjson
             return mContent.emplace_back(std::move(aKey), std::forward<value>(aDefault)).second;
         }
         else {
-              // std::d::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
+            // std::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
             return found->second;
         }
     }
