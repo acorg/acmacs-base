@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 #include <iostream>
+#include <cassert>
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/filesystem.hh"
@@ -156,16 +157,28 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
+    class field_container
+    {
+     public:
+        inline void use_json(value& aData) { mData = &aData; }
+        inline operator value&() { assert(mData); return *mData; }
+        inline operator const value&() const { assert(mData); return *mData; }
+        inline std::string json() const { return static_cast<const value&>(*this).to_json(); }
+
+     private:
+        mutable value* mData = nullptr;
+    };
+
     template <typename FValue> class field_get_set
     {
      public:
-        inline field_get_set(std::string aFieldName, FValue&& aDefault) : mFieldName{aFieldName}, mDefault{std::move(aDefault)} {}
-        inline operator FValue() const { return mContainer->get_field(mFieldName, mDefault); }
-        inline void operator = (FValue&& aValue) { mContainer->set_field(mFieldName, std::forward<FValue>(aValue)); }
-        inline void container(value* aContainer) { mContainer = aContainer; }
+        inline field_get_set(field_container* aContainer, std::string aFieldName, FValue&& aDefault) : mContainer{*aContainer}, mFieldName{aFieldName}, mDefault{std::move(aDefault)} {}
+        inline operator FValue() const { return static_cast<value&>(mContainer).get_field(mFieldName, mDefault); } // static_cast to non-const because we need to set to mDefault
+        inline field_get_set<FValue>& operator = (FValue&& aValue) { static_cast<value&>(mContainer).set_field(mFieldName, std::forward<FValue>(aValue)); return *this; }
+        inline field_get_set<FValue>& operator = (const field_get_set<FValue>& aSource) { return operator=(static_cast<FValue>(aSource)); }
 
      private:
-        mutable value* mContainer = nullptr;
+        field_container& mContainer;
         std::string mFieldName;
         FValue mDefault;
     };
