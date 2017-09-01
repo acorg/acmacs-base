@@ -21,6 +21,9 @@ namespace rjson
 
     class value;
 
+    template <typename F> struct content_type;
+    template <typename F> using rjson_type = typename content_type<std::decay_t<F>>::type;
+
     class string
     {
      public:
@@ -96,8 +99,13 @@ namespace rjson
     class object
     {
      public:
+        inline object() = default;
+        inline object(std::initializer_list<value> key_values);
+
         std::string to_json() const;
 
+        void insert(const string& aKey, value&& aValue);
+        void insert(const string& aKey, const value& aValue);
         void insert(value&& aKey, value&& aValue);
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
@@ -105,7 +113,14 @@ namespace rjson
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
-        value& get_ref_to_object(std::string aKey);
+        const value& get_ref(std::string aKey, value&& aDefault) const;
+        object& get_ref_to_object(std::string aKey);
+
+        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
+            {
+                return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type<F>{std::forward<F>(aDefaultValue)}));
+            }
+
         void set_field(std::string aKey, value&& aValue);
 
      private:
@@ -138,14 +153,11 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-    template <typename F> struct content_type;
     template <> struct content_type<double> { using type = rjson::number; };
     template <> struct content_type<long> { using type = rjson::integer; };
     template <> struct content_type<int> { using type = rjson::integer; };
     template <> struct content_type<bool> { using type = rjson::boolean; };
     template <> struct content_type<std::string> { using type = rjson::string; };
-
-    template <typename F> using rjson_type = typename content_type<std::decay_t<F>>::type;
 
     template <typename FValue> value to_value(const FValue& aValue);
 
@@ -176,21 +188,28 @@ namespace rjson
                 }
             }
 
-        inline value& get_ref_to_object(std::string aKey)
+        inline object& get_ref_to_object(std::string aKey)
             {
                 try {
                     return std::get<object>(*this).get_ref_to_object(aKey);
                 }
                 catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
+                    std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: " << to_json() << '\n'; // valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
                     throw;
                 }
             }
 
-        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
-        //     {
-        //         return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type{std::forward<F>(aDefaultValue)}));
-        //     }
+        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
+            {
+                try {
+                    return std::get<object>(*this).get_field(aFieldName, std::forward<F>(aDefaultValue));
+                }
+                catch (std::bad_variant_access&) {
+                    std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
+                    throw;
+                }
+                // return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type<F>{std::forward<F>(aDefaultValue)}));
+            }
 
         template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
             {
@@ -260,10 +279,25 @@ namespace std
 
 namespace rjson
 {
-    inline void object::insert(value&& aKey, value&& aValue)
+    inline void object::insert(const string& aKey, value&& aValue) { mContent.emplace(aKey, std::move(aValue)); }
+    inline void object::insert(const string& aKey, const value& aValue) { mContent.emplace(aKey, aValue); }
+    inline void object::insert(value&& aKey, value&& aValue) { insert(std::get<string>(std::forward<value>(aKey)), std::forward<value>(aValue)); }
+
+    inline object::object(std::initializer_list<value> key_values)
     {
-        mContent.emplace(std::get<rjson::string>(aKey), aValue);
-          // mContent.emplace_back(std::get<rjson::string>(aKey), aValue);
+        if ((key_values.size() % 2) != 0)
+            throw std::runtime_error("rjson::object::object(initializer_list): odd number of arguments");
+        try {
+            for (auto elt = std::begin(key_values); elt != std::end(key_values); ++elt) {
+                const auto& key = std::get<string>(*elt);
+                ++elt;
+                insert(key, *elt);
+            }
+        }
+        catch (std::bad_variant_access&) {
+            std::cerr << "ERROR: rjson::object::object(initializer_list): invalid object field name type?\n";
+            throw;
+        }
     }
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
@@ -282,13 +316,15 @@ namespace rjson
         // }
     }
 
-    inline value& object::get_ref_to_object(std::string aKey)
+    inline const value& object::get_ref(std::string aKey, value&& aDefault) const { return const_cast<object*>(this)->get_ref(aKey, std::forward<value>(aDefault)); }
+
+    inline object& object::get_ref_to_object(std::string aKey)
     {
         const auto existing = mContent.find(aKey);
         if (existing == mContent.end())
-            return get_ref(aKey, object{});
+            return std::get<object>(get_ref(aKey, object{}));
         else
-            return existing->second;
+            return std::get<object>(existing->second);
     }
 
     inline void object::set_field(std::string aKey, value&& aValue)
