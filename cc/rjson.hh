@@ -99,6 +99,8 @@ namespace rjson
     class object
     {
      public:
+        class field_not_found : public std::exception { public: using std::exception::exception; };
+
         inline object() = default;
         inline object(std::initializer_list<value> key_values);
 
@@ -113,12 +115,18 @@ namespace rjson
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
+        const value& get_ref(std::string aKey) const; // throws field_not_found
         const value& get_ref(std::string aKey, value&& aDefault) const;
         object& get_ref_to_object(std::string aKey);
 
         template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
             {
                 return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type<F>{std::forward<F>(aDefaultValue)}));
+            }
+
+        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName) const // throws field_not_found
+            {
+                return std::get<rjson_type<F>>(get_ref(aFieldName));
             }
 
         void set_field(std::string aKey, value&& aValue);
@@ -317,6 +325,14 @@ namespace rjson
     }
 
     inline const value& object::get_ref(std::string aKey, value&& aDefault) const { return const_cast<object*>(this)->get_ref(aKey, std::forward<value>(aDefault)); }
+
+    inline const value& object::get_ref(std::string aKey) const
+    {
+        const auto existing = mContent.find(aKey);
+        if (existing == mContent.end())
+            throw field_not_found{};
+        return existing->second;
+    }
 
     inline object& object::get_ref_to_object(std::string aKey)
     {
