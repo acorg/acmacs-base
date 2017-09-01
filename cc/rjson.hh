@@ -105,6 +105,7 @@ namespace rjson
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
+        value& get_ref_to_object(std::string aKey);
         void set_field(std::string aKey, value&& aValue);
 
      private:
@@ -144,6 +145,8 @@ namespace rjson
     template <> struct content_type<bool> { using type = rjson::boolean; };
     template <> struct content_type<std::string> { using type = rjson::string; };
 
+    template <typename F> using rjson_type = typename content_type<std::decay_t<F>>::type;
+
     template <typename FValue> value to_value(const FValue& aValue);
 
       // ----------------------------------------------------------------------
@@ -173,32 +176,43 @@ namespace rjson
                 }
             }
 
-        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
-            {
-                using rjson_type = typename content_type<std::decay_t<F>>::type;
-                return std::get<rjson_type>(get_ref(aFieldName, rjson_type{std::forward<F>(aDefaultValue)}));
-            }
-
-        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+        inline value& get_ref_to_object(std::string aKey)
             {
                 try {
-                    std::get<object>(*this).set_field(aFieldName, to_value(aValue));
+                    return std::get<object>(*this).get_ref_to_object(aKey);
                 }
                 catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
+                    std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
                     throw;
                 }
             }
 
+        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
+        //     {
+        //         return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type{std::forward<F>(aDefaultValue)}));
+        //     }
+
+        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+            {
+                set_field(aFieldName, to_value(aValue));
+                // try {
+                //     std::get<object>(*this).set_field(aFieldName, to_value(aValue));
+                // }
+                // catch (std::bad_variant_access&) {
+                //     std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
+                //     throw;
+                // }
+            }
+
         std::string to_json() const;
-    };
+
+    }; // class value
 
       // ----------------------------------------------------------------------
 
     template <typename FValue> inline value to_value(const FValue& aValue)
     {
-        using rjson_type = typename content_type<std::decay_t<FValue>>::type;
-        return rjson_type{aValue};
+        return rjson_type<FValue>{aValue};
     }
 
       // ----------------------------------------------------------------------
@@ -268,6 +282,15 @@ namespace rjson
         // }
     }
 
+    inline value& object::get_ref_to_object(std::string aKey)
+    {
+        const auto existing = mContent.find(aKey);
+        if (existing == mContent.end())
+            return get_ref(aKey, object{});
+        else
+            return existing->second;
+    }
+
     inline void object::set_field(std::string aKey, value&& aValue)
     {
         mContent.insert_or_assign(aKey, std::forward<value>(aValue));
@@ -293,6 +316,17 @@ namespace rjson
     }
 
       // ----------------------------------------------------------------------
+
+    template <> inline void value::set_field(std::string aFieldName, value&& aValue)
+    {
+        try {
+            std::get<object>(*this).set_field(aFieldName, std::forward<value>(aValue));
+        }
+        catch (std::bad_variant_access&) {
+            std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
+            throw;
+        }
+    }
 
     inline std::string value::to_json() const
     {
