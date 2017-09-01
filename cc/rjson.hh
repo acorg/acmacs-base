@@ -155,8 +155,10 @@ namespace rjson
         inline bool empty() const { return mContent.empty(); }
         inline value& operator[](size_t index) { return mContent[index]; }
         inline const value& operator[](size_t index) const { return mContent[index]; }
-        inline auto begin() const { return mContent.begin(); }
-        inline auto end() const { return mContent.end(); }
+
+        using iterator = decltype(std::declval<const std::vector<value>>().begin());
+        inline iterator begin() const { return mContent.begin(); }
+        inline iterator end() const { return mContent.end(); }
 
      private:
         std::vector<value> mContent;
