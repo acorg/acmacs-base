@@ -34,6 +34,7 @@ namespace rjson
         inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
         inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
         inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
+        inline bool operator==(const char* aToCompare) const { return mData == aToCompare; }
         inline size_t size() const { return mData.size(); }
         inline bool empty() const { return mData.empty(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
@@ -102,7 +103,7 @@ namespace rjson
         class field_not_found : public std::exception { public: using std::exception::exception; };
 
         inline object() = default;
-        inline object(std::initializer_list<value> key_values);
+        inline object(std::initializer_list<std::pair<string, value>> key_values);
 
         std::string to_json() const;
 
@@ -291,21 +292,24 @@ namespace rjson
     inline void object::insert(const string& aKey, const value& aValue) { mContent.emplace(aKey, aValue); }
     inline void object::insert(value&& aKey, value&& aValue) { insert(std::get<string>(std::forward<value>(aKey)), std::forward<value>(aValue)); }
 
-    inline object::object(std::initializer_list<value> key_values)
+    inline object::object(std::initializer_list<std::pair<string, value>> key_values)
     {
-        if ((key_values.size() % 2) != 0)
-            throw std::runtime_error("rjson::object::object(initializer_list): odd number of arguments");
-        try {
-            for (auto elt = std::begin(key_values); elt != std::end(key_values); ++elt) {
-                const auto& key = std::get<string>(*elt);
-                ++elt;
-                insert(key, *elt);
-            }
-        }
-        catch (std::bad_variant_access&) {
-            std::cerr << "ERROR: rjson::object::object(initializer_list): invalid object field name type?\n";
-            throw;
-        }
+        for (const auto& [key, value]: key_values)
+            insert(key, value);
+
+        // if ((key_values.size() % 2) != 0)
+        //     throw std::runtime_error("rjson::object::object(initializer_list): odd number of arguments");
+        // try {
+        //     for (auto elt = std::begin(key_values); elt != std::end(key_values); ++elt) {
+        //         const auto& key = std::get<string>(*elt);
+        //         ++elt;
+        //         insert(key, *elt);
+        //     }
+        // }
+        // catch (std::bad_variant_access&) {
+        //     std::cerr << "ERROR: rjson::object::object(initializer_list): invalid object field name type?\n";
+        //     throw;
+        // }
     }
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
