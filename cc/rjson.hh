@@ -115,9 +115,17 @@ namespace rjson
     class array
     {
      public:
+        inline array() = default;
+        inline array(array&&) = default;
+        inline array(const array&) = default;
+        inline array(std::initializer_list<value> args);
+        inline array& operator=(array&&) = default;
+        inline array& operator=(const array&) = default;
+
         std::string to_json() const;
 
         void insert(value&& aValue);
+        void insert(const value& aValue);
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
         inline value& operator[](size_t index) { return mContent[index]; }
@@ -127,17 +135,18 @@ namespace rjson
         std::vector<value> mContent;
     };
 
-    namespace implementation
-    {
-        template <typename F> struct content_type;
-        template <> struct content_type<double> { using type = rjson::number; };
-        template <> struct content_type<long> { using type = rjson::integer; };
-        template <> struct content_type<int> { using type = rjson::integer; };
-        template <> struct content_type<bool> { using type = rjson::boolean; };
-        template <> struct content_type<std::string> { using type = rjson::string; };
+      // ----------------------------------------------------------------------
 
-        template <typename FValue> value to_value(const FValue& aValue);
-    }
+    template <typename F> struct content_type;
+    template <> struct content_type<double> { using type = rjson::number; };
+    template <> struct content_type<long> { using type = rjson::integer; };
+    template <> struct content_type<int> { using type = rjson::integer; };
+    template <> struct content_type<bool> { using type = rjson::boolean; };
+    template <> struct content_type<std::string> { using type = rjson::string; };
+
+    template <typename FValue> value to_value(const FValue& aValue);
+
+      // ----------------------------------------------------------------------
 
     using value_base = std::variant<null, object, array, string, integer, number, boolean>; // null must be the first alternative, it is the default value;
 
@@ -166,70 +175,31 @@ namespace rjson
 
         template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue)
             {
-                using rjson_type = typename implementation::content_type<std::decay_t<F>>::type;
+                using rjson_type = typename content_type<std::decay_t<F>>::type;
                 return std::get<rjson_type>(get_ref(aFieldName, rjson_type{std::forward<F>(aDefaultValue)}));
             }
 
         template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
             {
                 try {
-                    std::get<object>(*this).set_field(aFieldName, implementation::to_value(aValue));
+                    std::get<object>(*this).set_field(aFieldName, to_value(aValue));
                 }
                 catch (std::bad_variant_access&) {
                     std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
                     throw;
                 }
-                  // using rjson_type = typename implementation::content_type<std::decay_t<F>>::type;
-                  // std::get<object>(*this).set_field(aFieldName, rjson_type{std::forward<F>(aValue)});
             }
 
         std::string to_json() const;
     };
 
-    namespace implementation
-    {
-        template <typename FValue> inline value to_value(const FValue& aValue)
-        {
-            using rjson_type = typename implementation::content_type<std::decay_t<FValue>>::type;
-            return rjson_type{aValue};
-        }
-    }
-
       // ----------------------------------------------------------------------
 
-    class field_container
+    template <typename FValue> inline value to_value(const FValue& aValue)
     {
-     public:
-        inline void use_json(value& aData) { mData = &aData; }
-        inline operator value&() { assert(mData); return *mData; }
-        inline operator const value&() const { assert(mData); return *mData; }
-        inline std::string to_json() const { return static_cast<const value&>(*this).to_json(); }
-
-     private:
-        mutable value* mData = nullptr;
-    };
-
-    template <typename FValue> class field_get_set
-    {
-     public:
-        inline field_get_set(field_container* aContainer, std::string aFieldName, FValue&& aDefault) : mContainer{*aContainer}, mFieldName{aFieldName}, mDefault{std::move(aDefault)} {}
-        inline operator FValue() const { return static_cast<value&>(mContainer).get_field(mFieldName, mDefault); } // static_cast to non-const because we need to set to mDefault
-        inline field_get_set<FValue>& operator = (FValue&& aValue) { static_cast<value&>(mContainer).set_field(mFieldName, std::forward<FValue>(aValue)); return *this; }
-        inline field_get_set<FValue>& operator = (const FValue& aValue) { static_cast<value&>(mContainer).set_field(mFieldName, aValue); return *this; }
-        inline field_get_set<FValue>& operator = (const field_get_set<FValue>& aSource) { return operator=(static_cast<FValue>(aSource)); }
-
-     protected:
-        inline value& get_ref() { return static_cast<value&>(mContainer).get_ref(mFieldName, implementation::to_value(mDefault)); }
-        inline const value& get_ref() const { return static_cast<value&>(mContainer).get_ref(mFieldName, implementation::to_value(mDefault)); }
-        using rjson_type = typename implementation::content_type<FValue>::type;
-        inline rjson_type& get_value_ref() { return std::get<rjson_type>(get_ref()); }
-        inline const rjson_type& get_value_ref() const { return std::get<rjson_type>(get_ref()); }
-
-     private:
-        field_container& mContainer;
-        std::string mFieldName;
-        FValue mDefault;
-    };
+        using rjson_type = typename content_type<std::decay_t<FValue>>::type;
+        return rjson_type{aValue};
+    }
 
       // ----------------------------------------------------------------------
 
@@ -313,9 +283,13 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-    inline void array::insert(value&& aValue)
+    inline void array::insert(value&& aValue) { mContent.push_back(std::move(aValue)); }
+    inline void array::insert(const value& aValue) { mContent.push_back(aValue); }
+
+    inline array::array(std::initializer_list<value> args)
     {
-        mContent.push_back(std::move(aValue));
+        for (const auto& arg: args)
+            insert(arg);
     }
 
       // ----------------------------------------------------------------------
@@ -331,11 +305,6 @@ namespace rjson
 inline std::ostream& operator<<(std::ostream& out, const rjson::value& aValue)
 {
     return out << aValue.to_json();
-}
-
-template <typename FValue> inline std::ostream& operator<<(std::ostream& out, const rjson::field_get_set<FValue>& aValue)
-{
-    return out << static_cast<FValue>(aValue);
 }
 
 // ----------------------------------------------------------------------
