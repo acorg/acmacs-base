@@ -161,8 +161,12 @@ namespace rjson
         inline const value& operator[](size_t index) const { return mContent[index]; }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
+        using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
         inline iterator begin() const { return mContent.begin(); }
         inline iterator end() const { return mContent.end(); }
+        inline iterator begin() { return mContent.begin(); }
+        inline iterator end() { return mContent.end(); }
+        inline reverse_iterator rbegin() const { return mContent.rbegin(); }
 
      private:
         std::vector<value> mContent;
