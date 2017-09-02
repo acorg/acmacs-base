@@ -159,6 +159,7 @@ namespace rjson
         inline bool empty() const { return mContent.empty(); }
         inline value& operator[](size_t index) { return mContent[index]; }
         inline const value& operator[](size_t index) const { return mContent[index]; }
+        inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
         using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
