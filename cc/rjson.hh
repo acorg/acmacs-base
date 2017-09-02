@@ -67,11 +67,11 @@ namespace rjson
      public:
         inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
         inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
-        inline std::string to_json() const { return mValue; } // { return double_to_string(mValue); }
-        inline operator double() const { return std::stod(mValue); } // { return mValue; }
+        inline std::string to_json() const { return mValue; }
+        inline operator double() const { return std::stod(mValue); }
 
      private:
-        inline number(std::string_view&& aData) : mValue{aData} {} // mValue{std::stod(static_cast<std::string>(aData))} {}
+        inline number(std::string_view&& aData) : mValue{aData} {}
 
           // double mValue;
         std::string mValue;
@@ -83,15 +83,19 @@ namespace rjson
     {
      public:
         inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer(unsigned long aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
-        inline std::string to_json() const { return mValue; } // { return std::to_string(mValue); }
-        inline operator double() const { return std::stod(mValue); } // { return mValue; }
-        inline operator long() const { return std::stol(mValue); } // { return mValue; }
+        inline integer& operator=(unsigned long aSrc) { mValue = std::to_string(aSrc); return *this; }
+        inline std::string to_json() const { return mValue; }
+        inline operator double() const { return std::stod(mValue); }
+        inline operator long() const { return std::stol(mValue); }
+        inline operator unsigned long() const { return std::stoul(mValue); }
+        inline operator int() const { return static_cast<int>(std::stol(mValue)); }
+        inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
 
      private:
-        inline integer(std::string_view&& aData) : mValue{aData} {} // mValue{std::stol(static_cast<std::string>(aData))} {}
+        inline integer(std::string_view&& aData) : mValue{aData} {}
 
-          // long mValue;
         std::string mValue;
 
         friend class implementation::NumberHandler;
@@ -168,7 +172,9 @@ namespace rjson
 
     template <> struct content_type<double> { using type = rjson::number; };
     template <> struct content_type<long> { using type = rjson::integer; };
+    template <> struct content_type<unsigned long> { using type = rjson::integer; };
     template <> struct content_type<int> { using type = rjson::integer; };
+    template <> struct content_type<unsigned int> { using type = rjson::integer; };
     template <> struct content_type<bool> { using type = rjson::boolean; };
     template <> struct content_type<std::string> { using type = rjson::string; };
 
