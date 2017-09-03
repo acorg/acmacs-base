@@ -136,6 +136,13 @@ namespace rjson
 
         void set_field(std::string aKey, value&& aValue);
 
+        using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
+        inline const_iterator begin() const { return mContent.begin(); }
+        inline const_iterator end() const { return mContent.end(); }
+        using iterator = decltype(std::declval<std::map<string, value>>().begin());
+        inline iterator begin() { return mContent.begin(); }
+        inline iterator end() { return mContent.end(); }
+
      private:
         std::map<string, value> mContent;
           // std::vector<std::pair<string, value>> mContent;
@@ -246,6 +253,30 @@ namespace rjson
                 //     throw;
                 // }
             }
+
+          // ----------------------------------------------------------------------
+
+        inline operator unsigned long() const { return std::get<integer>(*this); }
+        inline operator long() const { return std::get<integer>(*this); }
+        inline operator bool() const { return std::get<boolean>(*this); }
+        inline operator std::string() const { return std::get<string>(*this); }
+
+        inline operator double() const
+            {
+                if (auto ptr_n = std::get_if<number>(this))
+                    return *ptr_n;
+                else if (auto ptr_i = std::get_if<integer>(this))
+                    return *ptr_i;
+                else {
+                    std::cerr << "ERROR: cannot convert json to double (from rjson::number or rjson::integer): " << to_json() << '\n';
+                    throw std::bad_variant_access{};
+                }
+            }
+
+        inline operator const object&() const { return std::get<object>(*this); }
+        inline operator const array&() const { return std::get<array>(*this); }
+
+          // ----------------------------------------------------------------------
 
         std::string to_json() const;
 
