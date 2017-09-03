@@ -258,6 +258,8 @@ namespace rjson
 
         inline operator unsigned long() const { return std::get<integer>(*this); }
         inline operator long() const { return std::get<integer>(*this); }
+        inline operator unsigned int() const { return std::get<integer>(*this); }
+        inline operator int() const { return std::get<integer>(*this); }
         inline operator bool() const { return std::get<boolean>(*this); }
         inline operator std::string() const { return std::get<string>(*this); }
 
