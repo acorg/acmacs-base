@@ -8,7 +8,7 @@ int main(int argc, const char* const* argv)
     if (argc == 2) {
         try {
             auto data = rjson::parse_file(argv[1]);
-            std::cout << data.to_json() << '\n';
+            std::cout << data.to_json_pp(2) << '\n';
         }
         catch (std::exception& err) {
             std::cerr << "ERROR: " << err.what() << '\n';

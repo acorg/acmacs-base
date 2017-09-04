@@ -597,17 +597,25 @@ rjson::value rjson::parse_file(std::string aFilename)
 
 // ----------------------------------------------------------------------
 
-std::string rjson::object::to_json() const
+std::string rjson::object::to_json(bool space_after_comma) const
 {
     std::string result(1, '{');
+    size_t size_at_comma = 0;
     for (const auto& [key, val]: mContent) {
         result.append(key.to_json());
         result.append(1, ':');
+        if (space_after_comma)
+            result.append(1, ' ');
         result.append(val.to_json());
+        size_at_comma = result.size() + 1;
         result.append(1, ',');
+        if (space_after_comma)
+            result.append(1, ' ');
     }
-    if (result.back() == ',')
+    if (result.back() == ',' || result.back() == ' ') {
+        result.resize(size_at_comma);
         result.back() = '}';
+    }
     else
         result.append(1, '}');
     return result;
@@ -616,20 +624,83 @@ std::string rjson::object::to_json() const
 
 // ----------------------------------------------------------------------
 
-std::string rjson::array::to_json() const
+std::string rjson::object::to_json_pp(size_t indent, size_t prefix) const
+{
+    if (mContent.size() < 3)
+        return to_json(true);
+
+    std::string result("{\n");
+    result.append(prefix + indent, ' ');
+    size_t size_before_comma = 0;
+    for (const auto& [key, val]: mContent) {
+        result.append(key.to_json());
+        result.append(": ");
+        result.append(val.to_json_pp(indent, prefix + indent));
+        size_before_comma = result.size();
+        result.append(",\n");
+        result.append(prefix + indent, ' ');
+    }
+    if (result.back() == ' ') {
+        result.resize(size_before_comma);
+        result.append(1, '\n');
+        result.append(prefix, ' ');
+        result.append(1, '}');
+    }
+    else
+        result.append(1, '}');
+    return result;
+
+} // rjson::object::to_json_pp
+
+// ----------------------------------------------------------------------
+
+std::string rjson::array::to_json(bool space_after_comma) const
 {
     std::string result(1, '[');
     for (const auto& val: mContent) {
         result.append(val.to_json());
         result.append(1, ',');
+        if (space_after_comma)
+            result.append(1, ' ');
     }
-    if (result.back() == ',')
+    if (space_after_comma && result.size() > 2 && result.back() == ' ') {
+        result.resize(result.size() - 1);
+        result.back() = ']';
+    }
+    else if (result.back() == ',')
         result.back() = ']';
     else
         result.append(1, ']');
     return result;
 
 } // rjson::array::to_json
+
+// ----------------------------------------------------------------------
+
+std::string rjson::array::to_json_pp(size_t indent, size_t prefix) const
+{
+    std::cerr << "DEBUG: array::to_json_pp " << mContent.size() << '\n';
+    // if (mContent.size() < 3)
+    //     return to_json(true);
+
+    std::string result("[\n");
+    result.append(prefix + indent, ' ');
+    size_t size_at_comma = 0;
+    for (const auto& val: mContent) {
+        result.append(val.to_json_pp(indent, prefix + indent));
+        size_at_comma = result.size() + 1;
+        result.append(",\n");
+        result.append(prefix + indent, ' ');
+    }
+    if (result.back() == ' ') {
+        result.resize(size_at_comma);
+        result.back() = ']';
+    }
+    else
+        result.append(1, ']');
+    return result;
+
+} // rjson::array::to_json_pp
 
 // ----------------------------------------------------------------------
 
