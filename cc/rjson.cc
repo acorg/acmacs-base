@@ -43,13 +43,13 @@ namespace rjson::implementation
         inline size_t pos() const { return mPos; }
         inline size_t line() const { return mLine; }
         inline size_t column() const { return mColumn; }
-        inline std::string_view::value_type previous() const { if (mPos) return mSource[mPos - 1]; throw rjson::Error(line(), pos(), "internal: no previous at the beginning of parsing"); }
+        inline std::string_view::value_type previous() const { if (mPos) return mSource[mPos - 1]; throw rjson::parse_error(line(), pos(), "internal: no previous at the beginning of parsing"); }
         inline std::string data(size_t aBegin, size_t aEnd) const { return {mSource.data() + aBegin, aEnd - aBegin}; }
 
         inline void back()
             {
                 if (!mPos)
-                    throw rjson::Error(line(), pos(), "internal: cannot back at the beginning of parsing");
+                    throw rjson::parse_error(line(), pos(), "internal: cannot back at the beginning of parsing");
                 --mPos;
                 --mColumn;
                 if (mColumn == 0)
@@ -77,17 +77,17 @@ namespace rjson::implementation
 
         [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
             {
-                throw rjson::Error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string(1, aSymbol) + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+                throw rjson::parse_error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string(1, aSymbol) + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
             }
 
         [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const
             {
-                throw rjson::Error(aParser.line(), aParser.column(), std::move(aMessage));
+                throw rjson::parse_error(aParser.line(), aParser.column(), std::move(aMessage));
             }
 
         [[noreturn]] inline void internal_error(Parser& aParser) const
             {
-                throw rjson::Error(aParser.line(), aParser.column(), "internal error");
+                throw rjson::parse_error(aParser.line(), aParser.column(), "internal error");
             }
 
         inline void newline(Parser& aParser) const
@@ -630,6 +630,53 @@ std::string rjson::array::to_json() const
     return result;
 
 } // rjson::array::to_json
+
+// ----------------------------------------------------------------------
+
+rjson::value& rjson::value::update(const rjson::value& to_merge)
+{
+    auto visitor = [this,&to_merge](auto&& arg1, auto&& arg2) {
+        using T1 = std::decay_t<decltype(arg1)>;
+        using T2 = std::decay_t<decltype(arg2)>;
+        if constexpr (std::is_same_v<T1, T2>) {
+            // std::cerr << "DEBUG: updating " << typeid(T1).name() << DEBUG_LINE_FUNC << '\n';
+            arg1.update(arg2);
+        }
+        else {
+            throw merge_error(std::string{"cannot merge two rjson values of different types: %"} + this->to_json() + "% and %" + to_merge.to_json());
+        }
+    };
+
+    std::visit(visitor, *this, to_merge);
+    return *this;
+
+} // rjson::value::update
+
+// ----------------------------------------------------------------------
+
+void rjson::object::update(const rjson::object& to_merge)
+{
+    for (const auto& [new_key, new_value]: to_merge) {
+        try {
+            get_ref(new_key).update(new_value);
+        }
+        catch (field_not_found&) {
+            set_field(new_key, new_value);
+        }
+    }
+
+} // rjson::object::update
+
+// ----------------------------------------------------------------------
+
+void rjson::array::update(const rjson::array& to_merge)
+{
+    std::cerr << "WARNING: rjson::array::update performs replacing!" << '\n';
+    mContent = to_merge.mContent;
+
+} // rjson::array::update
+
+// ----------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------

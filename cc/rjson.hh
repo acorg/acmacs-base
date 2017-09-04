@@ -38,6 +38,7 @@ namespace rjson
         inline size_t size() const { return mData.size(); }
         inline bool empty() const { return mData.empty(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
+        inline void update(const string& to_merge) { mData = to_merge.mData; }
 
      private:
         std::string mData;
@@ -50,6 +51,7 @@ namespace rjson
         inline std::string to_json() const { return mValue ? "true" : "false"; }
         inline operator bool() const { return mValue; }
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
+        inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
 
      private:
         bool mValue;
@@ -59,6 +61,7 @@ namespace rjson
     {
      public:
         inline null() {}
+        inline void update(const null&) {}
         inline std::string to_json() const { return "null"; }
     };
 
@@ -69,6 +72,7 @@ namespace rjson
         inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
         inline operator double() const { return std::stod(mValue); }
+        inline void update(const number& to_merge) { mValue = to_merge.mValue; }
 
      private:
         inline number(std::string_view&& aData) : mValue{aData} {}
@@ -92,6 +96,7 @@ namespace rjson
         inline operator unsigned long() const { return std::stoul(mValue); }
         inline operator int() const { return static_cast<int>(std::stol(mValue)); }
         inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
+        inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
 
      private:
         inline integer(std::string_view&& aData) : mValue{aData} {}
@@ -121,6 +126,7 @@ namespace rjson
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
         const value& get_ref(std::string aKey) const; // throws field_not_found
+        value& get_ref(const string& aKey); // throws field_not_found
         const value& get_ref(std::string aKey, value&& aDefault) const;
         object& get_ref_to_object(std::string aKey);
 
@@ -135,6 +141,7 @@ namespace rjson
             }
 
         void set_field(std::string aKey, value&& aValue);
+        void set_field(const string& aKey, const value& aValue);
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
         inline const_iterator begin() const { return mContent.begin(); }
@@ -142,6 +149,8 @@ namespace rjson
         using iterator = decltype(std::declval<std::map<string, value>>().begin());
         inline iterator begin() { return mContent.begin(); }
         inline iterator end() { return mContent.end(); }
+
+        void update(const object& to_merge);
 
      private:
         std::map<string, value> mContent;
@@ -158,6 +167,7 @@ namespace rjson
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
 
+        void update(const array& to_merge);
         std::string to_json() const;
 
         void insert(value&& aValue);
@@ -280,6 +290,8 @@ namespace rjson
 
           // ----------------------------------------------------------------------
 
+        value& update(const value& to_merge);
+
         std::string to_json() const;
 
     }; // class value
@@ -293,14 +305,14 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-    class Error : public std::exception
+    class parse_error : public std::exception
     {
      public:
-        // inline Error(size_t aLine, size_t aColumn, std::string aMessage)
+        // inline parse_error(size_t aLine, size_t aColumn, std::string aMessage)
         //     : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + aMessage} //, mLine{aLine}, mColumn{aColumn}
         //     {}
 
-        inline Error(size_t aLine, size_t aColumn, std::string&& aMessage)
+        inline parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
             : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
             {}
 
@@ -310,7 +322,9 @@ namespace rjson
         std::string mMessage;
           //size_t mLine, mColumn;
 
-    }; // class Error
+    }; // class parse_error
+
+    class merge_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
     value parse_string(std::string aJsonData);
     value parse_file(std::string aFilename);
@@ -386,6 +400,14 @@ namespace rjson
         return existing->second;
     }
 
+    inline value& object::get_ref(const string& aKey)
+    {
+        const auto existing = mContent.find(aKey);
+        if (existing == mContent.end())
+            throw field_not_found{};
+        return existing->second;
+    }
+
     inline object& object::get_ref_to_object(std::string aKey)
     {
         const auto existing = mContent.find(aKey);
@@ -406,6 +428,11 @@ namespace rjson
         // else {
         //     found->second = std::forward<value>(aValue);
         // }
+    }
+
+    inline void object::set_field(const string& aKey, const value& aValue)
+    {
+        mContent.insert_or_assign(aKey, aValue);
     }
 
       // ----------------------------------------------------------------------
