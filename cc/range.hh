@@ -38,60 +38,60 @@ namespace _acmacs_base_internal
 
 // ----------------------------------------------------------------------
 
-template <typename T> class Range
-{
- private:
-    class increment
-    {
-     public:
-        inline increment() {}
-        inline increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
-        inline void operator()(T& current)
-            {
-                if (current != _acmacs_base_internal::input_iterator<T, increment>::End) {
-                    current += step;
-                    if (step > 0) {
-                        if (current >= last)
-                            current = _acmacs_base_internal::input_iterator<T, increment>::End;
-                    }
-                    else {
-                        if (current <= last)
-                            current = _acmacs_base_internal::input_iterator<T, increment>::End;
-                    }
-                }
-            }
+// template <typename T> class Range
+// {
+//  private:
+//     class increment
+//     {
+//      public:
+//         inline increment() {}
+//         inline increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
+//         inline void operator()(T& current)
+//             {
+//                 if (current != _acmacs_base_internal::input_iterator<T, increment>::End) {
+//                     current += step;
+//                     if (step > 0) {
+//                         if (current >= last)
+//                             current = _acmacs_base_internal::input_iterator<T, increment>::End;
+//                     }
+//                     else {
+//                         if (current <= last)
+//                             current = _acmacs_base_internal::input_iterator<T, increment>::End;
+//                     }
+//                 }
+//             }
 
-        inline void find_valid(T&) {}
+//         inline void find_valid(T&) {}
 
-     private:
-        T step;
-        T last;
-    };
+//      private:
+//         T step;
+//         T last;
+//     };
 
-    class iterator : public _acmacs_base_internal::input_iterator<T, increment>
-    {
-     public:
-        inline iterator() : _acmacs_base_internal::input_iterator<T, increment>() {}
-        inline iterator(T aFirst, T aLast, T aStep) : _acmacs_base_internal::input_iterator<T, increment>(aFirst, {aStep, aLast}) {}
-    };
+//     class iterator : public _acmacs_base_internal::input_iterator<T, increment>
+//     {
+//      public:
+//         inline iterator() : _acmacs_base_internal::input_iterator<T, increment>() {}
+//         inline iterator(T aFirst, T aLast, T aStep) : _acmacs_base_internal::input_iterator<T, increment>(aFirst, {aStep, aLast}) {}
+//     };
 
- public:
-    static inline iterator begin(T first, T last, T step = T{1})
-        {
-            return {first, last, step};
-        }
+//  public:
+//     static inline iterator begin(T first, T last, T step = T{1})
+//         {
+//             return {first, last, step};
+//         }
 
-    static inline iterator begin(T last)
-        {
-            return {T{0}, last, T{1}};
-        }
+//     static inline iterator begin(T last)
+//         {
+//             return {T{0}, last, T{1}};
+//         }
 
-    static inline iterator end()
-        {
-            return {};
-        }
+//     static inline iterator end()
+//         {
+//             return {};
+//         }
 
-}; // class Range
+// }; // class Range
 
 // ----------------------------------------------------------------------
 
@@ -151,6 +151,59 @@ inline std::ostream& operator << (std::ostream& out, const IndexGenerator& aGen)
     return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
 }
 #endif
+
+// ----------------------------------------------------------------------
+
+template <typename Index> class incrementer
+{
+ public:
+    class iterator
+    {
+     public:
+        using difference_type = long;
+        using value_type = Index;
+        using pointer = Index*;
+        using reference = Index&;
+        using iterator_category = std::random_access_iterator_tag;
+
+        inline iterator& operator++() { ++value; return *this;}
+        inline iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
+        inline bool operator==(iterator other) const { return value == other.value; }
+        inline bool operator!=(iterator other) const { return !(*this == other); }
+        inline value_type operator*() { return value; }
+        inline difference_type operator-(iterator other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
+
+     private:
+        value_type value;
+        inline iterator(value_type aValue) : value(aValue) {}
+
+        friend class incrementer<Index>;
+    };
+
+    inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd} {}
+
+    static inline iterator begin(Index aValue = 0) { return iterator(aValue); }
+    static inline iterator end(Index aValue) { return iterator(aValue); }
+
+    inline iterator begin() { return begin(mBegin); }
+    inline iterator end() { return end(mBegin); }
+
+ private:
+    Index mBegin, mEnd;
+
+}; // class incrementer<>
+
+template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aBegin, Index aEnd)
+{
+    aToFill.resize(aEnd - aBegin);
+    std::copy(incrementer<Index>::begin(aBegin), incrementer<Index>::end(aEnd), aToFill.begin());
+}
+
+template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aSize)
+{
+    aToFill.resize(aSize);
+    std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), aToFill.begin());
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
