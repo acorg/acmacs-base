@@ -23,7 +23,7 @@ namespace acmacs_base
 
       // ----------------------------------------------------------------------
 
-    inline std::string read_file(std::string aFilename)
+    inline std::string read_file(std::string aFilename, bool throw_if_absent = false)
     {
         std::string buffer;
         if (fs::exists(aFilename)) {
@@ -38,6 +38,9 @@ namespace acmacs_base
             else {
                 throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
             }
+        }
+        else if (throw_if_absent) {
+            throw std::runtime_error{"file not found: " + aFilename};
         }
         else {
             buffer = aFilename;
