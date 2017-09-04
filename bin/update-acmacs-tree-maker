@@ -1,2 +1,2 @@
 #! /bin/bash
-exec $(dirname $0)/update-acorg-package acmacs-tree-maker
+exec $(dirname $0)/update-acorg-package acmacs-tree-maker "$@"

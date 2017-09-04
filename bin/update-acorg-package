@@ -1,11 +1,19 @@
 #! /bin/bash
 source $(dirname $0)/__setup
 if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <package-name> [<pre-build-step>]" >&2
+    echo "Usage: $0 <package-name> [T=D|T=R] [<pre-build-step>]" >&2
     exit 2
 fi
 PACKAGE="$1"
-PRE_BUILD_STEP="$2"
+shift
+# T=D - debug,  T=R - release
+if [[ "$1" == "T=D" || "$1" == "T=R" ]]; then
+    TT="$1"
+    shift
+else
+    TT="T=R"
+fi
+PRE_BUILD_STEP="$1"
 
 echo "======================================================================"
 echo Updating $PACKAGE
@@ -16,6 +24,6 @@ if [[ -n "$PRE_BUILD_STEP" ]]; then
     $PRE_BUILD_STEP
 fi
 make -C "$ACMACS_PACKAGE_DIR" clean
-make -C "$ACMACS_PACKAGE_DIR" -j$NPROC install
-make -C "$ACMACS_PACKAGE_DIR" -j$NPROC test
+make -C "$ACMACS_PACKAGE_DIR" -j$NPROC $TT install
+make -C "$ACMACS_PACKAGE_DIR" -j$NPROC $TT test
 echo "======================================================================"

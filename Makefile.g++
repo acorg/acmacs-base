@@ -34,6 +34,19 @@ else
   endif
 endif
 
+# ----------------------------------------------------------------------
+
+ifeq ($(T),D)
+  OPTIMIZATION =
+else ifeq ($(T),R)
+  # -fvisibility=hidden and -flto make resulting lib smaller (pybind11) but linking is much slower
+  OPTIMIZATION = -O3
+else
+  $(error Please provide either T=D (debug) or T=R (release))
+endif
+
+PROFILE = # -pg
+
 # ======================================================================
 ### Local Variables:
 ### eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))

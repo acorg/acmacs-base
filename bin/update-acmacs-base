@@ -1,2 +1,2 @@
 #! /bin/bash
-exec $(dirname $0)/update-acorg-package acmacs-base $(dirname $0)/update-3rd-party
+exec $(dirname $0)/update-acorg-package acmacs-base "$@" $(dirname $0)/update-3rd-party
