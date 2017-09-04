@@ -658,7 +658,15 @@ void rjson::object::update(const rjson::object& to_merge)
 {
     for (const auto& [new_key, new_value]: to_merge) {
         try {
-            get_ref(new_key).update(new_value);
+            value& old_value = get_ref(new_key);
+            if (auto [old_n, old_i, new_n, new_i] = std::make_tuple(std::get_if<number>(&old_value), std::get_if<integer>(&old_value), std::get_if<number>(&new_value), std::get_if<integer>(&new_value));
+                (old_n || old_i) && (new_n || new_i)) {
+                  // number replaced with integer and vice versa
+                set_field(new_key, new_value);
+            }
+            else {
+                old_value.update(new_value);
+            }
         }
         catch (field_not_found&) {
             set_field(new_key, new_value);

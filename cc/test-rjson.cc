@@ -50,7 +50,8 @@ static const std::pair<std::vector<const char*>, std::variant<const char*, rjson
     {{R"( {"array":[ 1   ,   2   ,  true  , { "a" : null}  ], "another":[]}  )"}, R"({"another":[],"array":[1,2,true,{"a":null}]})"},
 
       // merge json objects
-    {{R"({"a": "a", "b": {"ba": "ba"}})", R"({"b": {"ba": "BAAA"}, "c": "c"})"}, R"({"a":"a","b":{"ba":"BAAA"},"c":"c"})"}
+    {{R"({"a": "a", "b": {"ba": "ba"}})", R"({"b": {"ba": "BAAA"}, "c": "c"})"}, R"({"a":"a","b":{"ba":"BAAA"},"c":"c"})"},
+    {{R"({"a": 1, "b": {"ba": 2}})", R"({"b": {"ba": 3.3}, "c": true})"}, R"({"a":1,"b":{"ba":3.3},"c":true})"},
 };
 
 #pragma GCC diagnostic pop
