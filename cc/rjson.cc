@@ -676,18 +676,6 @@ void rjson::object::update(const rjson::object& to_merge)
 } // rjson::object::update
 
 // ----------------------------------------------------------------------
-
-void rjson::array::update(const rjson::array& to_merge)
-{
-    std::cerr << "WARNING: rjson::array::update performs replacing!" << '\n';
-    mContent = to_merge.mContent;
-
-} // rjson::array::update
-
-// ----------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

@@ -167,7 +167,7 @@ namespace rjson
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
 
-        void update(const array& to_merge);
+        inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
         std::string to_json() const;
 
         void insert(value&& aValue);
