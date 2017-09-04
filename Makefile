@@ -9,6 +9,7 @@ MAKEFLAGS = -w
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc rjson.cc
+JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 
 # ----------------------------------------------------------------------
@@ -33,7 +34,7 @@ ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) # -L$(AD_LIB)
 
 all: check-python install
 
-install: check-acmacsd-root make-dirs install-acmacs-base
+install: check-acmacsd-root make-dirs install-acmacs-base json-pp
 
 lib: $(ACMACS_BASE_LIB)
 
@@ -42,6 +43,8 @@ make-dirs:
 
 test: $(DIST)/test-rjson
 	test/test
+
+json-pp: $(DIST)/json-pp
 
 # ----------------------------------------------------------------------
 
@@ -55,6 +58,7 @@ install-acmacs-base: lib
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath .)/Makefile.* $(AD_SHARE)
+	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 
 install-3rd-party:
 	$(ACMACSD_ROOT)/bin/update-3rd-party
@@ -70,6 +74,10 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 	@$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 $(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST)
+	@echo "LINK       " $@ # '<--' $^
+	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+
+$(DIST)/json-pp: $(patsubst %.cc,$(BUILD)/%.o,$(JSON_PP_SOURCES)) | $(DIST)
 	@echo "LINK       " $@ # '<--' $^
 	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 

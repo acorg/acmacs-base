@@ -591,7 +591,7 @@ rjson::value rjson::parse_string(std::string aJsonData)
 
 rjson::value rjson::parse_file(std::string aFilename)
 {
-    return parse_string(acmacs_base::read_file(aFilename));
+    return parse_string(acmacs_base::read_file(aFilename, true));
 
 } // rjson::parse_file
 
