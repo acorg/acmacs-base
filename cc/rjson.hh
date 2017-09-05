@@ -29,6 +29,7 @@ namespace rjson
     class string
     {
      public:
+        inline string() = default;
         inline string(std::string aData) : mData{aData} {}
         inline string(const char* aData) : mData{aData} {}
         inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
@@ -92,8 +93,12 @@ namespace rjson
     class integer
     {
      public:
+        inline integer(int aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer(unsigned int aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(unsigned long aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer& operator=(int aSrc) { mValue = std::to_string(aSrc); return *this; }
+        inline integer& operator=(unsigned int aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline integer& operator=(unsigned long aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
@@ -171,7 +176,7 @@ namespace rjson
         inline array() = default;
         inline array(array&&) = default;
         inline array(const array&) = default;
-        inline array(std::initializer_list<value> args);
+        template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
 
@@ -208,6 +213,16 @@ namespace rjson
     template <> struct content_type<unsigned int> { using type = rjson::integer; };
     template <> struct content_type<bool> { using type = rjson::boolean; };
     template <> struct content_type<std::string> { using type = rjson::string; };
+    template <> struct content_type<char*> { using type = rjson::string; };
+    template <> struct content_type<const char*> { using type = rjson::string; };
+
+    template <> struct content_type<null> { using type = rjson::null; };
+    template <> struct content_type<object> { using type = rjson::object; };
+    template <> struct content_type<array> { using type = rjson::array; };
+    template <> struct content_type<string> { using type = rjson::string; };
+    template <> struct content_type<boolean> { using type = rjson::boolean; };
+    template <> struct content_type<number> { using type = rjson::number; };
+    template <> struct content_type<integer> { using type = rjson::integer; };
 
     template <typename FValue> value to_value(const FValue& aValue);
 
@@ -414,11 +429,20 @@ namespace rjson
     inline void array::insert(value&& aValue) { mContent.push_back(std::move(aValue)); }
     inline void array::insert(const value& aValue) { mContent.push_back(aValue); }
 
-    inline array::array(std::initializer_list<value> args)
+    template <typename ... Args> inline array::array(Args ... args)
     {
-        for (const auto& arg: args)
-            insert(arg);
+        (insert(to_value(args)), ...);
     }
+
+    // template <typename T> inline array::array(std::initializer_list<T> args)
+    // {
+    //       // std::for_each(std::begin(args), std::end(args), [this](const T& arg) { this->insert(to_value(arg)); });
+    //     // for (auto&& arg: args)
+    //     //     insert(to_value(std::forward<T>(arg)));
+    //     const T& tt = *args.begin();
+    //     using TT = typename content_type<T>::type;
+    //     insert(TT(tt));
+    // }
 
       // ----------------------------------------------------------------------
 
