@@ -22,10 +22,10 @@ else
 fi
 
 # Makefile in acmacs-base also updates external packages
-if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
-    $ACMACSD_ROOT/bin/update-acmacs-base $TT
+if [ -x "$ACMACSD_ROOT"/bin/update-acmacs-base ]; then
+    "$ACMACSD_ROOT"/bin/update-acmacs-base $TT
 else
     $(dirname $0)/update-acmacs-base $TT
 fi
 
-$ACMACSD_ROOT/bin/update-acmacs-packages $TT
+"$ACMACSD_ROOT"/bin/update-acmacs-packages $TT

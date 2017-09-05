@@ -41,6 +41,8 @@ ifeq ($(T),D)
 else ifeq ($(T),R)
   # -fvisibility=hidden and -flto make resulting lib smaller (pybind11) but linking is much slower
   OPTIMIZATION = -O3
+else ifeq ($(MAKECMDGOALS),clean)
+  # pass
 else
   $(error Please provide either T=D (debug) or T=R (release))
 endif
