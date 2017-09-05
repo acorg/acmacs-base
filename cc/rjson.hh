@@ -148,6 +148,7 @@ namespace rjson
 
         void set_field(std::string aKey, value&& aValue);
         void set_field(const string& aKey, const value& aValue);
+        void delete_field(string aKey); // throws field_not_found
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
         inline const_iterator begin() const { return mContent.begin(); }
@@ -256,19 +257,11 @@ namespace rjson
                     std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
                     throw;
                 }
-                // return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type<F>{std::forward<F>(aDefaultValue)}));
             }
 
         template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
             {
                 set_field(aFieldName, to_value(aValue));
-                // try {
-                //     std::get<object>(*this).set_field(aFieldName, to_value(aValue));
-                // }
-                // catch (std::bad_variant_access&) {
-                //     std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
-                //     throw;
-                // }
             }
 
           // ----------------------------------------------------------------------
@@ -386,16 +379,6 @@ namespace rjson
     {
         const auto [iter, inserted] = mContent.emplace(aKey, std::forward<value>(aDefault));
         return iter->second;
-
-        // auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
-        // if (found == std::end(mContent)) {
-        //       // std::cerr << "DEBUG: object::get_ref: not found: " << aKey << ' ' << to_json() << " default:" << aDefault.to_json() << '\n';
-        //       return mContent.emplace_back(aKey, std::forward<value>(aDefault)).second;
-        // }
-        // else {
-        //     // std::cerr << "DEBUG: object::get_ref: found: " << aKey << ' ' << found->second.to_json() << '\n';
-        //     return found->second;
-        // }
     }
 
     inline const value& object::get_ref(std::string aKey, value&& aDefault) const { return const_cast<object*>(this)->get_ref(aKey, std::forward<value>(aDefault)); }
@@ -428,19 +411,19 @@ namespace rjson
     inline void object::set_field(std::string aKey, value&& aValue)
     {
         mContent.insert_or_assign(aKey, std::forward<value>(aValue));
-
-        // auto found = std::find_if(std::begin(mContent), std::end(mContent), [&aKey](const auto& entry) { return entry.first == aKey; });
-        // if (found == std::end(mContent)) {
-        //     mContent.emplace_back(std::move(aKey), std::forward<value>(aValue));
-        // }
-        // else {
-        //     found->second = std::forward<value>(aValue);
-        // }
     }
 
     inline void object::set_field(const string& aKey, const value& aValue)
     {
         mContent.insert_or_assign(aKey, aValue);
+    }
+
+    inline void object::delete_field(string aKey)
+    {
+        if (auto iter = mContent.find(aKey); iter != mContent.end())
+            mContent.erase(iter);
+        else
+            throw field_not_found{};
     }
 
       // ----------------------------------------------------------------------

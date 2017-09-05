@@ -40,6 +40,7 @@ namespace rjson::implementation
         void parse(std::string aJsonData);
 
         rjson::value result() const;
+        void remove_emacs_indent();
         inline size_t pos() const { return mPos; }
         inline size_t line() const { return mLine; }
         inline size_t column() const { return mColumn; }
@@ -130,6 +131,7 @@ namespace rjson::implementation
             }
 
         rjson::value value() const override { return mValue; }
+        rjson::value& value() { return mValue; }
 
      protected:
         bool value_read() const { return mValueRead; }
@@ -579,10 +581,26 @@ inline rjson::value rjson::implementation::Parser::result() const
 
 // ----------------------------------------------------------------------
 
+void rjson::implementation::Parser::remove_emacs_indent()
+{
+    auto& value = dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->value();
+    if (auto* top_obj = std::get_if<rjson::object>(&value); top_obj) {
+        try {
+            top_obj->delete_field("_");
+        }
+        catch (rjson::object::field_not_found&) {
+        }
+    }
+
+} // rjson::implementation::Parser::remove_emacs_indent
+
+// ----------------------------------------------------------------------
+
 rjson::value rjson::parse_string(std::string aJsonData)
 {
     implementation::Parser parser{};
     parser.parse(aJsonData);
+    parser.remove_emacs_indent();
     return parser.result();
 
 } // rjson::parse_string
