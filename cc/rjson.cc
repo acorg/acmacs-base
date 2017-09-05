@@ -661,12 +661,20 @@ std::string rjson::object::to_json(bool space_after_comma) const
 
 // ----------------------------------------------------------------------
 
-std::string rjson::object::to_json_pp(size_t indent, size_t prefix) const
+std::string rjson::object::to_json_pp(size_t indent, size_t prefix, json_pp_emacs_indent emacs_indent) const
 {
     if (is_simple(*this))
         return to_json(true);
 
-    std::string result("{\n");
+    std::string result;
+    if (emacs_indent == json_pp_emacs_indent::yes && indent) {
+        result.append(1, '{');
+        result.append(indent - 1, ' ');
+        result.append("\"_\": \"-*- js-indent-level: " + std::to_string(indent) + " -*-\",\n");
+    }
+    else {
+        result.append("{\n");
+    }
     result.append(prefix + indent, ' ');
     size_t size_before_comma = 0;
     for (const auto& [key, val]: mContent) {
@@ -714,7 +722,7 @@ std::string rjson::array::to_json(bool space_after_comma) const
 
 // ----------------------------------------------------------------------
 
-std::string rjson::array::to_json_pp(size_t indent, size_t prefix) const
+std::string rjson::array::to_json_pp(size_t indent, size_t prefix, json_pp_emacs_indent) const
 {
     if (is_simple(*this))
         return to_json(true);
