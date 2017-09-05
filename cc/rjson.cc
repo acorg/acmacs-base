@@ -597,12 +597,15 @@ rjson::value rjson::parse_file(std::string aFilename)
 
 // ----------------------------------------------------------------------
 
-static inline bool is_simple(const rjson::value& aValue)
+static inline bool is_simple(const rjson::value& aValue, bool dive = true)
 {
-    auto visitor = [](auto&& arg) -> bool {
+    auto visitor = [dive](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, rjson::object> || std::is_same_v<T, rjson::array>) {
-            return arg.empty();
+        if constexpr (std::is_same_v<T, rjson::object>) {
+            return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }));
+        }
+        else if constexpr (std::is_same_v<T, rjson::array>) {
+            return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
         }
         else {
             return true;
