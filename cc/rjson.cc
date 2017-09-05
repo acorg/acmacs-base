@@ -55,7 +55,6 @@ namespace rjson::implementation
                 --mColumn;
                 if (mColumn == 0)
                     --mLine;
-                  // std::cerr << "BACK " << mLine << ':' << mColumn << ' ' << mPos << '\n';
             }
 
         inline void newline() { ++mLine; mColumn = 0; }
@@ -759,7 +758,6 @@ rjson::value& rjson::value::update(const rjson::value& to_merge)
         using T1 = std::decay_t<decltype(arg1)>;
         using T2 = std::decay_t<decltype(arg2)>;
         if constexpr (std::is_same_v<T1, T2>) {
-            // std::cerr << "DEBUG: updating " << typeid(T1).name() << DEBUG_LINE_FUNC << '\n';
             arg1.update(arg2);
         }
         else {

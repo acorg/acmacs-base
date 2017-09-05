@@ -163,7 +163,6 @@ namespace rjson
 
      private:
         std::map<string, value> mContent;
-          // std::vector<std::pair<string, value>> mContent;
     };
 
     class array
@@ -311,10 +310,6 @@ namespace rjson
     class parse_error : public std::exception
     {
      public:
-        // inline parse_error(size_t aLine, size_t aColumn, std::string aMessage)
-        //     : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + aMessage} //, mLine{aLine}, mColumn{aColumn}
-        //     {}
-
         inline parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
             : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
             {}
@@ -361,20 +356,6 @@ namespace rjson
     {
         for (const auto& [key, value]: key_values)
             insert(key, value);
-
-        // if ((key_values.size() % 2) != 0)
-        //     throw std::runtime_error("rjson::object::object(initializer_list): odd number of arguments");
-        // try {
-        //     for (auto elt = std::begin(key_values); elt != std::end(key_values); ++elt) {
-        //         const auto& key = std::get<string>(*elt);
-        //         ++elt;
-        //         insert(key, *elt);
-        //     }
-        // }
-        // catch (std::bad_variant_access&) {
-        //     std::cerr << "ERROR: rjson::object::object(initializer_list): invalid object field name type?\n";
-        //     throw;
-        // }
     }
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
