@@ -424,7 +424,10 @@ namespace rjson::implementation
                             error(aParser, "unexpected comma -- two successive commas?");
                       }
                       break;
-                  case ' ': case '\n': case '\t':
+                  case '\n':
+                      newline(aParser);
+                      break;
+                  case ' ': case '\t':
                       break;
                   default:
                       switch (mExpected) {
