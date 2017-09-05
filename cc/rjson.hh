@@ -32,7 +32,7 @@ namespace rjson
         inline string(std::string aData) : mData{aData} {}
         inline string(const char* aData) : mData{aData} {}
         inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
-        inline std::string to_json_pp(size_t, size_t, json_pp_emacs_indent = json_pp_emacs_indent::no) const { return to_json(); }
+        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator std::string() const { return mData; }
         inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
         inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
@@ -52,7 +52,7 @@ namespace rjson
      public:
         inline boolean(bool aValue) : mValue{aValue} {}
         inline std::string to_json() const { return mValue ? "true" : "false"; }
-        inline std::string to_json_pp(size_t, size_t, json_pp_emacs_indent = json_pp_emacs_indent::no) const { return to_json(); }
+        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator bool() const { return mValue; }
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
         inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
@@ -67,7 +67,7 @@ namespace rjson
         inline null() {}
         inline void update(const null&) {}
         inline std::string to_json() const { return "null"; }
-        inline std::string to_json_pp(size_t, size_t, json_pp_emacs_indent = json_pp_emacs_indent::no) const { return to_json(); }
+        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
     };
 
     class number
@@ -76,7 +76,7 @@ namespace rjson
         inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
         inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
-        inline std::string to_json_pp(size_t, size_t, json_pp_emacs_indent = json_pp_emacs_indent::no) const { return to_json(); }
+        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }
         inline void update(const number& to_merge) { mValue = to_merge.mValue; }
 
@@ -97,7 +97,7 @@ namespace rjson
         inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline integer& operator=(unsigned long aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
-        inline std::string to_json_pp(size_t, size_t, json_pp_emacs_indent = json_pp_emacs_indent::no) const { return to_json(); }
+        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }
         inline operator long() const { return std::stol(mValue); }
         inline operator unsigned long() const { return std::stoul(mValue); }
@@ -122,7 +122,7 @@ namespace rjson
         inline object(std::initializer_list<std::pair<string, value>> key_values);
 
         std::string to_json(bool space_after_comma = false) const;
-        std::string to_json_pp(size_t indent, size_t prefix, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no) const;
+        std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
         void insert(const string& aKey, value&& aValue);
         void insert(const string& aKey, const value& aValue);
@@ -178,7 +178,7 @@ namespace rjson
 
         inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
         std::string to_json(bool space_after_comma = false) const;
-        std::string to_json_pp(size_t indent, size_t prefix, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no) const;
+        std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
         void insert(value&& aValue);
         void insert(const value& aValue);
@@ -295,7 +295,7 @@ namespace rjson
         value& update(const value& to_merge);
 
         std::string to_json() const;
-        std::string to_json_pp(size_t indent, size_t prefix = 0, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no) const;
+        std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
     }; // class value
 
@@ -457,9 +457,9 @@ namespace rjson
         return std::visit([](auto&& arg) -> std::string { return arg.to_json(); }, *this);
     }
 
-    inline std::string value::to_json_pp(size_t indent, size_t prefix, json_pp_emacs_indent emacs_indent) const
+    inline std::string value::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
     {
-        return std::visit([&](auto&& arg) -> std::string { return arg.to_json_pp(indent, prefix, emacs_indent); }, *this);
+        return std::visit([&](auto&& arg) -> std::string { return arg.to_json_pp(indent, emacs_indent, prefix); }, *this);
     }
 }
 
