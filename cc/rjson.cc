@@ -626,8 +626,8 @@ std::string rjson::object::to_json(bool space_after_comma) const
 
 std::string rjson::object::to_json_pp(size_t indent, size_t prefix) const
 {
-    if (mContent.size() < 3)
-        return to_json(true);
+    // if (mContent.size() < 3)
+    //     return to_json(true);
 
     std::string result("{\n");
     result.append(prefix + indent, ' ');
@@ -679,22 +679,23 @@ std::string rjson::array::to_json(bool space_after_comma) const
 
 std::string rjson::array::to_json_pp(size_t indent, size_t prefix) const
 {
-    std::cerr << "DEBUG: array::to_json_pp " << mContent.size() << '\n';
     // if (mContent.size() < 3)
     //     return to_json(true);
 
     std::string result("[\n");
     result.append(prefix + indent, ' ');
-    size_t size_at_comma = 0;
+    size_t size_before_comma = 0;
     for (const auto& val: mContent) {
         result.append(val.to_json_pp(indent, prefix + indent));
-        size_at_comma = result.size() + 1;
+        size_before_comma = result.size();
         result.append(",\n");
         result.append(prefix + indent, ' ');
     }
     if (result.back() == ' ') {
-        result.resize(size_at_comma);
-        result.back() = ']';
+        result.resize(size_before_comma);
+        result.append(1, '\n');
+        result.append(prefix, ' ');
+        result.append(1, ']');
     }
     else
         result.append(1, ']');
