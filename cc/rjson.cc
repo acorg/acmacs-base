@@ -597,6 +597,22 @@ rjson::value rjson::parse_file(std::string aFilename)
 
 // ----------------------------------------------------------------------
 
+static inline bool is_simple(const rjson::value& aValue)
+{
+    auto visitor = [](auto&& arg) -> bool {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, rjson::object> || std::is_same_v<T, rjson::array>) {
+            return arg.empty();
+        }
+        else {
+            return true;
+        }
+    };
+    return std::visit(visitor, aValue);
+}
+
+// ----------------------------------------------------------------------
+
 std::string rjson::object::to_json(bool space_after_comma) const
 {
     std::string result(1, '{');
@@ -626,8 +642,8 @@ std::string rjson::object::to_json(bool space_after_comma) const
 
 std::string rjson::object::to_json_pp(size_t indent, size_t prefix) const
 {
-    // if (mContent.size() < 3)
-    //     return to_json(true);
+    if (is_simple(*this))
+        return to_json(true);
 
     std::string result("{\n");
     result.append(prefix + indent, ' ');
@@ -679,8 +695,8 @@ std::string rjson::array::to_json(bool space_after_comma) const
 
 std::string rjson::array::to_json_pp(size_t indent, size_t prefix) const
 {
-    // if (mContent.size() < 3)
-    //     return to_json(true);
+    if (is_simple(*this))
+        return to_json(true);
 
     std::string result("[\n");
     result.append(prefix + indent, ' ');
