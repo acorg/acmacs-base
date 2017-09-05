@@ -14,11 +14,18 @@ trap failed ERR
 
 export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
 
-# Makefile in acmacs-base also updates external packages
-if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
-    $ACMACSD_ROOT/bin/update-acmacs-base
+if [[ "$1" == "T=D" || "$1" == "T=R" ]]; then
+    TT="$1"
+    shift
 else
-    $(dirname $0)/update-acmacs-base
+    TT="T=R"
 fi
 
-$ACMACSD_ROOT/bin/update-acmacs-packages
+# Makefile in acmacs-base also updates external packages
+if [ -x $ACMACSD_ROOT/bin/update-acmacs-base ]; then
+    $ACMACSD_ROOT/bin/update-acmacs-base $TT
+else
+    $(dirname $0)/update-acmacs-base $TT
+fi
+
+$ACMACSD_ROOT/bin/update-acmacs-packages $TT

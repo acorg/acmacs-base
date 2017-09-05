@@ -14,6 +14,13 @@ trap failed ERR
 
 export LD_LIBRARY_PATH=$ACMACSD_ROOT/lib
 
+if [[ "$1" == "T=D" || "$1" == "T=R" ]]; then
+    TT="$1"
+    shift
+else
+    TT="T=R"
+fi
+
 for P in locationdb acmacs-chart hidb seqdb acmacs-draw acmacs-map-draw acmacs-tree-maker signature-page ssm-report acmacs-whocc acmacs-webserver acmacs-api; do
-    $ACMACSD_ROOT/bin/update-$P "$@"
+    $ACMACSD_ROOT/bin/update-$P $TT "$@"
 done
