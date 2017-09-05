@@ -182,7 +182,7 @@ template <typename Index> class incrementer
 
     inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd} {}
 
-    static inline iterator begin(Index aValue = 0) { return iterator(aValue); }
+    static inline iterator begin(Index aValue) { return iterator(aValue); }
     static inline iterator end(Index aValue) { return iterator(aValue); }
 
     inline iterator begin() { return begin(mBegin); }
