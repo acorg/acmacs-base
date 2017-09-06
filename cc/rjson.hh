@@ -193,8 +193,8 @@ namespace rjson
         void insert(const value& aValue);
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
-        inline value& operator[](size_t index) { return mContent[index]; }
-        inline const value& operator[](size_t index) const { return mContent[index]; }
+        inline value& operator[](size_t index) { return mContent.at(index); }
+        inline const value& operator[](size_t index) const { return mContent.at(index); }
         inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
@@ -253,7 +253,8 @@ namespace rjson
                     return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
                 }
                 catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_ref: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
+                    std::cerr << "ERROR: rjson::value::get_ref: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << " value:" << to_json() << '\n';
+                    // std::visit([](auto&& arg) { std::cerr << "actual variant: " << typeid(arg).name() << '\n';}, *this);
                     throw;
                 }
             }
