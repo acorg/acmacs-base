@@ -622,7 +622,7 @@ static inline bool is_simple(const rjson::value& aValue, bool dive = true)
     auto visitor = [dive](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, rjson::object>) {
-            return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }));
+            return !arg.get_ref_not_set(rjson::object::force_pp_key, rjson::boolean{false}) && (arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); })));
         }
         else if constexpr (std::is_same_v<T, rjson::array>) {
             return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
@@ -678,14 +678,16 @@ std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_
         result.append("{\n");
     }
     result.append(prefix + indent, ' ');
-    size_t size_before_comma = 0;
+    size_t size_before_comma = result.size();
     for (const auto& [key, val]: mContent) {
-        result.append(key.to_json());
-        result.append(": ");
-        result.append(val.to_json_pp(indent, json_pp_emacs_indent::no, prefix + indent));
-        size_before_comma = result.size();
-        result.append(",\n");
-        result.append(prefix + indent, ' ');
+        if (key != force_pp_key) {
+            result.append(key.to_json());
+            result.append(": ");
+            result.append(val.to_json_pp(indent, json_pp_emacs_indent::no, prefix + indent));
+            size_before_comma = result.size();
+            result.append(",\n");
+            result.append(prefix + indent, ' ');
+        }
     }
     if (result.back() == ' ') {
         result.resize(size_before_comma);

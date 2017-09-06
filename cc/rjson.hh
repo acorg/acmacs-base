@@ -38,7 +38,9 @@ namespace rjson
         inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
         inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
         inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
+        inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
         inline bool operator==(const char* aToCompare) const { return mData == aToCompare; }
+        inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
         inline size_t size() const { return mData.size(); }
         inline bool empty() const { return mData.empty(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
@@ -141,6 +143,7 @@ namespace rjson
         const value& get_ref(std::string aKey) const; // throws field_not_found
         value& get_ref(const string& aKey); // throws field_not_found
         const value& get_ref(std::string aKey, value&& aDefault) const;
+        value get_ref_not_set(std::string aKey, value&& aDefault) const; // if key is absent in the object, returns aDefault but do not update the object
         object& get_ref_to_object(std::string aKey);
 
         template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
@@ -165,6 +168,8 @@ namespace rjson
         inline iterator end() { return mContent.end(); }
 
         void update(const object& to_merge);
+
+        static constexpr const char* const force_pp_key = "**rjson_pp**";
 
      private:
         std::map<string, value> mContent;
@@ -387,6 +392,16 @@ namespace rjson
         if (existing == mContent.end())
             throw field_not_found{};
         return existing->second;
+    }
+
+      // if key is absent in the object, returns aDefault but do not update the object
+    inline value object::get_ref_not_set(std::string aKey, value&& aDefault) const
+    {
+        const auto existing = mContent.find(aKey);
+        if (existing == mContent.end())
+            return aDefault;
+        else
+            return existing->second;
     }
 
     inline value& object::get_ref(const string& aKey)
