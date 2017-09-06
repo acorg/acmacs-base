@@ -381,8 +381,7 @@ namespace rjson
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
     {
-        const auto [iter, inserted] = mContent.emplace(aKey, std::forward<value>(aDefault));
-        return iter->second;
+        return mContent.emplace(aKey, std::forward<value>(aDefault)).first->second;
     }
 
     inline const value& object::get_ref(std::string aKey, value&& aDefault) const { return const_cast<object*>(this)->get_ref(aKey, std::forward<value>(aDefault)); }
