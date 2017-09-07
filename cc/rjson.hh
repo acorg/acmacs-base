@@ -159,6 +159,7 @@ namespace rjson
         void set_field(std::string aKey, value&& aValue);
         void set_field(const string& aKey, const value& aValue);
         void delete_field(string aKey); // throws field_not_found
+        inline void clear() { mContent.clear(); }
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
         inline const_iterator begin() const { return mContent.begin(); }
@@ -196,6 +197,7 @@ namespace rjson
         inline value& operator[](size_t index) { return mContent.at(index); }
         inline const value& operator[](size_t index) const { return mContent.at(index); }
         inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
+        inline void clear() { mContent.clear(); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
         using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
