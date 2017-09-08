@@ -53,6 +53,11 @@ class Transformation : public std::vector<double>
         (*this)[2] = r2;
         (*this)[3] = r3;
     }
+
+    inline std::pair<double, double> transform(double x, double y) const
+        {
+            return std::make_pair(x * (*this)[0] + y * (*this)[2], x * (*this)[1] + y * (*this)[3]);
+        }
 };
 
 // ----------------------------------------------------------------------
