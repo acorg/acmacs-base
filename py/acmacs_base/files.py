@@ -3,8 +3,9 @@
 # license.
 # ======================================================================
 
-import shutil
+import os, socket, subprocess, tempfile, shutil
 from pathlib import Path
+from contextlib import contextmanager
 import logging; module_logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------
@@ -76,6 +77,41 @@ def write_binary(path :Path, data :bytes):
         data = data.encode("utf-8")
     with opener(str(path), "wb") as f:
         f.write(data)
+
+# ----------------------------------------------------------------------
+
+TEMP_FILE_DIR = None
+if Path("/r/ramdisk-id").exists():
+    TEMP_FILE_DIR = "/r/T"
+    Path(TEMP_FILE_DIR).mkdir(parents=True, exist_ok=True)
+
+@contextmanager
+def temp_output(output=None, make_temp_output=True, suffix=".pdf"):
+    remove_output = not output
+    try:
+        output = output or (make_temp_output and tempfile.mkstemp(suffix=suffix, dir=TEMP_FILE_DIR)[1])
+        yield output
+    finally:
+        if remove_output and output:
+            try:
+                if os.path.isdir(output):
+                    shutil.rmtree(output)
+                else:
+                    os.remove(output)
+            except Exception as err:
+                module_logger.error(err)
+
+# ----------------------------------------------------------------------
+
+def open_image(filename):
+    hostname = socket.gethostname()
+    if os.environ.get('USER') == 'eu' and hostname[:4] == 'jagd':
+        if os.path.isdir(filename):
+            import glob
+            subprocess.run("qlmanage -p '{}'".format("' '".join(glob.glob(os.path.join(filename, "*.pdf")))), shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            # os.system("open '{}'".format(filename))
+            subprocess.run("qlmanage -p '{}'".format(filename), shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # ======================================================================
 ### Local Variables:
