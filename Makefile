@@ -8,9 +8,10 @@ MAKEFLAGS = -w
 
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
-ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc rjson.cc
+ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc rjson.cc argc-argv.cc
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
+TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 
 # ----------------------------------------------------------------------
 
@@ -41,7 +42,7 @@ lib: $(ACMACS_BASE_LIB)
 make-dirs:
 	bin/__setup_dirs acmacs-base
 
-test: $(DIST)/test-rjson
+test: $(DIST)/test-rjson $(DIST)/test-argc-argv
 	test/test
 
 json-pp: $(DIST)/json-pp
@@ -80,6 +81,10 @@ $(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST
 $(DIST)/json-pp: $(patsubst %.cc,$(BUILD)/%.o,$(JSON_PP_SOURCES)) | $(DIST)
 	@echo "LINK       " $@ # '<--' $^
 	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+
+$(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
+	@echo "LINK       " $@ # '<--' $^
+	@$(CXX) $(LDFLAGS) -o $@ $^
 
 # ----------------------------------------------------------------------
 
