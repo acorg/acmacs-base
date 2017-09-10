@@ -77,7 +77,7 @@ namespace rjson::implementation
 
         [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
             {
-                throw rjson::parse_error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string(1, aSymbol) + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+                throw rjson::parse_error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string{aSymbol} + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
             }
 
         [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const
@@ -311,7 +311,7 @@ namespace rjson::implementation
                             result = StateTransitionPop{};
                             break;
                         case Expected::KeyAfterComma:
-                            error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget to remove last comma?");
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
                         case Expected::Value:
                         case Expected::Colon:
                             unexpected(aSymbol, aParser);
@@ -348,7 +348,7 @@ namespace rjson::implementation
                             result = std::make_unique<StringHandler>(aParser);
                             break;
                         case Expected::Comma:
-                            error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget comma?");
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
                         case Expected::Colon:
                             unexpected(aSymbol, aParser);
                       }
@@ -409,7 +409,7 @@ namespace rjson::implementation
                             result = StateTransitionPop{};
                             break;
                         case Expected::ValueAfterComma:
-                            error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget to remove last comma?");
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
                       }
                       break;
                   case ',':
@@ -437,7 +437,7 @@ namespace rjson::implementation
                             mExpected = Expected::Comma;
                             break;
                         case Expected::Comma:
-                            error(aParser, "unexpected " + std::string(1, aSymbol) + " -- did you forget comma?");
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
                       }
                       break;
                 }

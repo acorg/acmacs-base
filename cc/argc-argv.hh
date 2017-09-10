@@ -35,6 +35,8 @@ class argc_argv
         friend class argc_argv;
 
         inline std::string name() const { return mName; }
+        inline void set_value(const char* aValue) { mValue = aValue; }
+        virtual bool really_present() const;
 
      private:
         std::string mName;
@@ -48,6 +50,11 @@ class argc_argv
 
       // returns option by name, if option was not in argv, returns ref to special option object
     const option& operator[](std::string aName) const;
+
+      // returns option by name, if option was not in argv, returns ref to an option object having aDefault as a value
+    const option& get(std::string aName, std::string aDefault) const;
+    const option& get(std::string aName, double aDefault) const;
+    const option& get(std::string aName, int aDefault) const;
 
       // returns number of arguments in the command line that are neither options nor option values
     inline size_t number_of_arguments() const { return mArguments.size(); }
@@ -63,6 +70,8 @@ class argc_argv
     const char* mProgram;
     std::vector<const char*> mArguments;
     mutable std::vector<std::unique_ptr<option>> mOptions;
+
+    const option& get(std::string aName) const;
 
 }; // class argc_argv
 
