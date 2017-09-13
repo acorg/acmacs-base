@@ -622,7 +622,9 @@ static inline bool is_simple(const rjson::value& aValue, bool dive = true)
     auto visitor = [dive](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, rjson::object>) {
-            return !arg.get_ref_not_set(rjson::object::force_pp_key, rjson::boolean{false}) && (arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); })));
+            return (!arg.get_ref_not_set(rjson::object::force_pp_key, rjson::boolean{false})
+                    && (arg.empty()
+                        || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
         }
         else if constexpr (std::is_same_v<T, rjson::array>) {
             return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
@@ -641,15 +643,17 @@ std::string rjson::object::to_json(bool space_after_comma) const
     std::string result(1, '{');
     size_t size_at_comma = 0;
     for (const auto& [key, val]: mContent) {
-        result.append(key.to_json());
-        result.append(1, ':');
-        if (space_after_comma)
-            result.append(1, ' ');
-        result.append(val.to_json());
-        size_at_comma = result.size() + 1;
-        result.append(1, ',');
-        if (space_after_comma)
-            result.append(1, ' ');
+        if (key != force_pp_key && key != no_pp_key) {
+            result.append(key.to_json());
+            result.append(1, ':');
+            if (space_after_comma)
+                result.append(1, ' ');
+            result.append(val.to_json());
+            size_at_comma = result.size() + 1;
+            result.append(1, ',');
+            if (space_after_comma)
+                result.append(1, ' ');
+        }
     }
     if (result.back() == ',' || result.back() == ' ') {
         result.resize(size_at_comma);
@@ -665,7 +669,7 @@ std::string rjson::object::to_json(bool space_after_comma) const
 
 std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
 {
-    if (is_simple(*this))
+    if (is_simple(*this) || get_ref_not_set(rjson::object::no_pp_key, rjson::boolean{false}))
         return to_json(true);
 
     std::string result;

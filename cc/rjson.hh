@@ -171,6 +171,7 @@ namespace rjson
         void update(const object& to_merge);
 
         static constexpr const char* const force_pp_key = "**rjson_pp**";
+        static constexpr const char* const no_pp_key = "**rjson_no_pp**";
 
      private:
         std::map<string, value> mContent;
