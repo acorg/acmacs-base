@@ -10,10 +10,20 @@ import logging; module_logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------
 
+if Path("/r/ramdisk-id").exists():
+    TEMP_FILE_DIR = "/r/T"
+    Path(TEMP_FILE_DIR).mkdir(parents=True, exist_ok=True)
+    BACKUP_ROOT_PATH = Path("/r/backup")
+    BACKUP_ROOT_PATH.mkdir(parents=True, exist_ok=True)
+else:
+    TEMP_FILE_DIR = None
+    BACKUP_ROOT_PATH = None
+
+# ----------------------------------------------------------------------
+
 def backup_file(path :Path):
     if path.exists():
-        backup_dir = path.resolve().parent.joinpath(".backup")
-        backup_dir.mkdir(exist_ok=True)
+        backup_dir = _backup_dir(path)
 
         version = 1
         def gen_name():
@@ -29,6 +39,24 @@ def backup_file(path :Path):
                 module_logger.debug('backup_file %s -> %s', path, newname)
                 shutil.copy(str(path), str(newname))
                 break
+
+# ----------------------------------------------------------------------
+
+def _backup_dir(path :Path):
+    parent = path.resolve().parent
+    if BACKUP_ROOT_PATH is not None:
+        if str(parent.parents[len(parent.parents) - 3]) == "/Users/eu":
+            backup_dir = BACKUP_ROOT_PATH.joinpath(*parent.parts[3:])
+        else:
+            backup_dir = BACKUP_ROOT_PATH.joinpath(*parent.parts[1:])
+    else:
+        backup_dir = parent.joinpath(".backup")
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    backup_link_name = ".backup"
+    if not parent.joinpath(backup_link_name).exists():
+        parent.joinpath(backup_link_name).symlink_to(backup_dir)
+    return backup_dir
 
 # ----------------------------------------------------------------------
 
@@ -79,11 +107,6 @@ def write_binary(path :Path, data :bytes):
         f.write(data)
 
 # ----------------------------------------------------------------------
-
-TEMP_FILE_DIR = None
-if Path("/r/ramdisk-id").exists():
-    TEMP_FILE_DIR = "/r/T"
-    Path(TEMP_FILE_DIR).mkdir(parents=True, exist_ok=True)
 
 @contextmanager
 def temp_output(output=None, make_temp_output=True, suffix=".pdf"):
