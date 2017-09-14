@@ -6,5 +6,5 @@ if [ -z "$ACMACSD_ROOT" ]; then
 fi
 
 for mf in $(find "$ACMACSD_ROOT/sources" -name Makefile -print); do
-    make -C $(dirname $mf) rtags
+    make -C $(dirname $mf) rtags T=D
 done
