@@ -43,7 +43,7 @@ install-acmacs-base: lib
 	ln -sf $(ACMACS_BASE_LIB) $(AD_LIB)
 	if [ $$(uname) = "Darwin" ]; then /usr/bin/install_name_tool -id $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)) $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)); fi
 	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
-	ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
+	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(AD_PY)
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
