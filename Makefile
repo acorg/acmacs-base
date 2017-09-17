@@ -42,7 +42,7 @@ json-pp: $(DIST)/json-pp
 install-acmacs-base: lib
 	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
-	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(AD_PY)
+	ln -sf $(abspath py/acmacs_base) $(AD_PY)
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
