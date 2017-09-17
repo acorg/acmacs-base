@@ -48,9 +48,6 @@ install-acmacs-base: lib
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 
-install-headers: check-acmacsd-root
-	$(call install_headers,acmacs-base)
-
 # ----------------------------------------------------------------------
 
 -include $(BUILD)/*.d
