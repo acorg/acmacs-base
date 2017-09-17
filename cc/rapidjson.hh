@@ -17,6 +17,7 @@ namespace from_json
 #pragma GCC diagnostic push
 
 #ifdef __clang__
+#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
