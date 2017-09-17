@@ -22,9 +22,11 @@ namespace py = pybind11;
 #pragma GCC diagnostic ignored "-Wrange-loop-analysis"
 #pragma GCC diagnostic ignored "-Wreserved-id-macro" // in Python.h
 #pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wshadow-field"
 // #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
