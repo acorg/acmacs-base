@@ -6,6 +6,7 @@
 // just for clang
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wcomma"
+#pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wcovered-switch-default"
 #pragma GCC diagnostic ignored "-Wdeprecated"
 #pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
@@ -24,6 +25,7 @@
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #else // g++-7
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough" // boost/asio
 #endif

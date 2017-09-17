@@ -18,6 +18,7 @@ namespace from_json
 
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
 #include "rapidjson/reader.h"

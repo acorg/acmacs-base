@@ -8,10 +8,15 @@
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 #define lzma_nothrow
 #include <lzma.h>
 #pragma GCC diagnostic pop
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 
 // ----------------------------------------------------------------------
 
