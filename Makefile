@@ -40,9 +40,7 @@ json-pp: $(DIST)/json-pp
 # ----------------------------------------------------------------------
 
 install-acmacs-base: lib
-	ln -sf $(ACMACS_BASE_LIB) $(AD_LIB)
-	if [ $$(uname) = "Darwin" ]; then /usr/bin/install_name_tool -id $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)) $(AD_LIB)/$(notdir $(ACMACS_BASE_LIB)); fi
-	if [ -d $(SRC_DIR)/acmacs-base ]; then (cd $(SRC_DIR)/acmacs-base; git pull); else git clone git@github.com:acorg/acmacs-base.git $(SRC_DIR)/acmacs-base; fi
+	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	ln -sf $(SRC_DIR)/acmacs-base/py/acmacs_base $(AD_PY)
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
@@ -50,9 +48,15 @@ install-acmacs-base: lib
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 
+install-headers: check-acmacsd-root
+	$(call install_headers,acmacs-base)
+
 # ----------------------------------------------------------------------
 
 -include $(BUILD)/*.d
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.rules
+RTAGS_TARGET = $(ACMACS_BASE_LIB)
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.rtags
 
 # ----------------------------------------------------------------------
 
@@ -71,13 +75,6 @@ $(DIST)/json-pp: $(patsubst %.cc,$(BUILD)/%.o,$(JSON_PP_SOURCES)) | $(DIST)
 $(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
 	@echo "LINK       " $@ # '<--' $^
 	@$(CXX) $(LDFLAGS) -o $@ $^
-
-# ----------------------------------------------------------------------
-
-include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.rules
-
-RTAGS_TARGET = $(ACMACS_BASE_LIB)
-include $(ACMACSD_ROOT)/share/makefiles/Makefile.rtags
 
 # ======================================================================
 ### Local Variables:
