@@ -15,8 +15,8 @@ TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 
 # ----------------------------------------------------------------------
 
-include Makefile.g++
-include Makefile.dist-build.vars
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.g++
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.vars
 
 CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
@@ -24,23 +24,13 @@ LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
 ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) # -L$(AD_LIB)
 
-# PYTHON_VERSION = $(shell python3 -c 'import sys; print("{0.major}.{0.minor}".format(sys.version_info))')
-# PYTHON_CONFIG = python$(PYTHON_VERSION)-config
-# PYTHON_MODULE_SUFFIX = $(shell $(PYTHON_CONFIG) --extension-suffix)
-# PYTHON_LD_LIB = $$($(PYTHON_CONFIG) --ldflags | sed -E 's/-Wl,-stack_size,[0-9]+//')
-
-# PKG_INCLUDES = $$($(PYTHON_CONFIG) --includes)
-
 # ----------------------------------------------------------------------
 
-all: check-python install
+all: install
 
-install: check-acmacsd-root make-dirs install-acmacs-base json-pp
+install: check-acmacsd-root install-acmacs-base json-pp
 
 lib: $(ACMACS_BASE_LIB)
-
-make-dirs:
-	bin/__setup_dirs acmacs-base
 
 test: $(DIST)/test-rjson $(DIST)/test-argc-argv
 	test/test
@@ -58,11 +48,7 @@ install-acmacs-base: lib
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
-	ln -sf $(abspath .)/Makefile.* $(AD_SHARE)
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
-
-install-3rd-party:
-	$(ACMACSD_ROOT)/bin/update-3rd-party
 
 # ----------------------------------------------------------------------
 
@@ -88,16 +74,10 @@ $(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(D
 
 # ----------------------------------------------------------------------
 
-$(BUILD)/%.o: cc/%.cc | $(BUILD)
-	@echo $(CXX_NAME) $(OPTIMIZATION) $<
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-# ----------------------------------------------------------------------
-
-include Makefile.dist-build.rules
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.rules
 
 RTAGS_TARGET = $(ACMACS_BASE_LIB)
-include Makefile.rtags
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.rtags
 
 # ======================================================================
 ### Local Variables:
