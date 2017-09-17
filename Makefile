@@ -18,7 +18,7 @@ TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.g++
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.vars
 
-CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
+CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
 ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
