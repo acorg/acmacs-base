@@ -13,18 +13,24 @@ class Timeit
     inline Timeit(std::string msg, std::ostream& out = std::cout)
         : message(msg), out_stream(out), start(std::chrono::steady_clock::now()) {}
 
-    inline ~Timeit()
+    inline ~Timeit() { report(); }
+
+    inline void report()
         {
-            const auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-            const decltype(total) s = total / 1000;
-            const decltype(total) ms = total % 1000;
-            out_stream << message << s << '.' << std::setw(3) << std::setfill('0') << ms << std::endl;
+            if (!reported) {
+                const auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+                const decltype(total) s = total / 1000;
+                const decltype(total) ms = total % 1000;
+                out_stream << message << s << '.' << std::setw(3) << std::setfill('0') << ms << std::endl;
+                reported = true;
+            }
         }
 
  private:
     std::string message;
     std::ostream& out_stream;
     decltype(std::chrono::steady_clock::now()) start;
+    bool reported = false;
 };
 
 // ----------------------------------------------------------------------
