@@ -23,6 +23,7 @@ class Color
     template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr inline Color(Uint aColor) : mColor(static_cast<uint32_t>(aColor)) {}
     inline Color(std::string aColor) { from_string(aColor); }
     inline Color& operator=(std::string aColor) { from_string(aColor); return *this; }
+    inline Color& operator=(const char* aColor) { from_string(aColor); return *this; }
     inline Color(const char* aColor) { from_string(aColor); }
       // inline Color(const Color&) = default;
       // inline Color& operator=(const Color& aSrc) = default;
