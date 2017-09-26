@@ -166,6 +166,8 @@ namespace rjson
                 return std::get<rjson_type<F>>(get_ref(aFieldName));
             }
 
+        inline const value& operator[](std::string aFieldName) const { return get_ref(aFieldName); } // throws field_not_found
+
         void set_field(std::string aKey, value&& aValue);
         void set_field(const string& aKey, const value& aValue);
         void delete_field(string aKey); // throws field_not_found
