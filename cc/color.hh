@@ -62,12 +62,26 @@ class Color
 
 }; // class Color
 
-constexpr const Color ColorNoChange{Color::NoChange};
+// ----------------------------------------------------------------------
 
 inline std::ostream& operator<<(std::ostream& out, Color c)
 {
     return out << c.to_string();
 }
+
+// ----------------------------------------------------------------------
+
+constexpr const Color ColorNoChange{Color::NoChange};
+constexpr const Color BLACK{0};
+constexpr const Color TRANSPARENT{0xFF000000};
+constexpr const Color RED{0xFF0000};
+constexpr const Color GREEN{0x00FF00};
+constexpr const Color BLUE{0x0000FF};
+constexpr const Color CYAN{0x00FFFF};
+constexpr const Color MAGENTA{0xFF00FF};
+constexpr const Color YELLOW{0xFFFF00};
+constexpr const Color GREY{0xBEBEBE};
+constexpr const Color GREY50{0x7F7F7F};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
