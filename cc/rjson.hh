@@ -20,6 +20,7 @@ namespace rjson
     namespace implementation { class NumberHandler; }
 
     class value;
+    class object;
 
     enum class json_pp_emacs_indent { no, yes };
 
@@ -45,9 +46,14 @@ namespace rjson
         inline bool empty() const { return mData.empty(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
         inline void update(const string& to_merge) { mData = to_merge.mData; }
+        inline void remove_comments() {}
 
      private:
         std::string mData;
+
+        inline bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
+
+        friend class object;
     };
 
     class boolean
@@ -59,6 +65,7 @@ namespace rjson
         inline operator bool() const { return mValue; }
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
         inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
+        inline void remove_comments() {}
 
      private:
         bool mValue;
@@ -71,6 +78,7 @@ namespace rjson
         inline void update(const null&) {}
         inline std::string to_json() const { return "null"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+        inline void remove_comments() {}
     };
 
     class number
@@ -82,6 +90,7 @@ namespace rjson
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }
         inline void update(const number& to_merge) { mValue = to_merge.mValue; }
+        inline void remove_comments() {}
 
      private:
         inline number(std::string_view&& aData) : mValue{aData} {}
@@ -111,6 +120,7 @@ namespace rjson
         inline operator int() const { return static_cast<int>(std::stol(mValue)); }
         inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
         inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
+        inline void remove_comments() {}
 
      private:
         inline integer(std::string_view&& aData) : mValue{aData} {}
@@ -169,6 +179,7 @@ namespace rjson
         inline iterator end() { return mContent.end(); }
 
         void update(const object& to_merge);
+        void remove_comments();
 
         static constexpr const char* const force_pp_key = "**rjson_pp**";
         static constexpr const char* const no_pp_key = "**rjson_no_pp**";
@@ -188,6 +199,7 @@ namespace rjson
         inline array& operator=(const array&) = default;
 
         inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
+        void remove_comments();
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
@@ -316,9 +328,10 @@ namespace rjson
           // ----------------------------------------------------------------------
 
         value& update(const value& to_merge);
+        inline void remove_comments() { std::visit([](auto&& arg) { arg.remove_comments(); }, *this); }
 
         std::string to_json() const;
-        std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
+        std::string to_json_pp(size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0) const;
 
     }; // class value
 
@@ -348,8 +361,9 @@ namespace rjson
 
     class merge_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
-    value parse_string(std::string aJsonData);
-    value parse_file(std::string aFilename);
+    value parse_string(std::string aJsonData, bool aRemoveComments = true);
+    value parse_string(const char* aJsonData, bool aRemoveComments = true);
+    value parse_file(std::string aFilename, bool aRemoveComments = true);
 
 } // namespace rjson
 

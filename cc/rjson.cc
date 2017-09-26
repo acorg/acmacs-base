@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stack>
 #include <memory>
+#include <string_view>
 
 #include "string.hh"
 #include "read-file.hh"
@@ -37,10 +38,11 @@ namespace rjson::implementation
      public:
         Parser();
 
-        void parse(std::string aJsonData);
+        void parse(std::string_view aJsonData);
 
         rjson::value result() const;
         void remove_emacs_indent();
+        void remove_comments();
         inline size_t pos() const { return mPos; }
         inline size_t line() const { return mLine; }
         inline size_t column() const { return mColumn; }
@@ -551,7 +553,7 @@ void rjson::implementation::Parser::pop()
 
 // ----------------------------------------------------------------------
 
-void rjson::implementation::Parser::parse(std::string aJsonData)
+void rjson::implementation::Parser::parse(std::string_view aJsonData)
 {
     mSource = aJsonData;
     for (mPos = 0; mPos < mSource.size(); ++mPos, ++mColumn) {
@@ -598,20 +600,43 @@ void rjson::implementation::Parser::remove_emacs_indent()
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_string(std::string aJsonData)
+inline void rjson::implementation::Parser::remove_comments()
 {
-    implementation::Parser parser{};
+    dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->value().remove_comments();
+
+} // rjson::implementation::Parser::remove_comments
+
+// ----------------------------------------------------------------------
+
+template <typename S> inline rjson::value parse_string_impl(S aJsonData, bool aRemoveComments)
+{
+    rjson::implementation::Parser parser{};
     parser.parse(aJsonData);
     parser.remove_emacs_indent();
+    if (aRemoveComments)
+        parser.remove_comments();
     return parser.result();
+}
+
+rjson::value rjson::parse_string(std::string aJsonData, bool aRemoveComments)
+{
+    return parse_string_impl(aJsonData, aRemoveComments);
 
 } // rjson::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_file(std::string aFilename)
+rjson::value rjson::parse_string(const char* aJsonData, bool aRemoveComments)
 {
-    return parse_string(acmacs_base::read_file(aFilename, true));
+    return parse_string_impl(aJsonData, aRemoveComments);
+
+} // rjson::parse_string
+
+// ----------------------------------------------------------------------
+
+rjson::value rjson::parse_file(std::string aFilename, bool aRemoveComments)
+{
+    return parse_string(acmacs_base::read_file(aFilename, true), aRemoveComments);
 
 } // rjson::parse_file
 
@@ -707,6 +732,15 @@ std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_
 
 // ----------------------------------------------------------------------
 
+void rjson::array::remove_comments()
+{
+    for (auto& val: mContent)
+        val.remove_comments();
+
+} // rjson::array::remove_comments
+
+// ----------------------------------------------------------------------
+
 std::string rjson::array::to_json(bool space_after_comma) const
 {
     std::string result(1, '[');
@@ -760,14 +794,14 @@ std::string rjson::array::to_json_pp(size_t indent, json_pp_emacs_indent, size_t
 
 rjson::value& rjson::value::update(const rjson::value& to_merge)
 {
-    auto visitor = [this,&to_merge](auto&& arg1, auto&& arg2) {
+    auto visitor = [this](auto&& arg1, auto&& arg2) {
         using T1 = std::decay_t<decltype(arg1)>;
         using T2 = std::decay_t<decltype(arg2)>;
         if constexpr (std::is_same_v<T1, T2>) {
             arg1.update(arg2);
         }
         else {
-            throw merge_error(std::string{"cannot merge two rjson values of different types: %"} + this->to_json() + "% and %" + to_merge.to_json());
+            throw merge_error(std::string{"cannot merge two rjson values of different types: %"} + this->to_json() + "% and %" + arg2.to_json());
         }
     };
 
@@ -798,6 +832,22 @@ void rjson::object::update(const rjson::object& to_merge)
     }
 
 } // rjson::object::update
+
+// ----------------------------------------------------------------------
+
+void rjson::object::remove_comments()
+{
+    for (auto it = mContent.begin(); it != mContent.end(); /* no increment! */) {
+        if (it->first.is_comment_key()) {
+            it = mContent.erase(it);
+        }
+        else {
+            it->second.remove_comments();
+            ++it;
+        }
+    }
+
+} // rjson::object::remove_comments
 
 // ----------------------------------------------------------------------
 /// Local Variables:
