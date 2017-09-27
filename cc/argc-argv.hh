@@ -26,7 +26,7 @@ class argc_argv
 
           // argument extraction, throws option_not_found, option_has_no_value, option_value_conversion_failed
         virtual operator const char*() const;
-          // virtual operator std::string() const;
+        inline operator std::string() const { return operator const char*(); }
         virtual operator double() const;
         virtual operator int() const;
 
