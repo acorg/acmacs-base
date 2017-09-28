@@ -357,6 +357,39 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
+    template <typename Result> class value_visitor_base
+    {
+     public:
+        class unexpected_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+
+        inline value_visitor_base() = default;
+          //inline value_visitor_base(const value_visitor_base&) = default;
+          // inline value_visitor_base(value_visitor_base&&) = default;
+        virtual inline ~value_visitor_base() {}
+
+        [[noreturn]] virtual inline Result operator()(null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+
+        [[noreturn]] virtual inline Result operator()(const rjson::null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual inline Result operator()(const rjson::boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+
+     protected:
+        [[noreturn]] virtual inline void throw_unexpected_value(std::string aMessage) { throw unexpected_value{aMessage}; }
+
+    }; // class value_visitor_base
+
+      // ----------------------------------------------------------------------
+
     class parse_error : public std::exception
     {
      public:
