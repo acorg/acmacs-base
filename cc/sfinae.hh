@@ -23,14 +23,14 @@ namespace ad_sfinae
 // // for container allowing std::begin(c) and std::end(c)
 // // https://stackoverflow.com/questions/30244447/how-to-sfinae-out-non-containers-parameters
 
-//     template <typename T, typename = void> struct is_std_container : std::false_type { };
+    template <typename T, typename = void> struct is_std_container : std::false_type { };
 
-//     template <typename T> struct is_std_container<T,
-//                                                   std::void_t<decltype(std::begin(std::declval<T&>())),
-//                                                          decltype(std::end(std::declval<T&>())),
-//                                                          typename T::value_type
-//                                                          >>
-//         : std::true_type { };
+    template <typename T> struct is_std_container<T,
+                                                  std::void_t<decltype(std::begin(std::declval<T&>())),
+                                                         decltype(std::end(std::declval<T&>())),
+                                                         typename T::value_type
+                                                         >>
+        : std::true_type { };
 
 // ----------------------------------------------------------------------
 
