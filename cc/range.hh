@@ -205,6 +205,13 @@ template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToF
     std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), aToFill.begin());
 }
 
+template <typename Index> inline std::vector<Index> filled_with_indexes(Index aSize)
+{
+    std::vector<Index> result(aSize);
+    std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), result.begin());
+    return result;
+}
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
