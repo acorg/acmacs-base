@@ -341,7 +341,7 @@ namespace rjson
           // ----------------------------------------------------------------------
 
         value& update(const value& to_merge);
-        inline void remove_comments() { std::visit([](auto&& arg) { arg.remove_comments(); }, *this); }
+        void remove_comments(); // defined below as inline (gcc 7.2 cannot handle it inlined here)
 
         std::string to_json() const;
         std::string to_json_pp(size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0) const;
@@ -500,6 +500,11 @@ namespace rjson
             std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
             throw;
         }
+    }
+
+    inline void value::remove_comments()
+    {
+        std::visit([](auto&& arg) -> void { arg.remove_comments(); }, *this);
     }
 
     inline std::string value::to_json() const
