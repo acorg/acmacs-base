@@ -7,29 +7,31 @@
 
 // ----------------------------------------------------------------------
 
+enum class report_time { No, Yes };
+
 class Timeit
 {
  public:
-    inline Timeit(std::string msg, std::ostream& out = std::cout, bool aReport = true)
+    inline Timeit(std::string msg, std::ostream& out = std::cout, report_time aReport = report_time::No)
         : message(msg), out_stream(out), mReport(aReport), start(std::chrono::steady_clock::now()) {}
 
     inline ~Timeit() { report(); }
 
     inline void report()
         {
-            if (mReport) {
+            if (mReport == report_time::Yes) {
                 const auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                 const decltype(total) s = total / 1000;
                 const decltype(total) ms = total % 1000;
                 out_stream << message << s << '.' << std::setw(3) << std::setfill('0') << ms << std::endl;
-                mReport = false;
+                mReport = report_time::No;
             }
         }
 
  private:
-    std::string message;
+    const std::string message;
     std::ostream& out_stream;
-    bool mReport;
+    report_time mReport;
     decltype(std::chrono::steady_clock::now()) start;
 };
 
