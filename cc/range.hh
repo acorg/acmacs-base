@@ -170,7 +170,7 @@ template <typename Index> class incrementer
         inline iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
         inline bool operator==(iterator other) const { return value == other.value; }
         inline bool operator!=(iterator other) const { return !(*this == other); }
-        inline value_type operator*() { return value; }
+        inline value_type operator*() const { return value; }
         inline difference_type operator-(iterator other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
 
      private:
@@ -192,6 +192,8 @@ template <typename Index> class incrementer
     Index mBegin, mEnd;
 
 }; // class incrementer<>
+
+// ----------------------------------------------------------------------
 
 template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aBegin, Index aEnd)
 {
