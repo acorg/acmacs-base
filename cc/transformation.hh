@@ -1,62 +1,80 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 #include <cmath>
+
+#include "acmacs-base/float.hh"
 
 // ----------------------------------------------------------------------
 
-class Transformation : public std::vector<double>
+class Transformation
 {
-  public:
-    inline Transformation() : std::vector<double>{1, 0, 0, 1} {}
+ public:
+    double a = 1.0, b = 0.0, c = 0.0, d = 1.0;
+
+    inline Transformation() = default;
     inline Transformation(const Transformation&) = default;
-    inline Transformation(double a11, double a12, double a21, double a22) : std::vector<double>{a11, a12, a21, a22} {}
-    inline Transformation& operator=(const Transformation& t) = default;
+    inline Transformation(double a11, double a12, double a21, double a22) : a{a11}, b{a12}, c{a21}, d{a22} {}
+    // inline Transformation& operator=(const Transformation& t) = default;
 
     inline void rotate(double aAngle)
         {
             const double cos = std::cos(aAngle);
             const double sin = std::sin(aAngle);
-            const double r0 = cos * (*this)[0] + -sin * (*this)[2];
-            const double r1 = cos * (*this)[1] + -sin * (*this)[3];
-            (*this)[2]      = sin * (*this)[0] +  cos * (*this)[2];
-            (*this)[3]      = sin * (*this)[1] +  cos * (*this)[3];
-            (*this)[0] = r0;
-            (*this)[1] = r1;
+            const double r0 = cos * a + -sin * c;
+            const double r1 = cos * b + -sin * d;
+            c = sin * a +  cos * c;
+            d = sin * b +  cos * d;
+            a = r0;
+            b = r1;
         }
 
       // reflect about a line specified with vector [aX, aY]
     inline void flip(double aX, double aY)
         {
               // vector [aX, aY] must be first transformed using this
-            const double x = aX * (*this)[0] + aY * (*this)[2];
-            const double y = aX * (*this)[1] + aY * (*this)[3];
+            const double x = aX * a + aY * c;
+            const double y = aX * b + aY * d;
 
             const double x2y2 = x * x - y * y, xy = 2 * x * y;
-            const double r0 = x2y2 * (*this)[0] + xy    * (*this)[2];
-            const double r1 = x2y2 * (*this)[1] + xy    * (*this)[3];
-            (*this)[2]      = xy   * (*this)[0] + -x2y2 * (*this)[2];
-            (*this)[3]      = xy   * (*this)[1] + -x2y2 * (*this)[3];
-            (*this)[0] = r0;
-            (*this)[1] = r1;
+            const double r0 = x2y2 * a + xy * c;
+            const double r1 = x2y2 * b + xy * d;
+            c = xy * a + -x2y2 * c;
+            d = xy * b + -x2y2 * d;
+            a = r0;
+            b = r1;
         }
 
     inline void multiply_by(const Transformation& t)
     {
-        const auto r0 = (*this)[0] * t[0] + (*this)[1] * t[2];
-        const auto r1 = (*this)[0] * t[1] + (*this)[1] * t[3];
-        const auto r2 = (*this)[2] * t[0] + (*this)[3] * t[2];
-        const auto r3 = (*this)[2] * t[1] + (*this)[3] * t[3];
-        (*this)[0] = r0;
-        (*this)[1] = r1;
-        (*this)[2] = r2;
-        (*this)[3] = r3;
+        const auto r0 = a * t.a + b * t.c;
+        const auto r1 = a * t.b + b * t.d;
+        const auto r2 = c * t.a + d * t.c;
+        const auto r3 = c * t.b + d * t.d;
+        a = r0;
+        b = r1;
+        c = r2;
+        d = r3;
     }
 
     inline std::pair<double, double> transform(double x, double y) const
         {
-            return std::make_pair(x * (*this)[0] + y * (*this)[2], x * (*this)[1] + y * (*this)[3]);
+            return std::make_pair(x * a + y * c, x * b + y * d);
+        }
+
+    inline double determinant() const
+        {
+            return a * d - b * c;
+        }
+
+    class singular : public std::exception {};
+
+    inline Transformation inverse() const
+        {
+            const auto deter = determinant();
+            if (float_zero(deter))
+                throw singular{};
+            return {d / deter, - b / deter, -c / deter, a / deter};
         }
 };
 
@@ -64,7 +82,7 @@ class Transformation : public std::vector<double>
 
 inline std::ostream& operator << (std::ostream& out, const Transformation& t)
 {
-    return out << "[[" << t[0] << ", " << t[1] << "], [" << t[2] << ", " << t[3] << "]]";
+    return out << "[[" << t.a << ", " << t.b << "], [" << t.c << ", " << t.d << "]]";
 }
 
 // ----------------------------------------------------------------------
