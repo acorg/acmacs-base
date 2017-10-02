@@ -44,6 +44,8 @@ namespace rjson
         inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
         inline size_t size() const { return mData.size(); }
         inline bool empty() const { return mData.empty(); }
+        inline char front() const { return mData.front(); }
+        inline char back() const { return mData.back(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
         inline void update(const string& to_merge) { mData = to_merge.mData; }
         inline void remove_comments() {}
@@ -315,7 +317,18 @@ namespace rjson
                     return std::get<object>(*this).get_ref(aFieldName);
                 }
                 catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
+                    std::cerr << "ERROR: rjson::value::get_field_number: not an object: " << to_json() << '\n'; // to_json() << '\n';
+                    throw;
+                }
+            }
+
+        inline const value& get_field_value(std::string aFieldName) const // throws object::field_not_found
+            {
+                try {
+                    return std::get<object>(*this).get_ref(aFieldName);
+                }
+                catch (std::bad_variant_access&) {
+                    std::cerr << "ERROR: rjson::value::get_field_value: not an object: " << to_json() << '\n'; // to_json() << '\n';
                     throw;
                 }
             }
@@ -418,9 +431,11 @@ namespace rjson
 
     class merge_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
-    value parse_string(std::string aJsonData, bool aRemoveComments = true);
-    value parse_string(const char* aJsonData, bool aRemoveComments = true);
-    value parse_file(std::string aFilename, bool aRemoveComments = true);
+    enum class remove_comments { No, Yes };
+
+    value parse_string(std::string aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
+    value parse_string(const char* aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
+    value parse_file(std::string aFilename, remove_comments aRemoveComments = remove_comments::Yes);
 
 } // namespace rjson
 

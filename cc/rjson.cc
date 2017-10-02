@@ -608,17 +608,17 @@ inline void rjson::implementation::Parser::remove_comments()
 
 // ----------------------------------------------------------------------
 
-template <typename S> inline rjson::value parse_string_impl(S aJsonData, bool aRemoveComments)
+template <typename S> inline rjson::value parse_string_impl(S aJsonData, rjson::remove_comments aRemoveComments)
 {
     rjson::implementation::Parser parser{};
     parser.parse(aJsonData);
     parser.remove_emacs_indent();
-    if (aRemoveComments)
+    if (aRemoveComments == rjson::remove_comments::Yes)
         parser.remove_comments();
     return parser.result();
 }
 
-rjson::value rjson::parse_string(std::string aJsonData, bool aRemoveComments)
+rjson::value rjson::parse_string(std::string aJsonData, rjson::remove_comments aRemoveComments)
 {
     return parse_string_impl(aJsonData, aRemoveComments);
 
@@ -626,7 +626,7 @@ rjson::value rjson::parse_string(std::string aJsonData, bool aRemoveComments)
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_string(const char* aJsonData, bool aRemoveComments)
+rjson::value rjson::parse_string(const char* aJsonData, rjson::remove_comments aRemoveComments)
 {
     return parse_string_impl(aJsonData, aRemoveComments);
 
@@ -634,7 +634,7 @@ rjson::value rjson::parse_string(const char* aJsonData, bool aRemoveComments)
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_file(std::string aFilename, bool aRemoveComments)
+rjson::value rjson::parse_file(std::string aFilename, rjson::remove_comments aRemoveComments)
 {
     return parse_string(acmacs_base::read_file(aFilename, true), aRemoveComments);
 
