@@ -309,6 +309,17 @@ namespace rjson
                 }
             }
 
+        inline double get_field_number(std::string aFieldName) const // throws object::field_not_found
+            {
+                try {
+                    return std::get<object>(*this).get_ref(aFieldName);
+                }
+                catch (std::bad_variant_access&) {
+                    std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
+                    throw;
+                }
+            }
+
         template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
             {
                 set_field(aFieldName, to_value(aValue));
