@@ -65,6 +65,8 @@ class argc_argv
       // returns argv[0]
     inline const char* program() const { return mProgram; }
 
+    std::string usage_options(size_t aIndent = 2) const;
+
  private:
     const char* mProgram;
     std::vector<const char*> mArguments;
