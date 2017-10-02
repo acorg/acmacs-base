@@ -23,7 +23,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                 auto visitor = [&, name=found->first, this](auto&& arg) -> void {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, bool>)
-                        mOptions.emplace_back(name, arg);
+                        mOptions.emplace_back(name, !arg);
                     else if constexpr (std::is_same_v<T, const char*>)
                         mOptions.emplace_back(name, option_default{argv[++arg_no]});
                     else if constexpr (std::is_same_v<T, long>)
