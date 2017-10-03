@@ -12,7 +12,7 @@ int main()
     try {
         {
             const char* const argv[] = {"test-1", "-a", "--aa", "aaa", "aaaa"};
-            argc_argv arg(std::end(argv) - std::begin(argv), argv, {{"-a", true}, {"--aa", "AAA"}, {"--bb", 77.0}});
+            argc_argv arg(std::end(argv) - std::begin(argv), argv, {{"-a", false}, {"--aa", "AAA"}, {"--bb", 77.0}});
             assert(arg.number_of_arguments() == 1);
             assert(strcmp(arg[0], argv[4]) == 0);
             assert(static_cast<bool>(arg[argv[1]]));
