@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 #include "acmacs-base/filesystem.hh"
 #include "acmacs-base/xz.hh"
@@ -133,8 +134,8 @@ namespace acmacs_base
     class TempFile
     {
      public:
-        inline TempFile()
-            : name("/tmp/AD.XXXXXXXX"), fd(mkstemp(name))
+        inline TempFile(std::string suffix)
+            : name(make_template() + suffix), fd(mkstemps(const_cast<char*>(name.c_str()), static_cast<int>(suffix.size())))
             {
                 if (fd < 0)
                     throw std::runtime_error(std::string("Cannot create temporary file using template ") + name + ": " + strerror(errno));
@@ -145,12 +146,22 @@ namespace acmacs_base
 
         inline ~TempFile()
             {
-                fs::remove(name);
+                fs::remove(name.c_str());
             }
 
      private:
-        char name[20];
+        std::string name;
         int fd;
+
+        inline std::string make_template()
+            {
+                const char* tdir = std::getenv("T");
+                if (!tdir)
+                    tdir = std::getenv("TMPDIR");
+                if (!tdir)
+                    tdir = "/tmp";
+                return tdir + std::string{"/AD.XXXXXXXX"};
+            }
 
     }; // class TempFile
 
