@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 #include <map>
+// #include <optional>
 #include <iostream>
 #include <cassert>
 
@@ -149,6 +150,8 @@ namespace rjson
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
 
+        const value* operator[](std::string aFieldName) const;
+
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
         value& get_ref(std::string aKey, value&& aDefault);
@@ -167,8 +170,6 @@ namespace rjson
             {
                 return std::get<rjson_type<F>>(get_ref(aFieldName));
             }
-
-        inline const value& operator[](std::string aFieldName) const { return get_ref(aFieldName); } // throws field_not_found
 
         void set_field(std::string aKey, value&& aValue);
         void set_field(const string& aKey, const value& aValue);
@@ -466,6 +467,15 @@ namespace rjson
     {
         for (const auto& [key, value]: key_values)
             insert(key, value);
+    }
+
+    inline const value* object::operator[](std::string aFieldName) const
+    {
+        const auto existing = mContent.find(aFieldName);
+        if (existing == mContent.end())
+            return nullptr;
+        else
+            return &existing->second;
     }
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
