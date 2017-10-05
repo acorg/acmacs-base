@@ -595,7 +595,13 @@ namespace rjson
 
 // ----------------------------------------------------------------------
 
-inline std::ostream& operator<<(std::ostream& out, const rjson::value& aValue)
+namespace ad_sfinae
+{
+    template <typename T, typename = void> struct has_to_json : std::false_type { };
+    template <typename T> struct has_to_json<T, std::void_t<decltype(std::declval<const T>().to_json())>> : std::true_type { };
+}
+
+template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::value, std::ostream&>::type operator<<(std::ostream& out, const T& aValue)
 {
     return out << aValue.to_json();
 }
