@@ -20,6 +20,8 @@ const char* std::bad_variant_access::what() const noexcept { return "bad_variant
 #endif
 
 rjson::value rjson::sNull{rjson::null{}};
+rjson::array rjson::sEmptyArray{rjson::array{}};
+rjson::object rjson::sEmptyObject{rjson::object{}};
 
 #pragma GCC diagnostic pop
 
@@ -602,7 +604,7 @@ void rjson::implementation::Parser::remove_emacs_indent()
         try {
             top_obj->delete_field("_");
         }
-        catch (rjson::object::field_not_found&) {
+        catch (rjson::field_not_found&) {
         }
     }
 

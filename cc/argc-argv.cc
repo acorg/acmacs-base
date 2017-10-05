@@ -76,20 +76,20 @@ const argc_argv::option& argc_argv::operator[](std::string aName) const
 std::string argc_argv::usage_options(size_t aIndent) const
 {
     auto visitor = [](auto&& arg) -> std::string {
-        using T = std::decay_t<decltype(arg)>;
-        std::string result;
-        if constexpr (std::is_same_v<T, bool>)
-            ;
-        else if constexpr (std::is_same_v<T, const char*>)
-            result = std::string{' ', '"'} + arg + "\"";
-        else if constexpr (std::is_same_v<T, long>)
-            result = " " + std::to_string(arg);
-        else if constexpr (std::is_same_v<T, double>)
-            result = " " + std::to_string(arg);
-        else
-            static_assert(std::is_same_v<T, bool>, "non-exhaustive visitor in argc_argv::argc_argv!");
-        return result;
-   };
+                       using T = std::decay_t<decltype(arg)>;
+                       std::string result;
+                       if constexpr (std::is_same_v<T, bool>)
+                                            ;
+                       else if constexpr (std::is_same_v<T, const char*>)
+                                                 result = std::string{' ', '"'} + arg + "\"";
+                       else if constexpr (std::is_same_v<T, long>)
+                                                 result = " " + std::to_string(arg);
+                       else if constexpr (std::is_same_v<T, double>)
+                                                 result = " " + std::to_string(arg);
+                       else
+                           static_assert(std::is_same_v<T, bool>, "non-exhaustive visitor in argc_argv::argc_argv!");
+                       return result;
+                   };
 
     std::ostringstream result;
     for (const auto& opt: mOptions) {

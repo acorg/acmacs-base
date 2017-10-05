@@ -20,8 +20,15 @@ namespace rjson
 {
     namespace implementation { class NumberHandler; }
 
+    class field_not_found : public std::exception { public: using std::exception::exception; };
+
     class value;
+    class array;
     class object;
+
+    extern value sNull;
+    extern array sEmptyArray;
+    extern object sEmptyObject;
 
     enum class json_pp_emacs_indent { no, yes };
 
@@ -50,6 +57,10 @@ namespace rjson
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
         inline void update(const string& to_merge) { mData = to_merge.mData; }
         inline void remove_comments() {}
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
         std::string mData;
@@ -69,6 +80,10 @@ namespace rjson
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
         inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
         bool mValue;
@@ -82,6 +97,10 @@ namespace rjson
         inline std::string to_json() const { return "null"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline void remove_comments() {}
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
     };
 
     class number
@@ -94,6 +113,10 @@ namespace rjson
         inline operator double() const { return std::stod(mValue); }
         inline void update(const number& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
         inline number(std::string_view&& aData) : mValue{aData} {}
@@ -124,6 +147,10 @@ namespace rjson
         inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
         inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
         inline integer(std::string_view&& aData) : mValue{aData} {}
@@ -136,8 +163,6 @@ namespace rjson
     class object
     {
      public:
-        class field_not_found : public std::exception { public: using std::exception::exception; };
-
         inline object() = default;
         inline object(std::initializer_list<std::pair<string, value>> key_values);
 
@@ -152,6 +177,18 @@ namespace rjson
 
           // if field is not in the object, returns ref to (static) null
         const value& operator[](std::string aFieldName) const;
+        value& operator[](std::string aFieldName);
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> const value& get(std::string aFieldName, T&& aDefault) const;
+        template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
+
+        value& set_field(std::string aKey, value&& aValue);
+        value& set_field(const string& aKey, const value& aValue);
+        void delete_field(string aKey); // throws field_not_found
+        inline void clear() { mContent.clear(); }
+
+          // ******************************************************************************************
 
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
@@ -172,10 +209,7 @@ namespace rjson
                 return std::get<rjson_type<F>>(get_ref(aFieldName));
             }
 
-        void set_field(std::string aKey, value&& aValue);
-        void set_field(const string& aKey, const value& aValue);
-        void delete_field(string aKey); // throws field_not_found
-        inline void clear() { mContent.clear(); }
+          // ******************************************************************************************
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
         inline const_iterator begin() const { return mContent.begin(); }
@@ -203,6 +237,13 @@ namespace rjson
         template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
+        // inline const value& operator[](std::string) const { throw field_not_found{}; /* return sNull; */ }
+        inline value& operator[](size_t index) { return mContent.at(index); }
+        inline value& operator[](int index) { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
+        template <typename Index> inline const value& operator[](Index) const { throw field_not_found{}; /* return sNull; */ }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        // template <typename T> inline const value& get(std::string, T&&) const { return sNull; }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
         inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
         void remove_comments();
@@ -213,9 +254,10 @@ namespace rjson
         void insert(const value& aValue);
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
-        inline value& operator[](size_t index) { return mContent.at(index); }
         inline const value& operator[](size_t index) const { return mContent.at(index); }
+        inline const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
         inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
+        inline void erase(int index) { mContent.erase(mContent.begin() + index); }
         inline void clear() { mContent.clear(); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
@@ -251,6 +293,7 @@ namespace rjson
     template <> struct content_type<integer> { using type = rjson::integer; };
 
     template <typename FValue> value to_value(const FValue& aValue);
+    template <typename FValue> value to_value(FValue&& aValue);
 
       // ----------------------------------------------------------------------
 
@@ -264,83 +307,6 @@ namespace rjson
         inline value(const value&) = default; // gcc7 wants this, otherwise it is deleted
         inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
           // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
-
-        inline bool is_null() const { return std::get_if<null>(this); }
-
-          // returns reference to the value at the passed key.
-          // if key not found, inserts aDefault with the passed key and returns reference to the inserted
-          // if this is not an object, throws  std::bad_variant_access
-        inline value& get_ref(std::string aKey, value&& aDefault)
-            {
-                try {
-                    return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_ref: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << " value:" << to_json() << '\n';
-                    // std::visit([](auto&& arg) { std::cerr << "actual variant: " << typeid(arg).name() << '\n';}, *this);
-                    throw;
-                }
-            }
-
-        inline object& get_ref_to_object(std::string aKey)
-            {
-                try {
-                    return std::get<object>(*this).get_ref_to_object(aKey);
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: " << to_json() << '\n'; // valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
-                    throw;
-                }
-            }
-
-        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
-            {
-                try {
-                    return std::get<object>(*this).get_field(aFieldName, std::forward<F>(aDefaultValue));
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
-                    throw;
-                }
-            }
-
-        template <typename F> inline std::decay_t<F> get_field(std::string aFieldName) const // throws object::field_not_found
-            {
-                try {
-                    return std::get<object>(*this).get_field<F>(aFieldName);
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
-                    throw;
-                }
-            }
-
-        inline double get_field_number(std::string aFieldName) const // throws object::field_not_found
-            {
-                try {
-                    return std::get<object>(*this).get_ref(aFieldName);
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_field_number: not an object: " << to_json() << '\n'; // to_json() << '\n';
-                    throw;
-                }
-            }
-
-        inline const value& get_field_value(std::string aFieldName) const // throws object::field_not_found
-            {
-                try {
-                    return std::get<object>(*this).get_ref(aFieldName);
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "ERROR: rjson::value::get_field_value: not an object: " << to_json() << '\n'; // to_json() << '\n';
-                    throw;
-                }
-            }
-
-        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
-            {
-                set_field(aFieldName, to_value(aValue));
-            }
 
           // ----------------------------------------------------------------------
 
@@ -365,8 +331,124 @@ namespace rjson
 
         inline operator const object&() const { return std::get<object>(*this); }
         inline operator const array&() const { return std::get<array>(*this); }
+        inline operator object&() { return std::get<object>(*this); }
+        inline operator array&() { return std::get<array>(*this); }
 
           // ----------------------------------------------------------------------
+
+        inline bool is_null() const { return std::get_if<null>(this); }
+
+          // ----------------------------------------------------------------------
+
+        template <typename Index> inline const value& operator[](Index aIndex) const
+            {
+                return std::visit([&](auto&& arg) -> const value& { return arg[aIndex]; }, *this);
+            }
+
+        template <typename Index> inline value& operator[](Index aIndex)
+            {
+                return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
+            }
+
+        // template <typename T> inline const value& get(std::string aFieldName, T&& aDefault) const
+        //     {
+        //         return std::visit([&](auto&& arg) -> const value& { return arg.get(aFieldName, std::forward<T>(aDefault)); }, *this);
+        //     }
+
+        template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
+            {
+                return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
+            }
+
+          // ********************************************************************** ----------------------------------------------------------------------
+
+        // inline const value& get(std::string aFieldName, value&& aDefault) const
+        //     {
+        //         const value& result = operator[](aFieldName);
+        //         return result.is_null() ? aDefault : result;
+        //     }
+
+        // template <typename T> inline const value& get(std::string aFieldName, T&& aDefault) const
+        //     {
+        //         return get(aFieldName, to_value(std::forward<T>(aDefault)));
+        //     }
+
+        //   // returns reference to the value at the passed key.
+        //   // if key not found, inserts aDefault with the passed key and returns reference to the inserted
+        //   // if this is not an object, throws  std::bad_variant_access
+        // inline value& get_ref(std::string aKey, value&& aDefault)
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_ref: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << " value:" << to_json() << '\n';
+        //             // std::visit([](auto&& arg) { std::cerr << "actual variant: " << typeid(arg).name() << '\n';}, *this);
+        //             throw;
+        //         }
+        //     }
+
+        // inline object& get_ref_to_object(std::string aKey)
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_ref_to_object(aKey);
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: " << to_json() << '\n'; // valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
+        //             throw;
+        //         }
+        //     }
+
+        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_field(aFieldName, std::forward<F>(aDefaultValue));
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
+        //             throw;
+        //         }
+        //     }
+
+        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName) const // throws field_not_found
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_field<F>(aFieldName);
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
+        //             throw;
+        //         }
+        //     }
+
+        // inline double get_field_number(std::string aFieldName) const // throws field_not_found
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_ref(aFieldName);
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_field_number: not an object: " << to_json() << '\n'; // to_json() << '\n';
+        //             throw;
+        //         }
+        //     }
+
+        // inline const value& get_field_value(std::string aFieldName) const // throws field_not_found
+        //     {
+        //         try {
+        //             return std::get<object>(*this).get_ref(aFieldName);
+        //         }
+        //         catch (std::bad_variant_access&) {
+        //             std::cerr << "ERROR: rjson::value::get_field_value: not an object: " << to_json() << '\n'; // to_json() << '\n';
+        //             throw;
+        //         }
+        //     }
+
+        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+            {
+                set_field(aFieldName, to_value(aValue));
+            }
+
+          // ********************************************************************** ----------------------------------------------------------------------
 
         value& update(const value& to_merge);
         void remove_comments(); // defined below as inline (gcc 7.2 cannot handle it inlined here)
@@ -378,13 +460,14 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-    extern value sNull;
-
-      // ----------------------------------------------------------------------
-
     template <typename FValue> inline value to_value(const FValue& aValue)
     {
         return rjson_type<FValue>{aValue};
+    }
+
+    template <typename FValue> inline value to_value(FValue&& aValue)
+    {
+        return rjson_type<FValue>{std::forward<FValue>(aValue)};
     }
 
       // ----------------------------------------------------------------------
@@ -481,8 +564,44 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            return sNull;
+            throw field_not_found{}; // return sNull;
     }
+
+    inline value& object::operator[](std::string aFieldName)
+    {
+        if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
+            return existing->second;
+        else
+            throw field_not_found{};
+    }
+
+    // template <> inline const value& object::get(std::string aFieldName, value&& aDefault) const
+    // {
+    //     const value& result = operator[](aFieldName);
+    //     return result.is_null() ? aDefault : result;
+    // }
+
+    // template <typename T> inline const value& object::get(std::string aFieldName, T&& aDefault) const
+    // {
+    //     return get(aFieldName, to_value(std::forward<T>(aDefault)));
+    // }
+
+    template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return set_field(aFieldName, std::forward<value>(aDefault));
+        }
+    }
+
+    template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
+    {
+        return get_or_add(aFieldName, to_value(std::forward<T>(aDefault)));
+    }
+
+      // **********************************************************************
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
     {
@@ -526,14 +645,16 @@ namespace rjson
             return std::get<object>(existing->second);
     }
 
-    inline void object::set_field(std::string aKey, value&& aValue)
+    inline value& object::set_field(std::string aKey, value&& aValue)
     {
-        mContent.insert_or_assign(aKey, std::forward<value>(aValue));
+        auto [iter, inserted] = mContent.insert_or_assign(aKey, std::forward<value>(aValue));
+        return iter->second;
     }
 
-    inline void object::set_field(const string& aKey, const value& aValue)
+    inline value& object::set_field(const string& aKey, const value& aValue)
     {
-        mContent.insert_or_assign(aKey, aValue);
+        auto [iter, inserted] = mContent.insert_or_assign(aKey, aValue);
+        return iter->second;
     }
 
     inline void object::delete_field(string aKey)
