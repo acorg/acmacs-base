@@ -13,6 +13,16 @@
 const char* std::bad_variant_access::what() const noexcept { return "bad_variant_access"; }
 #endif
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#endif
+
+rjson::value rjson::sNull{rjson::null{}};
+
+#pragma GCC diagnostic pop
+
 // ----------------------------------------------------------------------
 
 namespace rjson::implementation

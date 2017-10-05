@@ -150,7 +150,8 @@ namespace rjson
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
 
-        const value* operator[](std::string aFieldName) const;
+          // if field is not in the object, returns ref to (static) null
+        const value& operator[](std::string aFieldName) const;
 
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
@@ -264,6 +265,8 @@ namespace rjson
         inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
           // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
 
+        inline bool is_null() const { return std::get_if<null>(this); }
+
           // returns reference to the value at the passed key.
           // if key not found, inserts aDefault with the passed key and returns reference to the inserted
           // if this is not an object, throws  std::bad_variant_access
@@ -375,6 +378,10 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
+    extern value sNull;
+
+      // ----------------------------------------------------------------------
+
     template <typename FValue> inline value to_value(const FValue& aValue)
     {
         return rjson_type<FValue>{aValue};
@@ -469,13 +476,12 @@ namespace rjson
             insert(key, value);
     }
 
-    inline const value* object::operator[](std::string aFieldName) const
+    inline const value& object::operator[](std::string aFieldName) const
     {
-        const auto existing = mContent.find(aFieldName);
-        if (existing == mContent.end())
-            return nullptr;
+        if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
+            return existing->second;
         else
-            return &existing->second;
+            return sNull;
     }
 
     inline value& object::get_ref(std::string aKey, value&& aDefault)
