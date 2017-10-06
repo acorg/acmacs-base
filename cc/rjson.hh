@@ -73,6 +73,7 @@ namespace rjson
     class boolean
     {
      public:
+        inline boolean() : mValue{false} {}
         inline boolean(bool aValue) : mValue{aValue} {}
         inline std::string to_json() const { return mValue ? "true" : "false"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
@@ -106,6 +107,7 @@ namespace rjson
     class number
     {
      public:
+        inline number() : mValue{"0.0"} {}
         inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
         inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
@@ -130,6 +132,7 @@ namespace rjson
     class integer
     {
      public:
+        inline integer() : mValue{"0"} {}
         inline integer(int aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(unsigned int aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
@@ -329,6 +332,11 @@ namespace rjson
                 }
             }
 
+        inline operator const null&() const { return std::get<null>(*this); }
+        inline operator const boolean&() const { return std::get<boolean>(*this); }
+        inline operator const string&() const { return std::get<string>(*this); }
+        inline operator const integer&() const { return std::get<integer>(*this); }
+        inline operator const number&() const { return std::get<number>(*this); }
         inline operator const object&() const { return std::get<object>(*this); }
         inline operator const array&() const { return std::get<array>(*this); }
         inline operator object&() { return std::get<object>(*this); }
@@ -358,6 +366,12 @@ namespace rjson
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
+            }
+
+        template <typename T> inline value& get_or_add(std::string aFieldName, const T& aDefault)
+            {
+                T move_default{aDefault};
+                return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(move_default)); }, *this);
             }
 
           // ********************************************************************** ----------------------------------------------------------------------
@@ -460,15 +474,27 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
+    template <> struct content_type<value> { using type = value; };
+
     template <typename FValue> inline value to_value(const FValue& aValue)
     {
+          // return rjson_type<std::decay_t<FValue>>{aValue};
         return rjson_type<FValue>{aValue};
     }
 
     template <typename FValue> inline value to_value(FValue&& aValue)
     {
+          // return rjson_type<std::decay_t<FValue>>{std::forward<FValue>(aValue)};
         return rjson_type<FValue>{std::forward<FValue>(aValue)};
     }
+
+    template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
+    template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
+    template <typename FValue> inline value to_value(array&& aValue) { return aValue; }
+
+    template <typename FValue> inline value to_value(const value& aValue) { return aValue; }
+    template <typename FValue> inline value to_value(const object& aValue) { return aValue; }
+    template <typename FValue> inline value to_value(const array& aValue) { return aValue; }
 
       // ----------------------------------------------------------------------
 
