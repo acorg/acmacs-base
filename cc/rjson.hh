@@ -344,7 +344,7 @@ namespace rjson
 
           // ----------------------------------------------------------------------
 
-        inline bool is_null() const { return std::get_if<null>(this); }
+        inline bool is_null() const { std::cerr << "WARNING: deprecated: rjson::value::is_null()" << '\n'; return std::get_if<null>(this); }
 
           // ----------------------------------------------------------------------
 
