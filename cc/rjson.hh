@@ -358,19 +358,19 @@ namespace rjson
                 return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
             }
 
-        // template <typename T> inline const value& get(std::string aFieldName, T&& aDefault) const
-        //     {
-        //         return std::visit([&](auto&& arg) -> const value& { return arg.get(aFieldName, std::forward<T>(aDefault)); }, *this);
-        //     }
-
-        template <typename T> inline const T& get_or_default(std::string aFieldName, T&& aDefault) const
+        template <typename T> inline T get_or_default(std::string aFieldName, T&& aDefault) const
             {
                 try {
                     return operator[](aFieldName);
                 }
                 catch (field_not_found&) {
-                    return aDefault;
+                    return std::forward<T>(aDefault);
                 }
+            }
+
+        inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
+            {
+                return get_or_default<std::string>(aFieldName, aDefault);
             }
 
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
@@ -382,6 +382,28 @@ namespace rjson
             {
                 T move_default{aDefault};
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(move_default)); }, *this);
+            }
+
+        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+            {
+                return std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object>)
+                        arg.set_field(aFieldName, std::forward<F>(aValue));
+                    else
+                        throw field_not_found{};
+                }, *this);
+            }
+
+        template <typename F> inline void set_field(std::string aFieldName, const F& aValue)
+            {
+                return std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object>)
+                        arg.set_field(aFieldName, aValue);
+                    else
+                        throw field_not_found{};
+                }, *this);
             }
 
           // ********************************************************************** ----------------------------------------------------------------------
@@ -466,11 +488,6 @@ namespace rjson
         //             throw;
         //         }
         //     }
-
-        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
-            {
-                set_field(aFieldName, to_value(aValue));
-            }
 
           // ********************************************************************** ----------------------------------------------------------------------
 
