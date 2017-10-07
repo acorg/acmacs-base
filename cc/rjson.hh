@@ -363,6 +363,16 @@ namespace rjson
         //         return std::visit([&](auto&& arg) -> const value& { return arg.get(aFieldName, std::forward<T>(aDefault)); }, *this);
         //     }
 
+        template <typename T> inline const T& get_or_default(std::string aFieldName, T&& aDefault) const
+            {
+                try {
+                    return operator[](aFieldName);
+                }
+                catch (field_not_found&) {
+                    return aDefault;
+                }
+            }
+
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
