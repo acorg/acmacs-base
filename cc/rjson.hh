@@ -27,8 +27,8 @@ namespace rjson
     class object;
 
     extern value sNull;
-    extern array sEmptyArray;
-    extern object sEmptyObject;
+    extern value sEmptyArray;
+    extern value sEmptyObject;
 
     enum class json_pp_emacs_indent { no, yes };
 
@@ -197,35 +197,20 @@ namespace rjson
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
 
-
+        inline const value& get_or_empty_object(std::string aFieldName) const
+            {
+                try {
+                    return operator[](aFieldName);
+                }
+                catch (field_not_found&) {
+                    return rjson::sEmptyObject;
+                }
+            }
 
         value& set_field(std::string aKey, value&& aValue);
         value& set_field(const string& aKey, const value& aValue);
         void delete_field(string aKey); // throws field_not_found
         inline void clear() { mContent.clear(); }
-
-          // ******************************************************************************************
-
-        //   // returns reference to the value at the passed key.
-        //   // if key not found, inserts aDefault with the passed key and returns reference to the inserted
-        // value& get_ref(std::string aKey, value&& aDefault);
-        // const value& get_ref(std::string aKey) const; // throws field_not_found
-        // value& get_ref(const string& aKey); // throws field_not_found
-        // const value& get_ref(std::string aKey, value&& aDefault) const;
-        // value get_ref_not_set(std::string aKey, value&& aDefault) const; // if key is absent in the object, returns aDefault but do not update the object
-        // object& get_ref_to_object(std::string aKey);
-
-        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
-        //     {
-        //         return std::get<rjson_type<F>>(get_ref(aFieldName, rjson_type<F>{std::forward<F>(aDefaultValue)}));
-        //     }
-
-        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName) const // throws field_not_found
-        //     {
-        //         return std::get<rjson_type<F>>(get_ref(aFieldName));
-        //     }
-
-          // ******************************************************************************************
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
         inline const_iterator begin() const { return mContent.begin(); }
@@ -353,9 +338,16 @@ namespace rjson
         inline operator object&() { return std::get<object>(*this); }
         inline operator array&() { return std::get<array>(*this); }
 
-          // ----------------------------------------------------------------------
-
-        inline bool is_null() const { std::cerr << "WARNING: deprecated: rjson::value::is_null()" << '\n'; return std::get_if<null>(this); }
+        inline bool empty() const
+            {
+                return std::visit([&](auto&& arg) -> bool {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                        return arg.empty();
+                    else
+                        throw std::bad_variant_access{};
+                }, *this);
+            }
 
           // ----------------------------------------------------------------------
 
@@ -382,6 +374,16 @@ namespace rjson
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
             {
                 return get_or_default<std::string>(aFieldName, aDefault);
+            }
+
+        inline const value& get_or_empty_object(std::string aFieldName) const
+            {
+                try {
+                    return operator[](aFieldName);
+                }
+                catch (field_not_found&) {
+                    return rjson::sEmptyObject;
+                }
             }
 
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
@@ -417,90 +419,6 @@ namespace rjson
                 }, *this);
             }
 
-          // ********************************************************************** ----------------------------------------------------------------------
-
-        // inline const value& get(std::string aFieldName, value&& aDefault) const
-        //     {
-        //         const value& result = operator[](aFieldName);
-        //         return result.is_null() ? aDefault : result;
-        //     }
-
-        // template <typename T> inline const value& get(std::string aFieldName, T&& aDefault) const
-        //     {
-        //         return get(aFieldName, to_value(std::forward<T>(aDefault)));
-        //     }
-
-        //   // returns reference to the value at the passed key.
-        //   // if key not found, inserts aDefault with the passed key and returns reference to the inserted
-        //   // if this is not an object, throws  std::bad_variant_access
-        // inline value& get_ref(std::string aKey, value&& aDefault)
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_ref(aKey, std::forward<value>(aDefault));
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_ref: not an object: valueless_by_exception:" << valueless_by_exception() << " index:" << index() << " value:" << to_json() << '\n';
-        //             // std::visit([](auto&& arg) { std::cerr << "actual variant: " << typeid(arg).name() << '\n';}, *this);
-        //             throw;
-        //         }
-        //     }
-
-        // inline object& get_ref_to_object(std::string aKey)
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_ref_to_object(aKey);
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_ref_to_object: not an object: " << to_json() << '\n'; // valueless_by_exception:" << valueless_by_exception() << " index:" << index() << '\n'; // to_json() << '\n';
-        //             throw;
-        //         }
-        //     }
-
-        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName, F&& aDefaultValue) const
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_field(aFieldName, std::forward<F>(aDefaultValue));
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
-        //             throw;
-        //         }
-        //     }
-
-        // template <typename F> inline std::decay_t<F> get_field(std::string aFieldName) const // throws field_not_found
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_field<F>(aFieldName);
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_field: not an object: " << to_json() << '\n'; // to_json() << '\n';
-        //             throw;
-        //         }
-        //     }
-
-        // inline double get_field_number(std::string aFieldName) const // throws field_not_found
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_ref(aFieldName);
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_field_number: not an object: " << to_json() << '\n'; // to_json() << '\n';
-        //             throw;
-        //         }
-        //     }
-
-        // inline const value& get_field_value(std::string aFieldName) const // throws field_not_found
-        //     {
-        //         try {
-        //             return std::get<object>(*this).get_ref(aFieldName);
-        //         }
-        //         catch (std::bad_variant_access&) {
-        //             std::cerr << "ERROR: rjson::value::get_field_value: not an object: " << to_json() << '\n'; // to_json() << '\n';
-        //             throw;
-        //         }
-        //     }
-
-          // ********************************************************************** ----------------------------------------------------------------------
 
         value& update(const value& to_merge);
         void remove_comments(); // defined below as inline (gcc 7.2 cannot handle it inlined here)
@@ -542,8 +460,6 @@ namespace rjson
         class unexpected_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
         inline value_visitor_base() = default;
-          //inline value_visitor_base(const value_visitor_base&) = default;
-          // inline value_visitor_base(value_visitor_base&&) = default;
         virtual inline ~value_visitor_base() {}
 
         [[noreturn]] virtual inline Result operator()(null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
@@ -639,17 +555,6 @@ namespace rjson
             throw field_not_found{};
     }
 
-    // template <> inline const value& object::get(std::string aFieldName, value&& aDefault) const
-    // {
-    //     const value& result = operator[](aFieldName);
-    //     return result.is_null() ? aDefault : result;
-    // }
-
-    // template <typename T> inline const value& object::get(std::string aFieldName, T&& aDefault) const
-    // {
-    //     return get(aFieldName, to_value(std::forward<T>(aDefault)));
-    // }
-
     template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
     {
         try {
@@ -664,50 +569,6 @@ namespace rjson
     {
         return get_or_add(aFieldName, to_value(std::forward<T>(aDefault)));
     }
-
-      // **********************************************************************
-
-    // inline value& object::get_ref(std::string aKey, value&& aDefault)
-    // {
-    //     return mContent.emplace(aKey, std::forward<value>(aDefault)).first->second;
-    // }
-
-    // inline const value& object::get_ref(std::string aKey, value&& aDefault) const { return const_cast<object*>(this)->get_ref(aKey, std::forward<value>(aDefault)); }
-
-    // inline const value& object::get_ref(std::string aKey) const
-    // {
-    //     const auto existing = mContent.find(aKey);
-    //     if (existing == mContent.end())
-    //         throw field_not_found{};
-    //     return existing->second;
-    // }
-
-    //   // if key is absent in the object, returns aDefault but do not update the object
-    // inline value object::get_ref_not_set(std::string aKey, value&& aDefault) const
-    // {
-    //     const auto existing = mContent.find(aKey);
-    //     if (existing == mContent.end())
-    //         return aDefault;
-    //     else
-    //         return existing->second;
-    // }
-
-    // inline value& object::get_ref(const string& aKey)
-    // {
-    //     const auto existing = mContent.find(aKey);
-    //     if (existing == mContent.end())
-    //         throw field_not_found{};
-    //     return existing->second;
-    // }
-
-    // inline object& object::get_ref_to_object(std::string aKey)
-    // {
-    //     const auto existing = mContent.find(aKey);
-    //     if (existing == mContent.end())
-    //         return std::get<object>(get_ref(aKey, object{}));
-    //     else
-    //         return std::get<object>(existing->second);
-    // }
 
     inline value& object::set_field(std::string aKey, value&& aValue)
     {
@@ -738,16 +599,6 @@ namespace rjson
     {
         (insert(to_value(args)), ...);
     }
-
-    // template <typename T> inline array::array(std::initializer_list<T> args)
-    // {
-    //       // std::for_each(std::begin(args), std::end(args), [this](const T& arg) { this->insert(to_value(arg)); });
-    //     // for (auto&& arg: args)
-    //     //     insert(to_value(std::forward<T>(arg)));
-    //     const T& tt = *args.begin();
-    //     using TT = typename content_type<T>::type;
-    //     insert(TT(tt));
-    // }
 
       // ----------------------------------------------------------------------
 

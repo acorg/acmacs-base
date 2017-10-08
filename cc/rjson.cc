@@ -20,8 +20,8 @@ const char* std::bad_variant_access::what() const noexcept { return "bad_variant
 #endif
 
 rjson::value rjson::sNull{rjson::null{}};
-rjson::array rjson::sEmptyArray{rjson::array{}};
-rjson::object rjson::sEmptyObject{rjson::object{}};
+rjson::value rjson::sEmptyArray{rjson::array{}};
+rjson::value rjson::sEmptyObject{rjson::object{}};
 
 #pragma GCC diagnostic pop
 
