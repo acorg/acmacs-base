@@ -659,7 +659,7 @@ static inline bool is_simple(const rjson::value& aValue, bool dive = true)
     auto visitor = [dive](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, rjson::object>) {
-            return (!arg.get_ref_not_set(rjson::object::force_pp_key, rjson::boolean{false})
+            return (!arg.get_or_default(rjson::object::force_pp_key, rjson::boolean{false})
                     && (arg.empty()
                         || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
         }
@@ -706,7 +706,7 @@ std::string rjson::object::to_json(bool space_after_comma) const
 
 std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
 {
-    if (is_simple(*this) || get_ref_not_set(rjson::object::no_pp_key, rjson::boolean{false}))
+    if (is_simple(*this) || get_or_default(rjson::object::no_pp_key, rjson::boolean{false}))
         return to_json(true);
 
     std::string result;
@@ -828,7 +828,7 @@ void rjson::object::update(const rjson::object& to_merge)
 {
     for (const auto& [new_key, new_value]: to_merge) {
         try {
-            value& old_value = get_ref(new_key);
+            rjson::value& old_value = operator[](new_key);
             if (auto [old_n, old_i, new_n, new_i] = std::make_tuple(std::get_if<number>(&old_value), std::get_if<integer>(&old_value), std::get_if<number>(&new_value), std::get_if<integer>(&new_value));
                 (old_n || old_i) && (new_n || new_i)) {
                   // number replaced with integer and vice versa
