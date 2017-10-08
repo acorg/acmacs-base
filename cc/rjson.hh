@@ -386,6 +386,16 @@ namespace rjson
                 }
             }
 
+        inline const value& get_or_empty_array(std::string aFieldName) const
+            {
+                try {
+                    return operator[](aFieldName);
+                }
+                catch (field_not_found&) {
+                    return rjson::sEmptyArray;
+                }
+            }
+
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
@@ -414,6 +424,17 @@ namespace rjson
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, object>)
                         arg.set_field(aFieldName, aValue);
+                    else
+                        throw field_not_found{};
+                }, *this);
+            }
+
+        inline void delete_field(std::string aFieldName)
+            {
+                return std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object>)
+                        arg.delete_field(aFieldName);
                     else
                         throw field_not_found{};
                 }, *this);
