@@ -338,63 +338,26 @@ namespace rjson
         inline operator object&() { return std::get<object>(*this); }
         inline operator array&() { return std::get<array>(*this); }
 
-        inline bool empty() const
-            {
-                return std::visit([&](auto&& arg) -> bool {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                        return arg.empty();
-                    else
-                        throw std::bad_variant_access{};
-                }, *this);
-            }
+        bool empty() const;
 
           // ----------------------------------------------------------------------
 
-        template <typename Index> inline const value& operator[](Index aIndex) const
-            {
-                return std::visit([&](auto&& arg) -> const value& { return arg[aIndex]; }, *this);
-            }
+        template <typename Index> const value& operator[](Index aIndex) const;
 
         template <typename Index> inline value& operator[](Index aIndex)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
             }
 
-        template <typename T> inline T get_or_default(std::string aFieldName, T&& aDefault) const
-            {
-                try {
-                    return operator[](aFieldName);
-                }
-                catch (field_not_found&) {
-                    return std::forward<T>(aDefault);
-                }
-            }
+        template <typename T> T get_or_default(std::string aFieldName, T&& aDefault) const;
 
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
             {
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
 
-        inline const value& get_or_empty_object(std::string aFieldName) const
-            {
-                try {
-                    return operator[](aFieldName);
-                }
-                catch (field_not_found&) {
-                    return rjson::sEmptyObject;
-                }
-            }
-
-        inline const value& get_or_empty_array(std::string aFieldName) const
-            {
-                try {
-                    return operator[](aFieldName);
-                }
-                catch (field_not_found&) {
-                    return rjson::sEmptyArray;
-                }
-            }
+        const value& get_or_empty_object(std::string aFieldName) const;
+        const value& get_or_empty_array(std::string aFieldName) const;
 
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
@@ -429,17 +392,7 @@ namespace rjson
                 }, *this);
             }
 
-        inline void delete_field(std::string aFieldName)
-            {
-                return std::visit([&](auto&& arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object>)
-                        arg.delete_field(aFieldName);
-                    else
-                        throw field_not_found{};
-                }, *this);
-            }
-
+        void delete_field(std::string aFieldName);
 
         value& update(const value& to_merge);
         void remove_comments(); // defined below as inline (gcc 7.2 cannot handle it inlined here)
@@ -622,6 +575,65 @@ namespace rjson
     }
 
       // ----------------------------------------------------------------------
+
+      // gcc 7.2 wants the following functions to be defined here (not inside the class
+
+    inline bool value::empty() const
+    {
+        return std::visit([&](auto&& arg) -> bool {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                                 return arg.empty();
+            else
+                throw std::bad_variant_access{};
+        }, *this);
+    }
+
+    inline void value::delete_field(std::string aFieldName)
+    {
+        return std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object>)
+                                 arg.delete_field(aFieldName);
+            else
+                throw field_not_found{};
+        }, *this);
+    }
+
+    template <typename Index> inline const value& value::operator[](Index aIndex) const
+    {
+        return std::visit([&](auto&& arg) -> const value& { return arg[aIndex]; }, *this);
+    }
+
+    template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return std::forward<T>(aDefault);
+        }
+    }
+
+    inline const value& value::get_or_empty_object(std::string aFieldName) const
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return rjson::sEmptyObject;
+        }
+    }
+
+    inline const value& value::get_or_empty_array(std::string aFieldName) const
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return rjson::sEmptyArray;
+        }
+    }
 
     template <> inline void value::set_field(std::string aFieldName, value&& aValue)
     {
