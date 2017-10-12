@@ -163,6 +163,9 @@ namespace rjson
      public:
         inline object() = default;
         inline object(std::initializer_list<std::pair<string, value>> key_values);
+        // inline ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
+        // inline object(const object&) = default; // required if explicit destructor provided
+        // inline object& operator=(const object&) = default; // required if explicit destructor provided
 
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
@@ -185,6 +188,7 @@ namespace rjson
 
         template <typename T> inline T get_or_default(std::string aFieldName, T&& aDefault) const
             {
+                static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
                 try {
                     return operator[](aFieldName);
                 }
@@ -607,6 +611,7 @@ namespace rjson
 
     template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
     {
+        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
         try {
             return operator[](aFieldName);
         }
