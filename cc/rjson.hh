@@ -201,15 +201,7 @@ namespace rjson
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
 
-        inline const value& get_or_empty_object(std::string aFieldName) const
-            {
-                try {
-                    return operator[](aFieldName);
-                }
-                catch (field_not_found&) {
-                    return rjson::sEmptyObject;
-                }
-            }
+        const object& get_or_empty_object(std::string aFieldName) const;
 
         value& set_field(std::string aKey, value&& aValue);
         value& set_field(const string& aKey, const value& aValue);
@@ -231,7 +223,8 @@ namespace rjson
 
      private:
         std::map<string, value> mContent;
-    };
+
+    }; // class object
 
     class array
     {
@@ -360,8 +353,8 @@ namespace rjson
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
 
-        const value& get_or_empty_object(std::string aFieldName) const;
-        const value& get_or_empty_array(std::string aFieldName) const;
+        const object& get_or_empty_object(std::string aFieldName) const;
+        const array& get_or_empty_array(std::string aFieldName) const;
 
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
@@ -568,6 +561,16 @@ namespace rjson
             throw field_not_found{};
     }
 
+    inline const object& object::get_or_empty_object(std::string aFieldName) const
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return rjson::sEmptyObject;
+        }
+    }
+
       // ----------------------------------------------------------------------
 
     inline void array::insert(value&& aValue) { mContent.push_back(std::move(aValue)); }
@@ -620,7 +623,7 @@ namespace rjson
         }
     }
 
-    inline const value& value::get_or_empty_object(std::string aFieldName) const
+    inline const object& value::get_or_empty_object(std::string aFieldName) const
     {
         try {
             return operator[](aFieldName);
@@ -630,7 +633,7 @@ namespace rjson
         }
     }
 
-    inline const value& value::get_or_empty_array(std::string aFieldName) const
+    inline const array& value::get_or_empty_array(std::string aFieldName) const
     {
         try {
             return operator[](aFieldName);
