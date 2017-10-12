@@ -15,6 +15,7 @@ class argc_argv
  public:
     class unrecognized_option : public std::runtime_error { public: using std::runtime_error::runtime_error; };
     class option_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+    class option_requires_argument : public std::runtime_error { public: using std::runtime_error::runtime_error; };
     class argument_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; };
     class option_value_conversion_failed : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -34,10 +35,20 @@ class argc_argv
                 }
             }
 
+        inline bool get_bool() const
+            {
+                if (auto* b = std::get_if<bool>(&second); b)
+                    return *b;
+                else if (auto* const * s = std::get_if<const char*>(&second); s)
+                    return *s != nullptr && **s != 0;
+                else
+                    throw option_value_conversion_failed{std::string{"cannot convert value of "} + first + " to bool"};
+            }
+
      public:
         using std::pair<std::string, option_default>::pair;
 
-        inline operator bool() const { return get<bool>(); }
+        inline operator bool() const { return get_bool(); }
         inline operator std::string() const { return get<const char*>(); }
         inline operator double() const { return get<double>(); }
         inline operator long() const { return get<long>(); }

@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 
 #include "argc-argv.hh"
 
@@ -26,14 +24,26 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, bool>)
                         mOptions.emplace_back(name, !arg);
-                    else if constexpr (std::is_same_v<T, const char*>)
-                        mOptions.emplace_back(name, option_default{argv[++arg_no]});
-                    else if constexpr (std::is_same_v<T, long>)
-                        mOptions.emplace_back(name, option_default{std::stol(argv[++arg_no])});
+                    else if constexpr (std::is_same_v<T, const char*>) {
+                        if ((arg_no + 1) < argc)
+                            mOptions.emplace_back(name, option_default{argv[++arg_no]});
+                        else
+                            throw option_requires_argument{name + std::string{" requires argument"}};
+                    }
+                    else if constexpr (std::is_same_v<T, long>) {
+                        if ((arg_no + 1) < argc)
+                            mOptions.emplace_back(name, option_default{std::stol(argv[++arg_no])});
+                        else
+                            throw option_requires_argument{name + std::string{" requires argument"}};
                     // else if constexpr (std::is_same_v<T, unsigned long>)
                     //     mOptions.emplace_back(name, option_default{std::stoul(argv[++arg_no])});
-                    else if constexpr (std::is_same_v<T, double>)
-                        mOptions.emplace_back(name, option_default{std::stod(argv[++arg_no])});
+                    }
+                    else if constexpr (std::is_same_v<T, double>) {
+                        if ((arg_no + 1) < argc)
+                            mOptions.emplace_back(name, option_default{std::stod(argv[++arg_no])});
+                        else
+                            throw option_requires_argument{name + std::string{" requires argument"}};
+                    }
                     else
                         static_assert(std::is_same_v<T, bool>, "non-exhaustive visitor in argc_argv::argc_argv!");
                 };
@@ -91,15 +101,12 @@ std::string argc_argv::usage_options(size_t aIndent) const
                        return result;
                    };
 
-    std::ostringstream result;
+    std::string result;
+    const std::string indent(aIndent, ' ');
     for (const auto& opt: mOptions) {
-        result << std::string(aIndent, ' ')
-                  // << std::setw(15) << std::left
-               << opt.first
-               << std::visit(visitor, opt.second)
-               << '\n';
+        result += indent + opt.first + std::visit(visitor, opt.second) + '\n';
     }
-    return result.str();
+    return result;
 
 } // argc_argv::usage_options
 
