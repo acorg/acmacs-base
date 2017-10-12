@@ -91,7 +91,7 @@ namespace rjson::implementation
 
         [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
             {
-                throw rjson::parse_error(aParser.line(), aParser.column(), "unexpected symbol: " + std::string{aSymbol} + " (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+                throw rjson::parse_error(aParser.line(), aParser.column(), std::string{"unexpected symbol: '"} + aSymbol + "' (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
             }
 
         [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const

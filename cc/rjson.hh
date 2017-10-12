@@ -20,7 +20,7 @@ namespace rjson
 {
     namespace implementation { class NumberHandler; }
 
-    class field_not_found : public std::exception { public: using std::exception::exception; };
+    class field_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_not_found() : std::runtime_error{""} {} };
 
     class value;
     class array;
@@ -374,7 +374,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         arg.set_field(aFieldName, std::forward<F>(aValue));
                     else
-                        throw field_not_found{};
+                        throw field_not_found{aFieldName};
                 }, *this);
             }
 
@@ -385,7 +385,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         arg.set_field(aFieldName, aValue);
                     else
-                        throw field_not_found{};
+                        throw field_not_found{aFieldName};
                 }, *this);
             }
 
@@ -515,7 +515,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{}; // return sNull;
+            throw field_not_found{aFieldName}; // return sNull;
     }
 
     inline value& object::operator[](std::string aFieldName)
@@ -523,7 +523,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{};
+            throw field_not_found{aFieldName};
     }
 
     template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
@@ -558,7 +558,7 @@ namespace rjson
         if (auto iter = mContent.find(aKey); iter != mContent.end())
             mContent.erase(iter);
         else
-            throw field_not_found{};
+            throw field_not_found{aKey};
     }
 
     inline const object& object::get_or_empty_object(std::string aFieldName) const
@@ -603,7 +603,7 @@ namespace rjson
             if constexpr (std::is_same_v<T, object>)
                                  arg.delete_field(aFieldName);
             else
-                throw field_not_found{};
+                throw field_not_found{aFieldName};
         }, *this);
     }
 

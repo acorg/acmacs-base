@@ -216,7 +216,7 @@ namespace string
 
     template <typename T, typename = std::enable_if<std::is_integral<T>::value>> inline std::string to_hex_string(T aValue, enum ShowBase aShowBase, OutputCase aOutputCase = Uppercase)
     {
-        std::stringstream stream;
+        std::ostringstream stream;
           // stream << (aShowBase == ShowBase ? std::showbase : std::noshowbase);
         if (aShowBase == ShowBase)
             stream << "0x";
@@ -233,7 +233,7 @@ namespace string
 
     template <typename T> inline std::string to_hex_string(const T* aPtr)
     {
-        std::stringstream stream;
+        std::ostringstream stream;
         const void* value = reinterpret_cast<const void*>(aPtr);
         stream << value; // std::setfill('0') << std::setw(sizeof(value)*2) << std::hex << value;
         return stream.str();

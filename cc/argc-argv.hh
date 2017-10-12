@@ -87,6 +87,11 @@ class argc_argv
 
 }; // class argc_argv
 
+inline bool operator == (const argc_argv::option& aOpt, const char* aStr) { return static_cast<std::string>(aOpt) == aStr; }
+inline bool operator == (const char* aStr, const argc_argv::option& aOpt) { return static_cast<std::string>(aOpt) == aStr; }
+inline bool operator != (const argc_argv::option& aOpt, const char* aStr) { return !operator==(aOpt, aStr); }
+inline bool operator != (const char* aStr, const argc_argv::option& aOpt) { return !operator==(aStr, aOpt); }
+
 // ----------------------------------------------------------------------
 
 class argc_argv_simple

@@ -22,7 +22,7 @@ CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WARNINGS) -Icc
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
 ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
-ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) # -L$(AD_LIB)
+ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) $(CXX_LIB) # -L$(AD_LIB)
 
 # ----------------------------------------------------------------------
 
