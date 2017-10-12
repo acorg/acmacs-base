@@ -202,6 +202,7 @@ namespace rjson
             }
 
         const object& get_or_empty_object(std::string aFieldName) const;
+        const array& get_or_empty_array(std::string aFieldName) const;
 
         value& set_field(std::string aKey, value&& aValue);
         value& set_field(const string& aKey, const value& aValue);
@@ -568,6 +569,16 @@ namespace rjson
         }
         catch (field_not_found&) {
             return rjson::sEmptyObject;
+        }
+    }
+
+    inline const array& object::get_or_empty_array(std::string aFieldName) const
+    {
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return rjson::sEmptyArray;
         }
     }
 
