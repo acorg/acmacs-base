@@ -35,6 +35,8 @@ class Timeit
     decltype(std::chrono::steady_clock::now()) start;
 };
 
+inline report_time do_report_time(bool do_report) { return do_report ? report_time::Yes : report_time::No; }
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))

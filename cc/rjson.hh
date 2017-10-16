@@ -196,11 +196,16 @@ namespace rjson
                     return std::forward<T>(aDefault);
                 }
             }
+
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
             {
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
 
+        template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const;
+        std::pair<bool, const value&> get_value_if(std::string aFieldName) const;
+        std::pair<bool, const object&> get_object_if(std::string aFieldName) const;
+        std::pair<bool, const array&> get_array_if(std::string aFieldName) const;
         const object& get_or_empty_object(std::string aFieldName) const;
         const array& get_or_empty_array(std::string aFieldName) const;
 
@@ -356,6 +361,25 @@ namespace rjson
 
         const object& get_or_empty_object(std::string aFieldName) const;
         const array& get_or_empty_array(std::string aFieldName) const;
+
+        template <typename R> inline std::pair<bool, const R&> get_R_if(std::string aFieldName) const
+            {
+                try {
+                    return {true, operator[](aFieldName)};
+                }
+                catch (field_not_found&) {
+                    if constexpr (std::is_same_v<R, value>)
+                        return {false, sNull};
+                    else if constexpr (std::is_same_v<R, object>)
+                        return {false, sEmptyObject};
+                    else
+                        return {false, sEmptyArray};
+                }
+            }
+
+        std::pair<bool, const value&> inline get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
+        std::pair<bool, const object&> inline get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
+        std::pair<bool, const array&> inline get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
 
         template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
             {
@@ -581,6 +605,25 @@ namespace rjson
             return rjson::sEmptyArray;
         }
     }
+
+    template <typename R> inline std::pair<bool, const R&> object::get_R_if(std::string aFieldName) const
+    {
+        try {
+            return {true, operator[](aFieldName)};
+        }
+        catch (field_not_found&) {
+            if constexpr (std::is_same_v<R, value>)
+                return {false, sNull};
+            else if constexpr (std::is_same_v<R, object>)
+                return {false, sEmptyObject};
+            else
+                return {false, sEmptyArray};
+        }
+    }
+
+    std::pair<bool, const value&> inline object::get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
+    std::pair<bool, const object&> inline object::get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
+    std::pair<bool, const array&> inline object::get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
 
       // ----------------------------------------------------------------------
 
