@@ -46,15 +46,18 @@ namespace _enumerate_internal
 
 // ----------------------------------------------------------------------
 
-template <typename Iterator> auto enumerate(Iterator first, Iterator last, typename std::iterator_traits<Iterator>::difference_type initial)
+namespace acmacs
 {
-    return _enumerate_internal::enumerate_range<Iterator>(first, last, initial);
-}
+    template <typename Iterator> auto enumerate(Iterator first, Iterator last, typename std::iterator_traits<Iterator>::difference_type initial = 0)
+    {
+        return _enumerate_internal::enumerate_range<Iterator>(first, last, initial);
+    }
 
-template <typename Container> auto enumerate(Container& content)
-{
-    using iter_type = decltype(std::begin(content));
-    return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
+    template <typename Container> auto enumerate(Container& content)
+    {
+        using iter_type = decltype(std::begin(content));
+        return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
+    }
 }
 
 // ----------------------------------------------------------------------
