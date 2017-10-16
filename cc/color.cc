@@ -264,9 +264,14 @@ static const char* ana_colors[] =
     "#00939f",
 };
 
-std::vector<std::string> Color::distinct_colors()
+std::vector<std::string> Color::distinct_s()
 {
-    return std::vector<std::string>{std::begin(ana_colors), std::end(ana_colors)};
+    return {std::begin(ana_colors), std::end(ana_colors)};
+}
+
+std::vector<Color> Color::distinct()
+{
+    return {std::begin(ana_colors), std::end(ana_colors)};
 }
 
 // ----------------------------------------------------------------------
