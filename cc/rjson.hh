@@ -738,6 +738,14 @@ template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::
 }
 
 // ----------------------------------------------------------------------
+
+namespace string
+{
+    inline std::string to_string(const rjson::string& src) { return src; }
+    inline std::string to_string(const rjson::value& src) { return static_cast<const rjson::string&>(src); }
+}
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
