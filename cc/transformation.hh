@@ -15,7 +15,7 @@ class Transformation
     inline Transformation() = default;
     inline Transformation(const Transformation&) = default;
     inline Transformation(double a11, double a12, double a21, double a22) : a{a11}, b{a12}, c{a21}, d{a22} {}
-    // inline Transformation& operator=(const Transformation& t) = default;
+    inline Transformation& operator=(const Transformation& t) = default;
 
     inline void rotate(double aAngle)
         {

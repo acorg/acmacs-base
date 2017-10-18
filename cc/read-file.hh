@@ -141,12 +141,14 @@ namespace acmacs_base
                     throw std::runtime_error(std::string("Cannot create temporary file using template ") + name + ": " + strerror(errno));
             }
 
+        inline TempFile& operator = (TempFile&& aFrom) noexcept { name = std::move(aFrom.name); fd = aFrom.fd; aFrom.name.clear(); return *this; }
         inline operator std::string() const { return name; }
         inline operator int() const { return fd; }
 
         inline ~TempFile()
             {
-                fs::remove(name.c_str());
+                if (!name.empty())
+                    fs::remove(name.c_str());
             }
 
      private:
