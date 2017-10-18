@@ -186,7 +186,7 @@ namespace rjson
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
-        template <typename T> inline T get_or_default(std::string aFieldName, T&& aDefault) const
+        template <typename T> inline std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const
             {
                 static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
                 try {
