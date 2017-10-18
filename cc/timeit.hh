@@ -12,7 +12,7 @@ enum class report_time { No, Yes };
 class Timeit
 {
  public:
-    inline Timeit(std::string msg, std::ostream& out = std::cout, report_time aReport = report_time::No)
+    inline Timeit(std::string msg, report_time aReport = report_time::Yes, std::ostream& out = std::cerr)
         : message(msg), out_stream(out), mReport(aReport), start(std::chrono::steady_clock::now()) {}
 
     inline ~Timeit() { report(); }

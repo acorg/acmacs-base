@@ -58,6 +58,12 @@ namespace acmacs
         using iter_type = decltype(std::begin(content));
         return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
     }
+
+    template <typename Container> auto enumerate(const Container& content)
+    {
+        using iter_type = decltype(std::begin(content));
+        return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
+    }
 }
 
 // ----------------------------------------------------------------------
