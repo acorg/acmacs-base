@@ -28,6 +28,8 @@ namespace virus_name
         const std::regex international{std::string(re_international_name) + re_reassortant_passage + "$"};
         const std::regex international_name{re_international_name};
 
+#pragma GCC diagnostic pop
+
         inline std::string make_year(const std::smatch& m)
         {
             std::string year;
@@ -40,7 +42,13 @@ namespace virus_name
             return year;
         }
 
-#pragma GCC diagnostic pop
+        constexpr const size_t international_name_suffix_size = 9; // len(lo/isolation-number/year) >= 9
+
+        inline std::string location_human(std::string name, size_t prefix_size)
+        {
+            const auto end = name.find('/', prefix_size);
+            return name.substr(prefix_size, end - prefix_size);
+        }
     }
 
 // ----------------------------------------------------------------------
@@ -55,6 +63,8 @@ namespace virus_name
 
     std::string normalize(std::string name);
 
+    using location_func_t = std::string (*)(std::string);
+
       // returned cdc abbreviation starts with #
     inline std::string location(std::string name)
     {
@@ -68,6 +78,20 @@ namespace virus_name
         else
             THROW(Unrecognized{"No location in " + name}, std::string{});
         return location;
+    }
+
+      // Faster version of location() for A(H3N2)/ and A(H1N1)/ names without host field
+    inline std::string location_human_a(std::string name)
+    {
+        constexpr const size_t prefix_size = 8;
+        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ?  _internal::location_human(name, prefix_size) : location(name);
+    }
+
+      // Faster version of location() for B/ names without host field
+    inline std::string location_human_b(std::string name)
+    {
+        constexpr const size_t prefix_size = 2;
+        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ?  _internal::location_human(name, prefix_size) : location(name);
     }
 
 // ----------------------------------------------------------------------
