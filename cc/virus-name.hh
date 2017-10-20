@@ -61,10 +61,10 @@ namespace virus_name
         using namespace _internal;
         std::string location;
         std::smatch m;
-        if (std::regex_search(name, m, cdc))
-            location = "#" + m[1].str();
-        else if (std::regex_match(name, m, international))
+        if (std::regex_match(name, m, international))
             location = m[3].str();
+        else if (std::regex_search(name, m, cdc))
+            location = "#" + m[1].str();
         else
             THROW(Unrecognized{"No location in " + name}, std::string{});
         return location;
