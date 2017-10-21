@@ -6,6 +6,15 @@ MAKEFLAGS = -w
 
 # ----------------------------------------------------------------------
 
+TARGETS = \
+    $(ACMACS_BASE_LIB) \
+    $(DIST)/json-pp \
+    $(DIST)/test-rjson \
+    $(DIST)/test-rjson-load \
+    $(DIST)/test-argc-argv
+
+# ----------------------------------------------------------------------
+
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = virus-name.cc color.cc time-series.cc json-importer.cc rjson.cc argc-argv.cc quicklook.cc
@@ -28,18 +37,16 @@ ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) $(CXX_LIB) # -L$(AD
 
 all: install
 
-install: check-acmacsd-root install-acmacs-base json-pp
+install: check-acmacsd-root install-acmacs-base
 
 lib: $(ACMACS_BASE_LIB)
 
-test: $(DIST)/test-rjson $(DIST)/test-argc-argv
+test: $(TARGETS)
 	test/test
-
-json-pp: $(DIST)/json-pp
 
 # ----------------------------------------------------------------------
 
-install-acmacs-base: lib
+install-acmacs-base: $(TARGETS)
 	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	ln -sf $(abspath py/acmacs_base) $(AD_PY)
@@ -61,17 +68,21 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 	@echo "SHARED     " $@ # '<--' $^
 	@$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
-$(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST)
-	@echo "LINK       " $@ # '<--' $^
-	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+# $(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST)
+#	@echo "LINK       " $@ # '<--' $^
+#	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
-$(DIST)/json-pp: $(patsubst %.cc,$(BUILD)/%.o,$(JSON_PP_SOURCES)) | $(DIST)
-	@echo "LINK       " $@ # '<--' $^
-	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+# $(DIST)/json-pp: $(patsubst %.cc,$(BUILD)/%.o,$(JSON_PP_SOURCES)) | $(DIST)
+#	@echo "LINK       " $@ # '<--' $^
+#	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
-$(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
-	@echo "LINK       " $@ # '<--' $^
-	@$(CXX) $(LDFLAGS) -o $@ $^
+# $(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
+#	@echo "LINK       " $@ # '<--' $^
+#	@$(CXX) $(LDFLAGS) -o $@ $^
+
+$(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
+	@echo "LINK       " $@
+	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS)
 
 # ======================================================================
 ### Local Variables:

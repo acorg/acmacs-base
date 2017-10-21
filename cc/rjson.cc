@@ -109,7 +109,7 @@ namespace rjson::implementation
                 aParser.newline();
             }
 
-        virtual HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser)
+        virtual inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser)
             {
                 switch (aSymbol) {
                   case ' ':
@@ -125,8 +125,8 @@ namespace rjson::implementation
                 return StateTransitionNone{};
             }
 
-        virtual rjson::value value() const { return rjson::null{}; }
-        virtual void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
+        virtual inline rjson::value value() const { return rjson::null{}; }
+        virtual inline void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
     }; // class SymbolHandler
 
@@ -137,17 +137,17 @@ namespace rjson::implementation
      public:
         HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
 
-        void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
+        inline void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
             {
-                mValue = aSubvalue;
+                mValue = std::move(aSubvalue);
                 mValueRead = true;
             }
 
-        rjson::value value() const override { return mValue; }
-        rjson::value& value() { return mValue; }
+        inline rjson::value value() const override { return mValue; }
+        inline rjson::value& value() { return mValue; }
 
      protected:
-        bool value_read() const { return mValueRead; }
+        inline bool value_read() const { return mValueRead; }
 
      private:
         bool mValueRead = false;
@@ -160,7 +160,7 @@ namespace rjson::implementation
     class StringEscapeHandler : public SymbolHandler
     {
      public:
-        HandlingResult handle(std::string_view::value_type /*aSymbol*/, Parser& /*aParser*/) override
+        inline HandlingResult handle(std::string_view::value_type /*aSymbol*/, Parser& /*aParser*/) override
             {
                 return StateTransitionPop{};
             }
@@ -172,9 +172,9 @@ namespace rjson::implementation
     class StringHandler : public SymbolHandler
     {
      public:
-        StringHandler(Parser& aParser) : mParser{aParser}, mBegin{aParser.pos() + 1}, mEnd{0} {}
+        inline StringHandler(Parser& aParser) : mParser{aParser}, mBegin{aParser.pos() + 1}, mEnd{0} {}
 
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result = StateTransitionNone{};
                 switch (aSymbol) {
@@ -194,7 +194,7 @@ namespace rjson::implementation
                 return result;
             }
 
-        rjson::value value() const override
+        inline rjson::value value() const override
             {
                 return rjson::string{mParser.data(mBegin, mEnd)};
             }
@@ -210,9 +210,9 @@ namespace rjson::implementation
     class NumberHandler : public SymbolHandler
     {
      public:
-        NumberHandler(Parser& aParser) : mParser{aParser}, mBegin{aParser.pos()}, mEnd{0} {}
+        inline NumberHandler(Parser& aParser) : mParser{aParser}, mBegin{aParser.pos()}, mEnd{0} {}
 
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result = StateTransitionNone{};
                 mEnd = aParser.pos() + 1;
@@ -248,7 +248,7 @@ namespace rjson::implementation
                 return result;
             }
 
-        rjson::value value() const override
+        inline rjson::value value() const override
             {
                 if (mInteger)
                     return rjson::integer{mParser.data(mBegin, mEnd)};
@@ -272,7 +272,7 @@ namespace rjson::implementation
      public:
         inline BoolNullHandler(const char* aExpected, rjson::value&& aValue) : mExpected{aExpected}, mValue{std::move(aValue)} {}
 
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result = StateTransitionNone{};
                 switch (aSymbol) {
@@ -294,7 +294,7 @@ namespace rjson::implementation
                 return result;
             }
 
-        rjson::value value() const override { return mValue; }
+        inline rjson::value value() const override { return mValue; }
 
      private:
         const char* mExpected;
@@ -314,7 +314,7 @@ namespace rjson::implementation
      public:
         inline ObjectHandler() {}
 
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result = StateTransitionNone{};
                 switch (aSymbol) {
@@ -374,15 +374,15 @@ namespace rjson::implementation
                 return result;
             }
 
-        rjson::value value() const override { return mValue; }
+        inline rjson::value value() const override { return mValue; }
 
-        void subvalue(rjson::value&& aSubvalue, Parser& aParser) override
+        inline void subvalue(rjson::value&& aSubvalue, Parser& aParser) override
             {
                   // std::cerr << "ObjectHandler::subvalue " << aSubvalue.to_json() << '\n';
                 switch (mExpected) {
                   case Expected::Key:
                   case Expected::KeyAfterComma:
-                      mKey = aSubvalue;
+                      mKey = std::move(aSubvalue);
                       mExpected = Expected::Colon;
                       break;
                   case Expected::Value:
@@ -412,7 +412,7 @@ namespace rjson::implementation
      public:
         inline ArrayHandler() {}
 
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result = StateTransitionNone{};
                 switch (aSymbol) {
@@ -458,9 +458,9 @@ namespace rjson::implementation
                 return result;
             }
 
-        rjson::value value() const override { return mValue; }
+        inline rjson::value value() const override { return mValue; }
 
-        void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
+        inline void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
             {
                 mValue.insert(std::move(aSubvalue));
             }
@@ -476,7 +476,7 @@ namespace rjson::implementation
     class ToplevelHandler : public ValueHandler
     {
      public:
-        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result;
                 if (value_read())
