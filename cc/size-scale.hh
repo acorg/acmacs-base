@@ -55,6 +55,13 @@ inline Rotation RotationDegrees(double aAngle)
 }
 
 // ----------------------------------------------------------------------
+
+inline std::ostream& operator<<(std::ostream& out, Pixels aPixels) { return out << "Pixels{" << aPixels.value() << '}'; }
+inline std::ostream& operator<<(std::ostream& out, Scaled aScaled) { return out << "Scaled{" << aScaled.value() << '}'; }
+inline std::ostream& operator<<(std::ostream& out, Aspect aAspect) { if (aAspect == AspectNormal) return out << "AspectNormal"; else return out << "Aspect{" << aAspect.value() << '}'; }
+inline std::ostream& operator<<(std::ostream& out, Rotation aRotation) { if (aRotation == NoRotation) return out << "NoRotation"; else return out << "Rotation{" << aRotation.value() << '}'; }
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
