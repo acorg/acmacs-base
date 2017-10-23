@@ -9,10 +9,10 @@
 
 namespace _enumerate_internal
 {
-    template <class Iterator> struct enumerate_iterator
+    template <typename Iterator, typename index_type> struct enumerate_iterator
     {
         using iterator = Iterator;
-        using index_type = typename std::iterator_traits<iterator>::difference_type;
+          //using index_type = typename std::iterator_traits<iterator>::difference_type;
         using reference = typename std::iterator_traits<iterator>::reference;
 
         enumerate_iterator(index_type aIndex, iterator aIterator) : index(aIndex), iter(aIterator) {}
@@ -27,10 +27,10 @@ namespace _enumerate_internal
 
       // ----------------------------------------------------------------------
 
-    template <class Iterator> struct enumerate_range
+    template <typename Iterator, typename index_type> struct enumerate_range
     {
-        using index_type = typename std::iterator_traits<Iterator>::difference_type;
-        using iterator = enumerate_iterator<Iterator>;
+        // using index_type = typename std::iterator_traits<Iterator>::difference_type;
+        using iterator = enumerate_iterator<Iterator, index_type>;
 
         enumerate_range(Iterator aFirst, Iterator aLast, index_type aInitial) : first(aFirst), last(aLast), initial(aInitial) {}
         iterator begin() const { return iterator(initial, first); }
@@ -48,21 +48,21 @@ namespace _enumerate_internal
 
 namespace acmacs
 {
-    template <typename Iterator> auto enumerate(Iterator first, Iterator last, typename std::iterator_traits<Iterator>::difference_type initial = 0)
+    template <typename Iterator, typename index_type> auto enumerate(Iterator first, Iterator last, index_type initial = 0)
     {
-        return _enumerate_internal::enumerate_range<Iterator>(first, last, initial);
+        return _enumerate_internal::enumerate_range<Iterator, index_type>(first, last, initial);
     }
 
     template <typename Container> auto enumerate(Container& content)
     {
         using iter_type = decltype(std::begin(content));
-        return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
+        return _enumerate_internal::enumerate_range<iter_type, size_t>(std::begin(content), std::end(content), 0U);
     }
 
     template <typename Container> auto enumerate(const Container& content)
     {
         using iter_type = decltype(std::begin(content));
-        return _enumerate_internal::enumerate_range<iter_type>(std::begin(content), std::end(content), 0);
+        return _enumerate_internal::enumerate_range<iter_type, size_t>(std::begin(content), std::end(content), 0U);
     }
 }
 
