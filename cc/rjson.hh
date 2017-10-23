@@ -41,6 +41,10 @@ namespace rjson
         inline string() = default;
         inline string(std::string aData) : mData{aData} {}
         inline string(const char* aData) : mData{aData} {}
+        inline string(const string&) = default;
+        inline string& operator=(const string&) = default;
+        inline string(string&&) = default;
+        inline string& operator=(string&&) = default;
         inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator std::string() const { return mData; }
@@ -164,8 +168,10 @@ namespace rjson
         inline object() = default;
         inline object(std::initializer_list<std::pair<string, value>> key_values);
         // inline ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
-        // inline object(const object&) = default; // required if explicit destructor provided
-        // inline object& operator=(const object&) = default; // required if explicit destructor provided
+        inline object(const object&) = default; // required if explicit destructor provided
+        inline object& operator=(const object&) = default; // required if explicit destructor provided
+        inline object(object&&) = default;
+        inline object& operator=(object&&) = default;
 
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
@@ -308,6 +314,8 @@ namespace rjson
         using value_base::value_base;
         inline value(const value&) = default; // gcc7 wants this, otherwise it is deleted
         inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
+        inline value(value&&) = default;
+        inline value& operator=(value&&) = default;
           // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
 
           // ----------------------------------------------------------------------
