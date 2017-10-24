@@ -209,6 +209,7 @@ namespace rjson
             }
 
         template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const;
+        bool exists(std::string aFieldName) const;
         std::pair<bool, const value&> get_value_if(std::string aFieldName) const;
         std::pair<bool, const object&> get_object_if(std::string aFieldName) const;
         std::pair<bool, const array&> get_array_if(std::string aFieldName) const;
@@ -369,6 +370,17 @@ namespace rjson
 
         const object& get_or_empty_object(std::string aFieldName) const;
         const array& get_or_empty_array(std::string aFieldName) const;
+
+        bool exists(std::string aFieldName) const
+            {
+                try {
+                    operator[](aFieldName);
+                    return true;
+                }
+                catch (field_not_found&) {
+                    return false;
+                }
+            }
 
         template <typename R> inline std::pair<bool, const R&> get_R_if(std::string aFieldName) const
             {
@@ -611,6 +623,17 @@ namespace rjson
         }
         catch (field_not_found&) {
             return rjson::sEmptyArray;
+        }
+    }
+
+    inline bool object::exists(std::string aFieldName) const
+    {
+        try {
+            operator[](aFieldName);
+            return true;
+        }
+        catch (field_not_found&) {
+            return false;
         }
     }
 
