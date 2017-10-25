@@ -588,14 +588,12 @@ namespace rjson
 
     inline value& object::set_field(std::string aKey, value&& aValue)
     {
-        auto [iter, inserted] = mContent.insert_or_assign(aKey, std::forward<value>(aValue));
-        return iter->second;
+        return mContent.insert_or_assign(aKey, std::forward<value>(aValue)).first->second;
     }
 
     inline value& object::set_field(const string& aKey, const value& aValue)
     {
-        auto [iter, inserted] = mContent.insert_or_assign(aKey, aValue);
-        return iter->second;
+        return mContent.insert_or_assign(aKey, aValue).first->second;
     }
 
     inline void object::delete_field(string aKey)
