@@ -18,8 +18,6 @@
 
 namespace rjson
 {
-    namespace implementation { class NumberHandler; }
-
     class field_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_not_found() : std::runtime_error{""} {} };
 
     class value;
@@ -71,7 +69,8 @@ namespace rjson
         inline bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
 
         friend class object;
-    };
+
+    }; // class string
 
     class boolean
     {
@@ -90,7 +89,8 @@ namespace rjson
 
      private:
         bool mValue;
-    };
+
+    }; // class boolean
 
     class null
     {
@@ -103,13 +103,15 @@ namespace rjson
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
-    };
+
+    }; // class null
 
     class number
     {
      public:
         inline number() : mValue{"0.0"} {}
         inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
+        inline number(std::string_view&& aData) : mValue{aData} {} // for parser
         inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
@@ -121,13 +123,10 @@ namespace rjson
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
-        inline number(std::string_view&& aData) : mValue{aData} {}
-
           // double mValue;
         std::string mValue;
 
-        friend class implementation::NumberHandler;
-    };
+    }; // class number
 
     class integer
     {
@@ -137,6 +136,7 @@ namespace rjson
         inline integer(unsigned int aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
         inline integer(unsigned long aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer(std::string_view&& aData) : mValue{aData} {} // for parser
         inline integer& operator=(int aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline integer& operator=(unsigned int aSrc) { mValue = std::to_string(aSrc); return *this; }
         inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
@@ -155,12 +155,9 @@ namespace rjson
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
 
      private:
-        inline integer(std::string_view&& aData) : mValue{aData} {}
-
         std::string mValue;
 
-        friend class implementation::NumberHandler;
-    };
+    }; // class integer
 
     class object
     {
@@ -279,7 +276,8 @@ namespace rjson
 
      private:
         std::vector<value> mContent;
-    };
+
+    }; // class array
 
       // ----------------------------------------------------------------------
 
