@@ -1,6 +1,10 @@
 // POP rjson parser implementation
 // upon parsing a value (obejct, array, string, etc.) its value moved to parent
 
+#include <stack>
+#include <memory>
+#include <string_view>
+
 #include "acmacs-base/string.hh"
 
 #include "rjson.hh"
