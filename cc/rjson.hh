@@ -519,6 +519,7 @@ namespace rjson
     enum class remove_comments { No, Yes };
 
     value parse_string(std::string aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
+    value parse_string(const std::string_view& aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
     value parse_string(const char* aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
     value parse_file(std::string aFilename, remove_comments aRemoveComments = remove_comments::Yes);
 

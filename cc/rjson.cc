@@ -30,6 +30,14 @@ rjson::value rjson::parse_string(std::string aJsonData, rjson::remove_comments a
 
 // ----------------------------------------------------------------------
 
+rjson::value rjson::parse_string(const std::string_view& aJsonData, rjson::remove_comments aRemoveComments)
+{
+    return parser_pop::parse_string(aJsonData, aRemoveComments);
+
+} // rjson::parse_string
+
+// ----------------------------------------------------------------------
+
 rjson::value rjson::parse_string(const char* aJsonData, rjson::remove_comments aRemoveComments)
 {
     return parser_pop::parse_string(aJsonData, aRemoveComments);

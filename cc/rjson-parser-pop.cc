@@ -510,6 +510,14 @@ rjson::value rjson::parser_pop::parse_string(std::string aJsonData, rjson::remov
 
 // ----------------------------------------------------------------------
 
+rjson::value rjson::parser_pop::parse_string(const std::string_view& aJsonData, remove_comments aRemoveComments)
+{
+    return parse_string_impl(aJsonData, aRemoveComments);
+
+} // rjson::parser_pop::parse_string
+
+// ----------------------------------------------------------------------
+
 rjson::value rjson::parser_pop::parse_string(const char* aJsonData, rjson::remove_comments aRemoveComments)
 {
     return parse_string_impl(aJsonData, aRemoveComments);
