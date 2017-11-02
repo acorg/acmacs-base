@@ -239,7 +239,7 @@ namespace rjson
     class array
     {
      public:
-        inline array() = default;
+        inline array() { mContent.reserve(2000); }
         inline array(array&&) = default;
         inline array(const array&) = default;
         template <typename ... Args> array(Args ... args);
@@ -312,8 +312,10 @@ namespace rjson
         using value_base::operator=;
         using value_base::value_base;
         inline value(const value&) = default; // gcc7 wants this, otherwise it is deleted
-        inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
+          //inline value(const value& aSrc) : value_base(aSrc) { std::cerr << "rjson::value copy " << aSrc.to_json() << '\n'; }
         inline value(value&&) = default;
+          // inline value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
+        inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
         inline value& operator=(value&&) = default;
           // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
 
@@ -458,11 +460,11 @@ namespace rjson
         return rjson_type<FValue>{std::forward<FValue>(aValue)};
     }
 
-    template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
+    // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
     template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
     template <typename FValue> inline value to_value(array&& aValue) { return aValue; }
 
-    template <typename FValue> inline value to_value(const value& aValue) { return aValue; }
+      // template <typename FValue> inline value to_value(const value& aValue) { return aValue; }
     template <typename FValue> inline value to_value(const object& aValue) { return aValue; }
     template <typename FValue> inline value to_value(const array& aValue) { return aValue; }
 
@@ -546,7 +548,7 @@ namespace rjson
 {
     inline void object::insert(const string& aKey, value&& aValue) { mContent.emplace(aKey, std::move(aValue)); }
     inline void object::insert(const string& aKey, const value& aValue) { mContent.emplace(aKey, aValue); }
-    inline void object::insert(value&& aKey, value&& aValue) { insert(std::get<string>(std::forward<value>(aKey)), std::forward<value>(aValue)); }
+    inline void object::insert(value&& aKey, value&& aValue) { insert(std::get<string>(std::move(aKey)), std::move(aValue)); }
 
     inline object::object(std::initializer_list<std::pair<string, value>> key_values)
     {
@@ -576,7 +578,7 @@ namespace rjson
             return operator[](aFieldName);
         }
         catch (field_not_found&) {
-            return set_field(aFieldName, std::forward<value>(aDefault));
+            return set_field(aFieldName, std::move(aDefault));
         }
     }
 
@@ -728,7 +730,7 @@ namespace rjson
     template <> inline void value::set_field(std::string aFieldName, value&& aValue)
     {
         try {
-            std::get<object>(*this).set_field(aFieldName, std::forward<value>(aValue));
+            std::get<object>(*this).set_field(aFieldName, std::move(aValue));
         }
         catch (std::bad_variant_access&) {
             std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';

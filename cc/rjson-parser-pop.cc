@@ -37,7 +37,8 @@ namespace rjson::parser_pop
 
         void parse(std::string_view aJsonData);
 
-        rjson::value result() const;
+        // rjson::value result() const;
+        rjson::value result_move();
         void remove_emacs_indent();
         void remove_comments();
         inline size_t pos() const { return mPos; }
@@ -46,17 +47,21 @@ namespace rjson::parser_pop
         inline std::string_view::value_type previous() const { if (mPos) return mSource[mPos - 1]; throw rjson::parse_error(line(), pos(), "internal: no previous at the beginning of parsing"); }
         inline std::string data(size_t aBegin, size_t aEnd) const { return {mSource.data() + aBegin, aEnd - aBegin}; }
 
-        inline void back()
+        inline void back() noexcept
             {
-                if (!mPos)
-                    throw rjson::parse_error(line(), pos(), "internal: cannot back at the beginning of parsing");
+                // if (!mPos)
+                //     throw rjson::parse_error(line(), pos(), "internal: cannot back at the beginning of parsing");
                 --mPos;
                 --mColumn;
                 if (mColumn == 0)
                     --mLine;
             }
 
-        inline void newline() { ++mLine; mColumn = 0; }
+        inline void newline() noexcept
+            {
+                ++mLine;
+                mColumn = 0;
+            }
 
      private:
         std::string_view mSource;
@@ -110,7 +115,8 @@ namespace rjson::parser_pop
                 return StateTransitionNone{};
             }
 
-        virtual inline rjson::value value() const { return rjson::null{}; }
+          //virtual inline rjson::value value() const { return rjson::null{}; }
+        virtual inline rjson::value value_move() = 0; //{ return rjson::null{}; }
         virtual inline void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
     }; // class SymbolHandler
@@ -128,7 +134,8 @@ namespace rjson::parser_pop
                 mValueRead = true;
             }
 
-        inline rjson::value value() const override { return mValue; }
+          //inline rjson::value value() const override { return mValue; }
+        inline rjson::value value_move() override { return std::move(mValue); }
         inline rjson::value& value() { return mValue; }
 
      protected:
@@ -149,6 +156,8 @@ namespace rjson::parser_pop
             {
                 return StateTransitionPop{};
             }
+
+        inline rjson::value value_move() override { return rjson::sNull; }
 
     }; // class StringEscapeHandler
 
@@ -179,7 +188,12 @@ namespace rjson::parser_pop
                 return result;
             }
 
-        inline rjson::value value() const override
+        // inline rjson::value value() const override
+        //     {
+        //         return rjson::string{mParser.data(mBegin, mEnd)};
+        //     }
+
+        inline rjson::value value_move() override
             {
                 return rjson::string{mParser.data(mBegin, mEnd)};
             }
@@ -233,7 +247,15 @@ namespace rjson::parser_pop
                 return result;
             }
 
-        inline rjson::value value() const override
+        // inline rjson::value value() const override
+        //     {
+        //         if (mInteger)
+        //             return rjson::integer{mParser.data(mBegin, mEnd)};
+        //         else
+        //             return rjson::number{mParser.data(mBegin, mEnd)};
+        //     }
+
+        inline rjson::value value_move() override
             {
                 if (mInteger)
                     return rjson::integer{mParser.data(mBegin, mEnd)};
@@ -279,7 +301,8 @@ namespace rjson::parser_pop
                 return result;
             }
 
-        inline rjson::value value() const override { return mValue; }
+        // inline rjson::value value() const override { return mValue; }
+        inline rjson::value value_move() override { return std::move(mValue); }
 
      private:
         const char* mExpected;
@@ -359,7 +382,8 @@ namespace rjson::parser_pop
                 return result;
             }
 
-        inline rjson::value value() const override { return mValue; }
+        // inline rjson::value value() const override { return mValue; }
+        inline rjson::value value_move() override { return std::move(mValue); }
 
         inline void subvalue(rjson::value&& aSubvalue, Parser& aParser) override
             {
@@ -443,7 +467,8 @@ namespace rjson::parser_pop
                 return result;
             }
 
-        inline rjson::value value() const override { return mValue; }
+        // inline rjson::value value() const override { return mValue; }
+        inline rjson::value value_move() override { return std::move(mValue); }
 
         inline void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
             {
@@ -488,6 +513,22 @@ namespace std
 
 // ----------------------------------------------------------------------
 
+// inline rjson::value rjson::parser_pop::Parser::result() const
+// {
+//     return mHandlers.top()->value();
+
+// } // rjson::parser_pop::Parser::result
+
+// ----------------------------------------------------------------------
+
+inline rjson::value rjson::parser_pop::Parser::result_move()
+{
+    return mHandlers.top()->value_move();
+
+} // rjson::parser_pop::Parser::result
+
+// ----------------------------------------------------------------------
+
 namespace rjson::parser_pop
 {
     template <typename S> static inline rjson::value parse_string_impl(S aJsonData, rjson::remove_comments aRemoveComments)
@@ -497,7 +538,7 @@ namespace rjson::parser_pop
         parser.remove_emacs_indent();
         if (aRemoveComments == rjson::remove_comments::Yes)
             parser.remove_comments();
-        return parser.result();
+        return parser.result_move();
     }
 
 } // namespace rjson::parser_pop
@@ -578,9 +619,9 @@ rjson::parser_pop::Parser::Parser()
 
 // ----------------------------------------------------------------------
 
-void rjson::parser_pop::Parser::pop()
+inline void rjson::parser_pop::Parser::pop()
 {
-    auto value = mHandlers.top()->value();
+    auto value{mHandlers.top()->value_move()};
     mHandlers.pop();
     mHandlers.top()->subvalue(std::move(value), *this);
 
@@ -609,14 +650,6 @@ void rjson::parser_pop::Parser::parse(std::string_view aJsonData)
             pop();
 
 } // rjson::parser_pop::Parser::parse
-
-// ----------------------------------------------------------------------
-
-inline rjson::value rjson::parser_pop::Parser::result() const
-{
-    return mHandlers.top()->value();
-
-} // rjson::parser_pop::Parser::result
 
 // ----------------------------------------------------------------------
 
