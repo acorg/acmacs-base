@@ -239,7 +239,7 @@ namespace rjson
     class array
     {
      public:
-        inline array() { mContent.reserve(2000); }
+        inline array() = default;
         inline array(array&&) = default;
         inline array(const array&) = default;
         template <typename ... Args> array(Args ... args);
@@ -311,11 +311,11 @@ namespace rjson
      public:
         using value_base::operator=;
         using value_base::value_base;
-        inline value(const value&) = default; // gcc7 wants this, otherwise it is deleted
+        inline value(const value&) = default; // otherwise it is deleted
           //inline value(const value& aSrc) : value_base(aSrc) { std::cerr << "rjson::value copy " << aSrc.to_json() << '\n'; }
         inline value(value&&) = default;
           // inline value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
-        inline value& operator=(const value&) = default; // gcc7 wants this, otherwise it is deleted
+        inline value& operator=(const value&) = default; // otherwise it is deleted
         inline value& operator=(value&&) = default;
           // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
 

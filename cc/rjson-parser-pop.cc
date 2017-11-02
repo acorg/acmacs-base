@@ -157,7 +157,7 @@ namespace rjson::parser_pop
                 return StateTransitionPop{};
             }
 
-        inline rjson::value value_move() override { return rjson::sNull; }
+        inline rjson::value value_move() override { return {}; }
 
     }; // class StringEscapeHandler
 
