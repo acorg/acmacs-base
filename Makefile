@@ -44,6 +44,13 @@ lib: $(ACMACS_BASE_LIB)
 test: $(TARGETS)
 	test/test
 
+profile-rjson: $(DIST)/profile-rjson-load
+	env LLVM_PROFILE_FILE=/r/default.profraw $^ ~/ac/results/ssm/2017-0925-ssm/merges/niid-b-vic-hi.ace
+	/usr/local/opt/llvm/bin/llvm-profdata merge -sparse /r/default.profraw -o /r/default.profdata
+	rm /r/default.profraw
+	/usr/local/opt/llvm/bin/llvm-cov report $^ -instr-profile=/r/default.profdata
+	/usr/local/opt/llvm/bin/llvm-cov show $^ -instr-profile=/r/default.profdata
+
 # ----------------------------------------------------------------------
 
 install-acmacs-base: $(TARGETS)
@@ -79,6 +86,10 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 # $(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
 #	@echo "LINK       " $@ # '<--' $^
 #	@$(CXX) $(LDFLAGS) -o $@ $^
+
+$(DIST)/profile-rjson-load: cc/test-rjson-load.cc cc/rjson.cc cc/rjson-parser-pop.cc | $(DIST)
+	@echo "PROFILE       " $@ # '<--' $^
+	@$(CXX) -fprofile-instr-generate -fcoverage-mapping $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 $(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
 	@echo "LINK       " $@
