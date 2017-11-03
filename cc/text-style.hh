@@ -7,83 +7,83 @@
 
 // ----------------------------------------------------------------------
 
-class TextStyle
-{
- public:
-    enum class Slant { Normal, Italic };
-    enum class Weight { Normal, Bold };
-
-    inline TextStyle() : mSlant(Slant::Normal), mWeight(Weight::Normal) {}
-    inline TextStyle(std::string aFontFamily, Slant aSlant = Slant::Normal, Weight aWeight = Weight::Normal) : mFontFamily(aFontFamily), mSlant(aSlant), mWeight(aWeight) {}
-    inline TextStyle(std::string aFontFamily, std::string aSlant, std::string aWeight) : mFontFamily(aFontFamily) { slant(aSlant); weight(aWeight); }
-
-    inline std::string font_family() const { return mFontFamily; }
-    inline Slant slant() const { return mSlant; }
-    inline Weight weight() const { return mWeight; }
-
-    inline std::string slant_as_stirng() const
-        {
-            switch (mSlant) {
-              case Slant::Normal:
-                  return "normal";
-              case Slant::Italic:
-                  return "italic";
-            }
-            return "normal";
-        }
-
-    inline std::string weight_as_stirng() const
-        {
-            switch (mWeight) {
-              case Weight::Normal:
-                  return "normal";
-              case Weight::Bold:
-                  return "bold";
-            }
-            return "normal";
-        }
-
-    inline std::string& font_family() { return mFontFamily; }
-    inline TextStyle& font_family(std::string s) { mFontFamily = s; return *this; }
-    inline void font_family(const char* s, size_t len) { mFontFamily.assign(s, len); }
-
-    inline TextStyle& slant(Slant aSlant) { mSlant = aSlant; return *this; }
-    inline TextStyle& slant(std::string aSlant)
-        {
-            if (aSlant == "normal")
-                mSlant = Slant::Normal;
-            else if (aSlant == "italic")
-                mSlant = Slant::Italic;
-            else
-                THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle slant: " + aSlant));
-            return *this;
-        }
-    inline void slant(const char* s, size_t len) { slant(std::string(s, len)); }
-
-    inline TextStyle& weight(Weight aWeight) { mWeight = aWeight; return *this; }
-    inline TextStyle& weight(std::string aWeight)
-        {
-            if (aWeight == "normal")
-                mWeight = Weight::Normal;
-            else if (aWeight == "bold")
-                mWeight = Weight::Bold;
-            else
-                THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle weight: " + aWeight));
-            return *this;
-        }
-    inline void weight(const char* s, size_t len) { weight(std::string(s, len)); }
-
- private:
-    std::string mFontFamily;
-    Slant mSlant;
-    Weight mWeight;
-
-}; // class TextStyle
-
-// ----------------------------------------------------------------------
-
 namespace acmacs
 {
+
+    class TextStyle
+    {
+     public:
+        enum class Slant { Normal, Italic };
+        enum class Weight { Normal, Bold };
+
+        inline TextStyle() : mSlant(Slant::Normal), mWeight(Weight::Normal) {}
+        inline TextStyle(std::string aFontFamily, Slant aSlant = Slant::Normal, Weight aWeight = Weight::Normal) : mFontFamily(aFontFamily), mSlant(aSlant), mWeight(aWeight) {}
+        inline TextStyle(std::string aFontFamily, std::string aSlant, std::string aWeight) : mFontFamily(aFontFamily) { slant(aSlant); weight(aWeight); }
+
+        inline std::string font_family() const { return mFontFamily; }
+        inline Slant slant() const { return mSlant; }
+        inline Weight weight() const { return mWeight; }
+
+        inline std::string slant_as_stirng() const
+            {
+                switch (mSlant) {
+                  case Slant::Normal:
+                      return "normal";
+                  case Slant::Italic:
+                      return "italic";
+                }
+                return "normal";
+            }
+
+        inline std::string weight_as_stirng() const
+            {
+                switch (mWeight) {
+                  case Weight::Normal:
+                      return "normal";
+                  case Weight::Bold:
+                      return "bold";
+                }
+                return "normal";
+            }
+
+        inline std::string& font_family() { return mFontFamily; }
+        inline TextStyle& font_family(std::string s) { mFontFamily = s; return *this; }
+        inline void font_family(const char* s, size_t len) { mFontFamily.assign(s, len); }
+
+        inline TextStyle& slant(Slant aSlant) { mSlant = aSlant; return *this; }
+        inline TextStyle& slant(std::string aSlant)
+            {
+                if (aSlant == "normal")
+                    mSlant = Slant::Normal;
+                else if (aSlant == "italic")
+                    mSlant = Slant::Italic;
+                else
+                    THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle slant: " + aSlant));
+                return *this;
+            }
+        inline void slant(const char* s, size_t len) { slant(std::string(s, len)); }
+
+        inline TextStyle& weight(Weight aWeight) { mWeight = aWeight; return *this; }
+        inline TextStyle& weight(std::string aWeight)
+            {
+                if (aWeight == "normal")
+                    mWeight = Weight::Normal;
+                else if (aWeight == "bold")
+                    mWeight = Weight::Bold;
+                else
+                    THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle weight: " + aWeight));
+                return *this;
+            }
+        inline void weight(const char* s, size_t len) { weight(std::string(s, len)); }
+
+     private:
+        std::string mFontFamily;
+        Slant mSlant;
+        Weight mWeight;
+
+    }; // class TextStyle
+
+// ----------------------------------------------------------------------
 
     class LabelStyle
     {
