@@ -61,6 +61,13 @@ inline std::ostream& operator<<(std::ostream& out, Scaled aScaled) { return out 
 inline std::ostream& operator<<(std::ostream& out, Aspect aAspect) { if (aAspect == AspectNormal) return out << "AspectNormal"; else return out << "Aspect{" << aAspect.value() << '}'; }
 inline std::ostream& operator<<(std::ostream& out, Rotation aRotation) { if (aRotation == NoRotation) return out << "NoRotation"; else return out << "Rotation{" << aRotation.value() << '}'; }
 
+namespace std
+{
+    inline std::string to_string(Aspect aAspect) { return aAspect == AspectNormal ? std::string{"1.0"} : to_string(aAspect.value()); }
+    inline std::string to_string(Rotation aRotation) { return aRotation == NoRotation ? std::string{"0.0"} : to_string(aRotation.value()); }
+
+} // namespace std
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
