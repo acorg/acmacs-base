@@ -96,32 +96,36 @@ namespace acmacs
 
         field<bool> shown{true};
         field<const acmacs::Offset&> offset{sOffsetDefault};
+        field<double> size{1.0};
+        field<Color> color{BLACK};
+        field<Rotation> rotation{NoRotation};
+        field<double> interline{0.2};
 
         // inline bool shown() const { return mShown; }
         // inline acmacs::Offset offset() const { return mOffset; }
         inline const TextStyle& text_style() const { return mStyle; }
-        inline double size() const { return mSize; }
-        inline Color color() const { return mColor; }
-        inline Rotation rotation() const { return mRotation; }
-        inline double interline() const { return mInterline; }
+        // inline double size() const { return mSize; }
+        // inline Color color() const { return mColor; }
+        // inline Rotation rotation() const { return mRotation; }
+        // inline double interline() const { return mInterline; }
 
         // inline LabelStyle& shown(bool aShown) { mShown = aShown; return *this; }
         // inline LabelStyle& offset(const acmacs::Offset& aOffset) { mOffset = aOffset; return *this; }
         inline LabelStyle& text_style(const TextStyle& aTextStyle) { mStyle = aTextStyle; return *this; }
-        inline LabelStyle& size(double aSize) { mSize = aSize; return *this; }
-        inline LabelStyle& color(Color aColor) { mColor = aColor; return *this; }
-        inline LabelStyle& rotation(Rotation aRotation) { mRotation = aRotation; return *this; }
-        inline LabelStyle& interline(double aInterline) { mInterline = aInterline; return *this; }
+        // inline LabelStyle& size(double aSize) { mSize = aSize; return *this; }
+        // inline LabelStyle& color(Color aColor) { mColor = aColor; return *this; }
+        // inline LabelStyle& rotation(Rotation aRotation) { mRotation = aRotation; return *this; }
+        // inline LabelStyle& interline(double aInterline) { mInterline = aInterline; return *this; }
 
      private:
         static const Offset sOffsetDefault;
         // bool mShown{true};
         // acmacs::Offset mOffset;
         TextStyle mStyle;
-        double mSize{1.0};
-        Color mColor{"black"};
-        Rotation mRotation{NoRotation};
-        double mInterline{0.2};
+        // double mSize{1.0};
+        // Color mColor{"black"};
+        // Rotation mRotation{NoRotation};
+        // double mInterline{0.2};
 
     }; // class LabelStyle
 
