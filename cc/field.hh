@@ -10,11 +10,12 @@ namespace acmacs::internal
     template <typename T> class field_optional_with_default
     {
      public:
+        inline field_optional_with_default() = default;
         inline field_optional_with_default(const T aDefault) : mDefault{aDefault} {}
         inline field_optional_with_default(const field_optional_with_default&) = default;
         inline field_optional_with_default& operator=(const field_optional_with_default& aOther)
             {
-                if (aOther.present)
+                if (aOther.present())
                     mValue = aOther.mValue;
                 return *this;
             }

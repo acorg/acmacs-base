@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "acmacs-base/throw.hh"
 #include "acmacs-base/field.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
@@ -12,76 +11,92 @@
 namespace acmacs
 {
 
-    class TextStyle
+    class FontSlant
     {
      public:
-        enum class Slant { Normal, Italic };
-        enum class Weight { Normal, Bold };
+        enum FontSlantValue { Normal, Italic };
 
-        inline TextStyle() : mSlant(Slant::Normal), mWeight(Weight::Normal) {}
-        inline TextStyle(std::string aFontFamily, Slant aSlant = Slant::Normal, Weight aWeight = Weight::Normal) : mFontFamily(aFontFamily), mSlant(aSlant), mWeight(aWeight) {}
-        inline TextStyle(std::string aFontFamily, std::string aSlant, std::string aWeight) : mFontFamily(aFontFamily) { slant(aSlant); weight(aWeight); }
+        inline FontSlant(FontSlantValue aFontSlant = Normal) : mFontSlant{aFontSlant} {}
+        inline FontSlant(const FontSlant&) = default;
+        inline FontSlant(std::string aFontSlant) { from(aFontSlant); }
+        inline FontSlant& operator=(const FontSlant&) = default;
+        inline FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
 
-        inline std::string font_family() const { return mFontFamily; }
-        inline Slant slant() const { return mSlant; }
-        inline Weight weight() const { return mWeight; }
-
-        inline std::string slant_as_stirng() const
+        inline operator std::string() const
             {
-                switch (mSlant) {
-                  case Slant::Normal:
+                switch (mFontSlant) {
+                  case Normal:
                       return "normal";
-                  case Slant::Italic:
+                  case Italic:
                       return "italic";
                 }
                 return "normal";
             }
 
-        inline std::string weight_as_stirng() const
+     private:
+        FontSlantValue mFontSlant;
+
+        inline void from(std::string aFontSlant)
             {
-                switch (mWeight) {
-                  case Weight::Normal:
+                if (aFontSlant == "normal")
+                    mFontSlant = Normal;
+                else if (aFontSlant == "italic")
+                    mFontSlant = Italic;
+                else
+                    std::runtime_error("Unrecognized slant: " + aFontSlant);
+            }
+
+    }; // class FontSlant
+
+// ----------------------------------------------------------------------
+
+    class FontWeight
+    {
+     public:
+        enum FontWeightValue { Normal, Bold };
+
+        inline FontWeight(FontWeightValue aFontWeight = Normal) : mFontWeight{aFontWeight} {}
+        inline FontWeight(const FontWeight&) = default;
+        inline FontWeight(std::string aFontWeight) { from(aFontWeight); }
+        inline FontWeight& operator=(const FontWeight&) = default;
+        inline FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
+
+        inline operator std::string() const
+            {
+                switch (mFontWeight) {
+                  case Normal:
                       return "normal";
-                  case Weight::Bold:
+                  case Bold:
                       return "bold";
                 }
                 return "normal";
             }
 
-        inline std::string& font_family() { return mFontFamily; }
-        inline TextStyle& font_family(std::string s) { mFontFamily = s; return *this; }
-        inline void font_family(const char* s, size_t len) { mFontFamily.assign(s, len); }
-
-        inline TextStyle& slant(Slant aSlant) { mSlant = aSlant; return *this; }
-        inline TextStyle& slant(std::string aSlant)
-            {
-                if (aSlant == "normal")
-                    mSlant = Slant::Normal;
-                else if (aSlant == "italic")
-                    mSlant = Slant::Italic;
-                else
-                    THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle slant: " + aSlant));
-                return *this;
-            }
-        inline void slant(const char* s, size_t len) { slant(std::string(s, len)); }
-
-        inline TextStyle& weight(Weight aWeight) { mWeight = aWeight; return *this; }
-        inline TextStyle& weight(std::string aWeight)
-            {
-                if (aWeight == "normal")
-                    mWeight = Weight::Normal;
-                else if (aWeight == "bold")
-                    mWeight = Weight::Bold;
-                else
-                    THROW_OR_CERR(std::runtime_error("Unrecognized TextStyle weight: " + aWeight));
-                return *this;
-            }
-        inline void weight(const char* s, size_t len) { weight(std::string(s, len)); }
-
      private:
-        std::string mFontFamily;
-        Slant mSlant;
-        Weight mWeight;
+        FontWeightValue mFontWeight;
+
+        inline void from(std::string aFontWeight)
+            {
+                if (aFontWeight == "normal")
+                    mFontWeight = Normal;
+                else if (aFontWeight == "bold")
+                    mFontWeight = Bold;
+                else
+                    std::runtime_error("Unrecognized weight: " + aFontWeight);
+            }
+
+    }; // class FontWeight
+
+// ----------------------------------------------------------------------
+
+    class TextStyle
+    {
+     public:
+        template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+
+        field<FontSlant> slant;
+        field<FontWeight> weight;
+        field<std::string> font_family;
 
     }; // class TextStyle
 
@@ -90,8 +105,6 @@ namespace acmacs
     class LabelStyle
     {
      public:
-        inline LabelStyle() = default;
-
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
 
         field<bool> shown{true};
@@ -100,32 +113,10 @@ namespace acmacs
         field<Color> color{BLACK};
         field<Rotation> rotation{NoRotation};
         field<double> interline{0.2};
-
-        // inline bool shown() const { return mShown; }
-        // inline acmacs::Offset offset() const { return mOffset; }
-        inline const TextStyle& text_style() const { return mStyle; }
-        // inline double size() const { return mSize; }
-        // inline Color color() const { return mColor; }
-        // inline Rotation rotation() const { return mRotation; }
-        // inline double interline() const { return mInterline; }
-
-        // inline LabelStyle& shown(bool aShown) { mShown = aShown; return *this; }
-        // inline LabelStyle& offset(const acmacs::Offset& aOffset) { mOffset = aOffset; return *this; }
-        inline LabelStyle& text_style(const TextStyle& aTextStyle) { mStyle = aTextStyle; return *this; }
-        // inline LabelStyle& size(double aSize) { mSize = aSize; return *this; }
-        // inline LabelStyle& color(Color aColor) { mColor = aColor; return *this; }
-        // inline LabelStyle& rotation(Rotation aRotation) { mRotation = aRotation; return *this; }
-        // inline LabelStyle& interline(double aInterline) { mInterline = aInterline; return *this; }
+        TextStyle style;
 
      private:
         static const Offset sOffsetDefault;
-        // bool mShown{true};
-        // acmacs::Offset mOffset;
-        TextStyle mStyle;
-        // double mSize{1.0};
-        // Color mColor{"black"};
-        // Rotation mRotation{NoRotation};
-        // double mInterline{0.2};
 
     }; // class LabelStyle
 
