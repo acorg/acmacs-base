@@ -9,7 +9,7 @@
 
 // ----------------------------------------------------------------------
 
-#include "acmacs-base/float.hh"
+#include "acmacs-base/to-string.hh"
 #include "acmacs-base/stream.hh" // for debugging
 
 // ----------------------------------------------------------------------
