@@ -3,7 +3,9 @@
 #include <string>
 
 #include "acmacs-base/throw.hh"
+#include "acmacs-base/field.hh"
 #include "acmacs-base/size.hh"
+#include "acmacs-base/color.hh"
 
 // ----------------------------------------------------------------------
 
@@ -90,16 +92,21 @@ namespace acmacs
      public:
         inline LabelStyle() = default;
 
-        inline bool shown() const { return mShown; }
-        inline acmacs::Offset offset() const { return mOffset; }
+        template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+
+        field<bool> shown{true};
+        field<const acmacs::Offset&> offset{sOffsetDefault};
+
+        // inline bool shown() const { return mShown; }
+        // inline acmacs::Offset offset() const { return mOffset; }
         inline const TextStyle& text_style() const { return mStyle; }
         inline double size() const { return mSize; }
         inline Color color() const { return mColor; }
         inline Rotation rotation() const { return mRotation; }
         inline double interline() const { return mInterline; }
 
-        inline LabelStyle& shown(bool aShown) { mShown = aShown; return *this; }
-        inline LabelStyle& offset(const acmacs::Offset& aOffset) { mOffset = aOffset; return *this; }
+        // inline LabelStyle& shown(bool aShown) { mShown = aShown; return *this; }
+        // inline LabelStyle& offset(const acmacs::Offset& aOffset) { mOffset = aOffset; return *this; }
         inline LabelStyle& text_style(const TextStyle& aTextStyle) { mStyle = aTextStyle; return *this; }
         inline LabelStyle& size(double aSize) { mSize = aSize; return *this; }
         inline LabelStyle& color(Color aColor) { mColor = aColor; return *this; }
@@ -107,8 +114,9 @@ namespace acmacs
         inline LabelStyle& interline(double aInterline) { mInterline = aInterline; return *this; }
 
      private:
-        bool mShown{true};
-        acmacs::Offset mOffset;
+        static const Offset sOffsetDefault;
+        // bool mShown{true};
+        // acmacs::Offset mOffset;
         TextStyle mStyle;
         double mSize{1.0};
         Color mColor{"black"};
