@@ -14,9 +14,9 @@ namespace acmacs
     class FontSlant
     {
      public:
-        enum FontSlantValue { Normal, Italic };
+        enum Value { Normal, Italic };
 
-        inline FontSlant(FontSlantValue aFontSlant = Normal) : mFontSlant{aFontSlant} {}
+        inline FontSlant(Value aFontSlant = Normal) : mFontSlant{aFontSlant} {}
         inline FontSlant(const FontSlant&) = default;
         inline FontSlant(std::string aFontSlant) { from(aFontSlant); }
         inline FontSlant& operator=(const FontSlant&) = default;
@@ -33,8 +33,10 @@ namespace acmacs
                 return "normal";
             }
 
+        inline operator Value() const { return mFontSlant; }
+
      private:
-        FontSlantValue mFontSlant;
+        Value mFontSlant;
 
         inline void from(std::string aFontSlant)
             {
@@ -53,9 +55,9 @@ namespace acmacs
     class FontWeight
     {
      public:
-        enum FontWeightValue { Normal, Bold };
+        enum Value { Normal, Bold };
 
-        inline FontWeight(FontWeightValue aFontWeight = Normal) : mFontWeight{aFontWeight} {}
+        inline FontWeight(Value aFontWeight = Normal) : mFontWeight{aFontWeight} {}
         inline FontWeight(const FontWeight&) = default;
         inline FontWeight(std::string aFontWeight) { from(aFontWeight); }
         inline FontWeight& operator=(const FontWeight&) = default;
@@ -72,8 +74,10 @@ namespace acmacs
                 return "normal";
             }
 
+        inline operator Value() const { return mFontWeight; }
+
      private:
-        FontWeightValue mFontWeight;
+        Value mFontWeight;
 
         inline void from(std::string aFontWeight)
             {
@@ -93,6 +97,9 @@ namespace acmacs
     {
      public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+
+        inline TextStyle() = default;
+        inline TextStyle(std::string font_name) : font_family{font_name} {}
 
         field<FontSlant> slant;
         field<FontWeight> weight;

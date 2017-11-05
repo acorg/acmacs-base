@@ -11,7 +11,8 @@
 #include <cassert>
 
 #include "acmacs-base/debug.hh"
-#include "acmacs-base/float.hh"
+//#include "acmacs-base/float.hh"
+#include "acmacs-base/to-string.hh"
 #include "acmacs-base/filesystem.hh"
 
 // ----------------------------------------------------------------------
@@ -110,9 +111,9 @@ namespace rjson
     {
      public:
         inline number() : mValue{"0.0"} {}
-        inline number(double aSrc) : mValue{double_to_string(aSrc)} {}
+        inline number(double aSrc) : mValue{acmacs::to_string(aSrc)} {}
         inline number(std::string_view&& aData) : mValue{aData} {} // for parser
-        inline number& operator=(double aSrc) { mValue = double_to_string(aSrc); return *this; }
+        inline number& operator=(double aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }

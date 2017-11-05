@@ -22,20 +22,12 @@
 #include <sstream>
 #include <iomanip>
 
+#include "acmacs-base/to-string.hh"
+
 // ----------------------------------------------------------------------
 
 namespace string
 {
-
-// ----------------------------------------------------------------------
-
-    using std::to_string;
-
-    inline std::string to_string(const std::string& src) { return src; }
-    inline std::string to_string(const char* src) { return src; }
-
-// ----------------------------------------------------------------------
-
     enum class Split { RemoveEmpty, KeepEmpty };
 
       // http://stackoverflow.com/questions/236129/split-a-string-in-c
@@ -184,7 +176,7 @@ namespace string
               // const size_t resulting_size = std::accumulate(first, last, separator.size() * static_cast<size_t>(last - first - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
               // result.reserve(resulting_size);
             for ( ; first != last; ++first) {
-                const auto f_s = string::to_string(*first);
+                const auto f_s = acmacs::to_string(*first);
                 if (!f_s.empty()) {
                     if (!result.empty())
                         result.append(separator);
