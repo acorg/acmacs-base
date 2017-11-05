@@ -6,12 +6,10 @@
 #include <string_view>
 #include <vector>
 #include <map>
-// #include <optional>
 #include <iostream>
 #include <cassert>
 
 #include "acmacs-base/debug.hh"
-//#include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/filesystem.hh"
 
@@ -133,15 +131,15 @@ namespace rjson
     {
      public:
         inline integer() : mValue{"0"} {}
-        inline integer(int aSrc) : mValue{std::to_string(aSrc)} {}
-        inline integer(unsigned int aSrc) : mValue{std::to_string(aSrc)} {}
-        inline integer(long aSrc) : mValue{std::to_string(aSrc)} {}
-        inline integer(unsigned long aSrc) : mValue{std::to_string(aSrc)} {}
+        inline integer(int aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        inline integer(unsigned int aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        inline integer(long aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        inline integer(unsigned long aSrc) : mValue{acmacs::to_string(aSrc)} {}
         inline integer(std::string_view&& aData) : mValue{aData} {} // for parser
-        inline integer& operator=(int aSrc) { mValue = std::to_string(aSrc); return *this; }
-        inline integer& operator=(unsigned int aSrc) { mValue = std::to_string(aSrc); return *this; }
-        inline integer& operator=(long aSrc) { mValue = std::to_string(aSrc); return *this; }
-        inline integer& operator=(unsigned long aSrc) { mValue = std::to_string(aSrc); return *this; }
+        inline integer& operator=(int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        inline integer& operator=(unsigned int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        inline integer& operator=(long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        inline integer& operator=(unsigned long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
         inline std::string to_json() const { return mValue; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }
@@ -506,7 +504,7 @@ namespace rjson
     {
      public:
         inline parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
-            : mMessage{std::to_string(aLine) + ":" + std::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
+            : mMessage{acmacs::to_string(aLine) + ":" + acmacs::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
             {}
 
         inline const char* what() const noexcept override { return mMessage.c_str(); }
@@ -770,10 +768,21 @@ template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::
 
 // ----------------------------------------------------------------------
 
-namespace string
+namespace acmacs
 {
     inline std::string to_string(const rjson::string& src) { return src; }
-    inline std::string to_string(const rjson::value& src) { return static_cast<const rjson::string&>(src); }
+    inline std::string to_string(const rjson::null&) { return "null"; }
+    inline std::string to_string(const rjson::object& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::array& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::integer& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::number& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::boolean& src) { return src.to_json(); }
+
+    inline std::string to_string(const rjson::value& src)
+    {
+        return std::visit([](auto&& arg) -> std::string { return acmacs::to_string(arg); }, src);
+    }
+
 }
 
 // ----------------------------------------------------------------------
