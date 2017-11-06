@@ -212,8 +212,10 @@ namespace rjson
         const object& get_or_empty_object(std::string aFieldName) const;
         const array& get_or_empty_array(std::string aFieldName) const;
 
-        value& set_field(std::string aKey, value&& aValue);
-        value& set_field(const string& aKey, const value& aValue);
+        value& set_field(std::string aKey, value&& aValue); // returns ref to inserted
+        value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
+        template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
+        template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
         void delete_field(string aKey); // throws field_not_found
         inline void clear() { mContent.clear(); }
 
@@ -255,8 +257,8 @@ namespace rjson
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
-        void insert(value&& aValue);
-        void insert(const value& aValue);
+        value& insert(value&& aValue); // returns ref to inserted
+        value& insert(const value& aValue); // returns ref to inserted
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
         inline const value& operator[](size_t index) const { return mContent.at(index); }
@@ -596,6 +598,18 @@ namespace rjson
         return mContent.insert_or_assign(aKey, aValue).first->second;
     }
 
+    template <typename T> void object::set_field_if_not_empty(std::string aKey, const T& aValue)
+    {
+        if (!aValue.empty())
+            set_field(aKey, to_value(aValue));
+    }
+
+    template <typename T> void object::set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault)
+    {
+        if (aValue != aDefault)
+            set_field(aKey, to_value(aValue));
+    }
+
     inline void object::delete_field(string aKey)
     {
         if (auto iter = mContent.find(aKey); iter != mContent.end())
@@ -656,8 +670,8 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-    inline void array::insert(value&& aValue) { mContent.push_back(std::move(aValue)); }
-    inline void array::insert(const value& aValue) { mContent.push_back(aValue); }
+    inline value& array::insert(value&& aValue) { mContent.push_back(std::move(aValue)); return mContent.back(); }
+    inline value& array::insert(const value& aValue) { mContent.push_back(aValue); return mContent.back(); }
 
     template <typename ... Args> inline array::array(Args ... args)
     {
