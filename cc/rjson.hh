@@ -178,7 +178,7 @@ namespace rjson
         inline size_t size() const { return mContent.size(); }
         inline bool empty() const { return mContent.empty(); }
 
-          // if field is not in the object, returns ref to (static) null
+          // if field is not in the object, throws field_not_found
         const value& operator[](std::string aFieldName) const;
         value& operator[](std::string aFieldName);
         inline value& operator[](const rjson::string& aFieldName) { return operator[](static_cast<std::string>(aFieldName)); }
@@ -565,7 +565,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{aFieldName}; // return sNull;
+            throw field_not_found{aFieldName};
     }
 
     inline value& object::operator[](std::string aFieldName)
