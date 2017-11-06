@@ -104,8 +104,9 @@ namespace acmacs_base
       // ----------------------------------------------------------------------
 
     enum class ForceCompression { No, Yes };
+    enum class BackupFile { No, Yes };
 
-    inline void write_file(std::string aFilename, std::string aData, ForceCompression aForceCompression = ForceCompression::No)
+    inline void write_file(std::string aFilename, std::string aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes)
     {
         int f = -1;
         if (aFilename == "-") {
@@ -117,7 +118,8 @@ namespace acmacs_base
         else {
             if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && aFilename.substr(aFilename.size() - 3) == ".xz"))
                 aData = xz_compress(aData);
-            backup_file(aFilename);
+            if (aBackupFile == BackupFile::Yes)
+                backup_file(aFilename);
             f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
             if (f < 0)
                 throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));

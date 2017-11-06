@@ -167,16 +167,16 @@ inline int weeks_between_dates(const std::pair<Date, Date>& aDates)
 
 // ----------------------------------------------------------------------
 
-inline std::string time_format(std::string aFormat, std::time_t aTime = 0)
-{
-    std::ostringstream stream;
-    stream.imbue(std::locale(std::locale::classic(), new boost::posix_time::time_facet(aFormat.c_str())));
-    if (aTime == 0)
-        stream << boost::posix_time::second_clock::local_time();
-    else
-        stream << boost::posix_time::from_time_t(aTime);
-    return stream.str();
-}
+// inline std::string time_format(std::string aFormat, std::time_t aTime = 0)
+// {
+//     std::ostringstream stream;
+//     stream.imbue(std::locale(std::locale::classic(), new boost::posix_time::time_facet(aFormat.c_str())));
+//     if (aTime == 0)
+//         stream << boost::posix_time::second_clock::local_time();
+//     else
+//         stream << boost::posix_time::from_time_t(aTime);
+//     return stream.str();
+// }
 
 // ----------------------------------------------------------------------
 /// Local Variables:
