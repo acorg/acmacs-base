@@ -249,8 +249,8 @@ namespace rjson
         template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
-        inline value& operator[](size_t index) { return mContent.at(index); }
-        inline value& operator[](int index) { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
+        inline value& operator[](size_t index) { try { return mContent.at(index); } catch (std::out_of_range&) { throw field_not_found{"No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())}; } }
+        inline value& operator[](int index) { try { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); } catch (std::out_of_range&) { throw field_not_found{"No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())}; } }
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
@@ -423,7 +423,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         arg.set_field(aFieldName, std::forward<F>(aValue));
                     else
-                        throw field_not_found{aFieldName};
+                        throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
                 }, *this);
             }
 
@@ -434,7 +434,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         arg.set_field(aFieldName, aValue);
                     else
-                        throw field_not_found{aFieldName};
+                        throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
                 }, *this);
             }
 
@@ -565,7 +565,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{aFieldName};
+            throw field_not_found{"No field \"" + aFieldName + "\" in rjson::object"};
     }
 
     inline value& object::operator[](std::string aFieldName)
@@ -573,7 +573,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{aFieldName};
+            throw field_not_found{"No field \"" + aFieldName + "\" in rjson::object"};
     }
 
     template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
@@ -628,7 +628,7 @@ namespace rjson
         if (auto iter = mContent.find(aKey); iter != mContent.end())
             mContent.erase(iter);
         else
-            throw field_not_found{aKey};
+            throw field_not_found{"No field \"" + static_cast<const std::string&>(aKey) + "\" in rjson::object, cannot delete it"};
     }
 
     inline const object& object::get_or_empty_object(std::string aFieldName) const
@@ -713,7 +713,7 @@ namespace rjson
             if constexpr (std::is_same_v<T, object>)
                                  arg.delete_field(aFieldName);
             else
-                throw field_not_found{aFieldName};
+                throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value, cannot delete it"};
         }, *this);
     }
 
