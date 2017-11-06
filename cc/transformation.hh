@@ -18,6 +18,8 @@ namespace acmacs
         inline Transformation(const Transformation&) = default;
         inline Transformation(double a11, double a12, double a21, double a22) : a{a11}, b{a12}, c{a21}, d{a22} {}
         inline Transformation& operator=(const Transformation&) = default;
+        inline bool operator==(const Transformation& o) const { return float_equal(a, o.a) && float_equal(b, o.b) && float_equal(c, o.c) && float_equal(d, o.d); }
+        inline bool operator!=(const Transformation& o) const { return ! operator==(o); }
         inline Transformation& set(double a11, double a12, double a21, double a22) { a = a11; b = a12; c = a21; d = a22; return *this; }
 
         inline void rotate(double aAngle)
