@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include "acmacs-base/debug.hh"
+#include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/filesystem.hh"
 
@@ -216,6 +217,7 @@ namespace rjson
         value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
         template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
         template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
+        void set_field_if_not_default(std::string aKey, double aValue, double aDefault);
         template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
         template <typename Container> inline void set_array_field_if_not_empty(std::string aKey, const Container& aContainer) { set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer)); }
 
@@ -246,6 +248,7 @@ namespace rjson
         inline array() = default;
         inline array(array&&) = default;
         inline array(const array&) = default;
+        template <typename Iterator> array(Iterator first, Iterator last);
         template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
@@ -416,23 +419,23 @@ namespace rjson
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(move_default)); }, *this);
             }
 
-        template <typename F> inline void set_field(std::string aFieldName, F&& aValue)
+        template <typename F> inline value& set_field(std::string aFieldName, F&& aValue)
             {
-                return std::visit([&](auto&& arg) {
+                return std::visit([&](auto&& arg) -> value& {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, object>)
-                        arg.set_field(aFieldName, std::forward<F>(aValue));
+                        return arg.set_field(aFieldName, std::forward<F>(aValue));
                     else
                         throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
                 }, *this);
             }
 
-        template <typename F> inline void set_field(std::string aFieldName, const F& aValue)
+        template <typename F> inline value& set_field(std::string aFieldName, const F& aValue)
             {
-                return std::visit([&](auto&& arg) {
+                return std::visit([&](auto&& arg) -> value& {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, object>)
-                        arg.set_field(aFieldName, aValue);
+                        return arg.set_field(aFieldName, aValue);
                     else
                         throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
                 }, *this);
@@ -613,6 +616,12 @@ namespace rjson
             set_field(aKey, to_value(aValue));
     }
 
+    inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault)
+    {
+        if (! float_equal(aValue, aDefault))
+            set_field(aKey, to_value(aValue));
+    }
+
     template <typename Iterator> inline void object::set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last)
     {
         if (first != last) {
@@ -691,6 +700,12 @@ namespace rjson
         (insert(to_value(args)), ...);
     }
 
+    template <typename Iterator> inline array::array(Iterator first, Iterator last)
+    {
+        for (; first != last; ++first)
+            insert(to_value(*first));
+    }
+
       // ----------------------------------------------------------------------
 
       // gcc 7.2 wants the following functions to be defined here (not inside the class
@@ -753,10 +768,10 @@ namespace rjson
         }
     }
 
-    template <> inline void value::set_field(std::string aFieldName, value&& aValue)
+    template <> inline value& value::set_field(std::string aFieldName, value&& aValue)
     {
         try {
-            std::get<object>(*this).set_field(aFieldName, std::move(aValue));
+            return std::get<object>(*this).set_field(aFieldName, std::move(aValue));
         }
         catch (std::bad_variant_access&) {
             std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
