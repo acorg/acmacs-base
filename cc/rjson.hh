@@ -216,6 +216,9 @@ namespace rjson
         value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
         template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
         template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
+        template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
+        template <typename Container> inline void set_array_field_if_not_empty(std::string aKey, const Container& aContainer) { set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer)); }
+
         void delete_field(string aKey); // throws field_not_found
         inline void clear() { mContent.clear(); }
 
@@ -598,17 +601,27 @@ namespace rjson
         return mContent.insert_or_assign(aKey, aValue).first->second;
     }
 
-    template <typename T> void object::set_field_if_not_empty(std::string aKey, const T& aValue)
+    template <typename T> inline void object::set_field_if_not_empty(std::string aKey, const T& aValue)
     {
         if (!aValue.empty())
             set_field(aKey, to_value(aValue));
     }
 
-    template <typename T> void object::set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault)
+    template <typename T> inline void object::set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault)
     {
         if (aValue != aDefault)
             set_field(aKey, to_value(aValue));
     }
+
+    template <typename Iterator> inline void object::set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last)
+    {
+        if (first != last) {
+            array& ar = set_field(aKey, array{});
+            for (; first != last; ++first)
+                ar.insert(rjson::to_value(*first));
+        }
+
+    } // object::set_array_field_if_not_empty
 
     inline void object::delete_field(string aKey)
     {
