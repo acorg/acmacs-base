@@ -126,7 +126,7 @@ namespace acmacs
             }
 
         field<bool> shown{true};
-        field<const acmacs::Offset&> offset{sOffsetDefault};
+        field<acmacs::Offset> offset{sOffsetDefault};
         field<double> size{1.0};
         field<Color> color{BLACK};
         field<Rotation> rotation{NoRotation};
