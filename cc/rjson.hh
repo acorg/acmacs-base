@@ -245,10 +245,11 @@ namespace rjson
     class array
     {
      public:
+        enum _use_iterator { use_iterator };
         inline array() = default;
         inline array(array&&) = default;
         inline array(const array&) = default;
-        template <typename Iterator> array(Iterator first, Iterator last);
+        template <typename Iterator> array(_use_iterator, Iterator first, Iterator last);
         template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
@@ -700,7 +701,7 @@ namespace rjson
         (insert(to_value(args)), ...);
     }
 
-    template <typename Iterator> inline array::array(Iterator first, Iterator last)
+    template <typename Iterator> inline array::array(array::_use_iterator, Iterator first, Iterator last)
     {
         for (; first != last; ++first)
             insert(to_value(*first));
