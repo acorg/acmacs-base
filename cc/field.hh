@@ -50,6 +50,16 @@ namespace acmacs::internal
         return ((mValue.has_value() && f.mValue.has_value() && float_equal(mValue.value(), f.mValue.value())) || (!mValue.has_value() && !f.mValue.has_value())) && float_equal(mDefault, f.mDefault);
     }
 
+    template <> inline bool field_optional_with_default<double>::is_default() const
+    {
+        return !mValue.has_value() || float_equal(mValue.value(), mDefault);
+    }
+
+    template <> inline bool field_optional_with_default<double>::not_default() const
+    {
+        return mValue.has_value() && ! float_equal(mValue.value(), mDefault);
+    }
+
 } // namespace acmacs::internal
 
 // ----------------------------------------------------------------------

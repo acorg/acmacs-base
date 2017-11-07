@@ -19,6 +19,7 @@ namespace acmacs
         inline PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
         inline PointShape& operator=(std::string aShape) { from(aShape); return *this; }
         [[nodiscard]] inline bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
+        [[nodiscard]] inline bool operator!=(const PointShape& ps) const { return mShape != ps.mShape; }
 
         inline operator std::string() const
             {

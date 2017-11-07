@@ -17,6 +17,7 @@ namespace _acmacs_base_internal
         inline explicit SizeScale(double aValue) : mValue(aValue) {}
           // inline SizeScale(const SizeScale& a) = default;
         inline bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
+        inline bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
         inline bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
         inline SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
         inline double value() const { return mValue; }
