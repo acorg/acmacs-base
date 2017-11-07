@@ -3,6 +3,8 @@
 #include <optional>
 // #include <type_traits>
 
+#include "acmacs-base/float.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs::internal
@@ -20,6 +22,8 @@ namespace acmacs::internal
                 return *this;
             }
         inline field_optional_with_default& operator=(const T aValue) { mValue = aValue; return *this; }
+
+        [[nodiscard]] inline bool operator==(const field_optional_with_default<T>& f) const { return mValue == f.mValue && mDefault == f.mDefault; }
 
         inline bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
         inline bool not_default() const { return mValue.has_value() && mValue.value() != mDefault; }
@@ -40,6 +44,11 @@ namespace acmacs::internal
         const T mDefault;
 
     }; // class field_optional_with_default<>
+
+    template <> inline bool field_optional_with_default<double>::operator==(const field_optional_with_default<double>& f) const
+    {
+        return ((mValue.has_value() && f.mValue.has_value() && float_equal(mValue.value(), f.mValue.value())) || (!mValue.has_value() && !f.mValue.has_value())) && float_equal(mDefault, f.mDefault);
+    }
 
 } // namespace acmacs::internal
 

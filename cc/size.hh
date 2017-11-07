@@ -27,6 +27,11 @@ namespace acmacs
         Location(const Size& s);
         inline void set(double aX, double aY) { x = aX; y = aY; }
 
+        [[nodiscard]] inline bool operator==(const Location& loc) const
+            {
+                return float_equal(x, loc.x) && float_equal(y, loc.y);
+            }
+
         inline Location& operator -= (const Location& a) { x -= a.x; y -= a.y; return *this; }
         inline Location& operator += (const Location& a) { x += a.x; y += a.y; return *this; }
         Location& operator += (const Size& a);
@@ -69,6 +74,11 @@ namespace acmacs
         inline void set(double aWidth, double aHeight) { width = aWidth; height = aHeight; }
         inline double aspect() const { return width / height; }
         inline bool empty() const { return float_zero(width) && float_zero(height); }
+
+        [[nodiscard]] inline bool operator==(const Size& size) const
+            {
+                return float_equal(width, size.width) && float_equal(height, size.height);
+            }
 
           // inline std::string to_string() const { return "Size(" + std::to_string(width) + ", " + std::to_string(height) + ")"; }
 

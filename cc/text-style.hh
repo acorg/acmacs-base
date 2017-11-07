@@ -101,6 +101,11 @@ namespace acmacs
         inline TextStyle() = default;
         inline TextStyle(std::string font_name) : font_family{font_name} {}
 
+        [[nodiscard]] inline bool operator==(const TextStyle& ts) const
+            {
+                return slant == ts.slant && weight == ts.weight && font_family == ts.font_family;
+            }
+
         field<FontSlant> slant;
         field<FontWeight> weight;
         field<std::string> font_family;
@@ -113,6 +118,12 @@ namespace acmacs
     {
      public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+
+        [[nodiscard]] inline bool operator==(const LabelStyle& ls) const
+            {
+                return shown == ls.shown && offset == ls.offset && size == ls.size && color == ls.color
+                        && rotation == ls.rotation && interline == ls.interline && style == ls.style;
+            }
 
         field<bool> shown{true};
         field<const acmacs::Offset&> offset{sOffsetDefault};

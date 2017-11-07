@@ -18,6 +18,7 @@ namespace acmacs
         inline PointShape& operator=(const PointShape&) = default;
         inline PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
         inline PointShape& operator=(std::string aShape) { from(aShape); return *this; }
+        [[nodiscard]] inline bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
 
         inline operator std::string() const
             {
@@ -70,6 +71,13 @@ namespace acmacs
     {
       public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+
+        [[nodiscard]] inline bool operator==(const PointStyle& ps) const
+            {
+                return shown == ps.shown && fill == ps.fill && outline == ps.outline && outline_width == ps.outline_width
+                        && size == ps.size && rotation == ps.rotation && aspect == ps.aspect && shape == ps.shape
+                        && label == ps.label && label_text == ps.label_text;
+            }
 
         field<bool> shown{true};
         field<Color> fill{TRANSPARENT};
