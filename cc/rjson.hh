@@ -399,7 +399,7 @@ namespace rjson
                 try {
                     return {true, operator[](aFieldName)};
                 }
-                catch (field_not_found&) {
+                catch (std::exception&) {
                     if constexpr (std::is_same_v<R, value>)
                         return {false, sNull};
                     else if constexpr (std::is_same_v<R, object>)
@@ -681,7 +681,7 @@ namespace rjson
         try {
             return {true, operator[](aFieldName)};
         }
-        catch (field_not_found&) {
+        catch (std::exception&) {
             if constexpr (std::is_same_v<R, value>)
                 return {false, sNull};
             else if constexpr (std::is_same_v<R, object>)
