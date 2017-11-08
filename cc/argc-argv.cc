@@ -28,7 +28,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                         if ((arg_no + 1) < argc)
                             mOptions.emplace_back(name, option_default{argv[++arg_no]});
                         else
-                            throw option_requires_argument{name + std::string{" requires argument"}};
+                            throw option_requires_argument{name};
                     }
                     else if constexpr (std::is_same_v<T, strings>) {
                         if ((arg_no + 1) < argc) {
@@ -38,13 +38,13 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                                 std::get<T>(found_opt->second).push_back(argv[++arg_no]);
                         }
                         else
-                            throw option_requires_argument{name + std::string{" requires argument"}};
+                            throw option_requires_argument{name};
                     }
                     else if constexpr (std::is_same_v<T, long>) {
                         if ((arg_no + 1) < argc)
                             mOptions.emplace_back(name, option_default{std::stol(argv[++arg_no])});
                         else
-                            throw option_requires_argument{name + std::string{" requires argument"}};
+                            throw option_requires_argument{name};
                     // else if constexpr (std::is_same_v<T, unsigned long>)
                     //     mOptions.emplace_back(name, option_default{std::stoul(argv[++arg_no])});
                     }
@@ -52,7 +52,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                         if ((arg_no + 1) < argc)
                             mOptions.emplace_back(name, option_default{std::stod(argv[++arg_no])});
                         else
-                            throw option_requires_argument{name + std::string{" requires argument"}};
+                            throw option_requires_argument{name};
                     }
                     else
                         static_assert(std::is_same_v<T, bool>, "non-exhaustive visitor in argc_argv::argc_argv!");
@@ -60,8 +60,13 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                 std::visit(visitor, found->second);
             }
             else if (argv[arg_no][1] != '-' && split_single_dash) {
-                for (const char* item = &argv[arg_no][1]; *item; ++item)
-                    mOptions.emplace_back(std::string{'-', *item}, true);
+                for (const char* item = &argv[arg_no][1]; *item; ++item) {
+                    const std::string opt{'-', *item};
+                    if (auto found_opt = std::find_if(options.begin(), options.end(), [opt](const auto& aOption) { return aOption.first == opt; }); found_opt != options.end())
+                        mOptions.emplace_back(opt, true);
+                    else
+                        throw unrecognized_option(opt);
+                }
             }
             else
                 throw unrecognized_option(argv[arg_no]);

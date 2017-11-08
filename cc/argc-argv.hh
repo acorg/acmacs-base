@@ -13,9 +13,9 @@
 class argc_argv
 {
  public:
-    class unrecognized_option : public std::runtime_error { public: using std::runtime_error::runtime_error; };
-    class option_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; };
-    class option_requires_argument : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+    class unrecognized_option : public std::runtime_error { public: inline unrecognized_option(std::string opt) : std::runtime_error("unrecognized command line option: " + opt) {} };
+    class option_not_found : public std::runtime_error { public: inline option_not_found(std::string opt) : std::runtime_error("internal: option_not_found: " + opt) {} };
+    class option_requires_argument : public std::runtime_error { public: inline option_requires_argument(std::string opt) : std::runtime_error("command line option " + opt + " requires argument") {} };
     class argument_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; };
     class option_value_conversion_failed : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
