@@ -39,6 +39,8 @@ namespace acmacs::internal
                     return &mDefault;
             }
 
+        inline std::decay_t<T>& set() { if (!mValue.has_value()) mValue = mDefault; return mValue.value(); }
+
      private:
         std::optional<std::decay_t<T>> mValue;
         const T mDefault;
