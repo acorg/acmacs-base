@@ -198,6 +198,10 @@ namespace rjson
                 catch (field_not_found&) {
                     return std::forward<T>(aDefault);
                 }
+                catch (std::bad_variant_access&) {
+                    std::cerr << "WARNING: bad_variant_access for getting \"" << aFieldName << "\"\n";
+                    throw;
+                }
             }
 
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
