@@ -8,6 +8,7 @@
 #include <map>
 #include <iostream>
 #include <cassert>
+#include <typeinfo>
 
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/float.hh"
@@ -18,7 +19,8 @@
 
 namespace rjson
 {
-    class field_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_not_found() : std::runtime_error{""} {} };
+    class field_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
+    class field_type_mismatch : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
 
     class value;
     class array;
@@ -720,7 +722,7 @@ namespace rjson
         return std::visit([&](auto&& arg) -> bool {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                                 return arg.empty();
+                return arg.empty();
             else
                 throw std::bad_variant_access{};
         }, *this);
@@ -731,7 +733,7 @@ namespace rjson
         return std::visit([&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, object>)
-                                 arg.delete_field(aFieldName);
+                arg.delete_field(aFieldName);
             else
                 throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value, cannot delete it"};
         }, *this);
@@ -751,6 +753,16 @@ namespace rjson
         catch (field_not_found&) {
             return std::forward<T>(aDefault);
         }
+        catch (std::bad_variant_access&) {
+            const value& val = operator[](aFieldName);
+            return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
+                using AT = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<AT, rjson::null>)
+                    return std::forward<T>(aDefault);
+                else
+                    throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
+            }, val);
+        }
     }
 
     inline const object& value::get_or_empty_object(std::string aFieldName) const
@@ -761,6 +773,16 @@ namespace rjson
         catch (field_not_found&) {
             return rjson::sEmptyObject;
         }
+        catch (std::bad_variant_access&) {
+            const value& val = operator[](aFieldName);
+            return std::visit([aFieldName](auto&& arg) -> const object& {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, rjson::null>)
+                    return rjson::sEmptyObject;
+                else
+                    throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::object or rjson::null");
+            }, val);
+        }
     }
 
     inline const array& value::get_or_empty_array(std::string aFieldName) const
@@ -770,6 +792,16 @@ namespace rjson
         }
         catch (field_not_found&) {
             return rjson::sEmptyArray;
+        }
+        catch (std::bad_variant_access&) {
+            const value& val = operator[](aFieldName);
+            return std::visit([aFieldName](auto&& arg) -> const array& {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, rjson::null>)
+                    return rjson::sEmptyArray;
+                else
+                    throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::array or rjson::null");
+            }, val);
         }
     }
 
