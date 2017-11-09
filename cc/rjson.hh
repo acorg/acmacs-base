@@ -150,6 +150,7 @@ namespace rjson
         inline operator unsigned long() const { return std::stoul(mValue); }
         inline operator int() const { return static_cast<int>(std::stol(mValue)); }
         inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
+        inline operator bool() const { return static_cast<int>(*this); } // using integer as bool
         inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
@@ -191,20 +192,7 @@ namespace rjson
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
-        template <typename T> inline std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const
-            {
-                static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
-                try {
-                    return operator[](aFieldName);
-                }
-                catch (field_not_found&) {
-                    return std::forward<T>(aDefault);
-                }
-                catch (std::bad_variant_access&) {
-                    std::cerr << "WARNING: bad_variant_access for getting \"" << aFieldName << "\"\n";
-                    throw;
-                }
-            }
+        template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
 
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
             {
@@ -339,7 +327,6 @@ namespace rjson
         inline operator long() const { return std::get<integer>(*this); }
         inline operator unsigned int() const { return std::get<integer>(*this); }
         inline operator int() const { return std::get<integer>(*this); }
-        inline operator bool() const { return std::get<boolean>(*this); }
         inline operator std::string() const { return std::get<string>(*this); }
 
         inline operator double() const
@@ -350,6 +337,18 @@ namespace rjson
                     return *ptr_i;
                 else {
                     std::cerr << "ERROR: cannot convert json to double (from rjson::number or rjson::integer): " << to_json() << '\n';
+                    throw std::bad_variant_access{};
+                }
+            }
+
+        inline operator bool() const
+            {
+                if (auto ptr_n = std::get_if<boolean>(this))
+                    return *ptr_n;
+                else if (auto ptr_i = std::get_if<integer>(this))
+                    return *ptr_i;
+                else {
+                    std::cerr << "ERROR: cannot convert json to bool (from rjson::boolean or rjson::integer): " << to_json() << '\n';
                     throw std::bad_variant_access{};
                 }
             }
@@ -586,6 +585,27 @@ namespace rjson
             throw field_not_found{"No field \"" + aFieldName + "\" in rjson::object"};
     }
 
+    template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
+    {
+        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
+        try {
+            return operator[](aFieldName);
+        }
+        catch (field_not_found&) {
+            return std::forward<T>(aDefault);
+        }
+        catch (std::bad_variant_access&) {
+            const value& val = operator[](aFieldName);
+            return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
+                using AT = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<AT, rjson::null>)
+                    return std::forward<T>(aDefault);
+                else
+                    throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
+            }, val);
+        }
+    }
+
     template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
     {
         try {
@@ -746,22 +766,12 @@ namespace rjson
 
     template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
     {
-        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
         try {
-            return operator[](aFieldName);
-        }
-        catch (field_not_found&) {
-            return std::forward<T>(aDefault);
+            return static_cast<const rjson::object&>(*this).get_or_default(aFieldName, std::forward<T>(aDefault));
         }
         catch (std::bad_variant_access&) {
-            const value& val = operator[](aFieldName);
-            return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
-                using AT = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<AT, rjson::null>)
-                    return std::forward<T>(aDefault);
-                else
-                    throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
-            }, val);
+            std::cerr << "value::get_or_default called for non-object, stored variant alternative: " << index() << '\n';
+            throw;
         }
     }
 
