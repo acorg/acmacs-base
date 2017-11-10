@@ -19,8 +19,8 @@
 
 namespace rjson
 {
-    class field_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
-    class field_type_mismatch : public std::runtime_error { public: using std::runtime_error::runtime_error; inline field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
+    class field_not_found : public std::runtime_error { public: inline field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
+    class field_type_mismatch : public std::runtime_error { public: inline field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
 
     class value;
     class array;
@@ -61,9 +61,9 @@ namespace rjson
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
         inline void update(const string& to_merge) { mData = to_merge.mData; }
         inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{};}
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found();}
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         std::string mData;
@@ -85,9 +85,9 @@ namespace rjson
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
         inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         bool mValue;
@@ -102,9 +102,9 @@ namespace rjson
         inline std::string to_json() const { return "null"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
     }; // class null
 
@@ -120,9 +120,9 @@ namespace rjson
         inline operator double() const { return std::stod(mValue); }
         inline void update(const number& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
           // double mValue;
@@ -153,9 +153,9 @@ namespace rjson
         inline operator bool() const { return static_cast<int>(*this); } // using integer as bool
         inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
         inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         std::string mValue;
@@ -188,8 +188,8 @@ namespace rjson
         inline value& operator[](const rjson::string& aFieldName) { return operator[](static_cast<std::string>(aFieldName)); }
         inline value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
         inline const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
         template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
@@ -247,11 +247,11 @@ namespace rjson
         template <typename ... Args> array(Args ... args);
         inline array& operator=(array&&) = default;
         inline array& operator=(const array&) = default;
-        inline value& operator[](size_t index) { try { return mContent.at(index); } catch (std::out_of_range&) { throw field_not_found{"No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())}; } }
-        inline value& operator[](int index) { try { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); } catch (std::out_of_range&) { throw field_not_found{"No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())}; } }
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found{}; }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found{}; }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found{}; }
+        inline value& operator[](size_t index) { try { return mContent.at(index); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
+        inline value& operator[](int index) { try { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
+        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
         inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
         void remove_comments();
@@ -432,7 +432,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         return arg.set_field(aFieldName, std::forward<F>(aValue));
                     else
-                        throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
+                        throw field_not_found("No field \"" + aFieldName + "\" in rjson::value");
                 }, *this);
             }
 
@@ -443,7 +443,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, object>)
                         return arg.set_field(aFieldName, aValue);
                     else
-                        throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value"};
+                        throw field_not_found("No field \"" + aFieldName + "\" in rjson::value");
                 }, *this);
             }
 
@@ -574,7 +574,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{"No field \"" + aFieldName + "\" in rjson::object"};
+            throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
     }
 
     inline value& object::operator[](std::string aFieldName)
@@ -582,7 +582,7 @@ namespace rjson
         if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
             return existing->second;
         else
-            throw field_not_found{"No field \"" + aFieldName + "\" in rjson::object"};
+            throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
     }
 
     template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
@@ -664,7 +664,7 @@ namespace rjson
         if (auto iter = mContent.find(aKey); iter != mContent.end())
             mContent.erase(iter);
         else
-            throw field_not_found{"No field \"" + static_cast<const std::string&>(aKey) + "\" in rjson::object, cannot delete it"};
+            throw field_not_found("No field \"" + static_cast<const std::string&>(aKey) + "\" in rjson::object, cannot delete it");
     }
 
     inline const object& object::get_or_empty_object(std::string aFieldName) const
@@ -755,7 +755,7 @@ namespace rjson
             if constexpr (std::is_same_v<T, object>)
                 arg.delete_field(aFieldName);
             else
-                throw field_not_found{"No field \"" + aFieldName + "\" in rjson::value, cannot delete it"};
+                throw field_not_found("No field \"" + aFieldName + "\" in rjson::value, cannot delete it");
         }, *this);
     }
 
