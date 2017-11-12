@@ -31,7 +31,7 @@ namespace acmacs
                   case Triangle:
                       return "TRIANGLE";
                 }
-                  //return "?";
+                return "CIRCLE"; // gcc 7.2 wants this
             }
 
      private:
