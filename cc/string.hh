@@ -21,6 +21,7 @@
 #include <numeric>
 #include <sstream>
 #include <iomanip>
+#include <functional>
 
 #include "acmacs-base/to-string.hh"
 
@@ -182,6 +183,20 @@ namespace string
                         result.append(separator);
                     result.append(f_s);
                 }
+            }
+        }
+        return result;
+    }
+
+    template <typename Iterator, typename Converter> inline std::string join(std::string separator, Iterator first, Iterator last, Converter convert)
+    {
+        std::string result;
+        for ( ; first != last; ++first) {
+            const auto f_s = convert(*first);
+            if (!f_s.empty()) {
+                if (!result.empty())
+                    result.append(separator);
+                result.append(f_s);
             }
         }
         return result;
