@@ -47,6 +47,7 @@ class Color
     void light(double value);
 
     inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
+    inline Color without_transparency() const { return {mColor & 0x00FFFFFF}; }
 
     void from_string(std::string aColor);
     inline operator std::string() const { return to_string(); }
@@ -68,6 +69,13 @@ inline std::ostream& operator<<(std::ostream& out, Color c)
 {
     return out << c.to_string();
 }
+
+// ----------------------------------------------------------------------
+
+inline std::string operator+(std::string s, Color c) { return s + c.to_string(); }
+inline std::string operator+(Color c, std::string s) { return c.to_string() + s; }
+inline std::string operator+(const char* s, Color c) { return s + c.to_string(); }
+inline std::string operator+(Color c, const char* s) { return c.to_string() + s; }
 
 // ----------------------------------------------------------------------
 
