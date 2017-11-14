@@ -34,13 +34,8 @@ namespace acmacs
                 b = r1;
             }
 
-          // reflect about a line specified with vector [aX, aY]
-        inline void flip(double aX, double aY)
+        inline void flip_transformed(double x, double y)
             {
-                  // vector [aX, aY] must be first transformed using this
-                const double x = aX * a + aY * c;
-                const double y = aX * b + aY * d;
-
                 const double x2y2 = x * x - y * y, xy = 2 * x * y;
                 const double r0 = x2y2 * a + xy * c;
                 const double r1 = x2y2 * b + xy * d;
@@ -48,6 +43,15 @@ namespace acmacs
                 d = xy * b + -x2y2 * d;
                 a = r0;
                 b = r1;
+            }
+
+          // reflect about a line specified with vector [aX, aY]
+        inline void flip(double aX, double aY)
+            {
+                  // vector [aX, aY] must be first transformed using this
+                const double x = aX * a + aY * c;
+                const double y = aX * b + aY * d;
+                flip_transformed(x, y);
             }
 
         inline void multiply_by(const Transformation& t)
