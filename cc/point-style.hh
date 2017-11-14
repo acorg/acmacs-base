@@ -21,6 +21,8 @@ namespace acmacs
         [[nodiscard]] inline bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
         [[nodiscard]] inline bool operator!=(const PointShape& ps) const { return mShape != ps.mShape; }
 
+        inline operator Shape() const { return mShape; }
+
         inline operator std::string() const
             {
                 switch(mShape) {
