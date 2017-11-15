@@ -33,20 +33,20 @@ class Color
     inline bool operator != (const Color& aColor) const { return ! operator==(aColor); }
     inline bool operator < (const Color& aColor) const { return mColor < aColor.mColor; }
 
-    inline double alpha() const { return double(0xFF - ((mColor >> 24) & 0xFF)) / 255.0; }
-    inline double red() const { return double((mColor >> 16) & 0xFF) / 255.0; }
-    inline double green() const { return double((mColor >> 8) & 0xFF) / 255.0; }
-    inline double blue() const { return double(mColor & 0xFF) / 255.0; }
+    constexpr inline double alpha() const { return double(0xFF - ((mColor >> 24) & 0xFF)) / 255.0; }
+    constexpr inline double red() const { return double((mColor >> 16) & 0xFF) / 255.0; }
+    constexpr inline double green() const { return double((mColor >> 8) & 0xFF) / 255.0; }
+    constexpr inline double blue() const { return double(mColor & 0xFF) / 255.0; }
 
-    inline size_t alphaI() const { return static_cast<size_t>((mColor >> 24) & 0xFF); }
-    inline void alphaI(value_type v) { mColor = (mColor & 0xFFFFFF) | ((v & 0xFF) << 24); }
-    inline size_t rgbI() const { return static_cast<size_t>(mColor & 0xFFFFFF); }
+    constexpr inline size_t alphaI() const { return static_cast<size_t>((mColor >> 24) & 0xFF); }
+    constexpr inline void alphaI(value_type v) { mColor = (mColor & 0xFFFFFF) | ((v & 0xFF) << 24); }
+    constexpr inline size_t rgbI() const { return static_cast<size_t>(mColor & 0xFFFFFF); }
 
-    inline bool empty() const { return mColor == NoChange; }
+    constexpr inline bool empty() const { return mColor == NoChange; }
 
     void light(double value);
 
-    inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
+    constexpr inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
     inline Color without_transparency() const { return {mColor & 0x00FFFFFF}; }
 
     void from_string(std::string aColor);

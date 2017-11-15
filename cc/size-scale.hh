@@ -16,19 +16,19 @@ namespace _acmacs_base_internal
         inline SizeScale() : mValue(0) {}
         inline explicit SizeScale(double aValue) : mValue(aValue) {}
           // inline SizeScale(const SizeScale& a) = default;
-        inline bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
-        inline bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
-        inline bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
+        constexpr inline bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
+        constexpr inline bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
+        constexpr inline bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
         inline SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
-        inline double value() const { return mValue; }
-        inline SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
-        inline SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
-        inline SizeScale& operator *= (double a) { mValue *= a; return *this; }
-        inline SizeScale operator - () const { return SizeScale{- mValue}; }
-        inline SizeScale operator - (SizeScale<Tag> a) const { return SizeScale{mValue - a.mValue}; }
-        inline SizeScale operator + (SizeScale<Tag> a) const { return SizeScale{mValue + a.mValue}; }
-        inline SizeScale& operator += (SizeScale<Tag> a) { mValue += a.mValue; return *this; }
-        inline bool empty() const { return std::isnan(mValue); }
+        constexpr inline double value() const { return mValue; }
+        constexpr inline SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
+        constexpr inline SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
+        constexpr inline SizeScale& operator *= (double a) { mValue *= a; return *this; }
+        constexpr inline SizeScale operator - () const { return SizeScale{- mValue}; }
+        constexpr inline SizeScale operator - (SizeScale<Tag> a) const { return SizeScale{mValue - a.mValue}; }
+        constexpr inline SizeScale operator + (SizeScale<Tag> a) const { return SizeScale{mValue + a.mValue}; }
+        constexpr inline SizeScale& operator += (SizeScale<Tag> a) { mValue += a.mValue; return *this; }
+        constexpr inline bool empty() const { return std::isnan(mValue); }
         static SizeScale make_empty() { return SizeScale(std::numeric_limits<double>::quiet_NaN()); }
 
      private:

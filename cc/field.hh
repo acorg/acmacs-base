@@ -27,10 +27,10 @@ namespace acmacs::internal
 
         inline bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
         inline bool not_default() const { return mValue.has_value() && mValue.value() != mDefault; }
-        inline bool present() const { return mValue.has_value(); }
+        constexpr inline bool present() const { return mValue.has_value(); }
 
-        inline operator const T() const { return mValue.value_or(mDefault); }
-        inline const T operator*() const { return *this; }
+        constexpr inline operator const T() const { return mValue.value_or(mDefault); }
+        constexpr inline const T operator*() const { return *this; }
         inline const std::decay_t<T>* operator->() const
             {
                 if (present())

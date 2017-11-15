@@ -40,13 +40,13 @@ namespace acmacs
 
           // inline std::string to_string() const { return "Location(" + std::to_string(x) + ", " + std::to_string(y) + ")"; }
 
-        inline void min(const Location& a) { x = std::min(x, a.x); y = std::min(y, a.y); }
-        inline void max(const Location& a) { x = std::max(x, a.x); y = std::max(y, a.y); }
+        inline void min(const Location& a) noexcept { x = std::min(x, a.x); y = std::min(y, a.y); }
+        inline void max(const Location& a) noexcept { x = std::max(x, a.x); y = std::max(y, a.y); }
         static inline Location center_of(const Location& a, const Location& b) { return {(a.x + b.x) / 2.0, (a.y + b.y) / 2.0}; }
 
-        inline bool isnan() const { return std::isnan(x) || std::isnan(y); }
-        inline std::vector<double> to_vector() const { return {x, y}; }
-        inline void from_vector(const std::vector<double>& source) { x = source[0]; y = source[1]; }
+        inline bool isnan() const noexcept { return std::isnan(x) || std::isnan(y); }
+        inline std::vector<double> to_vector() const noexcept { return {x, y}; }
+        inline void from_vector(const std::vector<double>& source) noexcept { x = source[0]; y = source[1]; }
 
     }; // class Location
 
@@ -70,8 +70,8 @@ namespace acmacs
         inline Size(double aWidth, double aHeight) : width(aWidth), height(aHeight) {}
         inline Size(const Location& a, const Location& b) : width(std::abs(a.x - b.x)), height(std::abs(a.y - b.y)) {}
         inline void set(double aWidth, double aHeight) { width = aWidth; height = aHeight; }
-        inline double aspect() const { return width / height; }
-        inline bool empty() const { return float_zero(width) && float_zero(height); }
+        constexpr inline double aspect() const noexcept { return width / height; }
+        constexpr inline bool empty() const noexcept { return float_zero(width) && float_zero(height); }
 
         [[nodiscard]] inline bool operator==(const Size& size) const { return float_equal(width, size.width) && float_equal(height, size.height); }
         [[nodiscard]] inline bool operator!=(const Size& size) const { return ! operator==(size); }
@@ -181,7 +181,7 @@ namespace acmacs
             }
 
           // returns if passed point is within the rectangle
-        inline bool within(double x, double y) const
+        constexpr inline bool within(double x, double y) const
             {
                 return x >= top_left.x && x <= bottom_right.x && y >= top_left.y && y <= bottom_right.y;
             }

@@ -54,13 +54,13 @@ namespace rjson
         inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
         inline bool operator==(const char* aToCompare) const { return mData == aToCompare; }
         inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
-        inline size_t size() const { return mData.size(); }
-        inline bool empty() const { return mData.empty(); }
-        inline char front() const { return mData.front(); }
-        inline char back() const { return mData.back(); }
+        constexpr inline size_t size() const { return mData.size(); }
+        constexpr inline bool empty() const { return mData.empty(); }
+        constexpr inline char front() const { return mData.front(); }
+        constexpr inline char back() const { return mData.back(); }
         inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
         inline void update(const string& to_merge) { mData = to_merge.mData; }
-        inline void remove_comments() {}
+        constexpr inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found();}
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -68,7 +68,7 @@ namespace rjson
      private:
         std::string mData;
 
-        inline bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
+        constexpr inline bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
 
         friend class object;
 
@@ -81,10 +81,10 @@ namespace rjson
         inline boolean(bool aValue) : mValue{aValue} {}
         inline std::string to_json() const { return mValue ? "true" : "false"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        inline operator bool() const { return mValue; }
+        constexpr inline operator bool() const { return mValue; }
         inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
         inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
-        inline void remove_comments() {}
+        constexpr inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -101,7 +101,7 @@ namespace rjson
         inline void update(const null&) {}
         inline std::string to_json() const { return "null"; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        inline void remove_comments() {}
+        constexpr inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -119,7 +119,7 @@ namespace rjson
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator double() const { return std::stod(mValue); }
         inline void update(const number& to_merge) { mValue = to_merge.mValue; }
-        inline void remove_comments() {}
+        constexpr inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -150,9 +150,9 @@ namespace rjson
         inline operator unsigned long() const { return std::stoul(mValue); }
         inline operator int() const { return static_cast<int>(std::stol(mValue)); }
         inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
-        inline operator bool() const { return static_cast<int>(*this); } // using integer as bool
+        constexpr inline operator bool() const { return static_cast<int>(*this); } // using integer as bool
         inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
-        inline void remove_comments() {}
+        constexpr inline void remove_comments() {}
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -179,8 +179,8 @@ namespace rjson
         void insert(const string& aKey, value&& aValue);
         void insert(const string& aKey, const value& aValue);
         void insert(value&& aKey, value&& aValue);
-        inline size_t size() const { return mContent.size(); }
-        inline bool empty() const { return mContent.empty(); }
+        constexpr inline size_t size() const { return mContent.size(); }
+        constexpr inline bool empty() const { return mContent.empty(); }
 
           // if field is not in the object, throws field_not_found
         const value& operator[](std::string aFieldName) const;
@@ -260,13 +260,13 @@ namespace rjson
 
         value& insert(value&& aValue); // returns ref to inserted
         value& insert(const value& aValue); // returns ref to inserted
-        inline size_t size() const { return mContent.size(); }
-        inline bool empty() const { return mContent.empty(); }
+        constexpr inline size_t size() const { return mContent.size(); }
+        constexpr inline bool empty() const { return mContent.empty(); }
         inline const value& operator[](size_t index) const { return mContent.at(index); }
         inline const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
-        inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
-        inline void erase(int index) { mContent.erase(mContent.begin() + index); }
-        inline void clear() { mContent.clear(); }
+        constexpr inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
+        constexpr inline void erase(int index) { mContent.erase(mContent.begin() + index); }
+        constexpr inline void clear() { mContent.clear(); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
         using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
@@ -323,10 +323,10 @@ namespace rjson
 
           // ----------------------------------------------------------------------
 
-        inline operator unsigned long() const { return std::get<integer>(*this); }
-        inline operator long() const { return std::get<integer>(*this); }
-        inline operator unsigned int() const { return std::get<integer>(*this); }
-        inline operator int() const { return std::get<integer>(*this); }
+        constexpr inline operator unsigned long() const { return std::get<integer>(*this); }
+        constexpr inline operator long() const { return std::get<integer>(*this); }
+        constexpr inline operator unsigned int() const { return std::get<integer>(*this); }
+        constexpr inline operator int() const { return std::get<integer>(*this); }
         inline operator std::string() const { return std::get<string>(*this); }
 
         inline operator double() const
