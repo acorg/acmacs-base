@@ -30,7 +30,9 @@ include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.vars
 CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
-ACMACS_BASE_LIB = $(DIST)/libacmacsbase.so
+ACMACS_BASE_LIB_MAJOR = 1
+ACMACS_BASE_LIB_MINOR = 0
+ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
 ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) $(CXX_LIB) # -lprofiler
 
 # ----------------------------------------------------------------------
@@ -72,8 +74,8 @@ include $(ACMACSD_ROOT)/share/makefiles/Makefile.rtags
 # ----------------------------------------------------------------------
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
-	@echo "SHARED     " $@ # '<--' $^
-	@$(CXX) -shared $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+	@printf "%-16s %s\n" "SHARED" $@
+	@$(call make_shared,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 # $(DIST)/test-rjson: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_RJSON_SOURCES)) | $(DIST)
 #	@echo "LINK       " $@ # '<--' $^
@@ -88,11 +90,11 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 #	@$(CXX) $(LDFLAGS) -o $@ $^
 
 $(DIST)/profile-rjson-load: cc/test-rjson-load.cc cc/rjson.cc cc/rjson-parser-pop.cc | $(DIST)
-	@echo "PROFILE       " $@ # '<--' $^
+	@printf "%-16s %s\n" "PROFILE" $@
 	@$(CXX) -fprofile-instr-generate -fcoverage-mapping $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 $(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
-	@echo "LINK       " $@
+	@printf "%-16s %s\n" "LINK" $@
 	@$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS)
 
 # ======================================================================
