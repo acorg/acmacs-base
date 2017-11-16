@@ -15,11 +15,12 @@ namespace _acmacs_base_internal
      public:
         inline SizeScale() : mValue(0) {}
         inline explicit SizeScale(double aValue) : mValue(aValue) {}
-          // inline SizeScale(const SizeScale& a) = default;
+        inline SizeScale(const SizeScale& a) = default;
         constexpr inline bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
         constexpr inline bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
         constexpr inline bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
         inline SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
+        inline SizeScale& operator = (const SizeScale& a) = default;
         constexpr inline double value() const { return mValue; }
         constexpr inline SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
         constexpr inline SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
@@ -47,7 +48,9 @@ using Rotation = _acmacs_base_internal::SizeScale<'R'>;
 #include "acmacs-base/global-constructors-push.hh"
 
 const Rotation NoRotation{0.0};
+const Rotation RotationReassortant{0.5};
 const Aspect AspectNormal{1.0};
+const Aspect AspectEgg{0.75};
 
 #include "acmacs-base/diagnostics-pop.hh"
 

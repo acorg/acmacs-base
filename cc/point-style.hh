@@ -93,6 +93,9 @@ namespace acmacs
         LabelStyle label;
         field<std::string> label_text;
 
+        inline PointStyle& scale(double aScale) { size = static_cast<double>(size) * aScale; return *this; }
+        inline PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
+
     }; // class PointStyle
 
 } // namespace acmacs
