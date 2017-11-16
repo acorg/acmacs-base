@@ -6,7 +6,7 @@
 
 // ----------------------------------------------------------------------
 
-namespace passage
+namespace acmacs::passage
 {
     namespace _internal
     {
@@ -77,7 +77,7 @@ namespace passage
 
     }
 
-} // namespace passage
+} // namespace acmacs::passage
 
 // ----------------------------------------------------------------------
 /// Local Variables:
