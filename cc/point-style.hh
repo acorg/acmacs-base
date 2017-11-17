@@ -101,6 +101,19 @@ namespace acmacs
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
+
+inline std::ostream& operator<<(std::ostream& s, const acmacs::PointShape& shape)
+{
+    return s << static_cast<std::string>(shape);
+}
+
+inline std::ostream& operator<<(std::ostream& s, const acmacs::PointStyle& style)
+{
+    s << *style.shape << " F:" << style.fill << " O:" << style.outline << " S:" << style.size << ' ' << style.aspect << ' ' << style.rotation;
+    return s;
+}
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

@@ -8,7 +8,7 @@
 
 // ----------------------------------------------------------------------
 
-namespace _acmacs_base_internal
+namespace acmacs::internal
 {
     template <char Tag> class SizeScale
     {
@@ -37,13 +37,13 @@ namespace _acmacs_base_internal
     };
 }
 
-using Pixels = _acmacs_base_internal::SizeScale<'P'>; // size in pixels, indepenent from the surface internal coordinate system
-using Scaled = _acmacs_base_internal::SizeScale<'S'>; // size in the surface internal coordinate system
+using Pixels = acmacs::internal::SizeScale<'P'>; // size in pixels, indepenent from the surface internal coordinate system
+using Scaled = acmacs::internal::SizeScale<'S'>; // size in the surface internal coordinate system
 
 // ----------------------------------------------------------------------
 
-using Aspect = _acmacs_base_internal::SizeScale<'A'>;
-using Rotation = _acmacs_base_internal::SizeScale<'R'>;
+using Aspect = acmacs::internal::SizeScale<'A'>;
+using Rotation = acmacs::internal::SizeScale<'R'>;
 
 #include "acmacs-base/global-constructors-push.hh"
 
@@ -73,7 +73,13 @@ namespace acmacs
     template <> inline std::string to_string(Pixels aPixels) { return to_string(aPixels.value()); }
     template <> inline std::string to_string(Scaled aScaled) { return to_string(aScaled.value()); }
 
-} // namespace std
+} // namespace acmacs
+
+namespace acmacs::internal
+{
+    using ::operator<<;
+
+} // namespace acmacs::internal
 
 // ----------------------------------------------------------------------
 /// Local Variables:

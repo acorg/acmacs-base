@@ -65,6 +65,16 @@ namespace acmacs::internal
 } // namespace acmacs::internal
 
 // ----------------------------------------------------------------------
+
+template <typename T> inline std::ostream& operator<<(std::ostream& s, const acmacs::internal::field_optional_with_default<T>& field)
+{
+    s << *field;
+    if (field.is_default())
+        s << "(default)";
+    return s;
+}
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
