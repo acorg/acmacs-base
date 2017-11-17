@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <iostream>
 // #include <type_traits>
 
 #include "acmacs-base/float.hh"

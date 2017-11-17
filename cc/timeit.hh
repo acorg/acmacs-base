@@ -23,7 +23,8 @@ class Timeit
                 const auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
                 const decltype(total) s = total / 1000;
                 const decltype(total) ms = total % 1000;
-                out_stream << message << s << '.' << std::setw(3) << std::setfill('0') << ms << std::endl;
+                out_stream << message;
+                out_stream << s << '.' << std::setw(3) << std::setfill('0') << ms << std::setw(0) << '\n';
                 mReport = report_time::No;
             }
         }
