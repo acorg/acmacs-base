@@ -127,7 +127,7 @@ namespace acmacs
 
         field<bool> shown{true};
         field<acmacs::Offset> offset{sOffsetDefault};
-        field<double> size{1.0};
+        field<Pixels> size{Pixels{10.0}};
         field<Color> color{BLACK};
         field<Rotation> rotation{NoRotation};
         field<double> interline{0.2};

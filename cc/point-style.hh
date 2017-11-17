@@ -86,7 +86,7 @@ namespace acmacs
         field<Color> fill{TRANSPARENT};
         field<Color> outline{BLACK};
         field<Pixels> outline_width{Pixels{1.0}};
-        field<Pixels> size{Pixels{1.0}};
+        field<Pixels> size{Pixels{5.0}};
         field<Rotation> rotation{NoRotation};
         field<Aspect> aspect{AspectNormal};
         field<PointShape> shape;
