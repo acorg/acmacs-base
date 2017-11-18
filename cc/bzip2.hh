@@ -8,7 +8,7 @@ namespace acmacs::file
 {
     namespace bz2_internal
     {
-        const unsigned char sBz2Sig[] = { 'B', 'z', 'h' };
+        constexpr const unsigned char sBz2Sig[] = { 'B', 'Z', 'h' };
 
     } // namespace bz2_internal
 
