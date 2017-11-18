@@ -17,7 +17,8 @@ TARGETS = \
 
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
-ACMACS_BASE_SOURCES = virus-name.cc color.cc text-style.cc time-series.cc json-importer.cc rjson.cc rjson-parser-pop.cc argc-argv.cc quicklook.cc
+ACMACS_BASE_SOURCES = virus-name.cc color.cc text-style.cc time-series.cc read-file.cc \
+		      json-importer.cc rjson.cc rjson-parser-pop.cc argc-argv.cc quicklook.cc
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
@@ -33,7 +34,7 @@ LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) $(FS_LIB) $(CXX_LIB) # -lprofiler
+ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) -lbz2 $(FS_LIB) $(CXX_LIB) # -lprofiler
 
 # ----------------------------------------------------------------------
 

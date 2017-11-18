@@ -318,7 +318,7 @@ namespace json_reader
 
     template <typename Target, typename RootHandler> inline void read_from_file(std::string aFilename, Target& aTarget)
     {
-        const std::string buffer = aFilename == "-" ? acmacs_base::read_stdin() : acmacs_base::read_file(aFilename);
+        const std::string buffer = aFilename == "-" ? acmacs::file::read_stdin() : acmacs::file::read(aFilename);
         if (buffer[0] == '{') {
             ReaderEventHandler<Target, RootHandler> handler{aTarget};
             rapidjson::Reader reader;

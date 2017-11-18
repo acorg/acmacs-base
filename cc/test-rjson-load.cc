@@ -14,7 +14,7 @@ int main(int argc, const char** argv)
     if (argc == 2) {
         try {
             Timeit ti_read(std::string{"reading from "} + argv[1] + " ");
-            const std::string source = acmacs_base::read_file(argv[1], true);
+            const std::string source = acmacs::file::read(argv[1], true);
             ti_read.report();
             Timeit ti_parse(std::string{"parsing json "});
             const auto data = rjson::parse_string(source);

@@ -1,177 +1,49 @@
 #pragma once
 
 #include <string>
-#include <iostream>
-#include <stdexcept>
-#include <fcntl.h>
-#include <unistd.h>
-#include <cerrno>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
 
 #include "acmacs-base/filesystem.hh"
-#include "acmacs-base/xz.hh"
 
 // ----------------------------------------------------------------------
 
-namespace acmacs_base
+namespace acmacs::file
 {
-    inline bool file_exists(std::string aFilename)
-    {
-        return fs::exists(aFilename);
-    }
-
-      // ----------------------------------------------------------------------
-
-    inline std::string read_file(std::string aFilename, bool throw_if_absent = false)
-    {
-        std::string buffer;
-        if (fs::exists(aFilename)) {
-            const auto size = fs::file_size(aFilename);
-            int f = ::open(aFilename.c_str(), O_RDONLY);
-            if (f >= 0) {
-                buffer.resize(size, ' '); // reserve space
-                if (::read(f, &*buffer.begin(), size) < 0)
-                    throw std::runtime_error(std::string("Cannot read ") + aFilename + ": " + strerror(errno));
-                close(f);
-            }
-            else {
-                throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
-            }
-        }
-        else if (throw_if_absent) {
-            throw std::runtime_error{"file not found: " + aFilename};
-        }
-        else {
-            buffer = aFilename;
-        }
-        if (xz_compressed(buffer))
-            buffer = xz_decompress(buffer);
-        return buffer;
-    }
-
-      // ----------------------------------------------------------------------
-
-    inline std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024)
-    {
-        std::string buffer;
-        std::string::size_type offset = 0;
-        for (;;) {
-            buffer.resize(buffer.size() + chunk_size, ' ');
-            const auto bytes_read = read(fd, (&*buffer.begin()) + offset, chunk_size);
-            if (bytes_read < 0)
-                throw std::runtime_error(std::string("Cannot read from file descriptor: ") + strerror(errno));
-            if (static_cast<size_t>(bytes_read) < chunk_size) {
-                buffer.resize(buffer.size() - chunk_size + static_cast<size_t>(bytes_read));
-                break;
-            }
-            offset += static_cast<size_t>(bytes_read);
-        }
-        if (xz_compressed(buffer))
-            buffer = xz_decompress(buffer);
-        return buffer;
-    }
-
-      // ----------------------------------------------------------------------
-
-    inline std::string read_stdin()
-    {
-        return read_from_file_descriptor(0);
-    }
-
-      // ----------------------------------------------------------------------
-
-    inline void backup_file(std::string aFilename)
-    {
-        fs::path to_backup{aFilename};
-        if (fs::exists(to_backup)) {
-            fs::path backup_dir = to_backup.parent_path() / ".backup";
-            create_directory(backup_dir);
-
-            for (int version = 1; version < 1000; ++version) {
-                char infix[10];
-                std::sprintf(infix, ".~%03d~", version);
-                fs::path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
-                if (!fs::exists(new_name) || version == 999) {
-                    fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
-                    break;
-                }
-            }
-        }
-    }
-
-      // ----------------------------------------------------------------------
-
     enum class ForceCompression { No, Yes };
     enum class BackupFile { No, Yes };
 
-    inline void write_file(std::string aFilename, std::string aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes)
-    {
-        int f = -1;
-        if (aFilename == "-") {
-            f = 1;
-        }
-        else if (aFilename == "=") {
-            f = 2;
-        }
-        else {
-            if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && aFilename.substr(aFilename.size() - 3) == ".xz"))
-                aData = xz_compress(aData);
-            if (aBackupFile == BackupFile::Yes)
-                backup_file(aFilename);
-            f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
-            if (f < 0)
-                throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
-        }
-        if (write(f, aData.c_str(), aData.size()) < 0)
-            throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
-        if (f > 2)
-            close(f);
+      // ----------------------------------------------------------------------
 
-    }
+    inline bool exists(std::string aFilename) { return fs::exists(aFilename); }
 
       // ----------------------------------------------------------------------
 
-    class TempFile
+    std::string read(std::string aFilename, bool throw_if_absent = false);
+    std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
+    inline std::string read_stdin() { return read_from_file_descriptor(0); }
+    void write(std::string aFilename, std::string aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes);
+    void backup(std::string aFilename);
+
+      // ----------------------------------------------------------------------
+
+    class temp
     {
      public:
-        inline TempFile(std::string suffix)
-            : name(make_template() + suffix), fd(mkstemps(const_cast<char*>(name.c_str()), static_cast<int>(suffix.size())))
-            {
-                if (fd < 0)
-                    throw std::runtime_error(std::string("Cannot create temporary file using template ") + name + ": " + strerror(errno));
-            }
+        temp(std::string suffix);
+        ~temp();
 
-        inline TempFile& operator = (TempFile&& aFrom) noexcept { name = std::move(aFrom.name); fd = aFrom.fd; aFrom.name.clear(); return *this; }
+        inline temp& operator = (temp&& aFrom) noexcept { name = std::move(aFrom.name); fd = aFrom.fd; aFrom.name.clear(); return *this; }
         inline operator std::string() const { return name; }
         inline operator int() const { return fd; }
-
-        inline ~TempFile()
-            {
-                if (!name.empty())
-                    fs::remove(name.c_str());
-            }
 
      private:
         std::string name;
         int fd;
 
-        inline std::string make_template()
-            {
-                const char* tdir = std::getenv("T");
-                if (!tdir)
-                    tdir = std::getenv("TMPDIR");
-                if (!tdir)
-                    tdir = "/tmp";
-                return tdir + std::string{"/AD.XXXXXXXX"};
-            }
+        std::string make_template();
 
-    }; // class TempFile
+    }; // class temp
 
-      // ----------------------------------------------------------------------
-
-} // namespace acmacs_base
+} // namespace acmacs::file
 
 // ----------------------------------------------------------------------
 /// Local Variables:

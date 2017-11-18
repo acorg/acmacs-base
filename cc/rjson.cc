@@ -48,7 +48,7 @@ rjson::value rjson::parse_string(const char* aJsonData, rjson::remove_comments a
 
 rjson::value rjson::parse_file(std::string aFilename, rjson::remove_comments aRemoveComments)
 {
-    return parse_string(acmacs_base::read_file(aFilename, true), aRemoveComments);
+    return parse_string(acmacs::file::read(aFilename, true), aRemoveComments);
 
 } // rjson::parse_file
 
