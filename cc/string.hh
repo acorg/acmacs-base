@@ -166,6 +166,16 @@ namespace string
     inline int compare(std::string a, const char* b) { return compare(a.c_str(), a.size(), b, std::strlen(b)); }
     inline int compare(const char* a, std::string b) { return compare(a, std::strlen(a), b.c_str(), b.size()); }
 
+    inline int compare(std::initializer_list<std::string> as, std::initializer_list<std::string> bs)
+    {
+        assert(as.size() == bs.size());
+        for (auto ap = as.begin(), bp = bs.begin(); ap != as.end(); ++ap, ++bp) {
+            if (const auto r = compare(*ap, *bp); r != 0)
+                return r;
+        }
+        return 0;
+    }
+
       // ----------------------------------------------------------------------
       // split
       // ----------------------------------------------------------------------
@@ -239,8 +249,9 @@ namespace string
 
     inline std::string join(std::initializer_list<std::string>&& parts)
     {
-        std::vector<std::string> p{parts};
-        return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
+        // std::vector<std::string> p{parts};
+        // return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
+        return join(" ", std::begin(parts), std::end(parts));
     }
 
     enum ShowBase { NotShowBase, ShowBase };
