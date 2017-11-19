@@ -29,26 +29,6 @@
 
 namespace string
 {
-    enum class Split { RemoveEmpty, KeepEmpty };
-
-      // http://stackoverflow.com/questions/236129/split-a-string-in-c
-    inline std::vector<std::string> split(std::string s, std::string delim, Split keep_empty = Split::KeepEmpty)
-    {
-        std::vector<std::string> result;
-        if (! delim.empty()) {
-            for (std::string::iterator substart = s.begin(), subend = substart; substart <= s.end(); substart = subend + static_cast<std::string::difference_type>(delim.size())) {
-                subend = std::search(substart, s.end(), delim.begin(), delim.end());
-                if (substart != subend || keep_empty == Split::KeepEmpty) {
-                    result.push_back(std::string(substart, subend));
-                }
-            }
-        }
-        else {
-            result.push_back(s);
-        }
-        return result;
-    }
-
       // ----------------------------------------------------------------------
 
     inline std::string first_letter_of_words(std::string s)
@@ -168,6 +148,51 @@ namespace string
         }
         return result;
     }
+
+      // ----------------------------------------------------------------------
+      // compare
+      // ----------------------------------------------------------------------
+
+    inline int compare(const char* a, size_t al, const char* b, size_t bl)
+    {
+        auto r = std::memcmp(a, b, std::min(al, bl));
+        if (r == 0 && al != bl)
+            return al < bl ? -1 : 1;
+        else
+            return r;
+    }
+
+    inline int compare(std::string a, std::string b) { return compare(a.c_str(), a.size(), b.c_str(), b.size()); }
+    inline int compare(std::string a, const char* b) { return compare(a.c_str(), a.size(), b, std::strlen(b)); }
+    inline int compare(const char* a, std::string b) { return compare(a, std::strlen(a), b.c_str(), b.size()); }
+
+      // ----------------------------------------------------------------------
+      // split
+      // ----------------------------------------------------------------------
+
+    enum class Split { RemoveEmpty, KeepEmpty };
+
+      // http://stackoverflow.com/questions/236129/split-a-string-in-c
+    inline std::vector<std::string> split(std::string s, std::string delim, Split keep_empty = Split::KeepEmpty)
+    {
+        std::vector<std::string> result;
+        if (! delim.empty()) {
+            for (std::string::iterator substart = s.begin(), subend = substart; substart <= s.end(); substart = subend + static_cast<std::string::difference_type>(delim.size())) {
+                subend = std::search(substart, s.end(), delim.begin(), delim.end());
+                if (substart != subend || keep_empty == Split::KeepEmpty) {
+                    result.push_back(std::string(substart, subend));
+                }
+            }
+        }
+        else {
+            result.push_back(s);
+        }
+        return result;
+    }
+
+      // ----------------------------------------------------------------------
+      // join
+      // ----------------------------------------------------------------------
 
     template <typename Iterator> inline std::string join(std::string separator, Iterator first, Iterator last)
     {
