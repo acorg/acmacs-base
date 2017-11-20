@@ -13,7 +13,6 @@
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
-#include "acmacs-base/filesystem.hh"
 
 // ----------------------------------------------------------------------
 
