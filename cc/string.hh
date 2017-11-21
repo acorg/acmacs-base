@@ -151,6 +151,16 @@ namespace string
     }
 
       // ----------------------------------------------------------------------
+      // ends_with
+      // ----------------------------------------------------------------------
+
+    inline bool ends_with(std::string data, const char* end)
+    {
+        const std::string_view end_view{end};
+        return std::string_view(data.c_str() + data.size() - end_view.size(), end_view.size()) == end_view;
+    }
+
+      // ----------------------------------------------------------------------
       // compare
       // ----------------------------------------------------------------------
 
