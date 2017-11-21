@@ -24,6 +24,8 @@ namespace acmacs
                 mData.append(aField);
             }
 
+        inline void add_empty_field() { if (!mData.empty() && mData.back() != '\n') mData.append(1, ','); }
+
      private:
         std::string mData;
 
