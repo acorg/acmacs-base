@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include <functional>
+#include <cassert>
 
 #include "acmacs-base/to-string.hh"
 

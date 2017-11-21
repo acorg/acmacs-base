@@ -116,7 +116,7 @@ namespace rjson::parser_pop
             }
 
           //virtual inline rjson::value value() const { return rjson::null{}; }
-        virtual inline rjson::value value_move() = 0; //{ return rjson::null{}; }
+        virtual rjson::value value_move() = 0; //{ return rjson::null{}; }
         virtual inline void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
     }; // class SymbolHandler
