@@ -20,7 +20,7 @@ namespace virus_name
 
         const std::regex cdc{"^([A-Z][A-Z][A-Z]?) "};
 
-        constexpr const char* re_international_name = "^(?:([AB][^/]*)/)?(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)";
+        constexpr const char* re_international_name = "^(?:([AB][^/]*)/)?(?:([^/]+)/)?([^/]{2,})/0*([^/]+)/(19|20)?(\\d\\d)";
         constexpr const char* re_reassortant_passage = "(?:(?:\\s+|__)(.+))?";
 
           // [1] - type+subtype, [2] - host, [3] - location, [4] - isolation-number (omitting leading zeros), [5] - century, [6] - year (2 last digit), [7] - reassortant and passage
