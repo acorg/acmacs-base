@@ -64,7 +64,7 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    inline std::string xz_compress(std::string input)
+    inline std::string xz_compress(std::string_view input)
     {
         lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
         if (lzma_easy_encoder(&strm, 9 | LZMA_PRESET_EXTREME, LZMA_CHECK_CRC64) != LZMA_OK) {

@@ -10,6 +10,7 @@
 
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
+#include "acmacs-base/string.hh"
 #include "acmacs-base/read-file.hh"
 
 // ----------------------------------------------------------------------
@@ -133,7 +134,7 @@ void acmacs::file::backup(std::string aFilename)
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::write(std::string aFilename, std::string aData, ForceCompression aForceCompression, BackupFile aBackupFile)
+void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCompression aForceCompression, BackupFile aBackupFile)
 {
     int f = -1;
     if (aFilename == "-") {
@@ -143,18 +144,30 @@ void acmacs::file::write(std::string aFilename, std::string aData, ForceCompress
         f = 2;
     }
     else {
-        if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && aFilename.substr(aFilename.size() - 3) == ".xz"))
-            aData = xz_compress(aData);
         if (aBackupFile == BackupFile::Yes)
             backup(aFilename);
         f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
         if (f < 0)
             throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
     }
-    if (::write(f, aData.c_str(), aData.size()) < 0)
-        throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
-    if (f > 2)
-        close(f);
+    try {
+        if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && string::ends_with(aFilename, ".xz"))) {
+            const auto compressed = xz_compress(aData);
+            if (::write(f, compressed.data(), compressed.size()) < 0)
+                throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
+        }
+        else {
+            if (::write(f, aData.data(), aData.size()) < 0)
+                throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
+        }
+        if (f > 2)
+            close(f);
+    }
+    catch (std::exception&) {
+        if (f > 2)
+            close(f);
+        throw;
+    }
 
 } // acmacs::file::write
 
