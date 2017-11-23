@@ -10,6 +10,7 @@ namespace acmacs
     {
      public:
         inline operator std::string() const { return mData; }
+        inline operator std::string_view() const { return mData; }
 
         inline void new_row() { mData.append(1, '\n'); }
 
