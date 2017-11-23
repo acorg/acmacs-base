@@ -5,6 +5,8 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <sys/types.h>
+#include <sys/mman.h>
 
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
@@ -12,35 +14,77 @@
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::file::read(std::string aFilename, bool throw_if_absent)
+acmacs::file::read_access::read_access(std::string aFilename)
 {
-    std::string buffer;
     if (fs::exists(aFilename)) {
-        const auto size = fs::file_size(aFilename);
-        int f = ::open(aFilename.c_str(), O_RDONLY);
-        if (f >= 0) {
-            buffer.resize(size, ' '); // reserve space
-            if (::read(f, &*buffer.begin(), size) < 0)
-                throw std::runtime_error(std::string("Cannot read ") + aFilename + ": " + strerror(errno));
-            close(f);
+        len = fs::file_size(aFilename);
+        fd = ::open(aFilename.c_str(), O_RDONLY);
+        if (fd >= 0) {
+            mapped = reinterpret_cast<char*>(mmap(nullptr, len, PROT_READ, MAP_FILE|MAP_PRIVATE, fd, 0));
+            if (mapped == MAP_FAILED)
+                throw cannot_read(aFilename + ": " + strerror(errno));
         }
         else {
-            throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
+            throw not_opened(aFilename + ": " + strerror(errno));
         }
     }
-    else if (throw_if_absent) {
-        throw std::runtime_error{"file not found: " + aFilename};
-    }
     else {
-        buffer = aFilename;
+        throw not_found{aFilename};
     }
-    if (xz_compressed(buffer))
-        buffer = xz_decompress(buffer);
-    else if (bz2_compressed(buffer))
-        buffer = bz2_decompress(buffer);
-    return buffer;
 
-} // acmacs::file::read
+} // acmacs::file::read_access
+
+// ----------------------------------------------------------------------
+
+acmacs::file::read_access::read_access(read_access&& other)
+    : fd{other.fd}, len{other.len}, mapped{other.mapped}
+{
+    other.fd = -1;
+    other.len = 0;
+    other.mapped = nullptr;
+
+} // acmacs::file::read_access::read_access
+
+// ----------------------------------------------------------------------
+
+acmacs::file::read_access::~read_access()
+{
+    if (fd >= 0) {
+        if (mapped)
+            munmap(mapped, len);
+        close(fd);
+    }
+
+} // acmacs::file::read_access::~read_access
+
+// ----------------------------------------------------------------------
+
+acmacs::file::read_access& acmacs::file::read_access::operator=(read_access&& other)
+{
+    fd = other.fd;
+    len = other.len;
+    mapped = other.mapped;
+
+    other.fd = -1;
+    other.len = 0;
+    other.mapped = nullptr;
+
+    return *this;
+
+} // acmacs::file::read_access::operator=
+
+// ----------------------------------------------------------------------
+
+acmacs::file::read_access::operator std::string() const
+{
+    if (xz_compressed(mapped))
+        return xz_decompress({mapped, len});
+    else if (bz2_compressed(mapped))
+        return bz2_decompress({mapped, len});
+    else
+        return {mapped, len};
+
+} // acmacs::file::read_access::operator std::string
 
 // ----------------------------------------------------------------------
 
@@ -59,7 +103,7 @@ std::string acmacs::file::read_from_file_descriptor(int fd, size_t chunk_size)
         }
         offset += static_cast<size_t>(bytes_read);
     }
-    if (xz_compressed(buffer))
+    if (xz_compressed(buffer.data()))
         buffer = xz_decompress(buffer);
     return buffer;
 

@@ -17,7 +17,29 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    std::string read(std::string aFilename, bool throw_if_absent = false);
+    class not_opened : public std::runtime_error { public: not_opened(std::string aMsg) : std::runtime_error("cannot open " + aMsg) {} };
+    class cannot_read : public std::runtime_error { public: cannot_read(std::string aMsg) : std::runtime_error("cannot read " + aMsg) {} };
+    class not_found : public std::runtime_error { public: not_found(std::string aFilename) : std::runtime_error("not found: " + aFilename) {} };
+
+    class read_access
+    {
+     public:
+        read_access(std::string aFilename);
+        ~read_access();
+        read_access(const read_access&) = delete;
+        read_access(read_access&&);
+        read_access& operator=(const read_access&) = delete;
+        read_access& operator=(read_access&&);
+        operator std::string() const;
+
+     private:
+        int fd = -1;
+        size_t len = 0;
+        char* mapped = nullptr;
+
+    }; // class read_access
+
+    inline read_access read(std::string aFilename) { return {aFilename}; }
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string aFilename, std::string aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes);

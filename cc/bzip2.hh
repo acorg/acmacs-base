@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+#include <string_view>
 #include <bzlib.h>
 
 // ----------------------------------------------------------------------
@@ -14,9 +16,9 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    inline bool bz2_compressed(std::string input)
+    inline bool bz2_compressed(const char* input)
     {
-        return std::memcmp(input.c_str(), bz2_internal::sBz2Sig, sizeof(bz2_internal::sBz2Sig)) == 0;
+        return std::memcmp(input, bz2_internal::sBz2Sig, sizeof(bz2_internal::sBz2Sig)) == 0;
     }
 
       // ----------------------------------------------------------------------
@@ -33,7 +35,7 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    inline std::string bz2_decompress(std::string input)
+    inline std::string bz2_decompress(std::string_view input)
     {
         constexpr ssize_t BufSize = 409600;
         bz_stream strm;
@@ -43,7 +45,7 @@ namespace acmacs::file
         if (BZ2_bzDecompressInit(&strm, 0 /*verbosity*/, 0 /* not small */) != BZ_OK)
             throw std::runtime_error("bz2 decompression failed during initialization");
         try {
-            strm.next_in = const_cast<decltype(strm.next_in)>(input.c_str());
+            strm.next_in = const_cast<decltype(strm.next_in)>(input.data());
             strm.avail_in = static_cast<decltype(strm.avail_in)>(input.size());
             std::string output(BufSize, ' ');
             ssize_t offset = 0;

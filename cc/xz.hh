@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <cstring>
 
 #pragma GCC diagnostic push
@@ -27,9 +28,9 @@ namespace acmacs::file
         constexpr ssize_t sXzBufSize = 409600;
         const unsigned char sXzSig[] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
 
-        inline std::string process(lzma_stream* strm, std::string input)
+        inline std::string process(lzma_stream* strm, std::string_view input)
         {
-            strm->next_in = reinterpret_cast<const uint8_t *>(input.c_str());
+            strm->next_in = reinterpret_cast<const uint8_t *>(input.data());
             strm->avail_in = input.size();
             std::string output(sXzBufSize, ' ');
             ssize_t offset = 0;
@@ -56,9 +57,9 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    inline bool xz_compressed(std::string input)
+    inline bool xz_compressed(const char* input)
     {
-        return std::memcmp(input.c_str(), xz_internal::sXzSig, sizeof(xz_internal::sXzSig)) == 0;
+        return std::memcmp(input, xz_internal::sXzSig, sizeof(xz_internal::sXzSig)) == 0;
     }
 
       // ----------------------------------------------------------------------
@@ -74,7 +75,7 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    inline std::string xz_decompress(std::string input)
+    inline std::string xz_decompress(std::string_view input)
     {
         lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
         if (lzma_stream_decoder(&strm, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED) != LZMA_OK) {
