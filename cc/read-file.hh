@@ -34,7 +34,7 @@ namespace acmacs::file
         operator std::string() const;
         inline size_t size() const { return len; }
         inline const char* data() const { return mapped; }
-        inline operator bool() const { return mapped != nullptr; }
+        inline bool valid() const { return mapped != nullptr; }
 
      private:
         int fd = -1;
