@@ -15,6 +15,8 @@ namespace acmacs
 
     template <> inline std::string to_string(const std::string& src) { return src; }
     template <> inline std::string to_string(std::string src) { return src; }
+    template <> inline std::string to_string(const std::string_view& src) { return std::string(src); }
+    template <> inline std::string to_string(std::string_view src) { return std::string(src); }
     template <> inline std::string to_string(const char* src) { return src; }
 
     template <> inline std::string to_string(double value)

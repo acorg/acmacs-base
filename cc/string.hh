@@ -195,19 +195,19 @@ namespace string
     enum class Split { RemoveEmpty, KeepEmpty };
 
       // http://stackoverflow.com/questions/236129/split-a-string-in-c
-    inline std::vector<std::string> split(std::string s, std::string delim, Split keep_empty = Split::KeepEmpty)
+    inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
     {
-        std::vector<std::string> result;
+        std::vector<std::string_view> result;
         if (! delim.empty()) {
-            for (std::string::iterator substart = s.begin(), subend = substart; substart <= s.end(); substart = subend + static_cast<std::string::difference_type>(delim.size())) {
+            for (auto substart = s.cbegin(), subend = substart; substart <= s.cend(); substart = subend + delim.size()) {
                 subend = std::search(substart, s.end(), delim.begin(), delim.end());
                 if (substart != subend || keep_empty == Split::KeepEmpty) {
-                    result.push_back(std::string(substart, subend));
+                    result.emplace_back(substart, subend - substart);
                 }
             }
         }
         else {
-            result.push_back(s);
+            result.emplace_back(s.data(), s.size());
         }
         return result;
     }
@@ -255,6 +255,11 @@ namespace string
     }
 
     inline std::string join(std::string separator, std::initializer_list<std::string>&& values)
+    {
+        return join(separator, std::begin(values), std::end(values));
+    }
+
+    inline std::string join(std::string separator, std::initializer_list<std::string_view>&& values)
     {
         return join(separator, std::begin(values), std::end(values));
     }
