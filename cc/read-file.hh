@@ -17,9 +17,10 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    class not_opened : public std::runtime_error { public: not_opened(std::string aMsg) : std::runtime_error("cannot open " + aMsg) {} };
-    class cannot_read : public std::runtime_error { public: cannot_read(std::string aMsg) : std::runtime_error("cannot read " + aMsg) {} };
-    class not_found : public std::runtime_error { public: not_found(std::string aFilename) : std::runtime_error("not found: " + aFilename) {} };
+    class file_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+    class not_opened : public file_error { public: not_opened(std::string aMsg) : file_error("cannot open " + aMsg) {} };
+    class cannot_read : public file_error { public: cannot_read(std::string aMsg) : file_error("cannot read " + aMsg) {} };
+    class not_found : public file_error { public: not_found(std::string aFilename) : file_error("not found: " + aFilename) {} };
 
     class read_access
     {
