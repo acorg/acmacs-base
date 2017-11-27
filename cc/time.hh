@@ -31,6 +31,11 @@ namespace acmacs
         return time_format(std::chrono::system_clock::now(), aFormat);
     }
 
+    inline std::string date_format(const char* aFormat = "%Y-%m-%d")
+    {
+        return time_format(std::chrono::system_clock::now(), aFormat);
+    }
+
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
