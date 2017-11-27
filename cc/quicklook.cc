@@ -12,10 +12,21 @@
 void acmacs::quicklook(std::string aFilename, size_t aDelayInSeconds)
 {
     const char * const argv[] = {"qlmanage", "-p", aFilename.c_str(), nullptr};
-    run_and_detach(argv);
+    run_and_detach(argv, 0);
     if (aDelayInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayInSeconds);
+    }
+
+} // acmacs::quicklook
+
+void acmacs::open(std::string aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
+{
+    const char * const argv[] = {"open", aFilename.c_str(), nullptr};
+    run_and_detach(argv, aDelayBeforeInSeconds);
+    if (aDelayAfterInSeconds) {
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
     }
 
 } // acmacs::quicklook
@@ -26,17 +37,25 @@ void acmacs::quicklook(std::string /*aFilename*/, size_t /*aDelayInSeconds*/)
 {
 }
 
+void acmacs::open(std::string /*aFilename*/, size_t /*aDelayInSeconds*/)
+{
+}
+
 #endif
 
 // ----------------------------------------------------------------------
 
-void acmacs::run_and_detach(const char * const argv[])
+void acmacs::run_and_detach(const char * const argv[], size_t aDelayBeforeInSeconds)
 {
     if (!fork()) {
         close(0);
         close(1);
         close(2);
         setsid();
+        if (aDelayBeforeInSeconds) {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(1s * aDelayBeforeInSeconds);
+        }
         execvp(argv[0], const_cast<char *const *>(argv));
         perror(argv[0]);
         std::exit(-1);
