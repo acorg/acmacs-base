@@ -108,7 +108,7 @@ std::string argc_argv::usage_options(size_t aIndent) const
                        else if constexpr (std::is_same_v<T, string>)
                                                  result = std::string{' ', '"'} + arg + "\"";
                        else if constexpr (std::is_same_v<T, strings>)
-                                                 result = " \"(multiple-occurneces-ot-switch-hanled)\"";
+                                                 result = " \"(multiple-occurneces-of-switch-hanled)\"";
                        else if constexpr (std::is_same_v<T, long>)
                                                  result = " " + std::to_string(arg);
                        else if constexpr (std::is_same_v<T, double>)
