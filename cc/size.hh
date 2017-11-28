@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cassert>
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/size-scale.hh"
@@ -67,9 +68,9 @@ namespace acmacs
         double width, height;
 
         inline Size() : width(0), height(0) {}
-        inline Size(double aWidth, double aHeight) : width(aWidth), height(aHeight) {}
-        inline Size(const Location& a, const Location& b) : width(std::abs(a.x - b.x)), height(std::abs(a.y - b.y)) {}
-        inline void set(double aWidth, double aHeight) { width = aWidth; height = aHeight; }
+        inline Size(double aWidth, double aHeight) : width(aWidth), height(aHeight) { assert(width >= 0); assert(height >= 0); }
+        inline Size(const Location& a, const Location& b) : width(std::abs(a.x - b.x)), height(std::abs(a.y - b.y)) { assert(width >= 0); assert(height >= 0); }
+        inline void set(double aWidth, double aHeight) { width = aWidth; height = aHeight;  assert(width >= 0); assert(height >= 0); }
         constexpr inline double aspect() const noexcept { return width / height; }
         constexpr inline bool empty() const noexcept { return float_zero(width) && float_zero(height); }
 
