@@ -37,7 +37,7 @@ void acmacs::quicklook(std::string /*aFilename*/, size_t /*aDelayInSeconds*/)
 {
 }
 
-void acmacs::open(std::string /*aFilename*/, size_t /*aDelayInSeconds*/)
+void acmacs::open(std::string /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
 {
 }
 
