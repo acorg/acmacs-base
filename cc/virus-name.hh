@@ -28,6 +28,8 @@ namespace virus_name
         const std::regex international{std::string(re_international_name) + re_reassortant_passage + "$"};
         const std::regex international_name{re_international_name};
 
+        const std::regex passage_after_name{" (MDCK|SIAT|MK|E|X)[X\\?\\d]"}; // to extract cdc name only! NOT to extract passage!
+
 #pragma GCC diagnostic pop
 
         inline std::string make_year(const std::smatch& m)
@@ -61,7 +63,22 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
-    std::string normalize(std::string name);
+      // Extracts virus name without passage, reassortant, extra, etc.
+    inline std::string_view name(const std::string& aFullName) // pass by reference! because we return string_view to it
+    {
+        std::smatch m;
+        if (std::regex_search(aFullName, m, _internal::international_name)) {
+            return {aFullName.data(), static_cast<size_t>(m.length())};
+        }
+        else if (std::regex_search(aFullName, m, _internal::passage_after_name)) { // works for cdc name without extra and without reassortant (cdc names usually do not have reassortant)
+            return {aFullName.data(), static_cast<size_t>(m.position())};
+        }
+        else {
+            return aFullName;   // failed to split, perhaps cdc name without passage
+        }
+    }
+
+// ----------------------------------------------------------------------
 
     using location_func_t = std::string (*)(std::string);
 
@@ -96,16 +113,12 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
-    inline std::string virus_type(std::string name)
+    inline std::string_view virus_type(const std::string& name) // pass by reference! because we return string_view to it
     {
-        using namespace _internal;
-        std::string virus_type;
         std::smatch m;
-        if (std::regex_match(name, m, international))
-            virus_type = m[1].str();
-        else
-            THROW(Unrecognized{"No virus_type in " + name}, std::string{});
-        return virus_type;
+        if (std::regex_match(name, m, _internal::international))
+            return {name.data() + m.position(1), static_cast<size_t>(m.length(1))};
+        THROW(Unrecognized("No virus_type in " + name), std::string_view(name.data(), 0U));
 
     } // AntigenSerum::virus_type
 
@@ -113,14 +126,10 @@ namespace virus_name
 
     inline std::string year(std::string name)
     {
-        using namespace _internal;
-        std::string year;
         std::smatch m;
-        if (std::regex_match(name, m, international))
-            year = make_year(m);
-        else
-            THROW(Unrecognized{"No year in " + name}, std::string{});
-        return year;
+        if (std::regex_match(name, m, _internal::international))
+            return _internal::make_year(m);
+        THROW(Unrecognized("No year in " + name), std::string{});
 
     } // AntigenSerum::year
 
