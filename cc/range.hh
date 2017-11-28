@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <limits>
 #include <functional>
+#include <numeric>
 
 #include "acmacs-base/throw.hh"
 #include "acmacs-base/stream.hh"
@@ -196,19 +197,22 @@ namespace acmacs
     template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aBegin, Index aEnd)
     {
         aToFill.resize(aEnd - aBegin);
-        std::copy(incrementer<Index>::begin(aBegin), incrementer<Index>::end(aEnd), aToFill.begin());
+          // std::copy(incrementer<Index>::begin(aBegin), incrementer<Index>::end(aEnd), aToFill.begin());
+        std::iota(aToFill.begin(), aToFill.end(), aBegin);
     }
 
     template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aSize)
     {
         aToFill.resize(aSize);
-        std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), aToFill.begin());
+          //std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), aToFill.begin());
+        std::iota(aToFill.begin(), aToFill.end(), 0);
     }
 
     template <typename Index> inline std::vector<Index> filled_with_indexes(Index aSize)
     {
         std::vector<Index> result(aSize);
-        std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), result.begin());
+          // std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), result.begin());
+        std::iota(result.begin(), result.end(), 0);
         return result;
     }
 
