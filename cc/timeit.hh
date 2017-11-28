@@ -29,8 +29,10 @@ class Timeit
             }
         }
 
+    inline void message_append(std::string to_append) { message += to_append; }
+    
  private:
-    const std::string message;
+    std::string message;
     std::ostream& out_stream;
     report_time mReport;
     decltype(std::chrono::steady_clock::now()) start;
