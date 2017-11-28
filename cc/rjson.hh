@@ -47,6 +47,8 @@ namespace rjson
         inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator std::string() const { return mData; }
+        inline const std::string& str() const { return mData; }
+        inline operator std::string_view() const { return mData; }
         inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
         inline bool operator==(const std::string& aToCompare) const { return mData == aToCompare; }
         inline bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
@@ -187,7 +189,7 @@ namespace rjson
           // if field is not in the object, throws field_not_found
         const value& operator[](std::string aFieldName) const;
         value& operator[](std::string aFieldName);
-        inline value& operator[](const rjson::string& aFieldName) { return operator[](static_cast<std::string>(aFieldName)); }
+        inline value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
         inline value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
         inline const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
         template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
@@ -330,6 +332,8 @@ namespace rjson
         inline operator unsigned int() const { return std::get<integer>(*this); }
         inline operator int() const { return std::get<integer>(*this); }
         inline operator std::string() const { return std::get<string>(*this); }
+        inline const std::string& str() const { return std::get<string>(*this).str(); }
+        inline operator std::string_view() const { return std::get<string>(*this); }
 
         inline operator double() const
             {

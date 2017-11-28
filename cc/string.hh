@@ -106,31 +106,23 @@ namespace string
 
       // ----------------------------------------------------------------------
 
-    // inline std::string& lower(std::string& source)
-    // {
-    //     std::transform(source.begin(), source.end(), source.begin(), ::tolower);
-    //     return source;
-    // }
-
-    inline std::string lower(std::string source)
+    namespace _internal
     {
-        std::string result;
-        std::transform(source.begin(), source.end(), std::back_inserter(result), ::tolower);
-        return result;
+        template <typename Iter> inline std::string transform(Iter first, Iter last, std::function<char (char)> func)
+        {
+            std::string result;
+            std::transform(first, last, std::back_inserter(result), func);
+            return result;
+        }
     }
 
-    // inline std::string& upper(std::string& source)
-    // {
-    //     std::transform(source.begin(), source.end(), source.begin(), ::toupper);
-    //     return source;
-    // }
+    template <typename S> inline std::string lower(const S& source) { return _internal::transform(source.begin(), source.end(), ::tolower); }
+    inline std::string lower(const char* source) { return _internal::transform(source, source + std::strlen(source), ::tolower); }
+    inline std::string lower(char* source) { return lower(const_cast<const char*>(source)); }
 
-    inline std::string upper(std::string source)
-    {
-        std::string result;
-        std::transform(source.begin(), source.end(), std::back_inserter(result), ::toupper);
-        return result;
-    }
+    template <typename S> inline std::string upper(const S& source) { return _internal::transform(source.begin(), source.end(), ::toupper); }
+    inline std::string upper(const char* source) { return _internal::transform(source, source + std::strlen(source), ::toupper); }
+    inline std::string upper(char* source) { return upper(const_cast<const char*>(source)); }
 
     // inline std::string& capitalize(std::string& source)
     // {
@@ -141,7 +133,7 @@ namespace string
     //     return source;
     // }
 
-    inline std::string capitalize(std::string source)
+    template <typename S> inline std::string capitalize(const S& source)
     {
         std::string result;
         if (!source.empty()) {
@@ -155,10 +147,10 @@ namespace string
       // ends_with
       // ----------------------------------------------------------------------
 
-    inline bool ends_with(std::string data, const char* end)
+    template <typename S> inline bool ends_with(const S& data, const char* end)
     {
         const std::string_view end_view{end};
-        return std::string_view(data.c_str() + data.size() - end_view.size(), end_view.size()) == end_view;
+        return std::string_view(data.data() + data.size() - end_view.size(), end_view.size()) == end_view;
     }
 
       // ----------------------------------------------------------------------

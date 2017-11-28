@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cstdint>
 
@@ -21,8 +22,10 @@ class Color
 
     inline Color() : mColor(0xFF00FF) {}
     template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr inline Color(Uint aColor) : mColor(static_cast<uint32_t>(aColor)) {}
-    inline Color(std::string aColor) { from_string(aColor); }
-    inline Color& operator=(std::string aColor) { from_string(aColor); return *this; }
+    inline Color(const std::string& aColor) { from_string(aColor); }
+    inline Color(const std::string_view& aColor) { from_string(aColor); }
+    inline Color& operator=(const std::string& aColor) { from_string(aColor); return *this; }
+    inline Color& operator=(const std::string_view& aColor) { from_string(aColor); return *this; }
     inline Color& operator=(const char* aColor) { from_string(aColor); return *this; }
     inline Color(const char* aColor) { from_string(aColor); }
       // inline Color(const Color&) = default;
@@ -49,7 +52,7 @@ class Color
     constexpr inline void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
     inline Color without_transparency() const { return {mColor & 0x00FFFFFF}; }
 
-    void from_string(std::string aColor);
+    void from_string(const std::string_view& aColor);
     inline operator std::string() const { return to_string(); }
     std::string to_string() const;
     std::string to_hex_string() const;

@@ -43,11 +43,12 @@ std::string Color::to_hex_string() const
 
 // ----------------------------------------------------------------------
 
-void Color::from_string(std::string aColor)
+void Color::from_string(const std::string_view& aColor)
 {
-    using namespace _internal;
+    if (aColor.empty())
+        THROW_OR_CERR(std::invalid_argument("cannot read Color from empty string"));
     if (aColor[0] == '#') {
-        const value_type v = static_cast<uint32_t>(std::strtoul(aColor.c_str() + 1, nullptr, 16));
+        const value_type v = static_cast<uint32_t>(std::strtoul(aColor.data() + 1, nullptr, 16));
         switch (aColor.size()) {
           case 4:               // web color #abc -> #aabbcc
               mColor = ((v & 0xF00) << 12) | ((v & 0xF00) << 8) | ((v & 0x0F0) << 8) | ((v & 0x0F0) << 4) | ((v & 0x00F) << 4) | (v & 0x00F);
@@ -61,8 +62,8 @@ void Color::from_string(std::string aColor)
         }
     }
     else {
-        const auto e = sNameToColor.find(string::lower(aColor));
-        if (e != sNameToColor.end())
+        const auto e = _internal::sNameToColor.find(string::lower(aColor));
+        if (e != _internal::sNameToColor.end())
             mColor = e->second;
         else
             THROW_OR_CERR(std::invalid_argument("cannot read Color from " + aColor));
