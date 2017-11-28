@@ -48,7 +48,10 @@ namespace rjson
         inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         inline operator std::string() const { return mData; }
         inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
-        inline bool operator==(const std::string aToCompare) const { return mData == aToCompare; }
+        inline bool operator==(const std::string& aToCompare) const { return mData == aToCompare; }
+        inline bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
+        inline bool operator==(const std::string_view& aToCompare) const { return mData == aToCompare; }
+        inline bool operator!=(const std::string_view& aToCompare) const { return ! operator==(aToCompare); }
         inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
         inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
         inline bool operator==(const char* aToCompare) const { return mData == aToCompare; }
@@ -363,6 +366,15 @@ namespace rjson
         inline operator array&() { return std::get<array>(*this); }
 
         bool empty() const;
+
+        inline bool operator==(const std::string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        inline bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
+        inline bool operator==(const std::string_view& aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        inline bool operator!=(const std::string_view& aToCompare) const { return ! operator==(aToCompare); }
+        inline bool operator==(const string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
+        inline bool operator==(const char* aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
 
           // ----------------------------------------------------------------------
 
