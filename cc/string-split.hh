@@ -87,6 +87,32 @@ namespace acmacs::string
 
         }; // class split_iterator
 
+          // ======================================================================
+
+        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, std::string delim, Extractor extractor, const char* extractor_name)
+        {
+            using namespace std::string_literals;
+            auto extract = [&](auto chunk) -> T {
+                               try {
+                                   size_t pos;
+                                   const T result = extractor(chunk, &pos);
+                                   if (pos != chunk.size())
+                                       throw split_error{"cannot read "s + extractor_name + " from \""s + std::string(chunk) + '"'};
+                                   return result;
+                               }
+                               catch (split_error&) {
+                                   throw;
+                               }
+                               catch (std::exception& err) {
+                                   throw split_error{"cannot read "s + extractor_name + " from \""s + std::string(chunk) + "\": " + err.what()};
+                               }
+                           };
+
+            std::vector<T> result;
+            std::transform(internal::split_iterator<S>(s, delim, Split::KeepEmpty), internal::split_iterator<S>(), std::back_inserter(result), extract);
+            return result;
+        }
+
     } // namespace internal
 
     template <typename S> inline std::vector<std::string_view> split(const S& s, std::string delim, Split keep_empty = Split::KeepEmpty)
@@ -96,26 +122,12 @@ namespace acmacs::string
 
     template <typename S> inline std::vector<size_t> split_into_uint(const S& s, std::string delim)
     {
-        using namespace std::string_literals;
-        auto extract = [](auto chunk) -> size_t {
-            try {
-                size_t pos;
-                const size_t result = std::stoul(std::string(chunk), &pos);
-                if (pos != chunk.size())
-                    throw split_error{"cannot read uint from \""s + std::string(chunk) + '"'};
-                return result;
-            }
-            catch (split_error&) {
-                throw;
-            }
-            catch (std::exception& err) {
-                throw split_error{"cannot read uint from \""s + std::string(chunk) + "\": " + err.what()};
-            }
-        };
+        return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return std::stoul(std::string(chunk), pos); }, "unsigned");
+    }
 
-        std::vector<size_t> result;
-        std::transform(internal::split_iterator<S>(s, delim, Split::KeepEmpty), internal::split_iterator<S>(), std::back_inserter(result), extract);
-        return result;
+    template <typename S> inline std::vector<double> split_into_double(const S& s, std::string delim)
+    {
+        return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); }, "double");
     }
 
     // inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
