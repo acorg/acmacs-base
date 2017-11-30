@@ -15,10 +15,13 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
 {
     using opt_iter = decltype(options.begin());
     std::vector<opt_iter> options_used;
-
+    bool no_more_options = false; // support for --, after it all options are considered to be arguments
     for (int arg_no = 1; arg_no < argc; ++arg_no) {
-        if (argv[arg_no][0] == '-') {
-            if (auto found = std::find_if(options.begin(), options.end(), [arg=argv[arg_no]](const auto& aOption) { return !std::strcmp(arg, aOption.first); }); found != options.end()) {
+        if (!no_more_options && argv[arg_no][0] == '-') {
+            if (argv[arg_no][1] == '-' && argv[arg_no][2] == 0) { // --
+                no_more_options = true;
+            }
+            else if (auto found = std::find_if(options.begin(), options.end(), [arg=argv[arg_no]](const auto& aOption) { return !std::strcmp(arg, aOption.first); }); found != options.end()) {
                 options_used.push_back(found);
                 auto visitor = [&, name=found->first, this](auto&& arg) -> void {
                     using T = std::decay_t<decltype(arg)>;
