@@ -13,6 +13,7 @@ int main()
     try {
         const std::string S1{"1,2,,3"};
         const std::string_view SV1(S1);
+        const std::string S2{"1,2,3,5,8"};
 
         {
             auto r = acmacs::string::split(S1, ",");
@@ -21,7 +22,6 @@ int main()
             assert(r[1] == "2");
             assert(r[2].empty());
             assert(r[3] == "3");
-              // std::cout << r1 << '\n';
         }
 
         {
@@ -30,7 +30,6 @@ int main()
             assert(r[0] == "1");
             assert(r[1] == "2");
             assert(r[2] == "3");
-              // std::cout << r2 << '\n';
         }
 
         {
@@ -40,7 +39,6 @@ int main()
             assert(r[1] == "2");
             assert(r[2].empty());
             assert(r[3] == "3");
-              // std::cout << r1 << '\n';
         }
 
         {
@@ -49,9 +47,13 @@ int main()
             assert(r[0] == "1");
             assert(r[1] == "2");
             assert(r[2] == "3");
-              // std::cout << r2 << '\n';
         }
 
+        {
+            auto r = acmacs::string::split_into_uint(S2, ",");
+            assert(r.size() == 5);
+            assert((r == std::vector<size_t>{1,2,3,5,8}));
+        }
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';

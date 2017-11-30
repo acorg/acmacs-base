@@ -6,16 +6,17 @@
 #include <iterator>
 #include <stdexcept>
 
+
 // ----------------------------------------------------------------------
 
 namespace acmacs::string
 {
     enum class Split { RemoveEmpty, KeepEmpty };
 
+    class split_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+
     namespace internal
     {
-        class split_iterator_error : public std::exception { public: using std::exception::exception; };
-
         template <typename S> class split_iterator
         {
          public:
@@ -88,9 +89,33 @@ namespace acmacs::string
 
     } // namespace internal
 
-    template <typename S> std::vector<std::string_view> split(const S& s, std::string delim, Split keep_empty = Split::KeepEmpty)
+    template <typename S> inline std::vector<std::string_view> split(const S& s, std::string delim, Split keep_empty = Split::KeepEmpty)
     {
         return {internal::split_iterator<S>(s, delim, keep_empty), internal::split_iterator<S>()};
+    }
+
+    template <typename S> inline std::vector<size_t> split_into_uint(const S& s, std::string delim)
+    {
+        using namespace std::string_literals;
+        auto extract = [](auto chunk) -> size_t {
+            try {
+                size_t pos;
+                const size_t result = std::stoul(std::string(chunk), &pos);
+                if (pos != chunk.size())
+                    throw split_error{"cannot read uint from \""s + std::string(chunk) + '"'};
+                return result;
+            }
+            catch (split_error&) {
+                throw;
+            }
+            catch (std::exception& err) {
+                throw split_error{"cannot read uint from \""s + std::string(chunk) + "\": " + err.what()};
+            }
+        };
+
+        std::vector<size_t> result;
+        std::transform(internal::split_iterator<S>(s, delim, Split::KeepEmpty), internal::split_iterator<S>(), std::back_inserter(result), extract);
+        return result;
     }
 
     // inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
