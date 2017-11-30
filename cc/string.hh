@@ -1,15 +1,5 @@
 #pragma once
 
-// ----------------------------------------------------------------------
-// std::vector<std::string> split(const std::string& s, const std::string& delim, bool keep_empty = Split::KeepEmpty)
-// Split string by delimiter into array of substrings
-// std::vector<std::string> split(const std::string& s, const std::string& delim, bool keep_empty = Split::KeepEmpty)
-
-// std::string strip(std::string source)
-// Removes leading and trailing spaces from string
-//
-// ----------------------------------------------------------------------
-
 #include <string>
 #include <string_view>
 #include <vector>
@@ -178,30 +168,6 @@ namespace string
                 return r;
         }
         return 0;
-    }
-
-      // ----------------------------------------------------------------------
-      // split
-      // ----------------------------------------------------------------------
-
-    enum class Split { RemoveEmpty, KeepEmpty };
-
-      // http://stackoverflow.com/questions/236129/split-a-string-in-c
-    inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
-    {
-        std::vector<std::string_view> result;
-        if (! delim.empty()) {
-            for (auto substart = s.cbegin(), subend = substart; substart <= s.cend(); substart = subend + delim.size()) {
-                subend = std::search(substart, s.end(), delim.begin(), delim.end());
-                if (substart != subend || keep_empty == Split::KeepEmpty) {
-                    result.emplace_back(substart, subend - substart);
-                }
-            }
-        }
-        else {
-            result.emplace_back(s.data(), s.size());
-        }
-        return result;
     }
 
       // ----------------------------------------------------------------------
