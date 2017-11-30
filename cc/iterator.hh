@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iterator>
+
 // ----------------------------------------------------------------------
 // polyfill for std::ostream_joiner of c++17
 
