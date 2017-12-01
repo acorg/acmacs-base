@@ -14,7 +14,10 @@ namespace acmacs
     {
      public:
         using std::vector<double>::vector;
-          //inline Vector() = default;
+        inline Vector(const std::vector<double>& src) : std::vector<double>(src) {}
+        // inline Vector(std::vector<double>&& src) : std::vector<double>(std::move(src)) {}
+        // inline Vector& operator=(const std::vector<double>& src) { std::vector<double>::operator=(src); return *this; }
+        // inline Vector& operator=(std::vector<double>&& src) { std::vector<double>::operator=(std::move(src)); return *this; }
 
           // Multiplies all vector elements by aAlpha
         inline Vector& multiply_by(double aAlpha)
