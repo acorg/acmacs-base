@@ -5,7 +5,7 @@
 #include <vector>
 #include <iterator>
 #include <stdexcept>
-
+#include <algorithm>
 
 // ----------------------------------------------------------------------
 
