@@ -17,7 +17,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
     std::vector<opt_iter> options_used;
     bool no_more_options = false; // support for --, after it all options are considered to be arguments
     for (int arg_no = 1; arg_no < argc; ++arg_no) {
-        if (!no_more_options && argv[arg_no][0] == '-') {
+        if (!no_more_options && argv[arg_no][0] == '-' && argv[arg_no][1] != 0) {
             if (argv[arg_no][1] == '-' && argv[arg_no][2] == 0) { // --
                 no_more_options = true;
             }
