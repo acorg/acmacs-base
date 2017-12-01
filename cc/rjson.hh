@@ -695,20 +695,34 @@ namespace rjson
     inline const object& object::get_or_empty_object(std::string aFieldName) const
     {
         try {
-            return operator[](aFieldName);
+            const auto& v = operator[](aFieldName);
+            if (std::get_if<null>(&v))
+                return rjson::sEmptyObject;
+            return v;
         }
         catch (field_not_found&) {
             return rjson::sEmptyObject;
+        }
+        catch (std::bad_variant_access&) {
+            std::cerr << "object::get_or_empty_object " << aFieldName << ": bad_variant_access\n";
+            throw;
         }
     }
 
     inline const array& object::get_or_empty_array(std::string aFieldName) const
     {
         try {
-            return operator[](aFieldName);
+            const auto& v = operator[](aFieldName);
+            if (std::get_if<null>(&v))
+                return rjson::sEmptyArray;
+            return v;
         }
         catch (field_not_found&) {
             return rjson::sEmptyArray;
+        }
+        catch (std::bad_variant_access&) {
+            std::cerr << "object::get_or_empty_array " << aFieldName << ": bad_variant_access\n";
+            throw;
         }
     }
 
