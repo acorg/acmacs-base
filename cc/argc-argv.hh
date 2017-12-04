@@ -135,6 +135,19 @@ inline bool operator != (const argc_argv::option& aOpt, const char* aStr) { retu
 inline bool operator != (const char* aStr, const argc_argv::option& aOpt) { return !operator==(aStr, aOpt); }
 
 // ----------------------------------------------------------------------
+// gcc-7 support
+// ----------------------------------------------------------------------
+
+#if __GNUC__ == 7
+namespace std
+{
+      // gcc 7.2 wants those, if we derive from std::variant
+    template<> struct variant_size<argc_argv::option_default> : variant_size<argc_argv::option_default_base> {};
+    template<size_t _Np> struct variant_alternative<_Np, argc_argv::option_default> : variant_alternative<_Np, argc_argv::option_default_base> {};
+}
+#endif
+
+// ----------------------------------------------------------------------
 
 // class argc_argv_simple
 // {
