@@ -23,7 +23,21 @@ class argc_argv
     using strings = std::vector<string>;
 
     // using mandatory = std::variant<std::string, int, size_t, double, bool>;
-    using option_default = std::variant<bool, string, strings, long, double>;
+    using option_default_base = std::variant<bool, string, strings, long, double>;
+
+    class option_default : public option_default_base
+    {
+     public:
+        inline option_default(bool b) : option_default_base(b) {}
+        inline option_default(string s) : option_default_base(s) {}
+        inline option_default(strings ss) : option_default_base(ss) {}
+        inline option_default(long i) : option_default_base(i) {}
+        inline option_default(unsigned long i) : option_default_base(static_cast<long>(i)) {}
+        inline option_default(int i) : option_default_base(static_cast<long>(i)) {}
+        inline option_default(unsigned int i) : option_default_base(static_cast<long>(i)) {}
+        inline option_default(double d) : option_default_base(d) {}
+
+    }; // class option_default
 
     class option : public std::pair<std::string, option_default>
     {
@@ -55,6 +69,7 @@ class argc_argv
 
         inline operator bool() const { return get_bool(); }
         inline operator std::string() const { return get<string>(); }
+        inline operator std::string_view() const { return get<string>(); }
         inline operator strings() const { return get<strings>(); }
         inline operator double() const { return get<double>(); }
         inline operator long() const { return get<long>(); }
@@ -93,8 +108,8 @@ class argc_argv
 
 }; // class argc_argv
 
-inline bool operator == (const argc_argv::option& aOpt, const char* aStr) { return static_cast<std::string>(aOpt) == aStr; }
-inline bool operator == (const char* aStr, const argc_argv::option& aOpt) { return static_cast<std::string>(aOpt) == aStr; }
+inline bool operator == (const argc_argv::option& aOpt, const char* aStr) { return static_cast<std::string_view>(aOpt) == aStr; }
+inline bool operator == (const char* aStr, const argc_argv::option& aOpt) { return static_cast<std::string_view>(aOpt) == aStr; }
 inline bool operator != (const argc_argv::option& aOpt, const char* aStr) { return !operator==(aOpt, aStr); }
 inline bool operator != (const char* aStr, const argc_argv::option& aOpt) { return !operator==(aStr, aOpt); }
 

@@ -16,7 +16,7 @@ int main()
             assert(arg.number_of_arguments() == 1);
             assert(strcmp(arg[0], argv[4]) == 0);
             assert(static_cast<bool>(arg[argv[1]]));
-            assert(static_cast<std::string>(arg[argv[2]]) == argv[3]);
+            assert(static_cast<std::string_view>(arg[argv[2]]) == argv[3]);
             assert(static_cast<double>(arg["--bb"]) == 77.0);
               //static_cast<long>(arg["--bb"]);
         }
