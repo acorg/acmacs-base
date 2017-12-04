@@ -56,6 +56,8 @@ class argc_argv
     class option : public option_setting
     {
      private:
+        bool present_ = false;
+
         template <typename T> inline T get() const
             {
                 using namespace std::string_literals;
@@ -81,8 +83,10 @@ class argc_argv
             }
 
      public:
-        using option_setting::option_setting;
+        inline option(std::string aOption, option_default&& aDefault) : option_setting(aOption, std::move(aDefault)), present_{true} {}
         inline option(const option_setting& src) : option_setting(src) {}
+
+        constexpr inline bool present() const { return present_; }
 
         inline operator bool() const { return get_bool(); }
         inline operator std::string() const { return get<string>(); }
