@@ -8,6 +8,7 @@
 #include <variant>
 #include <typeinfo>
 
+
 // ----------------------------------------------------------------------
 
 class argc_argv
@@ -39,33 +40,49 @@ class argc_argv
 
     }; // class option_default
 
-    class option : public std::pair<std::string, option_default>
+    struct option_setting
+    {
+        inline option_setting(const char* aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
+        inline option_setting(std::string aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
+        inline option_setting(std::string aOption, const option_default& aDefault) : option_(aOption), default_(aDefault) {}
+        inline option_setting(const char* aOption, option_default&& aDefault, const char* aDescription) : option_(aOption), default_(std::move(aDefault)), description_(aDescription) {}
+
+        std::string option_;
+        option_default default_;
+        const char* description_ = nullptr;
+
+    }; // struct option_setting
+
+    class option : public option_setting
     {
      private:
         template <typename T> inline T get() const
             {
+                using namespace std::string_literals;
                 try {
-                    return std::get<T>(second);
+                    return std::get<T>(default_);
                 }
                 catch (std::bad_variant_access&) {
-                    throw option_value_conversion_failed{std::string{"cannot convert value of "} + first + " to " + typeid(T).name()};
+                    throw option_value_conversion_failed{"cannot convert value of "s + option_ + " to " + typeid(T).name()};
                 }
             }
 
         inline bool get_bool() const
             {
-                if (auto* b = std::get_if<bool>(&second); b)
+                using namespace std::string_literals;
+                if (auto* b = std::get_if<bool>(&default_); b)
                     return *b;
-                else if (auto* s1 = std::get_if<string>(&second); s1)
+                else if (auto* s1 = std::get_if<string>(&default_); s1)
                     return *s1 != nullptr && **s1 != 0;
-                else if (auto* s2 = std::get_if<strings>(&second); s2)
+                else if (auto* s2 = std::get_if<strings>(&default_); s2)
                     return !s2->empty();
                 else
-                    throw option_value_conversion_failed{std::string{"cannot convert value of "} + first + " to bool"};
+                    throw option_value_conversion_failed{"cannot convert value of "s + option_ + " to bool"};
             }
 
      public:
-        using std::pair<std::string, option_default>::pair;
+        using option_setting::option_setting;
+        inline option(const option_setting& src) : option_setting(src) {}
 
         inline operator bool() const { return get_bool(); }
         inline operator std::string() const { return get<string>(); }
@@ -79,7 +96,7 @@ class argc_argv
 
     }; // class option
 
-    argc_argv(int argc, const char* const argv[], std::initializer_list<std::pair<const char*, option_default>> options, bool split_single_dash = true);
+    argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
 
     const option& operator[](std::string aName) const;
 

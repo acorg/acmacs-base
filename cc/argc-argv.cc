@@ -10,7 +10,7 @@
 inline const char* std::bad_variant_access::what() const noexcept { return "bad_variant_access"; }
 #endif
 
-argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<std::pair<const char*, option_default>> options, bool split_single_dash)
+argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<argc_argv::option_setting> options, bool split_single_dash)
     : mProgram{argv[0]}
 {
     using opt_iter = decltype(options.begin());
@@ -21,9 +21,9 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
             if (argv[arg_no][1] == '-' && argv[arg_no][2] == 0) { // --
                 no_more_options = true;
             }
-            else if (auto found = std::find_if(options.begin(), options.end(), [arg=argv[arg_no]](const auto& aOption) { return !std::strcmp(arg, aOption.first); }); found != options.end()) {
+            else if (auto found = std::find_if(options.begin(), options.end(), [arg=argv[arg_no]](const auto& aOption) { return arg == aOption.option_; }); found != options.end()) {
                 options_used.push_back(found);
-                auto visitor = [&, name=found->first, this](auto&& arg) -> void {
+                auto visitor = [&, name=found->option_, this](auto&& arg) -> void {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, bool>)
                         mOptions.emplace_back(name, !arg);
@@ -35,10 +35,10 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                     }
                     else if constexpr (std::is_same_v<T, strings>) {
                         if ((arg_no + 1) < argc) {
-                            if (const auto found_opt = std::find_if(std::begin(mOptions), std::end(mOptions), [&name](const auto& opt) { return opt.first == name; }); found_opt == std::end(mOptions))
+                            if (const auto found_opt = std::find_if(std::begin(mOptions), std::end(mOptions), [&name](const auto& opt) { return opt.option_ == name; }); found_opt == std::end(mOptions))
                                 mOptions.emplace_back(name, option_default{strings{argv[++arg_no]}});
                             else
-                                std::get<T>(found_opt->second).push_back(argv[++arg_no]);
+                                std::get<T>(found_opt->default_).push_back(argv[++arg_no]);
                         }
                         else
                             throw option_requires_argument{name};
@@ -60,12 +60,12 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
                     else
                         static_assert(std::is_same_v<T, bool>, "non-exhaustive visitor in argc_argv::argc_argv!");
                 };
-                std::visit(visitor, found->second);
+                std::visit(visitor, found->default_);
             }
             else if (argv[arg_no][1] != '-' && split_single_dash) {
                 for (const char* item = &argv[arg_no][1]; *item; ++item) {
                     const std::string opt{'-', *item};
-                    if (auto found_opt = std::find_if(options.begin(), options.end(), [opt](const auto& aOption) { return aOption.first == opt; }); found_opt != options.end())
+                    if (auto found_opt = std::find_if(options.begin(), options.end(), [opt](const auto& aOption) { return aOption.option_ == opt; }); found_opt != options.end())
                         mOptions.emplace_back(opt, true);
                     else
                         throw unrecognized_option(opt);
@@ -81,7 +81,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
 
     for (auto opt_p = options.begin(); opt_p != options.end(); ++opt_p) {
         if (std::find(options_used.begin(), options_used.end(), opt_p) == options_used.end()) {
-            mOptions.emplace_back(opt_p->first, opt_p->second);
+            mOptions.push_back(*opt_p);
         }
     }
 
@@ -91,7 +91,7 @@ argc_argv::argc_argv(int argc, const char* const argv[], std::initializer_list<s
 
 const argc_argv::option& argc_argv::operator[](std::string aName) const
 {
-    const auto found = std::find_if(mOptions.begin(), mOptions.end(), [&aName](const auto& opt) { return opt.first == aName; });
+    const auto found = std::find_if(mOptions.begin(), mOptions.end(), [&aName](const auto& opt) { return opt.option_ == aName; });
     if (found != mOptions.end())
         return *found;
     else
@@ -124,7 +124,9 @@ std::string argc_argv::usage_options(size_t aIndent) const
     std::string result;
     const std::string indent(aIndent, ' ');
     for (const auto& opt: mOptions) {
-        result += indent + opt.first + std::visit(visitor, opt.second) + '\n';
+        result += indent + opt.option_ + std::visit(visitor, opt.default_) + '\n';
+        if (opt.description_)
+            result += indent + indent + opt.description_ + '\n';
     }
     return result;
 
