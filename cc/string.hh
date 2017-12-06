@@ -259,6 +259,13 @@ namespace string
 
 // ----------------------------------------------------------------------
 
+    template <typename S> inline std::string_view string_view(const S& aSrc, size_t aOffset)
+    {
+        return std::string_view(aSrc.data() + aOffset, aSrc.size() - aOffset);
+    }
+
+// ----------------------------------------------------------------------
+
 } // namespace string
 
 // ----------------------------------------------------------------------
