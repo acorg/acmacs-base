@@ -20,34 +20,27 @@ namespace acmacs
         // inline Vector& operator=(std::vector<double>&& src) { std::vector<double>::operator=(std::move(src)); return *this; }
 
           // Multiplies all vector elements by aAlpha
-        inline Vector& multiply_by(double aAlpha)
-            {
-                std::transform(this->begin(), this->end(), this->begin(), std::bind(std::multiplies<double>(), std::placeholders::_1, aAlpha));
-                return *this;
-            }
+          //inline Vector& multiply_by(double aAlpha) { std::transform(this->begin(), this->end(), this->begin(), std::bind(std::multiplies<double>(), std::placeholders::_1, aAlpha)); return *this; }
+        inline Vector& operator+=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value + aAlpha; }); return *this; }
+        inline Vector& operator-=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value - aAlpha; }); return *this; }
+        inline Vector& operator*=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value * aAlpha; }); return *this; }
+        inline Vector& operator/=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value / aAlpha; }); return *this; }
 
           // Add aValue to each vector element
-        inline Vector& add(double aValue)
-            {
-                std::transform(this->begin(), this->end(), this->begin(), std::bind(std::plus<double>(), std::placeholders::_1, aValue));
-                return *this;
-            }
+        inline Vector& add(double aValue) { std::transform(this->begin(), this->end(), this->begin(), std::bind(std::plus<double>(), std::placeholders::_1, aValue)); return *this; }
 
           // Adds corresponding elements of y from elements of this.
           // this = this + y
-        inline Vector& add(const Vector& y)
-            {
-                std::transform(this->begin(), this->end(), y.begin(), this->begin(), std::plus<double>());
-                return *this;
-            }
+        inline Vector& add(const Vector& y) { std::transform(this->begin(), this->end(), y.begin(), this->begin(), std::plus<double>()); return *this; }
+
+        inline Vector& operator+=(const Vector& y) { return add(y); }
 
           // Subtracts corresponding elements of y from elements of this (supports Vector and VectorView)
           // this' = this - y
-        inline Vector& subtract(const Vector& y)
-            {
-                std::transform(this->begin(), this->end(), y.begin(), this->begin(), std::minus<double>());
-                return *this;
-            }
+        inline Vector& subtract(const Vector& y) { std::transform(this->begin(), this->end(), y.begin(), this->begin(), std::minus<double>()); return *this; }
+
+        inline Vector& operator-=(const Vector& y) { return subtract(y); }
+        inline Vector& operator/=(const Vector& y) { std::transform(this->begin(), this->end(), y.begin(), this->begin(), std::divides<double>()); return *this; }
 
           // Sets all elemets of this to zero
         inline void zero()

@@ -59,8 +59,8 @@ namespace acmacs
         virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
           // returns boundary coordinates (min and max)
         virtual std::pair<Coordinates, Coordinates> boundaries() const;
-
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
+        virtual Coordinates centroid() const;
 
     }; // class LayoutInterface
 
@@ -80,6 +80,7 @@ namespace acmacs
      public:
         inline Layout() = default;
         inline Layout(size_t aNumberOfPoints) : std::vector<Coordinates>(aNumberOfPoints) {}
+        Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout bu subsetting source
 
         inline size_t number_of_points() const noexcept override { return size(); }
 

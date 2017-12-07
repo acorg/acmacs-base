@@ -59,6 +59,27 @@ acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transf
 } // acmacs::LayoutInterface::transform
 
 // ----------------------------------------------------------------------
+
+acmacs::Coordinates acmacs::LayoutInterface::centroid() const
+{
+    Coordinates result(number_of_dimensions(), 0.0);
+    for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
+        result += get(p_no);
+    result /= number_of_points();
+    return result;
+
+} // acmacs::LayoutInterface::centroid
+
+// ----------------------------------------------------------------------
+
+acmacs::Layout::Layout(const acmacs::LayoutInterface& aSource, const std::vector<size_t>& aIndexes)
+    : Layout(aIndexes.size())
+{
+    std::transform(aIndexes.begin(), aIndexes.end(), begin(), [&aSource](size_t index) { return aSource.get(index); });
+
+} // acmacs::Layout::Layout
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
