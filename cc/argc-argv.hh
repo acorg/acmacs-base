@@ -98,6 +98,9 @@ class argc_argv
         inline operator unsigned int() const { return static_cast<unsigned int>(get<long>()); }
         inline operator unsigned long() const { return static_cast<unsigned long>(get<long>()); }
 
+        inline std::string str() const { return get<string>(); }
+        inline std::string_view str_view() const { return get<string>(); }
+
     }; // class option
 
     argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
