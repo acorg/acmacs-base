@@ -63,9 +63,15 @@ acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transf
 acmacs::Coordinates acmacs::LayoutInterface::centroid() const
 {
     Coordinates result(number_of_dimensions(), 0.0);
-    for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
-        result += get(p_no);
-    result /= number_of_points();
+    size_t num_non_nan = number_of_points();
+    for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
+        const auto coord = get(p_no);
+        if (coord.not_nan())
+            result += coord;
+        else
+            --num_non_nan;
+    }
+    result /= num_non_nan;
     return result;
 
 } // acmacs::LayoutInterface::centroid
