@@ -150,39 +150,38 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
+    template <typename Index> class index_iterator
+    {
+     public:
+        using difference_type = long;
+        using value_type = Index;
+        using pointer = Index*;
+        using reference = Index&;
+        using iterator_category = std::random_access_iterator_tag;
+
+        inline index_iterator(value_type aValue) : value(aValue) {}
+        inline index_iterator& operator++() { ++value; return *this;}
+          //inline index_iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
+        inline bool operator==(const index_iterator<Index>& other) const { return value == other.value; }
+        inline bool operator!=(const index_iterator<Index>& other) const { return !(*this == other); }
+        inline value_type operator*() const { return value; }
+        inline difference_type operator-(const index_iterator<Index>& other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
+
+     private:
+        value_type value;
+
+    }; // class index_iterator<>
+
+    index_iterator(size_t) -> index_iterator<size_t>;
+    index_iterator(int) -> index_iterator<int>;
+
     template <typename Index> class incrementer
     {
      public:
-        class iterator
-        {
-         public:
-            using difference_type = long;
-            using value_type = Index;
-            using pointer = Index*;
-            using reference = Index&;
-            using iterator_category = std::random_access_iterator_tag;
-
-            inline iterator& operator++() { ++value; return *this;}
-            inline iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
-            inline bool operator==(iterator other) const { return value == other.value; }
-            inline bool operator!=(iterator other) const { return !(*this == other); }
-            inline value_type operator*() const { return value; }
-            inline difference_type operator-(iterator other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
-
-         private:
-            value_type value;
-            inline iterator(value_type aValue) : value(aValue) {}
-
-            friend class incrementer<Index>;
-        };
-
         inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd} {}
 
-        static inline iterator begin(Index aValue) { return aValue; }
-        static inline iterator end(Index aValue) { return aValue; }
-
-        inline iterator begin() { return mBegin; }
-        inline iterator end() { return mEnd; }
+        inline index_iterator<Index> begin() { return mBegin; }
+        inline index_iterator<Index> end() { return mEnd; }
 
      private:
         Index mBegin, mEnd;
@@ -197,21 +196,18 @@ namespace acmacs
     template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aBegin, Index aEnd)
     {
         aToFill.resize(aEnd - aBegin);
-          // std::copy(incrementer<Index>::begin(aBegin), incrementer<Index>::end(aEnd), aToFill.begin());
         std::iota(aToFill.begin(), aToFill.end(), aBegin);
     }
 
     template <typename Index> inline void fill_with_indexes(std::vector<Index>& aToFill, Index aSize)
     {
         aToFill.resize(aSize);
-          //std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), aToFill.begin());
         std::iota(aToFill.begin(), aToFill.end(), 0);
     }
 
     template <typename Index> inline std::vector<Index> filled_with_indexes(Index aSize)
     {
         std::vector<Index> result(aSize);
-          // std::copy(incrementer<Index>::begin(0), incrementer<Index>::end(aSize), result.begin());
         std::iota(result.begin(), result.end(), 0);
         return result;
     }
