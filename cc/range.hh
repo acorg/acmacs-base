@@ -178,7 +178,11 @@ namespace acmacs
     template <typename Index> class incrementer
     {
      public:
-        inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd} {}
+        inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
+            {
+                if (mEnd < mBegin)
+                    throw std::runtime_error("acmacs::incrementer: end < begin");
+            }
 
         inline index_iterator<Index> begin() { return mBegin; }
         inline index_iterator<Index> end() { return mEnd; }
