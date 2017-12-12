@@ -53,14 +53,16 @@ namespace acmacs
           // Returns maximum value for the elements of this.
         inline double max() const { return *std::max_element(begin(), end()); }
 
-          // Returns standard deviation for the elements of this (http://en.wikipedia.org/wiki/Standard_deviation)
-        inline double standard_deviation() const
+          // Returns {mean, standard deviation} for the elements of this (http://en.wikipedia.org/wiki/Standard_deviation)
+        inline std::pair<double, double> mean_and_standard_deviation() const
             {
                 const double m = mean();
                 const double sum_of_squares = std::inner_product(begin(), end(), begin(), 0.0, std::plus<double>(),
                                                                  [&m](double xx, double yy) { return (xx - m) * (yy - m); });
-                return std::sqrt(sum_of_squares / double(size()));
+                return {m, std::sqrt(sum_of_squares / double(size()))};
             }
+
+        inline double standard_deviation() const { return mean_and_standard_deviation().second; }
 
           // Returns distance between this and another vector
         inline double distance(const Vector& aNother) const
