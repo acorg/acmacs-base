@@ -29,6 +29,18 @@ namespace acmacs
         return {buffer, static_cast<size_t>(written)};
     }
 
+    template <typename Element> inline std::string to_string(const std::vector<Element>& src)
+    {
+        std::string result{'['};
+        for (const auto& elt: src) {
+            if (result.size() > 1)
+                result += ", ";
+            result += to_string(elt);
+        }
+        result += "]";
+        return result;
+    }
+
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
