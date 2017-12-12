@@ -7,7 +7,6 @@
 
 namespace acmacs
 {
-
     template <typename T> inline std::string to_string(T aSrc)
     {
         return std::to_string(aSrc);

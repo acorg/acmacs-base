@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "acmacs-base/config.hh"
+#include "acmacs-base/to-string.hh"
 
 #ifdef ACMACS_TARGET_BROWSER
 #error Not supported in cheerp client! include client/color.hh
@@ -94,6 +95,17 @@ constexpr const Color MAGENTA{0xFF00FF};
 constexpr const Color YELLOW{0xFFFF00};
 constexpr const Color GREY{0xBEBEBE};
 constexpr const Color GREY50{0x7F7F7F};
+
+// ----------------------------------------------------------------------
+
+namespace acmacs
+{
+    template <> inline std::string to_string(Color aColor)
+    {
+        return aColor.to_string();
+    }
+
+} // namespace acmacs
 
 // ----------------------------------------------------------------------
 /// Local Variables:

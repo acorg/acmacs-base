@@ -45,7 +45,6 @@ std::string Color::to_hex_string() const
 
 void Color::from_string(const std::string_view& aColor)
 {
-    using namespace std::string_literals;
     if (aColor.empty())
         THROW_OR_CERR(std::invalid_argument("cannot read Color from empty string"));
     if (aColor[0] == '#') {
@@ -59,7 +58,7 @@ void Color::from_string(const std::string_view& aColor)
               mColor = v;
               break;
           default:
-              THROW_OR_CERR(std::invalid_argument("cannot read Color from "s + aColor));
+              THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
         }
     }
     else {
@@ -67,7 +66,7 @@ void Color::from_string(const std::string_view& aColor)
         if (e != _internal::sNameToColor.end())
             mColor = e->second;
         else
-            THROW_OR_CERR(std::invalid_argument("cannot read Color from "s + aColor));
+            THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
     }
 
 } // Color::from_string
