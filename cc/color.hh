@@ -75,10 +75,11 @@ inline std::ostream& operator<<(std::ostream& out, Color c)
 
 // ----------------------------------------------------------------------
 
-inline std::string operator+(std::string s, Color c) { return s + c.to_string(); }
-inline std::string operator+(Color c, std::string s) { return c.to_string() + s; }
-inline std::string operator+(const char* s, Color c) { return s + c.to_string(); }
-inline std::string operator+(Color c, const char* s) { return c.to_string() + s; }
+// the functions below combined with Color imlicit constructor from string lead to incorrect conversion to Color from string-like values (e.g. Titer)
+// inline std::string operator+(std::string s, Color c) { return s + c.to_string(); }
+// inline std::string operator+(Color c, std::string s) { return c.to_string() + s; }
+// inline std::string operator+(const char* s, Color c) { return s + c.to_string(); }
+// inline std::string operator+(Color c, const char* s) { return c.to_string() + s; }
 
 // ----------------------------------------------------------------------
 
