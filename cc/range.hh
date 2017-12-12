@@ -175,13 +175,13 @@ namespace acmacs
     index_iterator(size_t) -> index_iterator<size_t>;
     index_iterator(int) -> index_iterator<int>;
 
-    template <typename Index> class incrementer
+    template <typename Index> class range
     {
      public:
-        inline incrementer(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
+        inline range(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
             {
                 if (mEnd < mBegin)
-                    throw std::runtime_error("acmacs::incrementer: end < begin");
+                    throw std::runtime_error("acmacs::range: end < begin");
             }
 
         inline index_iterator<Index> begin() { return mBegin; }
@@ -190,10 +190,10 @@ namespace acmacs
      private:
         Index mBegin, mEnd;
 
-    }; // class incrementer<>
+    }; // class range<>
 
-    incrementer(size_t, size_t) -> incrementer<size_t>;
-    incrementer(int, int) -> incrementer<int>;
+    range(size_t, size_t) -> range<size_t>;
+    range(int, int) -> range<int>;
 
 // ----------------------------------------------------------------------
 
