@@ -45,7 +45,7 @@ def backup_file(path :Path):
 def _backup_dir(path :Path):
     parent = path.resolve().parent
     if BACKUP_ROOT_PATH is not None:
-        if str(parent.parents[len(parent.parents) - 3]) == "/Users/eu":
+        if len(parent.parents) > 3 and str(parent.parents[len(parent.parents) - 3]) == "/Users/eu":
             backup_dir = BACKUP_ROOT_PATH.joinpath(*parent.parts[3:])
         else:
             backup_dir = BACKUP_ROOT_PATH.joinpath(*parent.parts[1:])
