@@ -30,7 +30,7 @@ class Timeit
         }
 
     inline void message_append(std::string to_append) { message += to_append; }
-    
+
  private:
     std::string message;
     std::ostream& out_stream;
