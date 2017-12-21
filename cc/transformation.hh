@@ -48,9 +48,10 @@ namespace acmacs
           // reflect about a line specified with vector [aX, aY]
         inline void flip(double aX, double aY)
             {
-                  // vector [aX, aY] must be first transformed using this
-                const double x = aX * a + aY * c;
-                const double y = aX * b + aY * d;
+                  // vector [aX, aY] must be first transformed using inversion of this
+                const auto inv = inverse();
+                const double x = aX * inv.a + aY * inv.c;
+                const double y = aX * inv.b + aY * inv.d;
                 flip_transformed(x, y);
             }
 
