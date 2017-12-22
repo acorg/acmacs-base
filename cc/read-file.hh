@@ -15,6 +15,8 @@ namespace acmacs::file
 
     inline bool exists(std::string aFilename) { return fs::exists(aFilename); }
 
+    std::string decompress_if_necessary(std::string_view aSource);
+
       // ----------------------------------------------------------------------
 
     class file_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
@@ -32,7 +34,7 @@ namespace acmacs::file
         read_access(read_access&&);
         read_access& operator=(const read_access&) = delete;
         read_access& operator=(read_access&&);
-        operator std::string() const;
+        inline operator std::string() const { return decompress_if_necessary({mapped, len}); }
         inline size_t size() const { return len; }
         inline const char* data() const { return mapped; }
         inline bool valid() const { return mapped != nullptr; }

@@ -76,16 +76,16 @@ acmacs::file::read_access& acmacs::file::read_access::operator=(read_access&& ot
 
 // ----------------------------------------------------------------------
 
-acmacs::file::read_access::operator std::string() const
+std::string acmacs::file::decompress_if_necessary(std::string_view aSource)
 {
-    if (xz_compressed(mapped))
-        return xz_decompress({mapped, len});
-    else if (bz2_compressed(mapped))
-        return bz2_decompress({mapped, len});
+    if (xz_compressed(aSource.data()))
+        return xz_decompress(aSource);
+    else if (bz2_compressed(aSource.data()))
+        return bz2_decompress(aSource);
     else
-        return {mapped, len};
+        return std::string(aSource);
 
-} // acmacs::file::read_access::operator std::string
+} // acmacs::file::decompress_if_necessary
 
 // ----------------------------------------------------------------------
 
@@ -104,9 +104,7 @@ std::string acmacs::file::read_from_file_descriptor(int fd, size_t chunk_size)
         }
         offset += static_cast<size_t>(bytes_read);
     }
-    if (xz_compressed(buffer.data()))
-        buffer = xz_decompress(buffer);
-    return buffer;
+    return decompress_if_necessary(std::string_view(buffer));
 
 } // acmacs::file::read_from_file_descriptor
 
