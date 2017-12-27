@@ -24,6 +24,7 @@ JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 
+PCH = $(DIST)/pch.$(shell uname).pch
 # ----------------------------------------------------------------------
 
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.g++
@@ -57,7 +58,7 @@ profile-rjson: $(DIST)/profile-rjson-load
 
 # ----------------------------------------------------------------------
 
-install-acmacs-base: $(TARGETS)
+install-acmacs-base: $(TARGETS) # $(PCH)
 	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	ln -sf $(abspath py/acmacs_base) $(AD_PY)
@@ -65,6 +66,7 @@ install-acmacs-base: $(TARGETS)
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
+	if [ -f $(PCH) ]; then ln -sf $(abspath $(PCH)) $(AD_INCLUDE)/acmacs-base; fi
 
 # ----------------------------------------------------------------------
 
@@ -72,6 +74,8 @@ install-acmacs-base: $(TARGETS)
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.rules
 RTAGS_TARGET = $(ACMACS_BASE_LIB)
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.rtags
+# python is for pch
+include $(ACMACSD_ROOT)/share/makefiles/Makefile.python
 
 # ----------------------------------------------------------------------
 
@@ -90,6 +94,13 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 # $(DIST)/test-argc-argv: $(patsubst %.cc,$(BUILD)/%.o,$(TEST_ARGV_SOURCES)) | $(DIST)
 #	@echo "LINK       " $@ # '<--' $^
 #	@$(CXX) $(LDFLAGS) -o $@ $^
+
+$(PCH): cc/pch.Darwin.hh
+	$(CXX) -x c++-header $(CXXFLAGS) $(PYTHON_INCLUDES) $^ -o $@
+
+$(DIST)/pch.Linux.pch:
+#cc/pch.Linux.hh
+
 
 $(DIST)/profile-rjson-load: cc/test-rjson-load.cc cc/rjson.cc cc/rjson-parser-pop.cc | $(DIST)
 	@printf "%-16s %s\n" "PROFILE" $@
