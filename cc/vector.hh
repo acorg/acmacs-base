@@ -6,6 +6,8 @@
 #include <functional>
 #include <algorithm>
 
+#include "acmacs-base/vector-math.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs
@@ -30,22 +32,22 @@ namespace acmacs
         inline Vector& operator*=(const Vector& y) { std::transform(begin(), end(), y.begin(), begin(), std::multiplies<double>()); return *this; }
         inline Vector& operator/=(const Vector& y) { std::transform(begin(), end(), y.begin(), begin(), std::divides<double>()); return *this; }
 
-          // Sets all elemets of this to zero
-        inline void zero() { std::fill(begin(), end(), 0.0); }
+        //   // Sets all elemets of this to zero
+        // inline void zero() { std::fill(begin(), end(), 0.0); }
 
-          // Computes the Euclidean norm ||x||_2 = \sqrt {\sum x_i^2} of this.
-        inline double eucledian_norm() const { return std::sqrt(std::inner_product(begin(), end(), begin(), 0.0)); }
+        //   // Computes the Euclidean norm ||x||_2 = \sqrt {\sum x_i^2} of this.
+        // see vector-math.hh inline double eucledian_norm() const { return std::sqrt(std::inner_product(begin(), end(), begin(), 0.0)); }
 
-          // Computes the scalar product x^T y for this and y.
-        inline double scalar_product(const Vector& y) const { return std::inner_product(begin(), end(), y.begin(), 0.0); }
+        //   // Computes the scalar product x^T y for this and y.
+        // see vector-math.hh inline double scalar_product(const Vector& y) const { return std::inner_product(begin(), end(), y.begin(), 0.0); }
 
-        inline double inner_product() const { return std::inner_product(begin(), end(), begin(), 0.0); }
+        // see vector-math.hh inline double inner_product() const { return std::inner_product(begin(), end(), begin(), 0.0); }
 
-          // Increments each element of y by aAlpha*this (y = alpha this + y). this unchanged.
-        inline void axpy(double aAlpha, Vector& y) const { std::transform(begin(), end(), y.begin(), y.begin(), [&aAlpha](double xx, double yy) { return aAlpha * xx + yy; }); }
+        //   // Increments each element of y by aAlpha*this (y = alpha this + y). this unchanged.
+        // see vector-math.hh inline void axpy(double aAlpha, Vector& y) const { std::transform(begin(), end(), y.begin(), y.begin(), [&aAlpha](double xx, double yy) { return aAlpha * xx + yy; }); }
 
           // Returns mean value for the elements of this.
-        inline double mean() const { return std::accumulate(begin(), end(), 0.0) / size(); }
+        inline double mean() const { return vector_math::mean<double>(begin(), end()); } //std::accumulate(begin(), end(), 0.0) / size(); }
 
           // Returns minimum value for the elements of this.
         inline double min() const { return *std::min_element(begin(), end()); }
@@ -56,23 +58,24 @@ namespace acmacs
           // Returns {mean, standard deviation} for the elements of this (http://en.wikipedia.org/wiki/Standard_deviation)
         inline std::pair<double, double> mean_and_standard_deviation() const
             {
-                const double m = mean();
-                const double sum_of_squares = std::inner_product(begin(), end(), begin(), 0.0, std::plus<double>(),
-                                                                 [&m](double xx, double yy) { return (xx - m) * (yy - m); });
-                return {m, std::sqrt(sum_of_squares / double(size()))};
+                return vector_math::mean_and_standard_deviation<double>(begin(), end());
+                // const double m = mean();
+                // const double sum_of_squares = std::inner_product(begin(), end(), begin(), 0.0, std::plus<double>(),
+                //                                                  [&m](double xx, double yy) { return (xx - m) * (yy - m); });
+                // return {m, std::sqrt(sum_of_squares / double(size()))};
             }
 
         inline double standard_deviation() const { return mean_and_standard_deviation().second; }
 
           // Returns distance between this and another vector
-        inline double distance(const Vector& aNother) const
-            {
-                double dist = 0;
-                auto square = [](double v) { return v * v; };
-                for (const_iterator a = begin(), b = aNother.begin(); a != end(); ++a, ++b)
-                    dist += square(*a - *b);
-                return std::sqrt(dist);
-            }
+        inline double distance(const Vector& aNother) const { return vector_math::distance<double>(begin(), end(), aNother.begin()); }
+            // {
+            //     double dist = 0;
+            //     auto square = [](double v) { return v * v; };
+            //     for (const_iterator a = begin(), b = aNother.begin(); a != end(); ++a, ++b)
+            //         dist += square(*a - *b);
+            //     return std::sqrt(dist);
+            // }
 
     }; // class Vector
 
