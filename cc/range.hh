@@ -183,6 +183,7 @@ namespace acmacs
                 if (mEnd < mBegin)
                     throw std::runtime_error("acmacs::range: end < begin");
             }
+        inline range(Index aEnd) : mBegin{0}, mEnd{aEnd} {}
 
         inline index_iterator<Index> begin() { return mBegin; }
         inline index_iterator<Index> end() { return mEnd; }
@@ -194,6 +195,8 @@ namespace acmacs
 
     range(size_t, size_t) -> range<size_t>;
     range(int, int) -> range<int>;
+    range(size_t) -> range<size_t>;
+    range(int) -> range<int>;
 
 // ----------------------------------------------------------------------
 
