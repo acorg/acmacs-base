@@ -12,8 +12,9 @@ namespace acmacs::vector_math
         auto square = [](Float v) { return v * v; };
         return std::sqrt(std::accumulate(first_1, last_1, Float{0}, [first_2,square](Float dist, Float to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
 
-        // double dist = 0;
-        // auto square = [](double v) { return v * v; };
+        // Float dist = 0;
+        // auto square = [](Float v) { return v * v; };
+        // // #pragma clang loop vectorize(enable) interleave(enable)
         // for (; first_1 != last_1; ++first_1, ++first_2)
         //     dist += square(*first_1 - *first_2);
         // return std::sqrt(dist);
