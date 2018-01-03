@@ -41,6 +41,22 @@ class Timeit
 inline report_time do_report_time(bool do_report) { return do_report ? report_time::Yes : report_time::No; }
 
 // ----------------------------------------------------------------------
+
+namespace acmacs
+{
+    using timestamp_t = decltype(std::chrono::steady_clock::now());
+    inline timestamp_t timestamp() { return std::chrono::steady_clock::now(); }
+    inline double elapsed(timestamp_t start)
+    {
+        const auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count();
+        const decltype(diff) sec = diff / std::nano::den;
+        const decltype(diff) nanosec = diff % std::nano::den;
+        return static_cast<double>(sec) + static_cast<double>(nanosec) / double{std::nano::den};
+    }
+
+} // namespace acmacs
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
