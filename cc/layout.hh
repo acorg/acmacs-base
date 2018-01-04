@@ -46,6 +46,8 @@ namespace acmacs
         inline const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
         Coordinates& operator[](size_t) = delete; // use set()!
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
+        virtual std::vector<double> as_flat_vector_double() const = 0;
+        virtual std::vector<float> as_flat_vector_float() const = 0;
         virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
 
         inline double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
