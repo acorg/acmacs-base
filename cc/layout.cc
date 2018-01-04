@@ -51,7 +51,7 @@ std::pair<acmacs::Coordinates, acmacs::Coordinates> acmacs::LayoutInterface::bou
 
 acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transformation& aTransformation) const
 {
-    auto* result = new acmacs::Layout(number_of_points());
+    auto* result = new acmacs::Layout(number_of_points(), number_of_dimensions());
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
         result->set(p_no, get(p_no).transform(aTransformation));
     return result;
@@ -78,10 +78,16 @@ acmacs::Coordinates acmacs::LayoutInterface::centroid() const
 
 // ----------------------------------------------------------------------
 
-acmacs::Layout::Layout(const acmacs::LayoutInterface& aSource, const std::vector<size_t>& aIndexes)
-    : Layout(aIndexes.size())
+acmacs::Layout::Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes)
+    : std::vector<double>(aIndexes.size() * aSource.number_of_dimensions(), std::numeric_limits<double>::quiet_NaN()),
+    number_of_dimensions_{aSource.number_of_dimensions()}
 {
-    std::transform(aIndexes.begin(), aIndexes.end(), begin(), [&aSource](size_t index) { return aSource.get(index); });
+    auto target = begin();
+    for (auto index : aIndexes) {
+        const auto coord{aSource[index]};
+        std::copy(coord.begin(), coord.end(), target);
+        target += static_cast<decltype(target)::difference_type>(number_of_dimensions_);
+    }
 
 } // acmacs::Layout::Layout
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "acmacs-base/vector.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/stream.hh"
@@ -77,27 +79,36 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-    class Layout : public virtual LayoutInterface, public std::vector<Coordinates>
+    class Layout : public virtual LayoutInterface, public std::vector<double>
     {
      public:
         inline Layout() = default;
-        inline Layout(size_t aNumberOfPoints) : std::vector<Coordinates>(aNumberOfPoints) {}
-        Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout bu subsetting source
+        inline Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
+            : std::vector<double>(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()),
+            number_of_dimensions_{aNumberOfDimensions}
+            {}
+        Layout(const LayoutInterface& aSource) : std::vector<double>(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
+        Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
 
-        inline size_t number_of_points() const noexcept override { return size(); }
+        inline size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
+        inline size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
 
-        inline size_t number_of_dimensions() const noexcept override
+        inline const Coordinates operator[](size_t aPointNo) const override
             {
-                for (const auto& point: *this) {
-                    if (!point.empty())
-                        return point.size();
-                }
-                return 0;
+                using diff_t = decltype(begin())::difference_type;
+                return {begin() + static_cast<diff_t>(aPointNo * number_of_dimensions_), begin() + static_cast<diff_t>((aPointNo + 1) * number_of_dimensions_)};
             }
 
-        inline const Coordinates operator[](size_t aPointNo) const override { return at(aPointNo); }
-        inline double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo).at(aDimensionNo); }
-        inline void set(size_t aPointNo, const Coordinates& aCoordinates) override { at(aPointNo) = aCoordinates; }
+        inline double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
+        inline std::vector<double> as_flat_vector_double() const override { return *this; }
+        inline std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
+        inline void set(size_t aPointNo, const Coordinates& aCoordinates) override
+            {
+                std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
+            }
+
+     private:
+        size_t number_of_dimensions_;
 
     }; // class Layout
 
