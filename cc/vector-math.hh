@@ -20,6 +20,53 @@ namespace acmacs::vector_math
         // return std::sqrt(dist);
     }
 
+    // template <typename Float, size_t NDim, typename Iterator = typename std::vector<Float>::const_iterator> struct distanceN
+    // {
+    //     static inline Float distance(Iterator first_1, Iterator first_2)
+    //         {
+    //             auto square = [](Float v) { return v * v; };
+    //             return std::sqrt(std::accumulate(first_1, first_1 + NDim, Float{0}, [first_2,square](Float dist, Float to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
+    //         }
+    // };
+
+    // template <typename Float, typename Iterator> struct distanceN<Float, 1, Iterator>
+    // {
+    //     static inline Float distance(Iterator first_1, Iterator first_2)
+    //         {
+    //             return std::abs(*first_1 - *first_2);
+    //         }
+    // };
+
+    // template <typename Float, typename Iterator> struct distanceN<Float, 2, Iterator>
+    // {
+    //     static inline Float distance(Iterator first_1, Iterator first_2)
+    //         {
+    //             return std::hypot(*first_1 - *first_2, *(first_1 + 1) - *(first_2 + 1));
+    //         }
+    // };
+
+    // template <typename Float, typename Iterator> struct distanceN<Float, 2, Iterator>
+    // {
+    //     static inline Float distance(Iterator first_1, Iterator first_2)
+    //         {
+    //             auto square = [](Float v) { return v * v; };
+    //             Float sum{0};
+    //             for (size_t i = 0; i < 2; ++i, ++first_1, ++first_2)
+    //                 sum += square(*first_1 - *first_2);
+    //             return std::sqrt(sum);
+    //         }
+    // };
+
+    // template <typename Float, typename Iterator> struct distanceN<Float, 3, Iterator>
+    // {
+    //     static inline Float distance(Iterator first_1, Iterator first_2)
+    //         {
+    //             return std::hypot(*first_1 - *first_2, *(first_1 + 1) - *(first_2 + 1), *(first_1 + 2) - *(first_2 + 2));
+    //         }
+    // };
+
+// ----------------------------------------------------------------------
+
     template <typename Float, typename Iterator> inline Float mean(Iterator first, Iterator last)
     {
         return std::accumulate(first, last, Float{0}) / (last - first);
