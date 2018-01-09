@@ -50,7 +50,6 @@ namespace acmacs
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
         virtual std::vector<double> as_flat_vector_double() const = 0;
         virtual std::vector<float> as_flat_vector_float() const = 0;
-        virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
 
         inline double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
         {
@@ -65,6 +64,9 @@ namespace acmacs
         virtual std::pair<Coordinates, Coordinates> boundaries() const;
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
+
+        virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
+        virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
 
     }; // class LayoutInterface
 
@@ -106,6 +108,8 @@ namespace acmacs
             {
                 std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
             }
+
+        virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no * number_of_dimensions() + dimension_no) = value; }
 
      private:
         size_t number_of_dimensions_;
