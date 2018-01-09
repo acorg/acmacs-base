@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cassert>
 #include <typeinfo>
+#include <optional>
 
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/float.hh"
@@ -196,12 +197,10 @@ namespace rjson
         template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
-        template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
+        template <typename T> std::optional<T> get(std::string aFieldName) const;
 
-        inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
-            {
-                return get_or_default<std::string>(aFieldName, aDefault);
-            }
+        template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
+        inline std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
 
         template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const;
         bool exists(std::string aFieldName) const;
@@ -389,6 +388,7 @@ namespace rjson
                 return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
             }
 
+        template <typename T> std::optional<T> get(std::string aFieldName) const;
         template <typename T> T get_or_default(std::string aFieldName, T&& aDefault) const;
 
         inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
@@ -600,25 +600,53 @@ namespace rjson
             throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
     }
 
-    template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
+    template <typename T> inline std::optional<T> object::get(std::string aFieldName) const
     {
-        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
+        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
         try {
-            return operator[](aFieldName);
+            const auto& val = operator[](aFieldName);
+            if constexpr (std::is_same_v<T, std::string>)
+                return std::get<string>(val).str();
+            else
+                return static_cast<T>(val);
         }
         catch (field_not_found&) {
-            return std::forward<T>(aDefault);
+            return {};
         }
         catch (std::bad_variant_access&) {
             const value& val = operator[](aFieldName);
-            return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
+            return std::visit([aFieldName](auto&& arg) -> T {
                 using AT = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<AT, rjson::null>)
-                    return std::forward<T>(aDefault);
+                    return {};
                 else
                     throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
             }, val);
         }
+    }
+
+    template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
+    {
+        static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
+        const auto val = get<std::decay_t<T>>(aFieldName);
+        return val ? *val : std::forward<T>(aDefault);
+
+        // try {
+        //     return operator[](aFieldName);
+        // }
+        // catch (field_not_found&) {
+        //     return std::forward<T>(aDefault);
+        // }
+        // catch (std::bad_variant_access&) {
+        //     const value& val = operator[](aFieldName);
+        //     return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
+        //         using AT = std::decay_t<decltype(arg)>;
+        //         if constexpr (std::is_same_v<AT, rjson::null>)
+        //             return std::forward<T>(aDefault);
+        //         else
+        //             throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
+        //     }, val);
+        // }
     }
 
     template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
@@ -801,6 +829,17 @@ namespace rjson
     template <typename Index> inline const value& value::operator[](Index aIndex) const
     {
         return std::visit([&](auto&& arg) -> const value& { return arg[aIndex]; }, *this);
+    }
+
+    template <typename T> inline std::optional<T> value::get(std::string aFieldName) const
+    {
+        try {
+            return static_cast<const rjson::object&>(*this).get<T>(aFieldName);
+        }
+        catch (std::bad_variant_access&) {
+            std::cerr << "value::get called for non-object, stored variant alternative: " << index() << '\n';
+            throw;
+        }
     }
 
     template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
