@@ -39,7 +39,8 @@ namespace acmacs
     class LayoutInterface
     {
      public:
-        inline LayoutInterface() = default;
+        LayoutInterface() = default;
+        LayoutInterface(const LayoutInterface&) = default;
         virtual ~LayoutInterface() = default;
 
         virtual size_t number_of_points() const noexcept = 0;
@@ -51,7 +52,7 @@ namespace acmacs
         virtual std::vector<double> as_flat_vector_double() const = 0;
         virtual std::vector<float> as_flat_vector_float() const = 0;
 
-        inline double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
+        double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
         {
             const auto c1 = operator[](p1);
             const auto c2 = operator[](p2);
@@ -84,27 +85,28 @@ namespace acmacs
     class Layout : public virtual LayoutInterface, public std::vector<double>
     {
      public:
-        inline Layout() = default;
-        inline Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
+        Layout() = default;
+        Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
             : std::vector<double>(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()),
             number_of_dimensions_{aNumberOfDimensions}
             {}
+        Layout(const Layout&) = default;
         Layout(const LayoutInterface& aSource) : std::vector<double>(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
         Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
 
-        inline size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
-        inline size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
+        size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
+        size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
 
-        inline const Coordinates operator[](size_t aPointNo) const override
+        const Coordinates operator[](size_t aPointNo) const override
             {
                 using diff_t = decltype(begin())::difference_type;
                 return {begin() + static_cast<diff_t>(aPointNo * number_of_dimensions_), begin() + static_cast<diff_t>((aPointNo + 1) * number_of_dimensions_)};
             }
 
-        inline double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
-        inline std::vector<double> as_flat_vector_double() const override { return *this; }
-        inline std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
-        inline void set(size_t aPointNo, const Coordinates& aCoordinates) override
+        double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
+        std::vector<double> as_flat_vector_double() const override { return *this; }
+        std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
+        void set(size_t aPointNo, const Coordinates& aCoordinates) override
             {
                 std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
             }
