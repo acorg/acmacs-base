@@ -42,6 +42,7 @@ namespace acmacs
         LayoutInterface() = default;
         LayoutInterface(const LayoutInterface&) = default;
         virtual ~LayoutInterface() = default;
+        LayoutInterface& operator=(const LayoutInterface&) = default;
 
         virtual size_t number_of_points() const noexcept = 0;
         virtual size_t number_of_dimensions() const noexcept = 0;
@@ -93,6 +94,7 @@ namespace acmacs
         Layout(const Layout&) = default;
         Layout(const LayoutInterface& aSource) : std::vector<double>(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
         Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
+        Layout& operator=(const Layout&) = default;
 
         size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
         size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
