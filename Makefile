@@ -12,7 +12,8 @@ TARGETS = \
     $(DIST)/test-rjson \
     $(DIST)/test-rjson-load \
     $(DIST)/test-argc-argv \
-    $(DIST)/test-string-split
+    $(DIST)/test-string-split \
+    $(DIST)/time-series-gen
 
 # ----------------------------------------------------------------------
 
@@ -25,6 +26,7 @@ TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
 TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 
 PCH = $(DIST)/pch.$(shell uname).pch
+
 # ----------------------------------------------------------------------
 
 include $(ACMACSD_ROOT)/share/makefiles/Makefile.g++
@@ -36,7 +38,7 @@ LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = $$(pkg-config --libs liblzma) -lbz2 $(FS_LIB) $(CXX_LIB) # -lprofiler
+ACMACS_BASE_LDLIBS = -L$(AD_LIB) -lboost_date_time $$(pkg-config --libs liblzma) -lbz2 $(FS_LIB) $(CXX_LIB) # -lprofiler
 
 # ----------------------------------------------------------------------
 
@@ -67,6 +69,7 @@ install-acmacs-base: $(TARGETS) # $(PCH)
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 	if [ -f $(PCH) ]; then ln -sf $(abspath $(PCH)) $(AD_INCLUDE)/acmacs-base; fi
+	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
 
 # ----------------------------------------------------------------------
 

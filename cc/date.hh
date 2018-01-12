@@ -27,7 +27,8 @@ class Date
     inline static Date years_ago(int number_of_years) { return Date(Today).decrement_month(number_of_years * 12); }
     inline static Date weeks_ago(int number_of_weeks) { return Date(Today).decrement_week(number_of_weeks); }
 
-    inline Date& operator =(std::string aText) { if (!aText.empty()) mDate = boost::gregorian::from_string(aText); return *this; }
+    inline Date& operator=(std::string aText) { if (!aText.empty()) mDate = boost::gregorian::from_string(aText); return *this; }
+    inline Date& operator=(const char* aText) { if (aText && *aText) mDate = boost::gregorian::from_string(aText); return *this; }
 
     inline bool operator < (const Date& d) const { return mDate < d.mDate; }
     inline bool operator == (const Date& d) const { return mDate == d.mDate; }
