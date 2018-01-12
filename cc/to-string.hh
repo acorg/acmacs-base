@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <string_view>
+#include <vector>
 #include <cstdio>
 
 // ----------------------------------------------------------------------
@@ -22,7 +24,7 @@ namespace acmacs
     {
         constexpr const size_t buffer_size = 100;
         char buffer[buffer_size + 1];
-        const int written = snprintf(buffer, buffer_size, "%.32g", value);
+        const int written = std::snprintf(buffer, buffer_size, "%.32g", value);
         if (written < 0 && static_cast<size_t>(written) >= buffer_size)
             throw std::runtime_error("acmacs::to_string(double) internal error");
         return {buffer, static_cast<size_t>(written)};
