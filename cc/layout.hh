@@ -15,13 +15,13 @@ namespace acmacs
      public:
         using Vector::Vector;
 
-        inline Coordinates transform(const Transformation& aTransformation) const
+        Coordinates transform(const Transformation& aTransformation) const
             {
                 const auto [x, y] = aTransformation.transform(operator[](0), operator[](1));
                 return {x, y};
             }
 
-        inline bool not_nan() const
+        bool not_nan() const
             {
                 return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return ! std::isnan(value); });
             }
@@ -47,7 +47,7 @@ namespace acmacs
         virtual size_t number_of_points() const noexcept = 0;
         virtual size_t number_of_dimensions() const noexcept = 0;
         virtual const Coordinates operator[](size_t aPointNo) const = 0;
-        inline const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
+        const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
         Coordinates& operator[](size_t) = delete; // use set()!
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
         virtual std::vector<double> as_flat_vector_double() const = 0;
@@ -98,6 +98,13 @@ namespace acmacs
 
         size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
         size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
+
+        void change_number_of_dimensions(size_t num_dim)
+            {
+                assert(num_dim <= number_of_dimensions_);
+                resize(number_of_points() * num_dim);
+                number_of_dimensions_ = num_dim;
+            }
 
         const Coordinates operator[](size_t aPointNo) const override
             {
