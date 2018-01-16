@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <cassert>
 
 #include "acmacs-base/vector.hh"
 #include "acmacs-base/transformation.hh"
@@ -101,7 +102,7 @@ namespace acmacs
 
         void change_number_of_dimensions(size_t num_dim)
             {
-                assert(num_dim <= number_of_dimensions_);
+                  // assert(num_dim <= number_of_dimensions_);
                 resize(number_of_points() * num_dim);
                 number_of_dimensions_ = num_dim;
             }
