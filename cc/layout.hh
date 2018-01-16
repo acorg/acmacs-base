@@ -102,7 +102,8 @@ namespace acmacs
 
         void change_number_of_dimensions(size_t num_dim)
             {
-                  // assert(num_dim <= number_of_dimensions_);
+                if (num_dim >= number_of_dimensions_)
+                    std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
                 resize(number_of_points() * num_dim);
                 number_of_dimensions_ = num_dim;
             }
