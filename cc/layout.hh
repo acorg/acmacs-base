@@ -100,10 +100,12 @@ namespace acmacs
         size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
         size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
 
-        void change_number_of_dimensions(size_t num_dim)
+        void change_number_of_dimensions(size_t num_dim, bool allow_dimensions_increase = false)
             {
-                if (num_dim >= number_of_dimensions_)
-                    std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
+                if (!allow_dimensions_increase && num_dim >= number_of_dimensions_) {
+                    throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + std::to_string(number_of_dimensions_) + " --> " + std::to_string(num_dim));
+                      // std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
+                }
                 resize(number_of_points() * num_dim);
                 number_of_dimensions_ = num_dim;
             }
