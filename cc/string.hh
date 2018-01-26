@@ -156,9 +156,9 @@ namespace string
             return r;
     }
 
-    inline int compare(std::string a, std::string b) { return compare(a.c_str(), a.size(), b.c_str(), b.size()); }
-    inline int compare(std::string a, const char* b) { return compare(a.c_str(), a.size(), b, std::strlen(b)); }
-    inline int compare(const char* a, std::string b) { return compare(a, std::strlen(a), b.c_str(), b.size()); }
+    inline int compare(const std::string& a, const std::string& b) { return compare(a.c_str(), a.size(), b.c_str(), b.size()); }
+    inline int compare(const std::string& a, const char* b) { return compare(a.c_str(), a.size(), b, std::strlen(b)); }
+    inline int compare(const char* a, const std::string& b) { return compare(a, std::strlen(a), b.c_str(), b.size()); }
 
     inline int compare(std::initializer_list<std::string> as, std::initializer_list<std::string> bs)
     {
