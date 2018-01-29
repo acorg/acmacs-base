@@ -51,6 +51,7 @@ namespace acmacs
         const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
         Coordinates& operator[](size_t) = delete; // use set()!
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
+        virtual bool point_has_coordinates(size_t point_no) const = 0;
         virtual std::vector<double> as_flat_vector_double() const = 0;
         virtual std::vector<float> as_flat_vector_float() const = 0;
 
@@ -117,6 +118,7 @@ namespace acmacs
             }
 
         double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
+        bool point_has_coordinates(size_t point_no) const override { return !std::isnan(coordinate(point_no, 0)); }
         std::vector<double> as_flat_vector_double() const override { return *this; }
         std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
         void set(size_t aPointNo, const Coordinates& aCoordinates) override
