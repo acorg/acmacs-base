@@ -11,7 +11,8 @@
 
 inline std::string name_encode(std::string aName)
 {
-    static constexpr const char to_encode[] = ":;@=?[]\\";
+      // static constexpr const char to_encode[] = ":;@=?[]\\";
+    static constexpr const char to_encode[] = "% :()!*';@&=+$,?#[]"; // the same as in ../py/acmacs_base/encode_name.py
     std::string result(aName.size() * 3, ' ');
     std::string::size_type output_pos = 0;
     for (const char src: aName) {
