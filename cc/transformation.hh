@@ -87,7 +87,19 @@ namespace acmacs
                     throw singular{};
                 return {d / deter, - b / deter, -c / deter, a / deter};
             }
-    };
+    }; // class Transformation
+
+// ----------------------------------------------------------------------
+
+    class TransformationTranslation : public Transformation
+    {
+     public:
+        inline TransformationTranslation() = default;
+        inline TransformationTranslation(const TransformationTranslation&) = default;
+
+        double tx = 0, ty = 0;
+
+    }; // class TransformationTranslation
 
 } // namespace acmacs
 
