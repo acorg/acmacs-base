@@ -20,16 +20,16 @@ namespace acmacs
          public:
             constexpr static const T End{std::numeric_limits<T>::max()};
 
-            inline input_iterator() : current(End) {}
-            inline input_iterator(T aFirst, const Increment& aIncrement) : current(aFirst), increment(aIncrement) { increment.find_valid(current); }
-            inline input_iterator(T aFirst, Increment&& aIncrement) : current(aFirst), increment(std::move(aIncrement)) { increment.find_valid(current); }
+            input_iterator() : current(End) {}
+            input_iterator(T aFirst, const Increment& aIncrement) : current(aFirst), increment(aIncrement) { increment.find_valid(current); }
+            input_iterator(T aFirst, Increment&& aIncrement) : current(aFirst), increment(std::move(aIncrement)) { increment.find_valid(current); }
 
-            inline input_iterator& operator++() { increment(current); return *this;}
-              // inline input_iterator operator++(int) { input_iterator result = *this; ++(*this); return result; }
-            inline bool operator==(const input_iterator& other) const { return current == other.current; }
-            inline bool operator!=(const input_iterator& other) const { return !(*this == other); }
-            inline const T& operator*() const { return current; }
-            inline T& operator*() { return current; }
+            input_iterator& operator++() { increment(current); return *this;}
+              // input_iterator operator++(int) { input_iterator result = *this; ++(*this); return result; }
+            bool operator==(const input_iterator& other) const { return current == other.current; }
+            bool operator!=(const input_iterator& other) const { return !(*this == other); }
+            const T& operator*() const { return current; }
+            T& operator*() { return current; }
 
          private:
             T current;
@@ -47,9 +47,9 @@ namespace acmacs
 //     class increment
 //     {
 //      public:
-//         inline increment() {}
-//         inline increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
-//         inline void operator()(T& current)
+//         increment() {}
+//         increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
+//         void operator()(T& current)
 //             {
 //                 if (current != internal::input_iterator<T, increment>::End) {
 //                     current += step;
@@ -64,7 +64,7 @@ namespace acmacs
 //                 }
 //             }
 
-//         inline void find_valid(T&) {}
+//         void find_valid(T&) {}
 
 //      private:
 //         T step;
@@ -74,8 +74,8 @@ namespace acmacs
 //     class iterator : public internal::input_iterator<T, increment>
 //     {
 //      public:
-//         inline iterator() : internal::input_iterator<T, increment>() {}
-//         inline iterator(T aFirst, T aLast, T aStep) : internal::input_iterator<T, increment>(aFirst, {aStep, aLast}) {}
+//         iterator() : internal::input_iterator<T, increment>() {}
+//         iterator(T aFirst, T aLast, T aStep) : internal::input_iterator<T, increment>(aFirst, {aStep, aLast}) {}
 //     };
 
 //  public:
@@ -107,12 +107,12 @@ namespace acmacs
         class increment
         {
          public:
-            inline increment() {}
-            inline increment(size_t aLast, Validator aValidator) : last(aLast), valid(aValidator) {}
-            inline bool end(size_t current) const { return current == internal::input_iterator<size_t, increment>::End; }
-            inline size_t end() const { return internal::input_iterator<size_t, increment>::End; }
+            increment() {}
+            increment(size_t aLast, Validator aValidator) : last(aLast), valid(aValidator) {}
+            bool end(size_t current) const { return current == internal::input_iterator<size_t, increment>::End; }
+            size_t end() const { return internal::input_iterator<size_t, increment>::End; }
 
-            inline void operator()(size_t& current)
+            void operator()(size_t& current)
                 {
                     if (!end(current)) {
                         ++current;
@@ -123,7 +123,7 @@ namespace acmacs
                     }
                 }
 
-            inline void find_valid(size_t& current)
+            void find_valid(size_t& current)
                 {
                     while (!end(current) && !valid(current))
                         operator()(current);
@@ -134,13 +134,13 @@ namespace acmacs
         };
 
      public:
-        inline IndexGenerator(size_t aFirst, size_t aLast, Validator aValidator) : mFirst(aFirst), mIncrement(aLast, aValidator) {}
-        inline IndexGenerator(size_t aLast, Validator aValidator) : mFirst(0), mIncrement(aLast, aValidator) {}
+        IndexGenerator(size_t aFirst, size_t aLast, Validator aValidator) : mFirst(aFirst), mIncrement(aLast, aValidator) {}
+        IndexGenerator(size_t aLast, Validator aValidator) : mFirst(0), mIncrement(aLast, aValidator) {}
 
         using iterator = internal::input_iterator<size_t, IndexGenerator::increment>;
 
-        inline iterator begin() const { return {mFirst, mIncrement}; }
-        inline iterator end() const { return {}; }
+        iterator begin() const { return {mFirst, mIncrement}; }
+        iterator end() const { return {}; }
 
      private:
         size_t mFirst;
@@ -159,13 +159,13 @@ namespace acmacs
         using reference = Index&;
         using iterator_category = std::random_access_iterator_tag;
 
-        inline index_iterator(value_type aValue) : value(aValue) {}
-        inline index_iterator& operator++() { ++value; return *this;}
-          //inline index_iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
-        inline bool operator==(const index_iterator<Index>& other) const { return value == other.value; }
-        inline bool operator!=(const index_iterator<Index>& other) const { return !(*this == other); }
-        inline value_type operator*() const { return value; }
-        inline difference_type operator-(const index_iterator<Index>& other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
+        index_iterator(value_type aValue) : value(aValue) {}
+        index_iterator& operator++() { ++value; return *this;}
+          //index_iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
+        bool operator==(const index_iterator<Index>& other) const { return value == other.value; }
+        bool operator!=(const index_iterator<Index>& other) const { return !(*this == other); }
+        value_type operator*() const { return value; }
+        difference_type operator-(const index_iterator<Index>& other) const { return static_cast<difference_type>(value) - static_cast<difference_type>(other.value); }
 
      private:
         value_type value;
@@ -174,19 +174,20 @@ namespace acmacs
 
     index_iterator(size_t) -> index_iterator<size_t>;
     index_iterator(int) -> index_iterator<int>;
+    index_iterator(long) -> index_iterator<long>;
 
     template <typename Index> class range
     {
      public:
-        inline range(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
+        range(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
             {
                 if (mEnd < mBegin)
                     throw std::runtime_error("acmacs::range: end < begin");
             }
-        inline range(Index aEnd) : mBegin{0}, mEnd{aEnd} {}
+        range(Index aEnd) : mBegin{0}, mEnd{aEnd} {}
 
-        inline index_iterator<Index> begin() { return mBegin; }
-        inline index_iterator<Index> end() { return mEnd; }
+        index_iterator<Index> begin() { return mBegin; }
+        index_iterator<Index> end() { return mEnd; }
 
      private:
         Index mBegin, mEnd;
