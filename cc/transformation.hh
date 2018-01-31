@@ -105,8 +105,8 @@ namespace acmacs
 
         TransformationTranslation(const TransformationTranslation&) = default;
 
-        double& operator()(size_t row, size_t column) { return operator[](row * (number_of_dimensions_ + 1) + column); }
-        double operator()(size_t row, size_t column) const { return operator[](row * (number_of_dimensions_ + 1) + column); }
+        template <typename S> double& operator()(S row, S column) { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
+        template <typename S> double operator()(S row, S column) const { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
 
      private:
         size_t number_of_dimensions_;
