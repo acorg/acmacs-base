@@ -19,7 +19,7 @@ namespace acmacs
     inline duration_t elapsed(timestamp_t start) { return std::chrono::duration_cast<duration_t>(timestamp() - start); }
 
     std::string format(duration_t duration);
-    template <> inline std::string to_string(duration_t duration) { return format(duration); }
+    inline std::string to_string(duration_t duration) { return format(duration); }
 
     inline double elapsed_seconds(timestamp_t start) { return std::chrono::duration<double>{timestamp() - start}.count(); }
 

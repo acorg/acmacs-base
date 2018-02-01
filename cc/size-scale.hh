@@ -68,10 +68,10 @@ inline std::ostream& operator<<(std::ostream& out, Rotation aRotation) { if (aRo
 
 namespace acmacs
 {
-    template <> inline std::string to_string(Aspect aAspect) { return aAspect == AspectNormal ? std::string{"1.0"} : to_string(aAspect.value()); }
-    template <> inline std::string to_string(Rotation aRotation) { return aRotation == NoRotation ? std::string{"0.0"} : to_string(aRotation.value()); }
-    template <> inline std::string to_string(Pixels aPixels) { return to_string(aPixels.value()); }
-    template <> inline std::string to_string(Scaled aScaled) { return to_string(aScaled.value()); }
+    inline std::string to_string(Aspect aAspect) { return aAspect == AspectNormal ? std::string{"1.0"} : to_string(aAspect.value()); }
+    inline std::string to_string(Rotation aRotation) { return aRotation == NoRotation ? std::string{"0.0"} : to_string(aRotation.value()); }
+    inline std::string to_string(Pixels aPixels) { return to_string(aPixels.value()); }
+    inline std::string to_string(Scaled aScaled) { return to_string(aScaled.value()); }
 
 } // namespace acmacs
 

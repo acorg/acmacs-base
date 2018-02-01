@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "acmacs-base/float.hh"
+#include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -91,6 +92,13 @@ namespace acmacs
             }
     }; // class Transformation
 
+    inline std::string to_string(const Transformation& t)
+    {
+        return "[[" + to_string(t.a) + ", " + to_string(t.b) + "], [" + to_string(t.c) + ", " + to_string(t.d) + "]]";
+    }
+
+    inline std::ostream& operator << (std::ostream& out, const Transformation& t) { return out << to_string(t); }
+
 // ----------------------------------------------------------------------
 
       // Nx(N+1) matrix handling transformation in N-dimensional space. The last column is for translation
@@ -104,6 +112,7 @@ namespace acmacs
             }
 
         TransformationTranslation(const TransformationTranslation&) = default;
+        size_t number_of_dimensions() const { return number_of_dimensions_; }
 
         template <typename S> double& operator()(S row, S column) { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
         template <typename S> double operator()(S row, S column) const { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
@@ -113,14 +122,27 @@ namespace acmacs
 
     }; // class TransformationTranslation
 
+    inline std::string to_string(const TransformationTranslation& t)
+    {
+        std::string result{'['};
+        auto p = t.cbegin();
+        for (size_t row = 0; row < t.number_of_dimensions(); ++row) {
+            result += '[';
+            for (size_t col = 0; col < (t.number_of_dimensions() + 1); ++col) {
+                result += to_string(*p);
+                if (col < t.number_of_dimensions())
+                    result += ',';
+                ++p;
+            }
+            result += "],";
+        }
+        result.back() = ']';
+        return result;
+    }
+
+    inline std::ostream& operator << (std::ostream& out, const TransformationTranslation& t) { return out << to_string(t); }
+
 } // namespace acmacs
-
-// ----------------------------------------------------------------------
-
-inline std::ostream& operator << (std::ostream& out, const acmacs::Transformation& t)
-{
-    return out << "[[" << t.a << ", " << t.b << "], [" << t.c << ", " << t.d << "]]";
-}
 
 // ----------------------------------------------------------------------
 /// Local Variables:

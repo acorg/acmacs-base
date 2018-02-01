@@ -21,6 +21,8 @@ class Date
     inline Date() : mDate() {}
     inline Date(enum Today) : mDate(boost::gregorian::day_clock::local_day()) {}
     inline Date(std::string aText) : mDate(boost::gregorian::from_string(aText)) {}
+    inline Date(std::string_view aText) : mDate(boost::gregorian::from_string(std::string(aText))) {}
+    inline Date(const char* aText) : mDate(boost::gregorian::from_string(std::string(aText))) {}
     inline Date(boost::gregorian::date aBoostDate) : mDate(aBoostDate) {}
     inline static Date today() { return Today; }
     inline static Date months_ago(int number_of_months) { return Date(Today).decrement_month(number_of_months); }

@@ -19,8 +19,8 @@
 
 namespace rjson
 {
-    class field_not_found : public std::runtime_error { public: inline field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
-    class field_type_mismatch : public std::runtime_error { public: inline field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
+    class field_not_found : public std::runtime_error { public: field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
+    class field_type_mismatch : public std::runtime_error { public: field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
 
     class value;
     class array;
@@ -38,61 +38,65 @@ namespace rjson
     class string
     {
      public:
-        inline string() = default;
-        inline string(std::string aData) : mData{aData} {}
-        inline string(const char* aData) : mData{aData} {}
-        inline string(const string&) = default;
-        inline string& operator=(const string&) = default;
-        inline string(string&&) = default;
-        inline string& operator=(string&&) = default;
-        inline std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
-        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        inline operator std::string() const { return mData; }
-        inline const std::string& str() const { return mData; }
-        inline operator std::string_view() const { return mData; }
-        inline string& operator=(std::string aSrc) { mData = aSrc; return *this; }
-        inline bool operator==(const std::string& aToCompare) const { return mData == aToCompare; }
-        inline bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const std::string_view& aToCompare) const { return mData == aToCompare; }
-        inline bool operator!=(const std::string_view& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
-        inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const char* aToCompare) const { return mData == aToCompare; }
-        inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
-        inline size_t size() const { return mData.size(); }
-        inline bool empty() const { return mData.empty(); }
-        inline char front() const { return mData.front(); }
-        inline char back() const { return mData.back(); }
-        inline bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
-        inline void update(const string& to_merge) { mData = to_merge.mData; }
-        constexpr inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found();}
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        string() = default;
+        string(std::string aData) : mData{aData} {}
+        string(const char* aData) : mData{aData} {}
+        string(const string&) = default;
+        string& operator=(const string&) = default;
+        string(string&&) = default;
+        string& operator=(string&&) = default;
+        std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
+        std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+          // explicit operator std::string() const { return mData; }
+        // const std::string& str() const { return mData; }
+        operator std::string_view() const { return mData; }
+        std::string_view strv() const { return mData; }
+        std::string str() const { return mData; }
+        string& operator=(std::string aSrc) { mData = aSrc; return *this; }
+        bool operator==(const std::string& aToCompare) const { return mData == aToCompare; }
+        bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(std::string_view aToCompare) const { return mData == aToCompare; }
+        bool operator!=(std::string_view aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
+        bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(const char* aToCompare) const { return mData == aToCompare; }
+        bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
+        size_t size() const { return mData.size(); }
+        bool empty() const { return mData.empty(); }
+        char front() const { return mData.front(); }
+        char back() const { return mData.back(); }
+        bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
+        void update(const string& to_merge) { mData = to_merge.mData; }
+        constexpr void remove_comments() {}
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found();}
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         std::string mData;
 
-        inline bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
+        bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
 
         friend class object;
 
     }; // class string
 
+    inline std::string operator+(std::string left, const string& right) { return left + right.str(); }
+
     class boolean
     {
      public:
-        inline boolean() : mValue{false} {}
-        inline boolean(bool aValue) : mValue{aValue} {}
-        inline std::string to_json() const { return mValue ? "true" : "false"; }
-        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        constexpr inline operator bool() const { return mValue; }
-        inline boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
-        inline void update(const boolean& to_merge) { mValue = to_merge.mValue; }
-        constexpr inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        boolean() : mValue{false} {}
+        boolean(bool aValue) : mValue{aValue} {}
+        std::string to_json() const { return mValue ? "true" : "false"; }
+        std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+        constexpr operator bool() const { return mValue; }
+        boolean& operator=(bool aSrc) { mValue = aSrc; return *this; }
+        void update(const boolean& to_merge) { mValue = to_merge.mValue; }
+        constexpr void remove_comments() {}
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         bool mValue;
@@ -102,32 +106,32 @@ namespace rjson
     class null
     {
      public:
-        inline null() {}
-        inline void update(const null&) {}
-        inline std::string to_json() const { return "null"; }
-        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        constexpr inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        null() {}
+        void update(const null&) {}
+        std::string to_json() const { return "null"; }
+        std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+        constexpr void remove_comments() {}
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
     }; // class null
 
     class number
     {
      public:
-        inline number() : mValue{"0.0"} {}
-        inline number(double aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        inline number(std::string_view&& aData) : mValue{aData} {} // for parser
-        inline number& operator=(double aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
-        inline std::string to_json() const { return mValue; }
-        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        inline operator double() const { return std::stod(mValue); }
-        inline void update(const number& to_merge) { mValue = to_merge.mValue; }
-        constexpr inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        number() : mValue{"0.0"} {}
+        number(double aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        number(std::string_view aData) : mValue{aData} {} // for parser
+        number& operator=(double aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        std::string to_json() const { return mValue; }
+        std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+        operator double() const { return std::stod(mValue); }
+        void update(const number& to_merge) { mValue = to_merge.mValue; }
+        constexpr void remove_comments() {}
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
           // double mValue;
@@ -138,29 +142,29 @@ namespace rjson
     class integer
     {
      public:
-        inline integer() : mValue{"0"} {}
-        inline integer(int aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        inline integer(unsigned int aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        inline integer(long aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        inline integer(unsigned long aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        inline integer(std::string_view&& aData) : mValue{aData} {} // for parser
-        inline integer& operator=(int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
-        inline integer& operator=(unsigned int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
-        inline integer& operator=(long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
-        inline integer& operator=(unsigned long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
-        inline std::string to_json() const { return mValue; }
-        inline std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-        inline operator double() const { return std::stod(mValue); }
-        inline operator long() const { return std::stol(mValue); }
-        inline operator unsigned long() const { return std::stoul(mValue); }
-        inline operator int() const { return static_cast<int>(std::stol(mValue)); }
-        inline operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
-        inline operator bool() const { return static_cast<int>(*this); } // using integer as bool
-        inline void update(const integer& to_merge) { mValue = to_merge.mValue; }
-        constexpr inline void remove_comments() {}
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        integer() : mValue{"0"} {}
+        integer(int aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        integer(unsigned int aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        integer(long aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        integer(unsigned long aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        integer(std::string_view aData) : mValue{aData} {} // for parser
+        integer& operator=(int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        integer& operator=(unsigned int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        integer& operator=(long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        integer& operator=(unsigned long aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        std::string to_json() const { return mValue; }
+        std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
+        operator double() const { return std::stod(mValue); }
+        operator long() const { return std::stol(mValue); }
+        operator unsigned long() const { return std::stoul(mValue); }
+        operator int() const { return static_cast<int>(std::stol(mValue)); }
+        operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
+        operator bool() const { return static_cast<int>(*this); } // using integer as bool
+        void update(const integer& to_merge) { mValue = to_merge.mValue; }
+        constexpr void remove_comments() {}
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
      private:
         std::string mValue;
@@ -170,13 +174,13 @@ namespace rjson
     class object
     {
      public:
-        inline object() = default;
-        inline object(std::initializer_list<std::pair<string, value>> key_values);
-        // inline ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
-        inline object(const object&) = default; // required if explicit destructor provided
-        inline object& operator=(const object&) = default; // required if explicit destructor provided
-        inline object(object&&) = default;
-        inline object& operator=(object&&) = default;
+        object() = default;
+        object(std::initializer_list<std::pair<string, value>> key_values);
+        // ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
+        object(const object&) = default; // required if explicit destructor provided
+        object& operator=(const object&) = default; // required if explicit destructor provided
+        object(object&&) = default;
+        object& operator=(object&&) = default;
 
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
@@ -184,23 +188,23 @@ namespace rjson
         void insert(const string& aKey, value&& aValue);
         void insert(const string& aKey, const value& aValue);
         void insert(value&& aKey, value&& aValue);
-        inline size_t size() const { return mContent.size(); }
-        inline bool empty() const { return mContent.empty(); }
+        size_t size() const { return mContent.size(); }
+        bool empty() const { return mContent.empty(); }
 
           // if field is not in the object, throws field_not_found
         const value& operator[](std::string aFieldName) const;
         value& operator[](std::string aFieldName);
-        inline value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
-        inline value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
-        inline const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
+        value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
+        value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
+        const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
         template <typename T> std::optional<T> get(std::string aFieldName) const;
 
         template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
-        inline std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
+        std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
 
         template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const;
         bool exists(std::string aFieldName) const;
@@ -216,17 +220,17 @@ namespace rjson
         template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
         void set_field_if_not_default(std::string aKey, double aValue, double aDefault);
         template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
-        template <typename Container> inline void set_array_field_if_not_empty(std::string aKey, const Container& aContainer) { set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer)); }
+        template <typename Container> void set_array_field_if_not_empty(std::string aKey, const Container& aContainer) { set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer)); }
 
         void delete_field(string aKey); // throws field_not_found
-        inline void clear() { mContent.clear(); }
+        void clear() { mContent.clear(); }
 
         using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
-        inline const_iterator begin() const { return mContent.begin(); }
-        inline const_iterator end() const { return mContent.end(); }
+        const_iterator begin() const { return mContent.begin(); }
+        const_iterator end() const { return mContent.end(); }
         using iterator = decltype(std::declval<std::map<string, value>>().begin());
-        inline iterator begin() { return mContent.begin(); }
-        inline iterator end() { return mContent.end(); }
+        iterator begin() { return mContent.begin(); }
+        iterator end() { return mContent.end(); }
 
         void update(const object& to_merge);
         void remove_comments();
@@ -243,41 +247,41 @@ namespace rjson
     {
      public:
         enum _use_iterator { use_iterator };
-        inline array() = default;
-        inline array(array&&) = default;
-        inline array(const array&) = default;
+        array() = default;
+        array(array&&) = default;
+        array(const array&) = default;
         template <typename Iterator> array(_use_iterator, Iterator first, Iterator last);
         template <typename ... Args> array(Args ... args);
-        inline array& operator=(array&&) = default;
-        inline array& operator=(const array&) = default;
-        inline value& operator[](size_t index) { try { return mContent.at(index); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
-        inline value& operator[](int index) { try { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
-        template <typename Index> [[noreturn]] inline const value& operator[](Index) const { throw field_not_found(); }
-        template <typename Index> [[noreturn]] inline value& operator[](Index) { throw field_not_found(); }
-        template <typename T> [[noreturn]] inline value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        array& operator=(array&&) = default;
+        array& operator=(const array&) = default;
+        value& operator[](size_t index) { try { return mContent.at(index); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
+        value& operator[](int index) { try { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); } catch (std::out_of_range&) { throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size())); } }
+        template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
+        template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
+        template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
 
-        inline void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
+        void update(const array& to_merge) { mContent = to_merge.mContent; } // replace content!
         void remove_comments();
         std::string to_json(bool space_after_comma = false) const;
         std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
         value& insert(value&& aValue); // returns ref to inserted
         value& insert(const value& aValue); // returns ref to inserted
-        inline size_t size() const { return mContent.size(); }
-        inline bool empty() const { return mContent.empty(); }
-        inline const value& operator[](size_t index) const { return mContent.at(index); }
-        inline const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
-        inline void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
-        inline void erase(int index) { mContent.erase(mContent.begin() + index); }
-        inline void clear() { mContent.clear(); }
+        size_t size() const { return mContent.size(); }
+        bool empty() const { return mContent.empty(); }
+        const value& operator[](size_t index) const { return mContent.at(index); }
+        const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
+        void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
+        void erase(int index) { mContent.erase(mContent.begin() + index); }
+        void clear() { mContent.clear(); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
         using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
-        inline iterator begin() const { return mContent.begin(); }
-        inline iterator end() const { return mContent.end(); }
-        inline iterator begin() { return mContent.begin(); }
-        inline iterator end() { return mContent.end(); }
-        inline reverse_iterator rbegin() const { return mContent.rbegin(); }
+        iterator begin() const { return mContent.begin(); }
+        iterator end() const { return mContent.end(); }
+        iterator begin() { return mContent.begin(); }
+        iterator end() { return mContent.end(); }
+        reverse_iterator rbegin() const { return mContent.rbegin(); }
 
      private:
         std::vector<value> mContent;
@@ -316,25 +320,27 @@ namespace rjson
      public:
         using value_base::operator=;
         using value_base::value_base;
-        inline value(const value&) = default; // otherwise it is deleted
-          //inline value(const value& aSrc) : value_base(aSrc) { std::cerr << "rjson::value copy " << aSrc.to_json() << '\n'; }
-        inline value(value&&) = default;
-          // inline value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
-        inline value& operator=(const value&) = default; // otherwise it is deleted
-        inline value& operator=(value&&) = default;
-          // inline ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
+        value(const value&) = default; // otherwise it is deleted
+          //value(const value& aSrc) : value_base(aSrc) { std::cerr << "rjson::value copy " << aSrc.to_json() << '\n'; }
+        value(value&&) = default;
+          // value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
+        value& operator=(const value&) = default; // otherwise it is deleted
+        value& operator=(value&&) = default;
+          // ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
 
           // ----------------------------------------------------------------------
 
-        inline operator unsigned long() const { return std::get<integer>(*this); }
-        inline operator long() const { return std::get<integer>(*this); }
-        inline operator unsigned int() const { return std::get<integer>(*this); }
-        inline operator int() const { return std::get<integer>(*this); }
-        inline operator std::string() const { return std::get<string>(*this); }
-        inline const std::string& str() const { return std::get<string>(*this).str(); }
-        inline operator std::string_view() const { return std::get<string>(*this); }
+        operator unsigned long() const { return std::get<integer>(*this); }
+        operator long() const { return std::get<integer>(*this); }
+        operator unsigned int() const { return std::get<integer>(*this); }
+        operator int() const { return std::get<integer>(*this); }
+        // operator std::string() const { return std::get<string>(*this); }
+        // const std::string& str() const { return std::get<string>(*this).str(); }
+        operator std::string_view() const { return std::get<string>(*this); }
+        std::string_view strv() const { return std::get<string>(*this).strv(); }
+        std::string str() const { return std::get<string>(*this).str(); }
 
-        inline operator double() const
+        operator double() const
             {
                 if (auto ptr_n = std::get_if<number>(this))
                     return *ptr_n;
@@ -346,7 +352,7 @@ namespace rjson
                 }
             }
 
-        inline operator bool() const
+        operator bool() const
             {
                 if (auto ptr_n = std::get_if<boolean>(this))
                     return *ptr_n;
@@ -358,32 +364,32 @@ namespace rjson
                 }
             }
 
-        inline operator const null&() const { return std::get<null>(*this); }
-        inline operator const boolean&() const { return std::get<boolean>(*this); }
-        inline operator const string&() const { return std::get<string>(*this); }
-        inline operator const integer&() const { return std::get<integer>(*this); }
-        inline operator const number&() const { return std::get<number>(*this); }
-        inline operator const object&() const { return std::get<object>(*this); }
-        inline operator const array&() const { return std::get<array>(*this); }
-        inline operator object&() { return std::get<object>(*this); }
-        inline operator array&() { return std::get<array>(*this); }
+        operator const null&() const { return std::get<null>(*this); }
+        operator const boolean&() const { return std::get<boolean>(*this); }
+        operator const string&() const { return std::get<string>(*this); }
+        operator const integer&() const { return std::get<integer>(*this); }
+        operator const number&() const { return std::get<number>(*this); }
+        operator const object&() const { return std::get<object>(*this); }
+        operator const array&() const { return std::get<array>(*this); }
+        operator object&() { return std::get<object>(*this); }
+        operator array&() { return std::get<array>(*this); }
 
         bool empty() const;
 
-        inline bool operator==(const std::string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        inline bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const std::string_view& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        inline bool operator!=(const std::string_view& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        inline bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
-        inline bool operator==(const char* aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        inline bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(const std::string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(std::string_view aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        bool operator!=(std::string_view aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(const string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(const char* aToCompare) const { return std::get<string>(*this) == aToCompare; }
+        bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
 
           // ----------------------------------------------------------------------
 
         template <typename Index> const value& operator[](Index aIndex) const;
 
-        template <typename Index> inline value& operator[](Index aIndex)
+        template <typename Index> value& operator[](Index aIndex)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
             }
@@ -391,7 +397,7 @@ namespace rjson
         template <typename T> std::optional<T> get(std::string aFieldName) const;
         template <typename T> T get_or_default(std::string aFieldName, T&& aDefault) const;
 
-        inline std::string get_or_default(std::string aFieldName, const char* aDefault) const
+        std::string get_or_default(std::string aFieldName, const char* aDefault) const
             {
                 return get_or_default<std::string>(aFieldName, aDefault);
             }
@@ -410,7 +416,7 @@ namespace rjson
                 }
             }
 
-        template <typename R> inline std::pair<bool, const R&> get_R_if(std::string aFieldName) const
+        template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const
             {
                 try {
                     return {true, operator[](aFieldName)};
@@ -425,22 +431,22 @@ namespace rjson
                 }
             }
 
-        std::pair<bool, const value&> inline get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
-        std::pair<bool, const object&> inline get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
-        std::pair<bool, const array&> inline get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
+        std::pair<bool, const value&> get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
+        std::pair<bool, const object&> get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
+        std::pair<bool, const array&> get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
 
-        template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
+        template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault)
             {
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
             }
 
-        template <typename T> inline value& get_or_add(std::string aFieldName, const T& aDefault)
+        template <typename T> value& get_or_add(std::string aFieldName, const T& aDefault)
             {
                 T move_default{aDefault};
                 return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(move_default)); }, *this);
             }
 
-        template <typename F> inline value& set_field(std::string aFieldName, F&& aValue)
+        template <typename F> value& set_field(std::string aFieldName, F&& aValue)
             {
                 return std::visit([&](auto&& arg) -> value& {
                     using T = std::decay_t<decltype(arg)>;
@@ -451,7 +457,7 @@ namespace rjson
                 }, *this);
             }
 
-        template <typename F> inline value& set_field(std::string aFieldName, const F& aValue)
+        template <typename F> value& set_field(std::string aFieldName, const F& aValue)
             {
                 return std::visit([&](auto&& arg) -> value& {
                     using T = std::decay_t<decltype(arg)>;
@@ -503,27 +509,27 @@ namespace rjson
      public:
         class unexpected_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
-        inline value_visitor_base() = default;
-        virtual inline ~value_visitor_base() {}
+        value_visitor_base() = default;
+        virtual ~value_visitor_base() {}
 
-        [[noreturn]] virtual inline Result operator()(null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
 
-        [[noreturn]] virtual inline Result operator()(const rjson::null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-        [[noreturn]] virtual inline Result operator()(const rjson::boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        [[noreturn]] virtual Result operator()(const rjson::boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
 
      protected:
-        [[noreturn]] virtual inline void throw_unexpected_value(std::string aMessage) { throw unexpected_value{aMessage}; }
+        [[noreturn]] virtual void throw_unexpected_value(std::string aMessage) { throw unexpected_value{aMessage}; }
 
     }; // class value_visitor_base
 
@@ -532,11 +538,11 @@ namespace rjson
     class parse_error : public std::exception
     {
      public:
-        inline parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
+        parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
             : mMessage{acmacs::to_string(aLine) + ":" + acmacs::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
             {}
 
-        inline const char* what() const noexcept override { return mMessage.c_str(); }
+        const char* what() const noexcept override { return mMessage.c_str(); }
 
      private:
         std::string mMessage;
@@ -549,7 +555,7 @@ namespace rjson
     enum class remove_comments { No, Yes };
 
     value parse_string(std::string aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
-    value parse_string(const std::string_view& aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
+    value parse_string(std::string_view aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
     value parse_string(const char* aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
     value parse_file(std::string aFilename, remove_comments aRemoveComments = remove_comments::Yes);
 
@@ -714,10 +720,11 @@ namespace rjson
 
     inline void object::delete_field(string aKey)
     {
+        using namespace std::string_literals;
         if (auto iter = mContent.find(aKey); iter != mContent.end())
             mContent.erase(iter);
         else
-            throw field_not_found("No field \"" + static_cast<const std::string&>(aKey) + "\" in rjson::object, cannot delete it");
+            throw field_not_found("No field \""s + aKey + "\" in rjson::object, cannot delete it");
     }
 
     inline const object& object::get_or_empty_object(std::string aFieldName) const
@@ -937,7 +944,7 @@ template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::
 
 namespace acmacs
 {
-    inline std::string to_string(const rjson::string& src) { return src; }
+    inline std::string to_string(const rjson::string& src) { return src.str(); }
     inline std::string to_string(const rjson::null&) { return "null"; }
     inline std::string to_string(const rjson::object& src) { return src.to_json(); }
     inline std::string to_string(const rjson::array& src) { return src.to_json(); }

@@ -15,6 +15,7 @@ namespace acmacs
         inline PointShape(const PointShape&) = default;
         inline PointShape(Shape aShape) : mShape{aShape} {}
         inline PointShape(std::string aShape) { from(aShape); }
+        inline PointShape(std::string_view aShape) { from(aShape); }
         inline PointShape& operator=(const PointShape&) = default;
         inline PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
         inline PointShape& operator=(std::string aShape) { from(aShape); return *this; }
@@ -39,7 +40,7 @@ namespace acmacs
      private:
         Shape mShape;
 
-        inline void from(std::string aShape)
+        inline void from(std::string_view aShape)
             {
                 if (!aShape.empty()) {
                     switch (aShape.front()) {
@@ -58,7 +59,7 @@ namespace acmacs
                           mShape = Triangle;
                           break;
                       default:
-                          std::runtime_error("Unrecognized point shape: " + aShape);
+                          std::runtime_error("Unrecognized point shape: " + std::string(aShape));
                     }
                 }
                 else {

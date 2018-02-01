@@ -98,10 +98,17 @@ namespace string
 
     namespace _internal
     {
-        template <typename Iter> inline std::string transform(Iter first, Iter last, std::function<char (char)> func)
+        template <typename Iter, typename F> inline std::string transform(Iter first, Iter last, F func)
         {
             std::string result;
             std::transform(first, last, std::back_inserter(result), func);
+            return result;
+        }
+
+        template <typename Iter, typename F> inline std::string copy_if(Iter first, Iter last, F func)
+        {
+            std::string result;
+            std::copy_if(first, last, std::back_inserter(result), func);
             return result;
         }
     }
@@ -132,6 +139,10 @@ namespace string
         }
         return result;
     }
+
+    template <typename S> inline std::string remove_spaces(const S& source) { return _internal::copy_if(source.begin(), source.end(), [](auto c) -> bool { return !std::isspace(c); }); }
+    inline std::string remove_spaces(const char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
+    inline std::string remove_spaces(char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
 
       // ----------------------------------------------------------------------
       // ends_with
