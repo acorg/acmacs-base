@@ -51,6 +51,7 @@ namespace acmacs
         const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
         Coordinates& operator[](size_t) = delete; // use set()!
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
+        double operator()(size_t aPointNo, size_t aDimensionNo) const { return coordinate(aPointNo, aDimensionNo); }
         virtual bool point_has_coordinates(size_t point_no) const = 0;
         virtual std::vector<double> as_flat_vector_double() const = 0;
         virtual std::vector<float> as_flat_vector_float() const = 0;
@@ -124,6 +125,13 @@ namespace acmacs
         void set(size_t aPointNo, const Coordinates& aCoordinates) override
             {
                 std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
+            }
+
+        void set_nan(size_t aPointNo)
+            {
+                using diff_t = decltype(begin())::difference_type;
+                const auto first{begin() + static_cast<diff_t>(aPointNo * number_of_dimensions())}, last{first + static_cast<diff_t>(number_of_dimensions())};
+                std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
             }
 
         virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no * number_of_dimensions() + dimension_no) = value; }
