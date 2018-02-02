@@ -101,11 +101,11 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-      // Nx(N+1) matrix handling transformation in N-dimensional space. The last column is for translation
+      // (N+1)xN matrix handling transformation in N-dimensional space. The last row is for translation
     class TransformationTranslation : public std::vector<double>
     {
      public:
-        TransformationTranslation(size_t number_of_dimensions) : std::vector<double>(number_of_dimensions * (number_of_dimensions + 1), 0.0), number_of_dimensions_{number_of_dimensions}
+        TransformationTranslation(size_t number_of_dimensions) : std::vector<double>((number_of_dimensions + 1) * number_of_dimensions, 0.0), number_of_dimensions_{number_of_dimensions}
             {
                 for (size_t dim = 0; dim < number_of_dimensions; ++dim)
                     operator()(dim, dim) = 1.0;
@@ -114,8 +114,10 @@ namespace acmacs
         TransformationTranslation(const TransformationTranslation&) = default;
         size_t number_of_dimensions() const { return number_of_dimensions_; }
 
-        template <typename S> double& operator()(S row, S column) { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
-        template <typename S> double operator()(S row, S column) const { return operator[](static_cast<size_t>(row) * (number_of_dimensions_ + 1) + static_cast<size_t>(column)); }
+        template <typename S> double& operator()(S row, S column) { return operator[](static_cast<size_t>(row) * number_of_dimensions_ + static_cast<size_t>(column)); }
+        template <typename S> double operator()(S row, S column) const { return operator[](static_cast<size_t>(row) * number_of_dimensions_ + static_cast<size_t>(column)); }
+        template <typename S> double& translation(S dimension) { return operator[](number_of_dimensions_ * number_of_dimensions_ + static_cast<size_t>(dimension)); }
+        template <typename S> double translation(S dimension) const { return operator[](number_of_dimensions_ * number_of_dimensions_ + static_cast<size_t>(dimension)); }
 
      private:
         size_t number_of_dimensions_;
@@ -126,9 +128,9 @@ namespace acmacs
     {
         std::string result{'['};
         auto p = t.cbegin();
-        for (size_t row = 0; row < t.number_of_dimensions(); ++row) {
+        for (size_t row = 0; row < (t.number_of_dimensions() + 1); ++row) {
             result += '[';
-            for (size_t col = 0; col < (t.number_of_dimensions() + 1); ++col) {
+            for (size_t col = 0; col < t.number_of_dimensions(); ++col) {
                 result += to_string(*p);
                 if (col < t.number_of_dimensions())
                     result += ',';
