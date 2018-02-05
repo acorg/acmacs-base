@@ -5,6 +5,7 @@
 
 #include "acmacs-base/vector.hh"
 #include "acmacs-base/transformation.hh"
+#include "acmacs-base/size.hh"
 #include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
@@ -26,6 +27,8 @@ namespace acmacs
             {
                 return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return ! std::isnan(value); });
             }
+
+        operator Location() const { assert(size() == 2); return {operator[](0), operator[](1)}; }
 
     }; // class Coordinates
 
