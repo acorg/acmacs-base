@@ -71,6 +71,16 @@ template <typename Stream, typename Key, typename Value> inline Stream& operator
 
 // ----------------------------------------------------------------------
 
+namespace std
+{
+    template <typename Stream, typename Value> inline Stream& operator << (Stream& out, const std::pair<Value*, Value*>& aRange)
+    {
+        return stream_internal::write_to_stream(out, aRange.first, aRange.second, "[", "]", ", ");
+    }
+}
+
+// ----------------------------------------------------------------------
+
 // template <typename Stream, typename Collection> class to_stream_t
 // {
 //  public:
