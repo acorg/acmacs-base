@@ -2,6 +2,7 @@
 #include <chrono>
 #include <thread>
 #include <unistd.h>
+#include <iostream>
 
 #include "quicklook.hh"
 
@@ -11,7 +12,7 @@
 
 void acmacs::quicklook(std::string aFilename, size_t aDelayInSeconds)
 {
-    const char * const argv[] = {"qlmanage", "-p", aFilename.c_str(), nullptr};
+    const char * const argv[] = {"/usr/bin/qlmanage", "-p", aFilename.c_str(), nullptr};
     run_and_detach(argv, 0);
     if (aDelayInSeconds) {
         using namespace std::chrono_literals;
@@ -22,7 +23,7 @@ void acmacs::quicklook(std::string aFilename, size_t aDelayInSeconds)
 
 void acmacs::open(std::string aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
-    const char * const argv[] = {"open", aFilename.c_str(), nullptr};
+    const char * const argv[] = {"/usr/bin/open", aFilename.c_str(), nullptr};
     run_and_detach(argv, aDelayBeforeInSeconds);
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
