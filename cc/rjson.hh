@@ -196,6 +196,8 @@ namespace rjson
         value& operator[](std::string aFieldName);
         value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
         value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
+        const value& one_of(std::initializer_list<std::string> aFieldOrder) const;
+        template <typename ... Args> const value& one_of(Args ... args) const { return one_of({args ...}); }
         const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
         template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
@@ -604,6 +606,15 @@ namespace rjson
             return existing->second;
         else
             throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
+    }
+
+    inline const value& object::one_of(std::initializer_list<std::string> aFieldOrder) const
+    {
+        for (const auto& name : aFieldOrder) {
+            if (const auto existing = mContent.find(name); existing != mContent.end())
+                return existing->second;
+        }
+        throw field_not_found("No fields \"" + acmacs::to_string(aFieldOrder.begin(), aFieldOrder.end()) + "\" in rjson::object");
     }
 
     template <typename T> inline std::optional<T> object::get(std::string aFieldName) const
