@@ -34,16 +34,22 @@ namespace acmacs
     inline std::string to_string(std::string_view src) { return std::string(src); }
     inline std::string to_string(const char* src) { return src; }
 
-    template <typename Element> inline std::string to_string(const std::vector<Element>& src)
+    template <typename Iter> inline std::string to_string(Iter first, Iter last)
     {
         std::string result{'['};
-        for (const auto& elt: src) {
+        while (first != last) {
             if (result.size() > 1)
                 result += ", ";
-            result += to_string(elt);
+            result += to_string(acmacs::to_string(*first));
+            ++first;
         }
         result += "]";
         return result;
+    }
+
+    template <typename Element> inline std::string to_string(const std::vector<Element>& src)
+    {
+        return to_string(src.begin(), src.end());
     }
 
 } // namespace acmacs
