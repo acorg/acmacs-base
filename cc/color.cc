@@ -265,13 +265,39 @@ static const char* ana_colors[] =
     "#00939f",
 };
 
-std::vector<std::string> Color::distinct_s()
+static const char* google_maps_2017_colors[] =
 {
+    "#FF0000",
+    "#4B96F3",
+    "#4DB546",
+    "#FFFF00",
+    "#FF8000",
+    "#15B5C7",
+    "#F98182",
+    "#7B9EB1",
+    "#8F9CE2",
+    "#0FBDFF",
+};
+
+std::vector<std::string> Color::distinct_s(distinct_t dtype)
+{
+    switch (dtype) {
+      case distinct_t::Ana:
+          return {std::begin(ana_colors), std::end(ana_colors)};
+      case distinct_t::GoogleMaps:
+          return {std::begin(google_maps_2017_colors), std::end(google_maps_2017_colors)};
+    }
     return {std::begin(ana_colors), std::end(ana_colors)};
 }
 
-std::vector<Color> Color::distinct()
+std::vector<Color> Color::distinct(distinct_t dtype)
 {
+    switch (dtype) {
+      case distinct_t::Ana:
+          return {std::begin(ana_colors), std::end(ana_colors)};
+      case distinct_t::GoogleMaps:
+          return {std::begin(google_maps_2017_colors), std::end(google_maps_2017_colors)};
+    }
     return {std::begin(ana_colors), std::end(ana_colors)};
 }
 

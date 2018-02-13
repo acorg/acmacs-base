@@ -59,8 +59,9 @@ class Color
     std::string to_hex_string() const;
     void from_string(const char* s, size_t len) { from_string(std::string(s, len)); }
 
-    static std::vector<std::string> distinct_s();
-    static std::vector<Color> distinct();
+    enum class distinct_t { Ana, GoogleMaps };
+    static std::vector<std::string> distinct_s(distinct_t dtype = distinct_t::Ana);
+    static std::vector<Color> distinct(distinct_t dtype = distinct_t::Ana);
 
  private:
     value_type mColor; // 4 bytes, most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
