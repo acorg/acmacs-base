@@ -18,40 +18,58 @@
 class Color
 {
  public:
-    using value_type = uint32_t;
-    constexpr static const value_type NoChange = 0xFFFFFFFE;
+    union value_type
+    {
+        constexpr value_type() : color{0xFF00FF} {}
+        constexpr value_type(uint32_t regular) : color{regular} {}
+        constexpr value_type(double adj) : adjustment{static_cast<float>(adj)} {}
+        constexpr bool operator==(const value_type& rhs) const { return color == rhs.color; }
+        uint32_t color;
+        float adjustment;
+    };
+      // constexpr static const uint32_t NoChange = 0xFFFFFFFE;
+    enum class type : char { regular, no_change, adjust_saturation, adjust_brightness };
 
-    Color() : mColor(0xFF00FF) {}
-    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr Color(Uint aColor) : mColor(static_cast<uint32_t>(aColor)) {}
+    Color() = default;
+    Color(const Color& aSrc) = default;
+    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr Color(Uint aColor) : color_(static_cast<uint32_t>(aColor)) {}
     explicit Color(const std::string& aColor) { from_string(aColor); }
     explicit Color(const std::string_view& aColor) { from_string(aColor); }
+    constexpr explicit Color(type a_type, double value) : color_(value), type_(a_type) {}
     Color& operator=(const std::string& aColor) { from_string(aColor); return *this; }
     Color& operator=(const std::string_view& aColor) { from_string(aColor); return *this; }
     Color& operator=(const char* aColor) { from_string(aColor); return *this; }
     Color(const char* aColor) { from_string(aColor); }
       // Color(const Color&) = default;
-      // Color& operator=(const Color& aSrc) = default;
-    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> Color& operator=(Uint aColor) { mColor = static_cast<uint32_t>(aColor); return *this; }
+    Color& operator=(const Color& aSrc);
+    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> Color& operator=(Uint aColor)
+        {
+            color_ = static_cast<uint32_t>(aColor);
+            type_ = type::regular;
+            return *this;
+        }
 
-    bool operator == (const Color& aColor) const { return mColor == aColor.mColor; }
+    bool operator == (const Color& aColor) const { return color_ == aColor.color_ && type_ == aColor.type_; }
     bool operator != (const Color& aColor) const { return ! operator==(aColor); }
-    bool operator < (const Color& aColor) const { return mColor < aColor.mColor; }
+    bool operator < (const Color& aColor) const { return color_.color < aColor.color_.color; }
 
-    constexpr double alpha() const { return double(0xFF - ((mColor >> 24) & 0xFF)) / 255.0; }
-    constexpr double red() const { return double((mColor >> 16) & 0xFF) / 255.0; }
-    constexpr double green() const { return double((mColor >> 8) & 0xFF) / 255.0; }
-    constexpr double blue() const { return double(mColor & 0xFF) / 255.0; }
+    constexpr double alpha() const { return double(0xFF - ((color_.color >> 24) & 0xFF)) / 255.0; }
+    constexpr double red() const { return double((color_.color >> 16) & 0xFF) / 255.0; }
+    constexpr double green() const { return double((color_.color >> 8) & 0xFF) / 255.0; }
+    constexpr double blue() const { return double(color_.color & 0xFF) / 255.0; }
 
-    constexpr size_t alphaI() const { return static_cast<size_t>((mColor >> 24) & 0xFF); }
-    constexpr void alphaI(value_type v) { mColor = (mColor & 0xFFFFFF) | ((v & 0xFF) << 24); }
-    constexpr size_t rgbI() const { return static_cast<size_t>(mColor & 0xFFFFFF); }
+    constexpr size_t alphaI() const { return static_cast<size_t>((color_.color >> 24) & 0xFF); }
+    constexpr void alphaI(uint32_t v) { color_.color = (color_.color & 0xFFFFFF) | ((v & 0xFF) << 24); }
+    constexpr size_t rgbI() const { return static_cast<size_t>(color_.color & 0xFFFFFF); }
 
-    constexpr bool empty() const { return mColor == NoChange; }
+    constexpr bool empty() const { return type_ == type::no_change; }
 
     void light(double value);
+    void adjust_saturation(double value);
+    void adjust_brightness(double value);
 
-    constexpr void set_transparency(double aTransparency) { mColor = (mColor & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
-    Color without_transparency() const { return {mColor & 0x00FFFFFF}; }
+    constexpr void set_transparency(double aTransparency) { color_.color = (color_.color & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
+    Color without_transparency() const { return {color_.color & 0x00FFFFFF}; }
 
     void from_string(const std::string_view& aColor);
     explicit operator std::string() const { return to_string(); }
@@ -64,7 +82,9 @@ class Color
     static std::vector<Color> distinct(distinct_t dtype = distinct_t::Ana);
 
  private:
-    value_type mColor; // 4 bytes, most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
+      // 4 bytes: most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
+    value_type color_;
+    type type_ = type::regular;
 
 }; // class Color
 
@@ -85,7 +105,7 @@ inline std::ostream& operator<<(std::ostream& out, Color c)
 
 // ----------------------------------------------------------------------
 
-constexpr const Color ColorNoChange{Color::NoChange};
+constexpr const Color ColorNoChange(Color::type::no_change, 0);
 constexpr const Color BLACK{0};
 constexpr const Color TRANSPARENT{0xFF000000};
 constexpr const Color RED{0xFF0000};

@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <cmath>
 
 #include "acmacs-base/throw.hh"
 #include "acmacs-base/color.hh"
@@ -10,8 +11,42 @@
 
 namespace _internal
 {
-    extern const std::map<std::string, Color::value_type> sNameToColor;
+    extern const std::map<std::string, uint32_t> sNameToColor;
 }
+
+// ----------------------------------------------------------------------
+
+Color& Color::operator=(const Color& src)
+{
+    switch (type_) {
+      case type::no_change:
+          type_ = src.type_;
+          color_ = src.color_;
+          break;
+      case type::regular:
+          switch (src.type_) {
+            case type::no_change:
+                break;
+            case type::regular:
+                type_ = type::regular;
+                color_ = src.color_;
+                break;
+            case type::adjust_saturation:
+                adjust_saturation(static_cast<double>(src.color_.adjustment));
+                break;
+            case type::adjust_brightness:
+                adjust_brightness(static_cast<double>(src.color_.adjustment));
+                break;
+          }
+          break;
+      case type::adjust_saturation:
+      case type::adjust_brightness:
+          throw std::runtime_error("Color::operator=: cannot assign to a non-regular color");
+    }
+
+    return *this;
+
+} // Color::operator=
 
 // ----------------------------------------------------------------------
 
@@ -19,12 +54,22 @@ std::string Color::to_string() const
 {
     using namespace _internal;
     std::string result;
-    const auto e = std::find_if(sNameToColor.cbegin(), sNameToColor.cend(), [this](const auto& ee) { return this->mColor == ee.second; });
-    if (e != sNameToColor.cend()) {
-        result = e->first;
-    }
-    else {
-        result = to_hex_string();
+    switch (type_) {
+      case type::no_change:
+          result = "*no_change*";
+          break;
+      case type::regular:
+          if (const auto e = std::find_if(sNameToColor.cbegin(), sNameToColor.cend(), [this](const auto& ee) { return this->color_.color == ee.second; }); e != sNameToColor.cend())
+              result = e->first;
+          else
+              result = to_hex_string();
+          break;
+      case type::adjust_saturation:
+          result = "*adjust_saturation " + std::to_string(color_.adjustment) + '*';
+          break;
+      case type::adjust_brightness:
+          result = "*adjust_brightness " + std::to_string(color_.adjustment) + '*';
+          break;
     }
     return result;
 
@@ -35,7 +80,7 @@ std::string Color::to_string() const
 std::string Color::to_hex_string() const
 {
     std::stringstream s;
-    s << '#' << std::hex << std::setw(6) << std::setfill('0') << mColor;
+    s << '#' << std::hex << std::setw(6) << std::setfill('0') << color_.color;
     return s.str();
 
 
@@ -47,15 +92,16 @@ void Color::from_string(const std::string_view& aColor)
 {
     if (aColor.empty())
         THROW_OR_CERR(std::invalid_argument("cannot read Color from empty string"));
+    type_ = type::regular;
     if (aColor[0] == '#') {
-        const value_type v = static_cast<uint32_t>(std::strtoul(aColor.data() + 1, nullptr, 16));
+        const auto v = static_cast<uint32_t>(std::strtoul(aColor.data() + 1, nullptr, 16));
         switch (aColor.size()) {
           case 4:               // web color #abc -> #aabbcc
-              mColor = ((v & 0xF00) << 12) | ((v & 0xF00) << 8) | ((v & 0x0F0) << 8) | ((v & 0x0F0) << 4) | ((v & 0x00F) << 4) | (v & 0x00F);
+              color_.color = ((v & 0xF00) << 12) | ((v & 0xF00) << 8) | ((v & 0x0F0) << 8) | ((v & 0x0F0) << 4) | ((v & 0x00F) << 4) | (v & 0x00F);
               break;
           case 7:
           case 9:
-              mColor = v;
+              color_.color = v;
               break;
           default:
               THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
@@ -64,7 +110,7 @@ void Color::from_string(const std::string_view& aColor)
     else {
         const auto e = _internal::sNameToColor.find(string::lower(aColor));
         if (e != _internal::sNameToColor.end())
-            mColor = e->second;
+            color_.color = e->second;
         else
             THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
     }
@@ -76,7 +122,7 @@ void Color::from_string(const std::string_view& aColor)
 struct HSV;
 
 struct RGB {
-    inline RGB(Color c) : r(c.red()), g(c.green()), b(c.blue()) {}
+    RGB(Color c) : r(c.red()), g(c.green()), b(c.blue()) {}
     RGB(const HSV& hsv);
     double r;       // percent
     double g;       // percent
@@ -85,7 +131,9 @@ struct RGB {
 
 struct HSV {
     HSV(const RGB& rgb);
-    inline void light(double value) { s /= value; }
+    void light(double value) { s /= value; }
+    void adjust_saturation(double value) { s *= std::abs(value); if (s > 1.0) s = 1.0; }
+    void adjust_brightness(double value) { v *= std::abs(value); if (v > 1.0) v = 1.0; }
     double h;       // angle in degrees
     double s;       // percent
     double v;       // percent
@@ -189,24 +237,48 @@ HSV::HSV(const RGB& rgb)
 
 void Color::light(double value)
 {
-    if ((mColor & 0xFF000000) == 0) {
-        if (mColor == 0) {
+    if ((color_.color & 0xFF000000) == 0) {
+        if (color_.color == 0) {
               // special case for black
             HSV hsv = RGB(0xFF0000);
             hsv.light(value);
             RGB rgb(hsv);
-            mColor = (unsigned(rgb.b * 255) << 16) | (unsigned(rgb.b * 255) << 8) | unsigned(rgb.b * 255);
+            color_.color = (unsigned(rgb.b * 255) << 16) | (unsigned(rgb.b * 255) << 8) | unsigned(rgb.b * 255);
         }
         else {
-            HSV hsv = RGB(mColor);
+            HSV hsv = RGB(color_.color);
             hsv.light(value);
             RGB rgb(hsv);
-              // std::cerr << std::hex << mColor << "  " << std::dec << RGB(mColor) << " --> " << rgb << std::endl;
-            mColor = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
+              // std::cerr << std::hex << color_ << "  " << std::dec << RGB(color_) << " --> " << rgb << std::endl;
+            color_.color = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
         }
     }
 
 } // Color::light
+
+void Color::adjust_saturation(double value)
+{
+    if ((color_.color & 0xFF000000) == 0) {
+        HSV hsv = RGB(color_.color);
+        // std::cerr << "DEBUG: adjust_saturation " << std::hex << color_.color << std::dec << " s:" << hsv.s << " v:" << hsv.v << " --> ";
+        hsv.adjust_saturation(value);
+        RGB rgb(hsv);
+          // std::cerr << std::hex << color_ << "  " << std::dec << RGB(color_) << " --> " << rgb << std::endl;
+        color_.color = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
+        // std::cerr << std::hex << color_.color << std::dec << ' ' << hsv.s << '\n';
+    }
+}
+
+void Color::adjust_brightness(double value)
+{
+    if ((color_.color & 0xFF000000) == 0) {
+        HSV hsv = RGB(color_.color);
+        hsv.adjust_brightness(value);
+        RGB rgb(hsv);
+          // std::cerr << std::hex << color_ << "  " << std::dec << RGB(color_) << " --> " << rgb << std::endl;
+        color_.color = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
+    }
+}
 
 // ----------------------------------------------------------------------
 
@@ -310,7 +382,7 @@ namespace _internal
 #pragma GCC diagnostic ignored "-Wexit-time-destructors"
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
-    const std::map<std::string, Color::value_type> sNameToColor = {
+    const std::map<std::string, uint32_t> sNameToColor = {
         {"transparent", 0xFF000000},
         {"black", 0x000000},
         {"white", 0xFFFFFF},

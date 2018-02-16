@@ -18,8 +18,14 @@ namespace acmacs::internal
         inline field_optional_with_default(const field_optional_with_default&) = default;
         inline field_optional_with_default& operator=(const field_optional_with_default& aOther)
             {
-                if (aOther.present())
+                if (aOther.present()) {
+                      // assignment for T may actually mean modifying
+                      // original value instead fo completely
+                      // overwriting it, it happens for Color. That is why we first assign to default, if necessary.
+                    if (!mValue.has_value())
+                        mValue = mDefault;
                     mValue = aOther.mValue;
+                }
                 return *this;
             }
         inline field_optional_with_default& operator=(const T aValue) { mValue = aValue; return *this; }
