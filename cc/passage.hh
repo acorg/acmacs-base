@@ -12,14 +12,14 @@ namespace acmacs::passage
     {
         constexpr const char* re_nimr_isolate = R"#(( (ISOLATE|CLONE) [0-9\-]+)*)#"; // NIMR isolate and/or clone, NIMR H1pdm has CLONE 38-32
         constexpr const char* re_niid_plus_number = R"#(( *\+[1-9])?)#"; // NIID has +1 at the end of passage
-        constexpr const char* re_passage_date = R"#(( \([12][0129][0-9][0-9]-[01][0-9]-[0-3][0-9]\))?$)#"; // passage date
+        constexpr const char* re_passage_date = R"#(( \([12][0129][0-9][0-9]-[01][0-9]-[0-3][0-9]\))?)#"; // passage date
     }
 
     inline bool is_egg(std::string aPassage)
     {
 #include "acmacs-base/global-constructors-push.hh"
         using namespace _internal;
-        static std::regex egg_passage{std::string(R"#(E(\?|[0-9][0-9]?))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date};
+        static std::regex egg_passage{std::string(R"#((E(\?|[0-9][0-9]?)|EGG))#") + re_nimr_isolate +  re_niid_plus_number + re_passage_date}; // NIMR has "EGG 10-6" in h3-neut
 #include "acmacs-base/diagnostics-pop.hh"
         return std::regex_search(aPassage, egg_passage);
 
