@@ -54,7 +54,7 @@ class Timeit
     acmacs::timestamp_t start_;
 };
 
-inline report_time do_report_time(bool do_report) { return do_report ? report_time::Yes : report_time::No; }
+constexpr report_time do_report_time(bool do_report) { return do_report ? report_time::Yes : report_time::No; }
 
 // ----------------------------------------------------------------------
 /// Local Variables:
