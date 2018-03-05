@@ -139,7 +139,17 @@ namespace acmacs
 
         virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no * number_of_dimensions() + dimension_no) = value; }
 
-     private:
+        void remove_points(const std::vector<size_t>& indexes, size_t base)
+        {
+            std::vector<size_t> mindexes{indexes};
+            std::sort(mindexes.begin(), mindexes.end(), [](auto i1, auto i2) { return i1 > i2; });
+            for (const auto index : mindexes) {
+                const auto first = begin() + static_cast<difference_type>(index + base);
+                erase(first, first + static_cast<difference_type>(number_of_dimensions_));
+            }
+        }
+
+      private:
         size_t number_of_dimensions_;
 
     }; // class Layout
