@@ -146,6 +146,11 @@ namespace acmacs
             }
         }
 
+        void insert_point(size_t before, size_t base)
+        {
+            insert(begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
+        }
+
       private:
         size_t number_of_dimensions_;
 
