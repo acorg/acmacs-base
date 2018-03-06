@@ -118,8 +118,7 @@ namespace acmacs
 
         const Coordinates operator[](size_t aPointNo) const override
             {
-                using diff_t = decltype(begin())::difference_type;
-                return {begin() + static_cast<diff_t>(aPointNo * number_of_dimensions_), begin() + static_cast<diff_t>((aPointNo + 1) * number_of_dimensions_)};
+                return {begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
             }
 
         double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
@@ -133,8 +132,7 @@ namespace acmacs
 
         void set_nan(size_t aPointNo)
             {
-                using diff_t = decltype(begin())::difference_type;
-                const auto first{begin() + static_cast<diff_t>(aPointNo * number_of_dimensions())}, last{first + static_cast<diff_t>(number_of_dimensions())};
+                const auto first{begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
                 std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
             }
 
@@ -143,7 +141,7 @@ namespace acmacs
         void remove_points(const ReverseSortedIndexes& indexes, size_t base)
         {
             for (const auto index : indexes) {
-                const auto first = begin() + static_cast<difference_type>(index + base);
+                const auto first = begin() + static_cast<difference_type>((index + base) * number_of_dimensions_);
                 erase(first, first + static_cast<difference_type>(number_of_dimensions_));
             }
         }
