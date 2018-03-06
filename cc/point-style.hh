@@ -11,20 +11,20 @@ namespace acmacs
      public:
         enum Shape {Circle, Box, Triangle};
 
-        inline PointShape() : mShape{Circle} {}
-        inline PointShape(const PointShape&) = default;
-        inline PointShape(Shape aShape) : mShape{aShape} {}
-        inline PointShape(std::string aShape) { from(aShape); }
-        inline PointShape(std::string_view aShape) { from(aShape); }
-        inline PointShape& operator=(const PointShape&) = default;
-        inline PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
-        inline PointShape& operator=(std::string aShape) { from(aShape); return *this; }
-        [[nodiscard]] inline bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
-        [[nodiscard]] inline bool operator!=(const PointShape& ps) const { return mShape != ps.mShape; }
+        PointShape() : mShape{Circle} {}
+        PointShape(const PointShape&) = default;
+        PointShape(Shape aShape) : mShape{aShape} {}
+        PointShape(std::string aShape) { from(aShape); }
+        PointShape(std::string_view aShape) { from(aShape); }
+        PointShape& operator=(const PointShape&) = default;
+        PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
+        PointShape& operator=(std::string aShape) { from(aShape); return *this; }
+        [[nodiscard]] bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
+        [[nodiscard]] bool operator!=(const PointShape& ps) const { return mShape != ps.mShape; }
 
-        inline operator Shape() const { return mShape; }
+        operator Shape() const { return mShape; }
 
-        inline operator std::string() const
+        operator std::string() const
             {
                 switch(mShape) {
                   case Circle:
@@ -40,7 +40,7 @@ namespace acmacs
      private:
         Shape mShape;
 
-        inline void from(std::string_view aShape)
+        void from(std::string_view aShape)
             {
                 if (!aShape.empty()) {
                     switch (aShape.front()) {
@@ -76,12 +76,12 @@ namespace acmacs
       public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
 
-        [[nodiscard]] inline bool operator==(const PointStyle& ps) const
-            {
-                return shown == ps.shown && fill == ps.fill && outline == ps.outline && outline_width == ps.outline_width
-                        && size == ps.size && rotation == ps.rotation && aspect == ps.aspect && shape == ps.shape
-                        && label == ps.label && label_text == ps.label_text;
-            }
+        [[nodiscard]] bool operator==(const PointStyle& rhs) const
+        {
+            return shown == rhs.shown && fill == rhs.fill && outline == rhs.outline && outline_width == rhs.outline_width && size == rhs.size && rotation == rhs.rotation && aspect == rhs.aspect &&
+                   shape == rhs.shape && label == rhs.label && label_text == rhs.label_text;
+        }
+        [[nodiscard]] bool operator!=(const PointStyle& rhs) const { return !operator==(rhs); }
 
         field<bool> shown{true};
         field<Color> fill{TRANSPARENT};
@@ -94,25 +94,26 @@ namespace acmacs
         LabelStyle label;
         field<std::string> label_text;
 
-        inline PointStyle& scale(double aScale) { size = static_cast<Pixels>(size) * aScale; return *this; }
-        inline PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
+        PointStyle& scale(double aScale) { size = static_cast<Pixels>(size) * aScale; return *this; }
+        PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
 
     }; // class PointStyle
+
+    inline std::string to_string(const acmacs::PointShape& shape) { return shape; }
+
+    inline std::string to_string(const acmacs::PointStyle& style)
+    {
+        return to_string(*style.shape) + " shown:" + to_string(*style.shown) + " F:" + to_string(*style.fill) + " O:" + to_string(*style.outline) + " o:" + to_string(*style.outline_width) +
+                " S:" + to_string(*style.size) + ' ' + to_string(*style.aspect) + ' ' + to_string(*style.rotation); // + " l:" + to_string(*style.label) + " t:" + to_string(*style.label_text);
+    }
+
+    inline std::ostream& operator<<(std::ostream& s, const acmacs::PointShape& shape) { return s << to_string(shape); }
+
+    inline std::ostream& operator<<(std::ostream& s, const acmacs::PointStyle& style) { return s << to_string(style); }
 
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
-
-inline std::ostream& operator<<(std::ostream& s, const acmacs::PointShape& shape)
-{
-    return s << static_cast<std::string>(shape);
-}
-
-inline std::ostream& operator<<(std::ostream& s, const acmacs::PointStyle& style)
-{
-    s << *style.shape << " F:" << style.fill << " O:" << style.outline << " S:" << style.size << ' ' << style.aspect << ' ' << style.rotation;
-    return s;
-}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
