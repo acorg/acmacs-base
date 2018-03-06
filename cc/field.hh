@@ -13,14 +13,15 @@ namespace acmacs::internal
     template <typename T> class field_optional_with_default
     {
      public:
-        inline field_optional_with_default() = default;
-        inline field_optional_with_default(const T aDefault) : mDefault{aDefault} {}
-        inline field_optional_with_default(const field_optional_with_default&) = default;
-        inline field_optional_with_default& operator=(const field_optional_with_default& aOther)
+        field_optional_with_default() = default;
+        field_optional_with_default(const T aDefault) : mDefault{aDefault} {}
+        field_optional_with_default(const field_optional_with_default&) = default;
+        field_optional_with_default(field_optional_with_default&&) = default;
+        field_optional_with_default& operator=(const field_optional_with_default& aOther)
             {
                 if (aOther.present()) {
                       // assignment for T may actually mean modifying
-                      // original value instead fo completely
+                      // original value instead of completely
                       // overwriting it, it happens for Color. That is why we first assign to default, if necessary.
                     if (!mValue.has_value())
                         mValue = mDefault;
@@ -28,17 +29,18 @@ namespace acmacs::internal
                 }
                 return *this;
             }
-        inline field_optional_with_default& operator=(const T aValue) { mValue = aValue; return *this; }
+        field_optional_with_default& operator=(field_optional_with_default&&) = default; // really move (unlike the above), to allow removing/inserting elements of vector<>
+        field_optional_with_default& operator=(const T aValue) { mValue = aValue; return *this; }
 
-        [[nodiscard]] inline bool operator==(const field_optional_with_default<T>& f) const { return mValue == f.mValue && mDefault == f.mDefault; }
+        [[nodiscard]] bool operator==(const field_optional_with_default<T>& f) const { return mValue.value_or(mDefault) == f.mValue.value_or(f.mDefault); }
 
-        inline bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
-        inline bool not_default() const { return mValue.has_value() && mValue.value() != mDefault; }
-        constexpr inline bool present() const { return mValue.has_value(); }
+        bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
+        bool not_default() const { return mValue.has_value() && mValue.value() != mDefault; }
+        constexpr bool present() const { return mValue.has_value(); }
 
-        constexpr inline operator const T() const { return mValue.value_or(mDefault); }
-        constexpr inline const T operator*() const { return *this; }
-        inline const std::decay_t<T>* operator->() const
+        constexpr operator const T() const { return mValue.value_or(mDefault); }
+        constexpr const T operator*() const { return *this; }
+        const std::decay_t<T>* operator->() const
             {
                 if (present())
                     return &mValue.value();
@@ -46,11 +48,19 @@ namespace acmacs::internal
                     return &mDefault;
             }
 
-        inline std::decay_t<T>& set() { if (!mValue.has_value()) mValue = mDefault; return mValue.value(); }
+        std::decay_t<T>& set() { if (!mValue.has_value()) mValue = mDefault; return mValue.value(); }
+
+        std::string to_string() const
+            {
+                if (is_default())
+                    return acmacs::to_string(mDefault) + "(default)";
+                else
+                    return acmacs::to_string(*mValue);
+            }
 
      private:
         std::optional<std::decay_t<T>> mValue;
-        const T mDefault;
+        T mDefault;             // non const to allow move assignment
 
     }; // class field_optional_with_default<>
 
@@ -71,15 +81,17 @@ namespace acmacs::internal
 
 } // namespace acmacs::internal
 
-// ----------------------------------------------------------------------
-
-template <typename T> inline std::ostream& operator<<(std::ostream& s, const acmacs::internal::field_optional_with_default<T>& field)
+namespace acmacs
 {
-    s << *field;
-    if (field.is_default())
-        s << "(default)";
-    return s;
-}
+    template <typename T> inline std::string to_string(const acmacs::internal::field_optional_with_default<T>& field) { return field.to_string(); }
+
+} // namespace acmacs
+
+namespace acmacs::internal
+{
+    template <typename T> inline std::ostream& operator<<(std::ostream& s, const field_optional_with_default<T>& field) { return s << acmacs::to_string(field); }
+
+} // namespace acmacs::internal
 
 // ----------------------------------------------------------------------
 /// Local Variables:
