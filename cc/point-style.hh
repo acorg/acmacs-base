@@ -69,7 +69,17 @@ namespace acmacs
 
     }; // class PointShape
 
-// ----------------------------------------------------------------------
+    inline std::string to_string(const PointShape& shape) { return shape; }
+
+    template <> inline std::string to_string(const acmacs::internal::field_optional_with_default<PointShape>& shape)
+    {
+        if (shape.is_default())
+            return acmacs::to_string(*shape) + "(default)";
+        else
+            return acmacs::to_string(*shape);
+    }
+
+    // ----------------------------------------------------------------------
 
     class PointStyle
     {
@@ -99,12 +109,19 @@ namespace acmacs
 
     }; // class PointStyle
 
-    inline std::string to_string(const acmacs::PointShape& shape) { return shape; }
-
-    inline std::string to_string(const acmacs::PointStyle& style)
+    inline std::string to_string(const PointStyle& style)
     {
-        return to_string(*style.shape) + " shown:" + to_string(*style.shown) + " F:" + to_string(*style.fill) + " O:" + to_string(*style.outline) + " o:" + to_string(*style.outline_width) +
-                " S:" + to_string(*style.size) + ' ' + to_string(*style.aspect) + ' ' + to_string(*style.rotation); // + " l:" + to_string(*style.label) + " t:" + to_string(*style.label_text);
+        return to_string(style.shape) + " shown:" + to_string(style.shown) + " F:" + to_string(style.fill) + " O:" + to_string(style.outline) + " o:" + to_string(style.outline_width) +
+                " S:" + to_string(style.size) + ' ' + to_string(style.aspect) + ' ' + to_string(style.rotation) + " label:[" + to_string(style.label) + "] t:" + to_string(style.label_text);
+    }
+
+      // for debugging
+    inline std::string equality_report(const PointStyle& s1, const PointStyle& s2)
+    {
+        return "shown:" + to_string(s1.shown == s2.shown) + " fill:" + to_string(s1.fill == s2.fill) + " outline:" + to_string(s1.outline == s2.outline) +
+               " outline_width:" + to_string(s1.outline_width == s2.outline_width) + " size:" + to_string(s1.size == s2.size) + " rotation:" + to_string(s1.rotation == s2.rotation) +
+               " aspect:" + to_string(s1.aspect == s2.aspect) + " shape:" + to_string(s1.shape == s2.shape) + " label:" + to_string(s1.label == s2.label) +
+               " label_text:" + to_string(s1.label_text == s2.label_text);
     }
 
     inline std::ostream& operator<<(std::ostream& s, const acmacs::PointShape& shape) { return s << to_string(shape); }

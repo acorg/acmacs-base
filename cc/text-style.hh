@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "acmacs-base/field.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
+#include "acmacs-base/field.hh"
 
 // ----------------------------------------------------------------------
 
@@ -16,13 +16,13 @@ namespace acmacs
      public:
         enum Value { Normal, Italic };
 
-        inline FontSlant(Value aFontSlant = Normal) : mFontSlant{aFontSlant} {}
-        inline FontSlant(const FontSlant&) = default;
-        inline FontSlant(std::string aFontSlant) { from(aFontSlant); }
-        inline FontSlant& operator=(const FontSlant&) = default;
-        inline FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
+        FontSlant(Value aFontSlant = Normal) : mFontSlant{aFontSlant} {}
+        FontSlant(const FontSlant&) = default;
+        FontSlant(std::string aFontSlant) { from(aFontSlant); }
+        FontSlant& operator=(const FontSlant&) = default;
+        FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
 
-        inline operator std::string() const
+        operator std::string() const
             {
                 switch (mFontSlant) {
                   case Normal:
@@ -33,12 +33,12 @@ namespace acmacs
                 return "normal";
             }
 
-        inline operator Value() const { return mFontSlant; }
+        operator Value() const { return mFontSlant; }
 
      private:
         Value mFontSlant;
 
-        inline void from(std::string aFontSlant)
+        void from(std::string aFontSlant)
             {
                 if (aFontSlant == "normal")
                     mFontSlant = Normal;
@@ -50,6 +50,8 @@ namespace acmacs
 
     }; // class FontSlant
 
+    inline std::string to_string(const FontSlant& slant) { return slant; }
+
 // ----------------------------------------------------------------------
 
     class FontWeight
@@ -57,13 +59,13 @@ namespace acmacs
      public:
         enum Value { Normal, Bold };
 
-        inline FontWeight(Value aFontWeight = Normal) : mFontWeight{aFontWeight} {}
-        inline FontWeight(const FontWeight&) = default;
-        inline FontWeight(std::string aFontWeight) { from(aFontWeight); }
-        inline FontWeight& operator=(const FontWeight&) = default;
-        inline FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
+        FontWeight(Value aFontWeight = Normal) : mFontWeight{aFontWeight} {}
+        FontWeight(const FontWeight&) = default;
+        FontWeight(std::string aFontWeight) { from(aFontWeight); }
+        FontWeight& operator=(const FontWeight&) = default;
+        FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
 
-        inline operator std::string() const
+        operator std::string() const
             {
                 switch (mFontWeight) {
                   case Normal:
@@ -74,12 +76,12 @@ namespace acmacs
                 return "normal";
             }
 
-        inline operator Value() const { return mFontWeight; }
+        operator Value() const { return mFontWeight; }
 
      private:
         Value mFontWeight;
 
-        inline void from(std::string aFontWeight)
+        void from(std::string aFontWeight)
             {
                 if (aFontWeight == "normal")
                     mFontWeight = Normal;
@@ -91,6 +93,8 @@ namespace acmacs
 
     }; // class FontWeight
 
+    inline std::string to_string(const FontWeight& weight) { return weight; }
+
 // ----------------------------------------------------------------------
 
     class TextStyle
@@ -98,10 +102,10 @@ namespace acmacs
      public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
 
-        inline TextStyle() = default;
-        inline TextStyle(std::string font_name) : font_family{font_name} {}
+        TextStyle() = default;
+        TextStyle(std::string font_name) : font_family{font_name} {}
 
-        [[nodiscard]] inline bool operator==(const TextStyle& ts) const
+        [[nodiscard]] bool operator==(const TextStyle& ts) const
             {
                 return slant == ts.slant && weight == ts.weight && font_family == ts.font_family;
             }
@@ -112,6 +116,11 @@ namespace acmacs
 
     }; // class TextStyle
 
+    inline std::string to_string(const TextStyle& style)
+    {
+        return " S:" + to_string(*style.slant) + " W:" + to_string(*style.weight) + " f:" + to_string(*style.font_family);
+    }
+
 // ----------------------------------------------------------------------
 
     class LabelStyle
@@ -119,14 +128,15 @@ namespace acmacs
      public:
         template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
 
-        [[nodiscard]] inline bool operator==(const LabelStyle& ls) const
+        [[nodiscard]] bool operator==(const LabelStyle& ls) const
             {
                 return shown == ls.shown && offset == ls.offset && size == ls.size && color == ls.color
                         && rotation == ls.rotation && interline == ls.interline && style == ls.style;
             }
+        [[nodiscard]] bool operator!=(const LabelStyle& rhs) const { return !operator==(rhs); }
 
         field<bool> shown{true};
-        field<acmacs::Offset> offset{sOffsetDefault};
+        field<Offset> offset{sOffsetDefault};
         field<Pixels> size{Pixels{10.0}};
         field<Color> color{BLACK};
         field<Rotation> rotation{NoRotation};
@@ -137,6 +147,12 @@ namespace acmacs
         static const Offset sOffsetDefault;
 
     }; // class LabelStyle
+
+    inline std::string to_string(const LabelStyle& style)
+    {
+        return " shown:" + to_string(*style.shown) + " p:" + to_string(*style.offset) + " s:" + to_string(*style.size) +
+                " c:" + to_string(*style.color) + " r:" + to_string(*style.rotation) + " i:" + acmacs::to_string(*style.interline, 2) + ' ' + to_string(style.style);
+    }
 
 } // namespace acmacs
 

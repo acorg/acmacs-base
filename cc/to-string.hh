@@ -20,11 +20,11 @@ namespace acmacs
     inline std::string to_string(unsigned long src) { return std::to_string(src); }
     inline std::string to_string(float src) { return std::to_string(src); }
 
-    inline std::string to_string(double value)
+    inline std::string to_string(double value, int precision = 32)
     {
         constexpr const size_t buffer_size = 100;
         char buffer[buffer_size + 1];
-        const int written = std::snprintf(buffer, buffer_size, "%.32g", value);
+        const int written = std::snprintf(buffer, buffer_size, "%.*g", precision, value);
         if (written < 0 && static_cast<size_t>(written) >= buffer_size)
             throw std::runtime_error("acmacs::to_string(double) internal error");
         return {buffer, static_cast<size_t>(written)};
