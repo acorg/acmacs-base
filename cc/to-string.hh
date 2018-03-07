@@ -4,6 +4,7 @@
 #include <string_view>
 #include <vector>
 #include <cstdio>
+#include <cmath>
 
 // ----------------------------------------------------------------------
 
@@ -22,9 +23,10 @@ namespace acmacs
 
     inline std::string to_string(double value, int precision = 32)
     {
+        const auto num_digits_before_dot = static_cast<int>(std::log10(std::abs(value))) + 1;
         constexpr const size_t buffer_size = 100;
         char buffer[buffer_size + 1];
-        const int written = std::snprintf(buffer, buffer_size, "%.*g", precision, value);
+        const int written = std::snprintf(buffer, buffer_size, "%.*g", precision + num_digits_before_dot, value);
         if (written < 0 && static_cast<size_t>(written) >= buffer_size)
             throw std::runtime_error("acmacs::to_string(double) internal error");
         return {buffer, static_cast<size_t>(written)};

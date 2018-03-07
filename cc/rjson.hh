@@ -122,6 +122,7 @@ namespace rjson
      public:
         number() : mValue{"0.0"} {}
         number(double aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        number(double aSrc, int precision) : mValue{acmacs::to_string(aSrc, precision)} {}
         number(std::string_view aData) : mValue{aData} {} // for parser
         number& operator=(double aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
         std::string to_json() const { return mValue; }
@@ -220,7 +221,7 @@ namespace rjson
         value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
         template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
         template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
-        void set_field_if_not_default(std::string aKey, double aValue, double aDefault);
+        void set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision = 32);
         template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
         template <typename Container> void set_array_field_if_not_empty(std::string aKey, const Container& aContainer) { set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer)); }
 
@@ -496,6 +497,11 @@ namespace rjson
         return rjson_type<FValue>{std::forward<FValue>(aValue)};
     }
 
+    inline value to_value(double aValue, int precision)
+    {
+        return rjson::number(aValue, precision);
+    }
+
     // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
     template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
     template <typename FValue> inline value to_value(array&& aValue) { return aValue; }
@@ -713,10 +719,10 @@ namespace rjson
             set_field(aKey, to_value(aValue));
     }
 
-    inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault)
+    inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision)
     {
         if (! float_equal(aValue, aDefault))
-            set_field(aKey, to_value(aValue));
+            set_field(aKey, to_value(aValue, precision));
     }
 
     template <typename Iterator> inline void object::set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last)
