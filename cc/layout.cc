@@ -48,6 +48,19 @@ acmacs::Boundaries acmacs::LayoutInterface::boundaries() const
 
 // ----------------------------------------------------------------------
 
+acmacs::Boundaries acmacs::LayoutInterface::boundaries(const std::vector<size_t>& points) const // just for the specified point indexes
+{
+    Boundaries result(operator[](points.front()));
+    for (auto point_no : points) {
+        if (const auto point = operator[](point_no); point.not_nan())
+            result.extend(point);
+    }
+    return result;
+
+} // acmacs::LayoutInterface::boundaries
+
+// ----------------------------------------------------------------------
+
 acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transformation& aTransformation) const
 {
     auto* result = new acmacs::Layout(number_of_points(), number_of_dimensions());

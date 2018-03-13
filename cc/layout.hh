@@ -98,7 +98,8 @@ namespace acmacs
           // returns indexes for min points for each dimension and max points for each dimension
         virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
           // returns boundary coordinates (min and max)
-        virtual Boundaries boundaries() const;
+        virtual Boundaries boundaries() const; // for all points
+        virtual Boundaries boundaries(const std::vector<size_t>& points) const; // just for the specified point indexes
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
 
