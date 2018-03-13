@@ -32,28 +32,17 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::LayoutInterface::min
 
 // ----------------------------------------------------------------------
 
-std::pair<acmacs::Coordinates, acmacs::Coordinates> acmacs::LayoutInterface::boundaries() const
+acmacs::Boundaries acmacs::LayoutInterface::boundaries() const
 {
-    const auto num_dim = number_of_dimensions();
     size_t point_no = 0;
     for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
-    Coordinates min_coordinates(operator[](point_no));
-    Coordinates max_coordinates(min_coordinates);
+    Boundaries result(operator[](point_no));
     ++point_no;
     for (; point_no < number_of_points(); ++point_no) {
-        const auto point = operator[](point_no);
-        if (point.not_nan()) {
-            for (size_t dim = 0; dim < num_dim; ++dim) {
-                if (point[dim] < min_coordinates[dim]) {
-                    min_coordinates[dim] = point[dim];
-                }
-                if (point[dim] > max_coordinates[dim]) {
-                    max_coordinates[dim] = point[dim];
-                }
-            }
-        }
+        if (const auto point = operator[](point_no); point.not_nan())
+            result.extend(point);
     }
-    return {min_coordinates, max_coordinates};
+    return result;
 
 } // acmacs::LayoutInterface::boundaries
 

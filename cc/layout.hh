@@ -41,6 +41,34 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
+    struct Boundaries
+    {
+        Coordinates min, max;
+
+        Boundaries(const Coordinates& a_min, const Coordinates& a_max) : min(a_min), max(a_max) {}
+        Boundaries(const Coordinates& a_min) : min(a_min), max(a_min) {}
+
+        constexpr size_t num_dim() const { return min.size(); }
+
+        void extend(const Coordinates& point)
+        {
+            for (size_t dim = 0; dim < num_dim(); ++dim) {
+                if (point[dim] < min[dim])
+                    min[dim] = point[dim];
+                if (point[dim] > max[dim])
+                    max[dim] = point[dim];
+            }
+        }
+
+    }; // struct Boundaries
+
+    inline std::string to_string(const Boundaries& boundaries, int precision = 32)
+    {
+        return to_string(boundaries.min, precision) + ' ' + to_string(boundaries.max, precision);
+    }
+
+// ----------------------------------------------------------------------
+
     class LayoutInterface
     {
      public:
@@ -70,7 +98,7 @@ namespace acmacs
           // returns indexes for min points for each dimension and max points for each dimension
         virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
           // returns boundary coordinates (min and max)
-        virtual std::pair<Coordinates, Coordinates> boundaries() const;
+        virtual Boundaries boundaries() const;
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
 
