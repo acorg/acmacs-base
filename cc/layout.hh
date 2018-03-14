@@ -8,6 +8,7 @@
 #include "acmacs-base/size.hh"
 #include "acmacs-base/stream.hh"
 #include "acmacs-base/indexes.hh"
+#include "acmacs-base/range.hh"
 
 // ----------------------------------------------------------------------
 
@@ -45,12 +46,12 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    struct Boundaries
+    struct Area
     {
         Coordinates min, max;
 
-        Boundaries(const Coordinates& a_min, const Coordinates& a_max) : min(a_min), max(a_max) {}
-        Boundaries(const Coordinates& a_min) : min(a_min), max(a_min) {}
+        Area(const Coordinates& a_min, const Coordinates& a_max) : min(a_min), max(a_max) {}
+        Area(const Coordinates& a_min) : min(a_min), max(a_min) {}
 
         size_t num_dim() const { return min.size(); }
 
@@ -72,11 +73,49 @@ namespace acmacs
             return result;
         }
 
-    }; // struct Boundaries
+        class Iterator
+        {
+         private:
+            double step_;
+            Coordinates min_, max_, current_;
 
-    inline std::string to_string(const Boundaries& boundaries, int precision = 32) { return to_string(boundaries.min, precision) + ' ' + to_string(boundaries.max, precision); }
+            friend struct Area;
+            Iterator(double step, const Coordinates& a_min, const Coordinates& a_max) : step_(step), min_(a_min), max_(a_max), current_(a_min) {}
+            Iterator(const Coordinates& a_max) : step_(std::numeric_limits<double>::quiet_NaN()), min_(a_max), max_(a_max), current_(a_max) {}
 
-    inline std::ostream& operator<<(std::ostream& s, const Boundaries& boundaries) { return s << to_string(boundaries, 4); }
+          public:
+            bool operator==(const Iterator& rhs) const
+                {
+                    return current_[0] > rhs.current_[0];
+                    // return std::all_of(acmacs::index_iterator(0UL), acmacs::index_iterator(current_.size()), [this,&rhs](auto dim) { return this->current_[dim] >= rhs.current_[dim]; });
+                }
+            bool operator!=(const Iterator& rhs) const { return !operator==(rhs); }
+            const Coordinates& operator*() const { return current_; }
+            const Coordinates* operator->() const { return &current_; }
+
+            const Iterator& operator++()
+                {
+                    if (current_[0] <= max_[0]) {
+                        for (auto dim : acmacs::range(current_.size())) {
+                            current_[dim] += step_;
+                            if (current_[dim] <= max_[dim]) {
+                                std::copy(min_.begin(), min_.begin() + static_cast<Coordinates::difference_type>(dim), current_.begin());
+                                break;
+                            }
+                        }
+                    }
+                    return *this;
+                }
+        };
+
+        Iterator begin(double step) const { return Iterator(step, min, max); }
+        Iterator end() const { return Iterator(max); }
+
+    }; // struct Area
+
+    inline std::string to_string(const Area& area, int precision = 32) { return to_string(area.min, precision) + ' ' + to_string(area.max, precision); }
+
+    inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
 
     // ----------------------------------------------------------------------
 
@@ -109,8 +148,8 @@ namespace acmacs
         // returns indexes for min points for each dimension and max points for each dimension
         virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
         // returns boundary coordinates (min and max)
-        virtual Boundaries boundaries() const;                                  // for all points
-        virtual Boundaries boundaries(const std::vector<size_t>& points) const; // just for the specified point indexes
+        virtual Area area() const;                                  // for all points
+        virtual Area area(const std::vector<size_t>& points) const; // just for the specified point indexes
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
 

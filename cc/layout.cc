@@ -32,11 +32,11 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::LayoutInterface::min
 
 // ----------------------------------------------------------------------
 
-acmacs::Boundaries acmacs::LayoutInterface::boundaries() const
+acmacs::Area acmacs::LayoutInterface::area() const
 {
     size_t point_no = 0;
     for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
-    Boundaries result(operator[](point_no));
+    Area result(operator[](point_no));
     ++point_no;
     for (; point_no < number_of_points(); ++point_no) {
         if (const auto point = operator[](point_no); point.not_nan())
@@ -48,9 +48,9 @@ acmacs::Boundaries acmacs::LayoutInterface::boundaries() const
 
 // ----------------------------------------------------------------------
 
-acmacs::Boundaries acmacs::LayoutInterface::boundaries(const std::vector<size_t>& points) const // just for the specified point indexes
+acmacs::Area acmacs::LayoutInterface::area(const std::vector<size_t>& points) const // just for the specified point indexes
 {
-    Boundaries result(operator[](points.front()));
+    Area result(operator[](points.front()));
     for (auto point_no : points) {
         if (const auto point = operator[](point_no); point.not_nan())
             result.extend(point);
