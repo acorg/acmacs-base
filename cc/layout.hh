@@ -48,7 +48,7 @@ namespace acmacs
         Boundaries(const Coordinates& a_min, const Coordinates& a_max) : min(a_min), max(a_max) {}
         Boundaries(const Coordinates& a_min) : min(a_min), max(a_min) {}
 
-        constexpr size_t num_dim() const { return min.size(); }
+        size_t num_dim() const { return min.size(); }
 
         void extend(const Coordinates& point)
         {
