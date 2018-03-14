@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <cassert>
+#include <cmath>
 
 #include "acmacs-base/vector.hh"
 #include "acmacs-base/transformation.hh"
@@ -80,15 +81,26 @@ namespace acmacs
             Coordinates min_, max_, current_;
 
             friend struct Area;
-            Iterator(double step, const Coordinates& a_min, const Coordinates& a_max) : step_(step), min_(a_min), max_(a_max), current_(a_min) {}
-            Iterator(const Coordinates& a_max) : step_(std::numeric_limits<double>::quiet_NaN()), min_(a_max), max_(a_max), current_(a_max) {}
+            Iterator(double step, const Coordinates& a_min, const Coordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
+            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()) {}
+
+            void set_max(const Coordinates& a_max)
+                {
+                    for (auto dim : acmacs::range(max_.size()))
+                        max_[dim] = min_[dim] + std::ceil((a_max[dim] - min_[dim]) / step_) * step_;
+                }
 
           public:
             bool operator==(const Iterator& rhs) const
                 {
-                    return current_[0] > rhs.current_[0];
-                    // return std::all_of(acmacs::index_iterator(0UL), acmacs::index_iterator(current_.size()), [this,&rhs](auto dim) { return this->current_[dim] >= rhs.current_[dim]; });
+                    if (std::isnan(rhs.step_))
+                        return current_[0] > max_[0];
+                    else if (std::isnan(step_))
+                        return rhs.current_[0] > rhs.max_[0];
+                    else
+                        throw std::runtime_error("cannot compare Area::Iterators");
                 }
+
             bool operator!=(const Iterator& rhs) const { return !operator==(rhs); }
             const Coordinates& operator*() const { return current_; }
             const Coordinates* operator->() const { return &current_; }
@@ -109,7 +121,7 @@ namespace acmacs
         };
 
         Iterator begin(double step) const { return Iterator(step, min, max); }
-        Iterator end() const { return Iterator(max); }
+        Iterator end() const { return Iterator{}; }
 
     }; // struct Area
 
