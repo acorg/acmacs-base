@@ -21,11 +21,16 @@ namespace acmacs
         // Vector& operator=(const std::vector<double>& src) { std::vector<double>::operator=(src); return *this; }
         // Vector& operator=(std::vector<double>&& src) { std::vector<double>::operator=(std::move(src)); return *this; }
 
-          // Multiplies all vector elements by aAlpha
+          // add/subtruct/multiply/divide all vector elements by aAlpha
         Vector& operator+=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value + aAlpha; }); return *this; }
         Vector& operator-=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value - aAlpha; }); return *this; }
         Vector& operator*=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value * aAlpha; }); return *this; }
         Vector& operator/=(double aAlpha) { std::transform(begin(), end(), begin(), [aAlpha](double value) { return value / aAlpha; }); return *this; }
+
+        Vector operator+(double aAlpha) const { Vector result(*this); return result += aAlpha; }
+        Vector operator-(double aAlpha) const { Vector result(*this); return result -= aAlpha; }
+        Vector operator*(double aAlpha) const { Vector result(*this); return result *= aAlpha; }
+        Vector operator/(double aAlpha) const { Vector result(*this); return result /= aAlpha; }
 
         Vector& operator+=(const Vector& y) { std::transform(begin(), end(), y.begin(), begin(), std::plus<double>()); return *this; }
         Vector& operator-=(const Vector& y) { std::transform(begin(), end(), y.begin(), begin(), std::minus<double>()); return *this; }

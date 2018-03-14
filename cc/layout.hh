@@ -15,21 +15,25 @@ namespace acmacs
 {
     class Coordinates : public Vector
     {
-     public:
+      public:
         using Vector::Vector;
 
         Coordinates transform(const Transformation& aTransformation) const
-            {
-                const auto [x, y] = aTransformation.transform(operator[](0), operator[](1));
-                return {x, y};
-            }
+        {
+            const auto [x, y] = aTransformation.transform(operator[](0), operator[](1));
+            return {x, y};
+        }
 
         bool not_nan() const
-            {
-                return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return ! std::isnan(value); });
-            }
+        {
+            return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
+        }
 
-        operator Location() const { assert(size() == 2); return {operator[](0), operator[](1)}; }
+        operator Location() const
+        {
+            assert(size() == 2);
+            return {operator[](0), operator[](1)};
+        }
 
     }; // class Coordinates
 
@@ -39,7 +43,7 @@ namespace acmacs
         return s;
     }
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     struct Boundaries
     {
@@ -60,18 +64,25 @@ namespace acmacs
             }
         }
 
+        double area() const
+        {
+            double result = max[0] - min[0];
+            for (size_t dim = 1; dim < num_dim(); ++dim)
+                result *= max[dim] - min[dim];
+            return result;
+        }
+
     }; // struct Boundaries
 
-    inline std::string to_string(const Boundaries& boundaries, int precision = 32)
-    {
-        return to_string(boundaries.min, precision) + ' ' + to_string(boundaries.max, precision);
-    }
+    inline std::string to_string(const Boundaries& boundaries, int precision = 32) { return to_string(boundaries.min, precision) + ' ' + to_string(boundaries.max, precision); }
 
-// ----------------------------------------------------------------------
+    inline std::ostream& operator<<(std::ostream& s, const Boundaries& boundaries) { return s << to_string(boundaries, 4); }
+
+    // ----------------------------------------------------------------------
 
     class LayoutInterface
     {
-     public:
+      public:
         LayoutInterface() = default;
         LayoutInterface(const LayoutInterface&) = default;
         virtual ~LayoutInterface() = default;
@@ -95,10 +106,10 @@ namespace acmacs
             return (c1.not_nan() && c2.not_nan()) ? c1.distance(c2) : no_distance;
         }
 
-          // returns indexes for min points for each dimension and max points for each dimension
+        // returns indexes for min points for each dimension and max points for each dimension
         virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
-          // returns boundary coordinates (min and max)
-        virtual Boundaries boundaries() const; // for all points
+        // returns boundary coordinates (min and max)
+        virtual Boundaries boundaries() const;                                  // for all points
         virtual Boundaries boundaries(const std::vector<size_t>& points) const; // just for the specified point indexes
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
@@ -117,16 +128,16 @@ namespace acmacs
         return s;
     }
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     class Layout : public virtual LayoutInterface, public std::vector<double>
     {
-     public:
+      public:
         Layout() = default;
         Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
-            : std::vector<double>(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()),
-            number_of_dimensions_{aNumberOfDimensions}
-            {}
+            : std::vector<double>(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions}
+        {
+        }
         Layout(const Layout&) = default;
         Layout(const LayoutInterface& aSource) : std::vector<double>(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
         Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
@@ -136,36 +147,36 @@ namespace acmacs
         size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
 
         void change_number_of_dimensions(size_t num_dim, bool allow_dimensions_increase = false)
-            {
-                if (!allow_dimensions_increase && num_dim >= number_of_dimensions_) {
-                    throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + std::to_string(number_of_dimensions_) + " --> " + std::to_string(num_dim));
-                      // std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
-                }
-                resize(number_of_points() * num_dim);
-                number_of_dimensions_ = num_dim;
+        {
+            if (!allow_dimensions_increase && num_dim >= number_of_dimensions_) {
+                throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + std::to_string(number_of_dimensions_) + " --> " + std::to_string(num_dim));
+                // std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
             }
+            resize(number_of_points() * num_dim);
+            number_of_dimensions_ = num_dim;
+        }
 
         const Coordinates operator[](size_t aPointNo) const override
-            {
-                return {begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
-            }
+        {
+            return {begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
+        }
 
         double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const override { return !std::isnan(coordinate(point_no, 0)); }
         std::vector<double> as_flat_vector_double() const override { return *this; }
         std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
         void set(size_t aPointNo, const Coordinates& aCoordinates) override
-            {
-                std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
-            }
+        {
+            std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
+        }
 
         void set_nan(size_t aPointNo)
-            {
-                const auto first{begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
-                std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
-            }
+        {
+            const auto first{begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
+            std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
+        }
 
-        virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no * number_of_dimensions() + dimension_no) = value; }
+        virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no* number_of_dimensions() + dimension_no) = value; }
 
         void remove_points(const ReverseSortedIndexes& indexes, size_t base)
         {
