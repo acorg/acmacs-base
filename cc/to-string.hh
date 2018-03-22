@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <tuple>
 #include <cstdio>
 #include <cmath>
 
@@ -35,6 +36,16 @@ namespace acmacs
     inline std::string to_string(std::string src) { return src; }
     inline std::string to_string(std::string_view src) { return std::string(src); }
     inline std::string to_string(const char* src) { return src; }
+
+    template <typename L, typename R> inline std::string to_string(const std::pair<L, R>& arg)
+    {
+        std::string result{'<'};
+        result += to_string(arg.first);
+        result += ", ";
+        result += to_string(arg.second);
+        result += '>';
+        return result;
+    }
 
     template <typename Iter, typename ... Args> inline std::string to_string(Iter first, Iter last, Args&& ... args)
     {

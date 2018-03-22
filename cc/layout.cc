@@ -104,6 +104,26 @@ acmacs::Layout::Layout(const LayoutInterface& aSource, const std::vector<size_t>
 } // acmacs::Layout::Layout
 
 // ----------------------------------------------------------------------
+
+std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
+{
+    std::vector<std::pair<double, double>> result(number_of_dimensions_);
+    using diff_t = decltype(result)::difference_type;
+    for (auto dim : acmacs::range(number_of_dimensions_)) {
+        const auto offset = begin() + static_cast<diff_t>(dim);
+        result[dim] = std::pair(*offset, *offset);
+    }
+    for (auto it = begin() + static_cast<diff_t>(number_of_dimensions_); it != end(); ) {
+        for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
+            result[dim].first = std::min(result[dim].first, *it);
+            result[dim].second = std::max(result[dim].second, *it);
+        }
+    }
+    return result;
+
+} // acmacs::Layout::minmax
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

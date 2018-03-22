@@ -242,6 +242,8 @@ namespace acmacs
             insert(begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
         }
 
+        std::vector<std::pair<double, double>> minmax() const;
+
       private:
         size_t number_of_dimensions_;
 
