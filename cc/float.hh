@@ -7,8 +7,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "acmacs-base/config.hh"
-
 // ----------------------------------------------------------------------
 
 // http://en.cppreference.com/w/cpp/types/numeric_limits/epsilon

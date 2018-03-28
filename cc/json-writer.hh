@@ -5,11 +5,7 @@
 #include <map>
 #include <set>
 
-#include "acmacs-base/config.hh"
-
-#ifdef ACMACSD_FILESYSTEM
 #include "acmacs-base/read-file.hh"
-#endif
 #include "acmacs-base/float.hh"
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/rapidjson.hh"
@@ -309,14 +305,12 @@ namespace json_writer
 
       // ----------------------------------------------------------------------
 
-#ifdef ACMACSD_FILESYSTEM
     using acmacs::file::ForceCompression;
 
     template <typename V> inline void export_to_json(const V& value, std::string filename, size_t indent, ForceCompression force_compression = ForceCompression::No)
     {
         acmacs::file::write(filename, json(value, indent), force_compression);
     }
-#endif
 
 } // namespace json_writer
 

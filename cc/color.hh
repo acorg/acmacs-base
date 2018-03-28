@@ -6,12 +6,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "acmacs-base/config.hh"
 #include "acmacs-base/to-string.hh"
-
-#ifdef ACMACS_TARGET_BROWSER
-#error Not supported in cheerp client! include client/color.hh
-#endif
 
 // ----------------------------------------------------------------------
 

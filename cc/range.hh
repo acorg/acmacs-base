@@ -6,7 +6,6 @@
 #include <functional>
 #include <numeric>
 
-#include "acmacs-base/throw.hh"
 #include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
@@ -48,7 +47,7 @@ namespace acmacs
 //     {
 //      public:
 //         increment() {}
-//         increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) THROW_OR_VOID(std::runtime_error("Invalid range with step 0")); }
+//         increment(T aStep, T aLast) : step(aStep), last(aLast) { if (step == T{0}) throw std::runtime_error("Invalid range with step 0"); }
 //         void operator()(T& current)
 //             {
 //                 if (current != internal::input_iterator<T, increment>::End) {
@@ -226,13 +225,10 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-
-#ifdef ACMACS_TARGET_OS
 inline std::ostream& operator << (std::ostream& out, const acmacs::IndexGenerator& aGen)
 {
     return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
 }
-#endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:

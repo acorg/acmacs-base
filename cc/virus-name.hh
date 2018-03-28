@@ -4,8 +4,6 @@
 #include <regex>
 #include <iostream>
 
-#include "acmacs-base/throw.hh"
-
 // ----------------------------------------------------------------------
 
 namespace virus_name
@@ -93,7 +91,7 @@ namespace virus_name
         else if (std::regex_search(name, m, cdc))
             location = "#" + m[1].str();
         else
-            THROW(Unrecognized{"No location in " + name}, std::string{});
+            throw Unrecognized{"No location in " + name};
         return location;
     }
 
@@ -118,7 +116,7 @@ namespace virus_name
         std::smatch m;
         if (std::regex_match(name, m, _internal::international))
             return {name.data() + m.position(1), static_cast<size_t>(m.length(1))};
-        THROW(Unrecognized("No virus_type in " + name), std::string_view(name.data(), 0U));
+        throw Unrecognized("No virus_type in " + name);
 
     } // AntigenSerum::virus_type
 
@@ -129,7 +127,7 @@ namespace virus_name
         std::smatch m;
         if (std::regex_match(name, m, _internal::international))
             return _internal::make_year(m);
-        THROW(Unrecognized("No year in " + name), std::string{});
+        throw Unrecognized("No year in " + name);
 
     } // AntigenSerum::year
 
@@ -147,7 +145,7 @@ namespace virus_name
             passage = m[7].str();
         }
         else
-            THROW_OR_VOID(Unrecognized{"Cannot split " + name});
+            throw Unrecognized("Cannot split " + name);
     }
 
 // ----------------------------------------------------------------------

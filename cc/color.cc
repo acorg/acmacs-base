@@ -3,7 +3,6 @@
 #include <map>
 #include <cmath>
 
-#include "acmacs-base/throw.hh"
 #include "acmacs-base/color.hh"
 #include "acmacs-base/string.hh"
 
@@ -91,7 +90,7 @@ std::string Color::to_hex_string() const
 void Color::from_string(const std::string_view& aColor)
 {
     if (aColor.empty())
-        THROW_OR_CERR(std::invalid_argument("cannot read Color from empty string"));
+        throw std::invalid_argument("cannot read Color from empty string");
     type_ = type::regular;
     if (aColor[0] == '#') {
         const auto v = static_cast<uint32_t>(std::strtoul(aColor.data() + 1, nullptr, 16));
@@ -104,7 +103,7 @@ void Color::from_string(const std::string_view& aColor)
               color_.color = v;
               break;
           default:
-              THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
+              throw std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor));
         }
     }
     else {
@@ -112,7 +111,7 @@ void Color::from_string(const std::string_view& aColor)
         if (e != _internal::sNameToColor.end())
             color_.color = e->second;
         else
-            THROW_OR_CERR(std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor)));
+            throw std::invalid_argument("cannot read Color from " + acmacs::to_string(aColor));
     }
 
 } // Color::from_string

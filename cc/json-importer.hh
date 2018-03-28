@@ -9,7 +9,6 @@
 #include <iostream>
 #include <memory>
 
-#include "acmacs-base/throw.hh"
 #include "acmacs-base/rapidjson.hh"
 
 // ----------------------------------------------------------------------
@@ -48,44 +47,27 @@ namespace json_importer
              public:
                 enum Tag { Failure, Pop, Pop2 };
                 static Msg sMsg;
-                inline void failure(std::string aMessage) { mTag = Failure; mMessage = aMessage; }
-                inline void pop() { mTag = Pop; }
-                inline void pop2() { mTag = Pop2; }
-                inline void report() const { if (mTag == Failure && !mMessage.empty()) std::cerr << "ERROR: " << mMessage << std::endl; }
-                inline bool is_failure() const { return mTag == Failure; }
-                inline bool is_pop() const { return mTag == Pop; }
-                inline bool is_pop2() const { return mTag == Pop2; }
+                void failure(std::string aMessage) { mTag = Failure; mMessage = aMessage; }
+                void pop() { mTag = Pop; }
+                void pop2() { mTag = Pop2; }
+                void report() const { if (mTag == Failure && !mMessage.empty()) std::cerr << "ERROR: " << mMessage << std::endl; }
+                bool is_failure() const { return mTag == Failure; }
+                bool is_pop() const { return mTag == Pop; }
+                bool is_pop2() const { return mTag == Pop2; }
 
              private:
-                inline Msg() : mTag(Failure) {}
+                Msg() : mTag(Failure) {}
                 Tag mTag;
                 std::string mMessage;
             };
 
-#ifdef NO_EXCEPTIONS
-            inline Msg* failure(std::string aMessage) { Msg::sMsg.failure(aMessage); return &Msg::sMsg; }
-            inline Msg* pop() { Msg::sMsg.pop(); return &Msg::sMsg; }
-            inline Msg* pop2() { Msg::sMsg.pop2(); return &Msg::sMsg; }
-
-            inline bool failure(Base* ptr, bool report = true)
-            {
-                const auto* msg = DYNAMIC_CAST(Msg*, ptr);
-                const bool result = msg && msg->is_failure();
-                if (result && report)
-                    msg->report();
-                return result;
-            }
-            inline bool pop(Base* ptr) { const auto* msg = DYNAMIC_CAST(Msg*, ptr); return msg && msg->is_pop(); }
-            inline bool pop2(Base* ptr) { const auto* msg = DYNAMIC_CAST(Msg*, ptr); return msg && msg->is_pop2(); }
-#else
-            class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; inline Failure() : std::runtime_error{""} {} };
+            class Failure : public std::runtime_error { public: using std::runtime_error::runtime_error; Failure() : std::runtime_error{""} {} };
             class Pop : public std::exception { public: using std::exception::exception; };
             class Pop2 : public std::exception { public: using std::exception::exception; };
 
             inline Msg* failure(std::string aMessage) { throw Failure(aMessage); }
             inline Msg* pop() { throw Pop(); }
             inline Msg* pop2() { throw Pop2(); }
-#endif
 
         } // namespace _i
 
@@ -106,11 +88,11 @@ namespace json_importer
         template <typename F> class Storer : public Base
         {
          public:
-            inline Storer(F aStorage) : mStorage(aStorage) {}
+            Storer(F aStorage) : mStorage(aStorage) {}
          protected:
-            inline virtual Base* pop() { return nullptr; }
-            template <typename ...Args> inline Base* store(Args... args) { mStorage(args...); return pop(); }
-            inline F& storage() { return mStorage; }
+            virtual Base* pop() { return nullptr; }
+            template <typename ...Args> Base* store(Args... args) { mStorage(args...); return pop(); }
+            F& storage() { return mStorage; }
          private:
             F mStorage;
         };
@@ -119,41 +101,41 @@ namespace json_importer
         {
          public:
             using Storer<F>::Storer;
-            inline virtual Base* String(const char* str, rapidjson::SizeType length) { return this->store(str, length); }
+            virtual Base* String(const char* str, rapidjson::SizeType length) { return this->store(str, length); }
         };
 
         template <typename F> class Double_ : public Storer<F>
         {
          public:
             using Storer<F>::Storer;
-            inline virtual Base* Double(double d) { return this->store(d); }
-            inline virtual Base* Int(int i) { return this->store(static_cast<double>(i)); }
-            inline virtual Base* Uint(unsigned u) { return this->store(static_cast<double>(u)); }
+            virtual Base* Double(double d) { return this->store(d); }
+            virtual Base* Int(int i) { return this->store(static_cast<double>(i)); }
+            virtual Base* Uint(unsigned u) { return this->store(static_cast<double>(u)); }
         };
 
         template <typename F> class Unsigned_ : public Storer<F>
         {
          public:
             using Storer<F>::Storer;
-            inline virtual Base* Uint(unsigned u) { return this->store(u); }
-            inline virtual Base* Int(int i) { if (i == -1) return this->store(static_cast<unsigned>(i)); else return Storer<F>::Int(i); } // to read -1 for some size_t fields
+            virtual Base* Uint(unsigned u) { return this->store(u); }
+            virtual Base* Int(int i) { if (i == -1) return this->store(static_cast<unsigned>(i)); else return Storer<F>::Int(i); } // to read -1 for some size_t fields
         };
 
         template <typename F> class Int_ : public Storer<F>
         {
          public:
             using Storer<F>::Storer;
-            inline virtual Base* Int(int i) { return this->store(i); }
-            inline virtual Base* Uint(unsigned u) { return Int(static_cast<int>(u)); }
+            virtual Base* Int(int i) { return this->store(i); }
+            virtual Base* Uint(unsigned u) { return Int(static_cast<int>(u)); }
         };
 
         template <typename F> class Bool_ : public Storer<F>
         {
          public:
             using Storer<F>::Storer;
-            inline virtual Base* Bool(bool b) { return this->store(b); }
-              // inline virtual Base* Int(int i) { return Bool(i != 0); }
-            inline virtual Base* Uint(unsigned u) { return Bool(u != 0); }
+            virtual Base* Bool(bool b) { return this->store(b); }
+              // virtual Base* Int(int i) { return Bool(i != 0); }
+            virtual Base* Uint(unsigned u) { return Bool(u != 0); }
         };
 
           // ----------------------------------------------------------------------
@@ -161,14 +143,12 @@ namespace json_importer
           // They are never called but used by field(std::vector<Field>& (Parent::*accessor)()) and reader(void(T::*setter)(V), T& target) functions below to infer of the storer's type
           // ----------------------------------------------------------------------
 
-#ifdef ACMACS_TARGET_OS
-        template <typename F> inline Unsigned_<F> type_detector(size_t) { THROW(std::exception{}, 0); }
-#endif
-        template <typename F> inline Unsigned_<F> type_detector(unsigned) { THROW(std::exception{}, 0); }
-        template <typename F> inline Int_<F> type_detector(int) { THROW(std::exception{}, 0); }
-        template <typename F> inline Double_<F> type_detector(double) { THROW(std::exception{}, 0); }
-        template <typename F> inline Bool_<F> type_detector(bool) { THROW(std::exception{}, 0); }
-        template <typename F> inline StringLength<F> type_detector(std::string) { THROW(std::exception{}, 0); }
+        template <typename F> inline Unsigned_<F> type_detector(size_t) { throw std::exception{}; }
+        template <typename F> inline Unsigned_<F> type_detector(unsigned) { throw std::exception{}; }
+        template <typename F> inline Int_<F> type_detector(int) { throw std::exception{}; }
+        template <typename F> inline Double_<F> type_detector(double) { throw std::exception{}; }
+        template <typename F> inline Bool_<F> type_detector(bool) { throw std::exception{}; }
+        template <typename F> inline StringLength<F> type_detector(std::string) { throw std::exception{}; }
 
           // ----------------------------------------------------------------------
           // to be used as template parameter F for the above to store Array values
@@ -177,10 +157,10 @@ namespace json_importer
         template <typename Target> class ArrayElement
         {
          public:
-            inline ArrayElement(std::vector<Target>& aTarget) : mTarget(aTarget) {}
-            // inline void operator()(Target aValue) { mTarget.emplace_back(aValue); }
-            // inline void operator()(const char* str, size_t length) { mTarget.emplace_back(str, length); }
-            template <typename ...Args> inline void operator()(Args ...args) { mTarget.emplace_back(args...); }
+            ArrayElement(std::vector<Target>& aTarget) : mTarget(aTarget) {}
+            // void operator()(Target aValue) { mTarget.emplace_back(aValue); }
+            // void operator()(const char* str, size_t length) { mTarget.emplace_back(str, length); }
+            template <typename ...Args> void operator()(Args ...args) { mTarget.emplace_back(args...); }
          private:
             std::vector<Target>& mTarget;
         };
@@ -188,12 +168,12 @@ namespace json_importer
         template <typename Target> class ArrayOfArrayElementTarget
         {
          public:
-            inline ArrayOfArrayElementTarget(Target& aTarget) : mTarget(aTarget) {}
-              // inline void operator()(Target aValue) { mTarget.back().emplace_back(aValue); }
-            template <typename ...Args> inline void operator()(Args ...args) { mTarget.back().emplace_back(args...); }
-            inline size_t size() const { return mTarget.size(); }
-            inline void clear() { mTarget.clear(); }
-            inline void new_nested() { mTarget.emplace_back(); }
+            ArrayOfArrayElementTarget(Target& aTarget) : mTarget(aTarget) {}
+              // void operator()(Target aValue) { mTarget.back().emplace_back(aValue); }
+            template <typename ...Args> void operator()(Args ...args) { mTarget.back().emplace_back(args...); }
+            size_t size() const { return mTarget.size(); }
+            void clear() { mTarget.clear(); }
+            void new_nested() { mTarget.emplace_back(); }
          private:
             Target& mTarget;
         };
@@ -207,24 +187,24 @@ namespace json_importer
         class Ignore : public Base
         {
          public:
-            inline Ignore() : mNesting(0) {}
+            Ignore() : mNesting(0) {}
 
-            inline Base* pop() { if (mNesting == 0) return _i::pop(); else return nullptr; }
-            inline Base* decr() { --mNesting; return pop(); }
+            Base* pop() { if (mNesting == 0) return _i::pop(); else return nullptr; }
+            Base* decr() { --mNesting; return pop(); }
 
-            inline virtual Base* StartObject() { ++mNesting; return nullptr; }
-            inline virtual Base* EndObject() { return decr(); }
-            inline virtual Base* StartArray() { ++mNesting; return nullptr; }
-            inline virtual Base* EndArray() { return decr(); }
-            inline virtual Base* Key(const char*, rapidjson::SizeType) { return nullptr; }
-            inline virtual Base* String(const char*, rapidjson::SizeType) { return pop(); }
-            inline virtual Base* Int(int) { return pop(); }
-            inline virtual Base* Uint(unsigned) { return pop(); }
-            inline virtual Base* Double(double) { return pop(); }
-            inline virtual Base* Bool(bool) { return pop(); }
-            inline virtual Base* Null() { return pop(); }
-            inline virtual Base* Int64(int64_t) { return pop(); }
-            inline virtual Base* Uint64(uint64_t) { return pop(); }
+            virtual Base* StartObject() { ++mNesting; return nullptr; }
+            virtual Base* EndObject() { return decr(); }
+            virtual Base* StartArray() { ++mNesting; return nullptr; }
+            virtual Base* EndArray() { return decr(); }
+            virtual Base* Key(const char*, rapidjson::SizeType) { return nullptr; }
+            virtual Base* String(const char*, rapidjson::SizeType) { return pop(); }
+            virtual Base* Int(int) { return pop(); }
+            virtual Base* Uint(unsigned) { return pop(); }
+            virtual Base* Double(double) { return pop(); }
+            virtual Base* Bool(bool) { return pop(); }
+            virtual Base* Null() { return pop(); }
+            virtual Base* Int64(int64_t) { return pop(); }
+            virtual Base* Uint64(uint64_t) { return pop(); }
 
          private:
             size_t mNesting;
@@ -245,9 +225,9 @@ namespace json_importer
         template <typename Target> class Object : public Base
         {
          public:
-            inline Object(Target aTarget, bool aStarted = false) : mTarget(aTarget), mStarted(aStarted) {}
+            Object(Target aTarget, bool aStarted = false) : mTarget(aTarget), mStarted(aStarted) {}
 
-            inline virtual Base* Key(const char* str, rapidjson::SizeType length)
+            virtual Base* Key(const char* str, rapidjson::SizeType length)
                 {
                     if (!mStarted)
                         return storers::_i::failure(typeid(*this).name() + std::string(": unexpected Key event"));
@@ -263,7 +243,7 @@ namespace json_importer
                     return r;
                 }
 
-            inline virtual Base* StartObject()
+            virtual Base* StartObject()
                 {
                     if (mStarted)
                         return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
@@ -271,7 +251,7 @@ namespace json_importer
                     return nullptr;
                 }
 
-            inline virtual Base* EndObject()
+            virtual Base* EndObject()
                 {
                     return storers::_i::pop();
                 }
@@ -279,7 +259,7 @@ namespace json_importer
          protected:
             virtual Base* match_key(const char* str, rapidjson::SizeType length) = 0;
 
-            inline Target& target() { return mTarget; }
+            Target& target() { return mTarget; }
 
          private:
             Target mTarget;
@@ -295,7 +275,7 @@ namespace json_importer
          public:
             using ValueStorer::ValueStorer;
          protected:
-            inline virtual Base* pop() { return storers::_i::pop(); }
+            virtual Base* pop() { return storers::_i::pop(); }
         };
 
           // ----------------------------------------------------------------------
@@ -307,7 +287,7 @@ namespace json_importer
             template <typename Parent> class Base
             {
              public:
-                inline Base() = default;
+                Base() = default;
                 virtual ~Base() {}
                 virtual readers::Base* reader(Parent& parent) = 0;
             };
@@ -327,10 +307,10 @@ namespace json_importer
         template <typename Target> class DataRef : public Object<Target&>
         {
          public:
-            inline DataRef(Target& aTarget, data<Target>& aData, bool aStarted = false) : Object<Target&>(aTarget, aStarted), mData(aData) {}
+            DataRef(Target& aTarget, data<Target>& aData, bool aStarted = false) : Object<Target&>(aTarget, aStarted), mData(aData) {}
 
          protected:
-            virtual inline readers::Base* match_key(const char* str, rapidjson::SizeType length)
+            virtual readers::Base* match_key(const char* str, rapidjson::SizeType length)
                 {
                     const std::string k{str, length};
                       // std::cerr << typeid(*this).name() << " " << k << std::endl;
@@ -353,9 +333,9 @@ namespace json_importer
         template <typename Element> class ArrayOfObjects : public Base
         {
          public:
-            inline ArrayOfObjects(std::vector<Element>& aArray, data<Element>& aData) : mArray(aArray), mData(aData), mStarted(false) {}
+            ArrayOfObjects(std::vector<Element>& aArray, data<Element>& aData) : mArray(aArray), mData(aData), mStarted(false) {}
 
-            inline virtual Base* StartArray()
+            virtual Base* StartArray()
                 {
                     if (mStarted)
                         return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
@@ -364,13 +344,13 @@ namespace json_importer
                     return nullptr;
                 }
 
-            inline virtual Base* EndArray()
+            virtual Base* EndArray()
                 {
                       // std::cerr << "EndArray of " << typeid(Element).name() << " elements:" << mArray.size() << std::endl;
                     return storers::_i::pop();
                 }
 
-            inline virtual Base* StartObject()
+            virtual Base* StartObject()
                 {
                     if (!mStarted)
                         return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartObject event"));
@@ -392,9 +372,9 @@ namespace json_importer
         template <typename Element, typename Storer> class ArrayOfValues : public Storer
         {
          public:
-            inline ArrayOfValues(std::vector<Element>& aArray) : Storer(aArray), mArray(aArray), mStarted(false) {}
+            ArrayOfValues(std::vector<Element>& aArray) : Storer(aArray), mArray(aArray), mStarted(false) {}
 
-            inline virtual Base* StartArray()
+            virtual Base* StartArray()
                 {
                     if (mStarted)
                         return storers::_i::failure(typeid(*this).name() + std::string(": unexpected StartArray event"));
@@ -403,7 +383,7 @@ namespace json_importer
                     return nullptr;
                 }
 
-            inline virtual Base* EndArray()
+            virtual Base* EndArray()
                 {
                     return storers::_i::pop();
                 }
@@ -421,9 +401,9 @@ namespace json_importer
         template <typename Target, typename Storer> class ArrayOfArrayOfValuesTarget : public Storer
         {
          public:
-            inline ArrayOfArrayOfValuesTarget(Target& aArray) : Storer(aArray), mNesting(0) {}
+            ArrayOfArrayOfValuesTarget(Target& aArray) : Storer(aArray), mNesting(0) {}
 
-            inline virtual Base* StartArray()
+            virtual Base* StartArray()
                 {
                     switch (mNesting) {
                       case 0:
@@ -439,7 +419,7 @@ namespace json_importer
                     return nullptr;
                 }
 
-            inline virtual Base* EndArray()
+            virtual Base* EndArray()
                 {
                     switch (mNesting) {
                       case 1:
@@ -508,8 +488,8 @@ namespace json_importer
                 class Setter : public Base<Parent>
             {
              public:
-                inline Setter(Func aF) : mF(aF) {}
-                virtual inline readers::Base* reader(Parent& parent) { return readers::reader(mF, parent); }
+                Setter(Func aF) : mF(aF) {}
+                virtual readers::Base* reader(Parent& parent) { return readers::reader(mF, parent); }
 
              private:
                 Func mF;
@@ -519,8 +499,8 @@ namespace json_importer
                 class Accessor : public Base<Parent>
             {
              public:
-                inline Accessor(Func aF, data<Field>& aData) : mF(aF), mData(aData) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                Accessor(Func aF, data<Field>& aData) : mF(aF), mData(aData) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new DataRef<Field>(std::bind(mF, &parent)(), mData);
                     }
@@ -534,8 +514,8 @@ namespace json_importer
                 class AccessorField : public Base<Parent>
             {
              public:
-                inline AccessorField(Field Parent::* aF, data<Field>& aData) : mF(aF), mData(aData) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                AccessorField(Field Parent::* aF, data<Field>& aData) : mF(aF), mData(aData) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new DataRef<Field>(parent.*mF, mData);
                     }
@@ -549,8 +529,8 @@ namespace json_importer
                 class ArrayOfObjectsAccessor : public Base<Parent>
             {
              public:
-                inline ArrayOfObjectsAccessor(Func aF, data<Element>& aData) : mF(aF), mData(aData) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                ArrayOfObjectsAccessor(Func aF, data<Element>& aData) : mF(aF), mData(aData) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new ArrayOfObjects<Element>(std::bind(mF, &parent)(), mData);
                     }
@@ -564,8 +544,8 @@ namespace json_importer
                 class ArrayOfValuesAccessor : public Base<Parent>
             {
              public:
-                inline ArrayOfValuesAccessor(Func aF) : mF(aF) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                ArrayOfValuesAccessor(Func aF) : mF(aF) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new ArrayOfValues<Element, Storer>(std::bind(mF, &parent)());
                     }
@@ -578,8 +558,8 @@ namespace json_importer
                 class ArrayOfArrayOfValuesTargetAccessor : public Base<Parent>
             {
              public:
-                inline ArrayOfArrayOfValuesTargetAccessor(Func aF) : mF(aF) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                ArrayOfArrayOfValuesTargetAccessor(Func aF) : mF(aF) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new ArrayOfArrayOfValuesTarget<Target, Storer>(std::bind(mF, &parent)());
                     }
@@ -592,8 +572,8 @@ namespace json_importer
                 class ArrayOfArrayOfValuesAccessor : public Base<Parent>
             {
              public:
-                inline ArrayOfArrayOfValuesAccessor(Func aF) : mF(aF) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                ArrayOfArrayOfValuesAccessor(Func aF) : mF(aF) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new ArrayOfArrayOfValues<Element, Storer>(std::bind(mF, &parent)());
                     }
@@ -607,8 +587,8 @@ namespace json_importer
             {
              public:
                 using Accessor  = Field& (Parent::*)();
-                inline GenericAccessor(Accessor aAccessor) : mAccessor(aAccessor) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                GenericAccessor(Accessor aAccessor) : mAccessor(aAccessor) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new Storer(std::bind(mAccessor, &parent)());
                     }
@@ -621,8 +601,8 @@ namespace json_importer
             {
              public:
                 using Accessor  = Field Parent::*;
-                inline GenericAccessorField(Accessor aAccessor) : mAccessor(aAccessor) {}
-                virtual inline readers::Base* reader(Parent& parent)
+                GenericAccessorField(Accessor aAccessor) : mAccessor(aAccessor) {}
+                virtual readers::Base* reader(Parent& parent)
                     {
                         return new Storer(parent.*mAccessor);
                     }
@@ -643,19 +623,19 @@ namespace json_importer
     class EventHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, EventHandler>
     {
      public:
-          // template <typename Target> inline EventHandler(Target& aTarget)
+          // template <typename Target> EventHandler(Target& aTarget)
           //     {
           //         mHandler.emplace(json_reader(aTarget));
           //     }
 
-        template <typename Target> inline EventHandler(Target& aTarget, readers::data<Target>& aData)
+        template <typename Target> EventHandler(Target& aTarget, readers::data<Target>& aData)
             {
                 mHandler.emplace(new readers::DataRef<Target>(aTarget, aData));
             }
 
      private:
 #ifdef NO_EXCEPTIONS
-        template <typename... Args> inline bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
+        template <typename... Args> bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
             {
                 auto new_handler = ((*mHandler.top()).*aHandler)(args...);
                 if (storers::_i::failure(new_handler)) {
@@ -680,7 +660,7 @@ namespace json_importer
                 return true;
             }
 #else
-        template <typename... Args> inline bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
+        template <typename... Args> bool handler(readers::Base* (readers::Base::*aHandler)(Args... args), Args... args)
             {
                 try {
                     auto new_handler = ((*mHandler.top()).*aHandler)(args...);
@@ -714,19 +694,19 @@ namespace json_importer
 #endif
 
      public:
-        inline bool StartObject() { return handler(&readers::Base::StartObject); }
-        inline bool EndObject(rapidjson::SizeType /*memberCount*/) { return handler(&readers::Base::EndObject); }
-        inline bool StartArray() { return handler(&readers::Base::StartArray); }
-        inline bool EndArray(rapidjson::SizeType /*elementCount*/) { return handler(&readers::Base::EndArray); }
-        inline bool Key(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&readers::Base::Key, str, length); }
-        inline bool String(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&readers::Base::String, str, length); }
-        inline bool Int(int i) { return handler(&readers::Base::Int, i); }
-        inline bool Uint(unsigned u) { return handler(&readers::Base::Uint, u); }
-        inline bool Double(double d) { return handler(&readers::Base::Double, d); }
-        inline bool Bool(bool b) { return handler(&readers::Base::Bool, b); }
-        inline bool Null() { return handler(&readers::Base::Null); }
-        inline bool Int64(int64_t i) { return handler(&readers::Base::Int64, i); }
-        inline bool Uint64(uint64_t u) { return handler(&readers::Base::Uint64, u); }
+        bool StartObject() { return handler(&readers::Base::StartObject); }
+        bool EndObject(rapidjson::SizeType /*memberCount*/) { return handler(&readers::Base::EndObject); }
+        bool StartArray() { return handler(&readers::Base::StartArray); }
+        bool EndArray(rapidjson::SizeType /*elementCount*/) { return handler(&readers::Base::EndArray); }
+        bool Key(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&readers::Base::Key, str, length); }
+        bool String(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&readers::Base::String, str, length); }
+        bool Int(int i) { return handler(&readers::Base::Int, i); }
+        bool Uint(unsigned u) { return handler(&readers::Base::Uint, u); }
+        bool Double(double d) { return handler(&readers::Base::Double, d); }
+        bool Bool(bool b) { return handler(&readers::Base::Bool, b); }
+        bool Null() { return handler(&readers::Base::Null); }
+        bool Int64(int64_t i) { return handler(&readers::Base::Int64, i); }
+        bool Uint64(uint64_t u) { return handler(&readers::Base::Uint64, u); }
 
      private:
         std::stack<std::unique_ptr<readers::Base>> mHandler;
@@ -839,7 +819,7 @@ namespace json_importer
             const auto message = "json_importer failed at " + std::to_string(reader.GetErrorOffset()) + ": "
                     +  GetParseError_En(reader.GetParseErrorCode()) + "\n"
                     + aSource.substr(reader.GetErrorOffset(), 50);
-            THROW_OR_CERR(std::runtime_error(message));
+            throw std::runtime_error(message);
         }
     }
 
