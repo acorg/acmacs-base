@@ -103,6 +103,7 @@ inline std::ostream& operator<<(std::ostream& out, Color c)
 constexpr const Color ColorNoChange(Color::type::no_change, 0);
 constexpr const Color BLACK{0};
 constexpr const Color WHITE{0xFFFFFF};
+constexpr const Color GREY97{0xF7F7F7};
 constexpr const Color TRANSPARENT{0xFF000000};
 constexpr const Color RED{0xFF0000};
 constexpr const Color GREEN{0x00FF00};
