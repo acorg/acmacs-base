@@ -128,6 +128,21 @@ namespace acmacs
 
     inline std::ostream& operator<<(std::ostream& s, const acmacs::PointStyle& style) { return s << to_string(style); }
 
+    // ----------------------------------------------------------------------
+
+    class PointStyles
+    {
+     public:
+        PointStyles() = default;
+        PointStyles(const PointStyles&) = delete;
+        virtual ~PointStyles() = default;
+
+        virtual size_t number_of_points() const = 0;
+        virtual bool empty() const = 0;
+        virtual PointStyle style(size_t aPointNo) const = 0;
+
+    }; // class PointStyles
+
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
