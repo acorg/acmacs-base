@@ -110,6 +110,7 @@ constexpr const Color GREEN{0x00FF00};
 constexpr const Color BLUE{0x0000FF};
 constexpr const Color CYAN{0x00FFFF};
 constexpr const Color MAGENTA{0xFF00FF};
+constexpr const Color PINK{0xFFC0CB};
 constexpr const Color YELLOW{0xFFFF00};
 constexpr const Color GREY{0xBEBEBE};
 constexpr const Color GREY50{0x7F7F7F};
