@@ -573,7 +573,7 @@ namespace rjson
 // gcc-7 support
 // ----------------------------------------------------------------------
 
-#if __GNUC__ == 7
+#if __GNUC__ == 7 || __GNUC__ == 8
 namespace std
 {
       // gcc 7.2 wants those, if we derive from std::variant
@@ -826,7 +826,7 @@ namespace rjson
 
       // ----------------------------------------------------------------------
 
-      // gcc 7.2 wants the following functions to be defined here (not inside the class
+      // gcc 7.2 wants the following functions to be defined here (not inside the class)
 
     inline bool value::empty() const
     {

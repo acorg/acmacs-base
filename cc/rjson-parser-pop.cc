@@ -502,7 +502,7 @@ namespace rjson::parser_pop
 
 // ----------------------------------------------------------------------
 
-#if __GNUC__ == 7
+#if __GNUC__ == 7 || __GNUC__ == 8
 namespace std
 {
       // gcc 7.2 wants those, if we derive from std::variant
