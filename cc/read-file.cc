@@ -193,7 +193,7 @@ acmacs::file::temp::~temp()
 std::string acmacs::file::temp::make_template()
 {
     const char* tdir = std::getenv("T");
-    if (!tdir)
+    if (!tdir || *tdir != '/')
         tdir = std::getenv("TMPDIR");
     if (!tdir)
         tdir = "/tmp";
