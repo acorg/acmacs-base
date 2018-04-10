@@ -22,7 +22,7 @@ namespace acmacs
 
      private:
         static inline bool cmp(size_t i1, size_t i2) { return i1 > i2; }
-        void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end(), cmp), end()); }
+        void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end()), end()); }
     };
 
     template <typename T> void remove(const ReverseSortedIndexes& indexes, std::vector<T>& data, size_t base_index = 0)
