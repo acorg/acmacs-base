@@ -16,8 +16,13 @@ namespace acmacs
     class ReverseSortedIndexes : public Indexes
     {
      public:
-        explicit ReverseSortedIndexes(const Indexes& source)
-            : Indexes(source) { std::sort(begin(), end(), [](auto i1, auto i2) { return i1 > i2; }); }
+        explicit ReverseSortedIndexes(const Indexes& source) : Indexes(source) { sort(); }
+
+        void add(const Indexes& to_add) { insert(end(), to_add.begin(), to_add.end()); sort(); }
+
+     private:
+        static inline bool cmp(size_t i1, size_t i2) { return i1 > i2; }
+        void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end(), cmp), end()); }
     };
 
     template <typename T> void remove(const ReverseSortedIndexes& indexes, std::vector<T>& data, size_t base_index = 0)
