@@ -130,6 +130,13 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
+    struct PointStylesCompacted
+    {
+        std::vector<PointStyle> styles;
+        std::vector<size_t> index;
+
+    }; // class PointStylesCompacted
+
     class PointStyles
     {
      public:
@@ -140,6 +147,7 @@ namespace acmacs
         virtual size_t number_of_points() const = 0;
         virtual bool empty() const = 0;
         virtual PointStyle style(size_t aPointNo) const = 0;
+        virtual PointStylesCompacted compacted() const = 0;
 
     }; // class PointStyles
 
