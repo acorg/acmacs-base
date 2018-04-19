@@ -18,6 +18,7 @@
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wredundant-parens"
 #pragma GCC diagnostic ignored "-Wreserved-id-macro"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wshorten-64-to-32"
