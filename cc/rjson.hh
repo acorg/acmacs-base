@@ -694,7 +694,7 @@ namespace rjson
         }
     }
 
-    template <typename T> inline value& get_or_add(std::string aFieldName, T&& aDefault)
+    template <typename T> inline value& object::get_or_add(std::string aFieldName, T&& aDefault)
     {
         return get_or_add(aFieldName, to_value(std::forward<T>(aDefault)));
     }
