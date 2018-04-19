@@ -276,6 +276,8 @@ namespace rjson
         const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
         void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
         void erase(int index) { mContent.erase(mContent.begin() + index); }
+        void resize(size_t new_size);
+        void resize(size_t new_size, const value& to_insert);
         void clear() { mContent.clear(); }
 
         using iterator = decltype(std::declval<const std::vector<value>>().begin());
@@ -823,6 +825,9 @@ namespace rjson
         for (; first != last; ++first)
             insert(to_value(*first));
     }
+
+    inline void array::resize(size_t new_size, const value& to_insert) { mContent.resize(new_size, to_insert); }
+    inline void array::resize(size_t new_size) { resize(new_size, null{}); }
 
       // ----------------------------------------------------------------------
 
