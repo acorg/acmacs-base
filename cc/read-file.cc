@@ -153,8 +153,8 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCom
             throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
     }
     try {
-        if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && string::ends_with(aFilename, ".xz"))) {
-            const auto compressed = xz_compress(aData);
+        if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && (string::ends_with(aFilename, ".xz") || string::ends_with(aFilename, ".gz")))) {
+            const auto compressed = string::ends_with(aFilename, ".gz") ? gzip_compress(aData) : xz_compress(aData);
             if (::write(f, compressed.data(), compressed.size()) < 0)
                 throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
         }
