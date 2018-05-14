@@ -35,10 +35,12 @@ include $(ACMACSD_ROOT)/share/makefiles/Makefile.dist-build.vars
 CXXFLAGS = -MMD -g $(OPTIMIZATION) $(PROFILE) -fPIC -std=$(STD) $(WARNINGS) -Icc -I$(BUILD)/include -I$(AD_INCLUDE) $(PKG_INCLUDES)
 LDFLAGS = $(OPTIMIZATION) $(PROFILE)
 
+PKG_INCLUDES = $(shell pkg-config --cflags liblzma) $(shell pkg-config --cflags zlib)
+
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = -L$(AD_LIB) -lboost_date_time $$(pkg-config --libs liblzma) -lbz2 $(FS_LIB) $(CXX_LIB) # -lprofiler
+ACMACS_BASE_LDLIBS = -L$(AD_LIB) -lboost_date_time $$(pkg-config --libs liblzma) -lbz2 $$(pkg-config --libs zlib) $(FS_LIB) $(CXX_LIB) # -lprofiler
 
 # ----------------------------------------------------------------------
 

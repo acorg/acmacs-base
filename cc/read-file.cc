@@ -10,6 +10,7 @@
 
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
+#include "acmacs-base/gzip.hh"
 #include "acmacs-base/string.hh"
 #include "acmacs-base/read-file.hh"
 
@@ -82,6 +83,9 @@ std::string acmacs::file::decompress_if_necessary(std::string_view aSource)
         return xz_decompress(aSource);
     else if (bz2_compressed(aSource.data()))
         return bz2_decompress(aSource);
+    else if (gzip_compressed(aSource.data())) {
+        return gzip_decompress(aSource);
+    }
     else
         return std::string(aSource);
 
