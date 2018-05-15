@@ -1,4 +1,6 @@
+#include <stdexcept>
 #include <zlib.h>
+
 #include "acmacs-base/gzip.hh"
 
 // ----------------------------------------------------------------------
