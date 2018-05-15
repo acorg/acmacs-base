@@ -41,7 +41,7 @@ namespace acmacs::file
         strm.zfree = Z_NULL;
         strm.next_in = reinterpret_cast<decltype(strm.next_in)>(const_cast<char*>(input.data()));
         strm.total_in = strm.avail_in = static_cast<decltype(strm.avail_in)>(input.size());
-        if (deflateInit(&strm, Z_BEST_COMPRESSION) != Z_OK)
+        if (deflateInit2(&strm, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY) != Z_OK)
             throw std::runtime_error("gzip compression failed during initialization");
 
         try {
