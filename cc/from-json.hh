@@ -15,6 +15,8 @@ namespace from_json
 {
     using ConstArray = rapidjson::Value::ConstArray;
 
+    inline const rapidjson::Value& get_raw(const rapidjson::Value& aValue, const char* aName) { return aValue[aName]; }
+
     template <typename Value> Value get(const rapidjson::Value& aValue, const char* aName);
 
     template<> inline std::string get(const rapidjson::Value& aValue, const char* aName) { return aValue[aName].GetString(); }
@@ -48,31 +50,51 @@ namespace from_json
         }
     }
 
+    inline std::string to_string(const rapidjson::Value& value)
+    {
+        rapidjson::StringBuffer buffer;
+        buffer.Clear();
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        value.Accept(writer);
+        return buffer.GetString();
+    }
+
 // ----------------------------------------------------------------------
 
     class object
     {
      public:
-        inline object(std::string aSrc) { mDoc.Parse(aSrc.c_str(), aSrc.size()); }
-        inline object(object&& aSrc) : mDoc{std::move(aSrc.mDoc)} {}
-        inline object(std::istream&& aInput, std::string aFilename = "istream")
+        object(std::string aSrc) { mDoc.Parse(aSrc.c_str(), aSrc.size()); }
+        object(object&& aSrc) : mDoc{std::move(aSrc.mDoc)} {}
+        object(std::istream&& aInput, std::string aFilename = "istream")
             {
                 if (!aInput)
                     throw std::runtime_error{"cannot read json input from " + aFilename };
                 rapidjson::IStreamWrapper wrapper{aInput};
                 mDoc.ParseStream(wrapper);
             }
-        virtual inline ~object() {}
+        virtual ~object() = default;
 
-        template <typename Value> inline Value get(const char* aName) const { return from_json::get<Value>(mDoc, aName); }
-        template <typename Value> inline Value get(const char* aName, const Value& aDefault) const { return from_json::get(mDoc, aName, aDefault); }
+          // const rapidjson::Value& get_raw(const char* aName) const { return from_json::get_raw(mDoc, aName); }
+        template <typename Value> Value get(const char* aName) const { return from_json::get<Value>(mDoc, aName); }
+        template <typename Value> Value get(const char* aName, const Value& aDefault) const { return from_json::get(mDoc, aName, aDefault); }
 
-        inline std::string get_string(const char* aName) const { return get(aName, std::string{}); }
-        inline ConstArray get_array(const char* aName) const { return from_json::get<ConstArray>(mDoc, aName); } // throws rapidjson_assert
+        std::string get_string(const char* aName) const { return get(aName, std::string{}); }
+        ConstArray get_array(const char* aName) const { return from_json::get<ConstArray>(mDoc, aName); } // throws rapidjson_assert
 
-        // inline const rapidjson::Document& doc() const { return mDoc; }
+        std::string get_as_string(const char* aName) const
+            {
+                try {
+                    return from_json::to_string(from_json::get_raw(mDoc, aName));
+                }
+                catch (rapidjson_assert&) {
+                    return {};
+                }
+            }
 
-        inline std::string to_json() const
+        // const rapidjson::Document& doc() const { return mDoc; }
+
+        std::string to_json() const
             {
                 rapidjson::StringBuffer buffer;
                 rapidjson::Writer<decltype(buffer)> writer(buffer);
