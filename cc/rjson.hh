@@ -205,6 +205,7 @@ namespace rjson
         template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
 
         template <typename T> std::optional<T> get(std::string aFieldName) const;
+        std::string get_string_or_throw(std::string aFieldName) const;
 
         template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
         std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
@@ -648,6 +649,11 @@ namespace rjson
                     throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or rjson::null");
             }, val);
         }
+    }
+
+    inline std::string object::get_string_or_throw(std::string aFieldName) const
+    {
+        return std::get<string>(operator[](aFieldName)).str();
     }
 
     template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
