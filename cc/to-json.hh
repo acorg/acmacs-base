@@ -53,7 +53,9 @@ namespace to_json
         else if constexpr (std::is_same<null_t, std::decay_t<T>>::value)         { return "null"; }
         else if constexpr (std::is_same<undefined_t, std::decay_t<T>>::value)    { return "undefined"; }
         else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer)     { return std::to_string(aValue); }
-        else if constexpr (std::is_floating_point<std::decay_t<T>>::value)       { return acmacs::to_string(aValue); }
+        else if constexpr (std::is_same<double, std::decay_t<T>>::value)         { return acmacs::to_string(aValue); }
+        else if constexpr (std::is_same<float, std::decay_t<T>>::value)          { return std::to_string(aValue); }
+          // else if constexpr (std::is_floating_point<std::decay_t<T>>::value)       { return acmacs::to_string(aValue); }
         else                                                                     { static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?"); /* compilation fails trying to instantiate this type */ }
     }
 
