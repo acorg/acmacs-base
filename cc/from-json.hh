@@ -1,5 +1,7 @@
 #pragma once
 
+#error Obsolete, use rjson
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
