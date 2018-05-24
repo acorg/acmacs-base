@@ -27,8 +27,8 @@ namespace to_json
     enum null_t { null };
 
     enum Options {
-        option_default = 0,
-        ignore_empty_strings = 1
+        option_default,
+        ignore_empty_values
     };
 
 // ----------------------------------------------------------------------
@@ -72,7 +72,7 @@ namespace to_json
         {
             if constexpr (sizeof...(args) == 0) {
                     const auto val = value(std::forward<Value>(aValue));
-                    if ((options & ignore_empty_strings) && val == "\"\"")
+                    if (options == ignore_empty_values && (val == "\"\"" || val == "[]" || val == "{}" || val == "null"))
                         return target;
                     const auto prefix = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
                     return prefix + "\"" + key + "\":" + val + "}";
