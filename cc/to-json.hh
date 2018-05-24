@@ -158,6 +158,16 @@ namespace to_json
         return target;
     }
 
+    template <typename Iterator, typename Transformer, typename = if_iterator<Iterator>>
+        inline std::string array(Iterator first, Iterator last, Transformer transformer)
+    {
+        std::string target = "[]";
+        for (; first != last; ++first) {
+            target = internal::array_append(target, transformer(*first));
+        }
+        return target;
+    }
+
     template <typename ... Args> inline std::string array_append(std::string target, Args&& ... args)
     {
         return internal::join(target, array(std::forward<Args>(args) ...));
