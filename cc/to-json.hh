@@ -37,6 +37,7 @@ namespace to_json
 
     template <typename T> static inline constexpr bool is_const_char_ptr_v = is_same_<const char*, T>::value;
     template <typename T> static inline constexpr bool is_string_v = is_same_<std::string, T>::value;
+    template <typename T> static inline constexpr bool is_string_view_v = is_same_<std::string_view, T>::value;
     template <typename T> static inline constexpr bool is_raw_v = is_same_<raw, T>::value;
 
       // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
@@ -51,6 +52,7 @@ namespace to_json
     template <typename T> inline std::string value(T&& aValue)
     {
         if constexpr      (is_string_v<T>)                                       { return "\"" + aValue + "\""; }
+        else if constexpr (is_string_view_v<T>)                                  { return "\"" + std::string(aValue) + "\""; }
         else if constexpr (is_raw_v<T>)                                          { return aValue; }
         else if constexpr (is_const_char_ptr_v<T>)                               { return std::string{"\""} + aValue + "\""; }
         else if constexpr (std::is_same<bool, std::decay_t<T>>::value)           { return aValue ? "true" : "false"; }
