@@ -26,6 +26,11 @@ namespace to_json
     enum undefined_t { undefined };
     enum null_t { null };
 
+    enum Options {
+        option_default = 0,
+        ignore_empty_strings = 1
+    };
+
 // ----------------------------------------------------------------------
 
     template <typename T1, typename T2> using is_same_ = std::is_same<T1, std::decay_t<T2>>;
@@ -63,16 +68,24 @@ namespace to_json
 
     namespace internal
     {
-        template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value&& aValue, Args&& ... args)
+        template <typename Value, typename ... Args> inline std::string object_append(std::string target, Options options, std::string key, Value&& aValue, Args&& ... args)
         {
             if constexpr (sizeof...(args) == 0) {
+                    const auto val = value(std::forward<Value>(aValue));
+                    if ((options & ignore_empty_strings) && val == "\"\"")
+                        return target;
                     const auto prefix = target.size() > 2 ? target.substr(0, target.size() - 1) + "," : std::string{"{"};
-                    return prefix + "\"" + key + "\":" + value(std::forward<Value>(aValue)) + "}";
+                    return prefix + "\"" + key + "\":" + val + "}";
                 }
             else {
-                return object_append(object_append(target, key, std::forward<Value>(aValue)), std::forward<Args>(args) ...);
+                return object_append(object_append(target, options, key, std::forward<Value>(aValue)), options, std::forward<Args>(args) ...);
             }
         }
+
+        // template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value&& aValue, Args&& ... args)
+        // {
+        //     return object_append(target, option_default, key, std::forward<Value>(aValue));
+        // }
 
         inline std::string join(std::string left, std::string right)
         {
@@ -101,34 +114,39 @@ namespace to_json
 
     template <typename ... Args> inline std::string object(Args&& ... args)
     {
-        return internal::object_append(std::string{}, std::forward<Args>(args) ...);
+        return internal::object_append(std::string{}, option_default, std::forward<Args>(args) ...);
+    }
+
+    template <typename ... Args> inline std::string object(Options options, Args&& ... args)
+    {
+        return internal::object_append(std::string{}, options, std::forward<Args>(args) ...);
     }
 
     template <typename Iterator, typename UnaryOperation, typename = if_iterator<Iterator>>
-        inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op)
+        inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op, Options options = option_default)
     {
         std::string target = "{}";
         for (; first != last; ++first) {
             const auto [key, value] = unary_op(*first);
-            target = internal::object_append(target, key, value);
+            target = internal::object_append(target, options, key, value);
         }
         return target;
     }
 
     template <typename Iterator, typename = if_iterator<Iterator>, typename = enable_if_not_const_char_ptr<Iterator>>
-        inline std::string object(Iterator first, Iterator last)
+        inline std::string object(Iterator first, Iterator last, Options options = option_default)
     {
         std::string target = "{}";
         for (; first != last; ++first) {
             const auto [key, value] = *first;
-            target = internal::object_append(target, key, value);
+            target = internal::object_append(target, options, key, value, options);
         }
         return target;
     }
 
-    template <typename Value> inline std::string object(const std::map<std::string, Value>& aMap)
+    template <typename Value> inline std::string object(const std::map<std::string, Value>& aMap, Options options = option_default)
     {
-        return object(std::begin(aMap), std::end(aMap));
+        return object(std::begin(aMap), std::end(aMap), options);
     }
 
     template <typename ... Args> inline std::string object_append(std::string target, Args&& ... args)
