@@ -43,7 +43,7 @@ PKG_INCLUDES = $(shell pkg-config --cflags liblzma) $(shell pkg-config --cflags 
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = -L$(AD_LIB) -lboost_date_time $$(pkg-config --libs liblzma) -lbz2 $$(pkg-config --libs zlib) $(FS_LIB) $(CXX_LIB) # -lprofiler
+ACMACS_BASE_LDLIBS = -L$(AD_LIB) -lboost_date_time $$(pkg-config --libs liblzma) -lbz2 $$(pkg-config --libs zlib) $(CXX_LIB) # -lprofiler
 
 # ----------------------------------------------------------------------
 
