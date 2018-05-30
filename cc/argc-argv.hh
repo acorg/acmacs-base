@@ -138,10 +138,10 @@ inline bool operator != (const argc_argv::option& aOpt, const char* aStr) { retu
 inline bool operator != (const char* aStr, const argc_argv::option& aOpt) { return !operator==(aStr, aOpt); }
 
 // ----------------------------------------------------------------------
-// gcc-7 support
+// gcc support
 // ----------------------------------------------------------------------
 
-#if __GNUC__ == 7
+#ifndef __clang__
 namespace std
 {
       // gcc 7.2 wants those, if we derive from std::variant

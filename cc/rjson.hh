@@ -573,10 +573,10 @@ namespace rjson
 } // namespace rjson
 
 // ----------------------------------------------------------------------
-// gcc-7 support
+// gcc support
 // ----------------------------------------------------------------------
 
-#if __GNUC__ == 7 || __GNUC__ == 8
+#ifndef __clang__
 namespace std
 {
       // gcc 7.2 wants those, if we derive from std::variant
