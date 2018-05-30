@@ -99,7 +99,17 @@ namespace string
         return replace(replace(source, l1, r1), l2, r2, args ...);
     }
 
-      // ----------------------------------------------------------------------
+    inline std::string replace_spaces(std::string source, char replacement)
+    {
+        std::transform(source.begin(), source.end(), source.begin(), [replacement](char c) {
+            if (std::isspace(c))
+                c = replacement;
+            return c;
+        });
+        return source;
+    }
+
+    // ----------------------------------------------------------------------
 
     namespace _internal
     {
