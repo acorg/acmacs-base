@@ -126,7 +126,12 @@ void acmacs::file::backup(std::string aFilename)
             std::sprintf(infix, ".~%03d~", version);
             fs::path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
             if (!fs::exists(new_name) || version == 999) {
-                fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
+                try {
+                    fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
+                }
+                catch (std::exception& err) {
+                    std::cerr << "WARNING: backing up \"" << to_backup << "\" to \"" << new_name << "\" failed: " << err.what() << '\n';
+                }
                 break;
             }
         }
