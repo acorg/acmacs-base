@@ -12,7 +12,7 @@ namespace acmacs
         using namespace std::string_literals;
         if (auto root = std::getenv("ACMACSD_ROOT"); root)
             return root;
-        return std::getenv("HOME") + "/AD"s;
+        throw std::runtime_error("ACMACSD_ROOT env is not set");
     }
 
 } // namespace acmacs
