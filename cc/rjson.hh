@@ -21,6 +21,7 @@ namespace rjson
 {
     class field_not_found : public std::runtime_error { public: field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {} };
     class field_type_mismatch : public std::runtime_error { public: field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {} };
+    class numeric_value_is_nan : public std::runtime_error { public: numeric_value_is_nan(std::string msg = std::string{"field is NaN"}) : std::runtime_error{msg} {} };
 
     class value;
     class array;
@@ -119,12 +120,20 @@ namespace rjson
 
     class number
     {
+     private:
+        inline static std::string make_value(double val, int precision = 32)
+            {
+                if (std::isnan(val))
+                    throw numeric_value_is_nan{};
+                return acmacs::to_string(val, precision);
+            }
+
      public:
         number() : mValue{"0.0"} {}
-        number(double aSrc) : mValue{acmacs::to_string(aSrc)} {}
-        number(double aSrc, int precision) : mValue{acmacs::to_string(aSrc, precision)} {}
+        number(double aSrc) : mValue{make_value(aSrc)} {}
+        number(double aSrc, int precision) : mValue{make_value(aSrc, precision)} {}
         number(std::string_view aData) : mValue{aData} {} // for parser
-        number& operator=(double aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
+        number& operator=(double aSrc) { mValue = make_value(aSrc); return *this; }
         std::string to_json() const { return mValue; }
         std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         operator double() const { return std::stod(mValue); }
@@ -729,7 +738,7 @@ namespace rjson
 
     inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision)
     {
-        if (! float_equal(aValue, aDefault))
+        if (!std::isnan(aValue) && !float_equal(aValue, aDefault))
             set_field(aKey, to_value(aValue, precision));
     }
 
