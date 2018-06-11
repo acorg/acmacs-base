@@ -52,25 +52,13 @@ namespace acmacs
         // see vector-math.hh void axpy(double aAlpha, Vector& y) const { std::transform(begin(), end(), y.begin(), y.begin(), [&aAlpha](double xx, double yy) { return aAlpha * xx + yy; }); }
 
           // Returns mean value for the elements of this.
-        double mean() const { return vector_math::mean<double>(begin(), end()); } //std::accumulate(begin(), end(), 0.0) / size(); }
+        // double mean() const { return vector_math::mean<double>(begin(), end()); } //std::accumulate(begin(), end(), 0.0) / size(); }
 
           // Returns minimum value for the elements of this.
         double min() const { return *std::min_element(begin(), end()); }
 
           // Returns maximum value for the elements of this.
         double max() const { return *std::max_element(begin(), end()); }
-
-          // Returns {mean, standard deviation} for the elements of this (http://en.wikipedia.org/wiki/Standard_deviation)
-        std::pair<double, double> mean_and_standard_deviation() const
-            {
-                return vector_math::mean_and_standard_deviation<double>(begin(), end());
-                // const double m = mean();
-                // const double sum_of_squares = std::inner_product(begin(), end(), begin(), 0.0, std::plus<double>(),
-                //                                                  [&m](double xx, double yy) { return (xx - m) * (yy - m); });
-                // return {m, std::sqrt(sum_of_squares / double(size()))};
-            }
-
-        double standard_deviation() const { return mean_and_standard_deviation().second; }
 
           // Returns distance between this and another vector
         double distance(const Vector& aNother) const { return vector_math::distance<double>(begin(), end(), aNother.begin()); }

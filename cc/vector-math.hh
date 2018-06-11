@@ -67,18 +67,18 @@ namespace acmacs::vector_math
 
 // ----------------------------------------------------------------------
 
-    template <typename Float, typename Iterator> inline Float mean(Iterator first, Iterator last)
-    {
-        return std::accumulate(first, last, Float{0}) / (last - first);
-    }
+    // template <typename Float, typename Iterator> inline Float mean(Iterator first, Iterator last)
+    // {
+    //     return std::accumulate(first, last, Float{0}) / (last - first);
+    // }
 
-    template <typename Float, typename Iterator> inline std::pair<Float, Float> mean_and_standard_deviation(Iterator first, Iterator last)
-    {
-        const Float m = mean<Float>(first, last);
-        const Float sum_of_squares = std::inner_product(first, last, first, Float{0}, std::plus<Float>(),
-                                                        [m](Float xx, Float yy) { return (xx - m) * (yy - m); });
-        return {m, std::sqrt(sum_of_squares / (last - first))};
-    }
+    // template <typename Float, typename Iterator> inline std::pair<Float, Float> mean_and_standard_deviation(Iterator first, Iterator last)
+    // {
+    //     const Float m = mean<Float>(first, last);
+    //     const Float sum_of_squares = std::inner_product(first, last, first, Float{0}, std::plus<Float>(),
+    //                                                     [m](Float xx, Float yy) { return (xx - m) * (yy - m); });
+    //     return {m, std::sqrt(sum_of_squares / (last - first))};
+    // }
 
     template <typename Float, typename Iterator> inline Float inner_product(Iterator first_1, Iterator last_1, Iterator first_2, Float init = 0)
     {
