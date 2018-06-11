@@ -94,7 +94,7 @@ acmacs::Layout::Layout(const LayoutInterface& aSource, const std::vector<size_t>
     : std::vector<double>(aIndexes.size() * aSource.number_of_dimensions(), std::numeric_limits<double>::quiet_NaN()),
     number_of_dimensions_{aSource.number_of_dimensions()}
 {
-    auto target = begin();
+    auto target = Vec::begin();
     for (auto index : aIndexes) {
         const auto coord{aSource[index]};
         std::copy(coord.begin(), coord.end(), target);
@@ -110,10 +110,10 @@ std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
     std::vector<std::pair<double, double>> result(number_of_dimensions_);
     using diff_t = decltype(result)::difference_type;
     for (auto dim : acmacs::range(number_of_dimensions_)) {
-        const auto offset = begin() + static_cast<diff_t>(dim);
+        const auto offset = Vec::begin() + static_cast<diff_t>(dim);
         result[dim] = std::pair(*offset, *offset);
     }
-    for (auto it = begin() + static_cast<diff_t>(number_of_dimensions_); it != end(); ) {
+    for (auto it = Vec::begin() + static_cast<diff_t>(number_of_dimensions_); it != Vec::end(); ) {
         for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
             result[dim].first = std::min(result[dim].first, *it);
             result[dim].second = std::max(result[dim].second, *it);
