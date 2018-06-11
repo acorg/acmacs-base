@@ -129,6 +129,43 @@ namespace acmacs
 
     inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
 
+      // ----------------------------------------------------------------------
+
+    class LayoutInterface;
+
+    class LayoutDimensionConstIterator
+    {
+     public:
+        double operator*() const;
+        auto& operator++()
+            {
+                ++point_no_;
+                  // do not skip disconnected points to avoid jumping over end iterator
+                return *this;
+            }
+        bool operator==(const LayoutDimensionConstIterator& rhs) const
+            {
+                if (&parent_ != &rhs.parent_)
+                    throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+                if (dimension_no_ != rhs.dimension_no_)
+                    throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
+                return point_no_ == rhs.point_no_;
+            }
+        bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
+
+     private:
+        const LayoutInterface& parent_;
+        mutable size_t point_no_;
+        const size_t dimension_no_;
+
+        LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no)
+            : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no}
+            {}
+
+        friend class LayoutInterface;
+
+    }; // class LayoutDimensionIterator
+
     // ----------------------------------------------------------------------
 
     class LayoutInterface
@@ -168,6 +205,11 @@ namespace acmacs
         virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
         virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
 
+        LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+
     }; // class LayoutInterface
 
     inline std::ostream& operator<<(std::ostream& s, const LayoutInterface& aLayout)
@@ -179,7 +221,14 @@ namespace acmacs
         return s;
     }
 
-    // ----------------------------------------------------------------------
+    inline double LayoutDimensionConstIterator::operator*() const
+    {
+        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+            ++point_no_; // skip disconnected points
+        return parent_.coordinate(point_no_, dimension_no_);
+    }
+
+      // ----------------------------------------------------------------------
 
     class Layout : public virtual LayoutInterface, public std::vector<double>
     {
