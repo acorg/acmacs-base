@@ -49,6 +49,26 @@ namespace acmacs::statistics
 
 // ----------------------------------------------------------------------
 
+    template <typename ForwardIterator> inline double varianceN(ForwardIterator first, ForwardIterator last, double mean)
+    {
+        return std::accumulate(first, last, 0.0, [mean](double sum, double value) { return sum + sqr(value - mean); });
+    }
+
+    template <typename ForwardIterator> inline double varianceN(ForwardIterator first, ForwardIterator last)
+    {
+        return varianceN(first, last, mean(first, last));
+    }
+
+    template <typename XForwardIterator, typename YForwardIterator> inline double covarianceN(XForwardIterator x_first, XForwardIterator x_last, double x_mean, YForwardIterator y_first, double y_mean)
+    {
+        double sum = 0;
+        for (; x_first != x_last; ++x_first, ++y_first)
+            sum += (*x_first - x_mean) * (*y_first - y_mean);
+        return sum;
+    }
+
+// ----------------------------------------------------------------------
+
     class StandardDeviation
     {
      public:
@@ -56,41 +76,38 @@ namespace acmacs::statistics
         constexpr double sd() const { return sd_; }
 
      private:
-        StandardDeviation(double mean) : mean_{mean} {}
+        StandardDeviation(double mean, double sd) : mean_{mean}, sd_{sd} {}
 
         double mean_;
         double sd_ = 0;
 
         template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator, double);
+        template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator);
     };
 
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
     {
-        StandardDeviation result(mean);
-        const auto sum_of_squares = std::inner_product(first, last, first, 0.0, std::plus<double>(), [m = result.mean_](double xx, double yy) { return (xx - m) * (yy - m); });
-        result.sd_ = std::sqrt(sum_of_squares / (last - first));
-        return result;
+        return {mean, std::sqrt(varianceN(first, last, mean) / (last - first))};
     }
 
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last)
     {
-        return standard_deviation(first, last, mean(first, last));
+        const auto [mean, size] = mean_size(first, last);
+        return {mean, std::sqrt(varianceN(first, last, mean) / size)};
     }
 
-// ----------------------------------------------------------------------
+    // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
+    // {
+    //     StandardDeviation result(mean);
+    //     const auto sum_of_squares = std::inner_product(first, last, first, 0.0, std::plus<double>(), [m = result.mean_](double xx, double yy) { return (xx - m) * (yy - m); });
+    //     result.sd_ = std::sqrt(sum_of_squares / (last - first));
+    //     return result;
+    // }
 
-    template <typename ForwardIterator> inline double variance(ForwardIterator first, ForwardIterator last, double mean)
-    {
-        return std::accumulate(first, last, 0.0, [mean](double sum, double value) { return sum + sqr(value - mean); });
-    }
-
-    template <typename XForwardIterator, typename YForwardIterator> inline double covariance(XForwardIterator x_first, XForwardIterator x_last, double x_mean, YForwardIterator y_first, double y_mean)
-    {
-        double sum = 0;
-        for (; x_first != x_last; ++x_first, ++y_first)
-            sum += (*x_first - x_mean) * (*y_first - y_mean);
-        return sum;
-    }
+    // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last)
+    // {
+    //     return standard_deviation(first, last, mean(first, last));
+    // }
 
 // ----------------------------------------------------------------------
 
@@ -119,7 +136,7 @@ namespace acmacs::statistics
     {
         const auto [x_mean, x_size] = mean_size(x_first, x_last);
         const auto y_mean = mean(y_first, x_size);
-        const auto slope = covariance(x_first, x_last, x_mean, y_first, y_mean) / variance(x_first, x_last, x_mean);
+        const auto slope = covarianceN(x_first, x_last, x_mean, y_first, y_mean) / varianceN(x_first, x_last, x_mean);
         return {slope, y_mean - slope * x_mean};
     }
 
