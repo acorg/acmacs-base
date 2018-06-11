@@ -100,6 +100,11 @@ namespace acmacs::statistics
         constexpr double slope() const { return slope_; }
         constexpr double intercept() const { return intercept_; }
 
+        double distance_to(double x, double y) const // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+            {
+                return std::abs(slope() * x - y + intercept()) / std::sqrt(sqr(slope()) + 1);
+            }
+
      private:
         double slope_;
         double intercept_ = 0;
