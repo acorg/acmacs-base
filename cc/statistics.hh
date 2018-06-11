@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <numeric>
 #include <cmath>
+#include <iostream>
 
 // ----------------------------------------------------------------------
 
@@ -13,6 +14,7 @@ namespace acmacs::statistics
     constexpr double sqr(double value) { return value * value; }
 
 // ----------------------------------------------------------------------
+
     template <typename ForwardIterator> inline double mean(ForwardIterator first, ForwardIterator last)
     {
         size_t num = 0;
@@ -22,6 +24,16 @@ namespace acmacs::statistics
         if (num == 0)
             throw Error("mean(): empty range");
         return sum / num;
+    }
+
+    template <typename ForwardIterator> inline double mean(ForwardIterator first, size_t size)
+    {
+        if (size == 0)
+            throw Error("mean(): empty range");
+        double sum = 0;
+        for (size_t no = 0; no < size; ++no, ++first)
+            sum += *first;
+        return sum / size;
     }
 
     template <typename ForwardIterator> inline std::pair<double, size_t> mean_size(ForwardIterator first, ForwardIterator last)
@@ -69,12 +81,15 @@ namespace acmacs::statistics
 
     template <typename ForwardIterator> inline double variance(ForwardIterator first, ForwardIterator last, double mean)
     {
-        return std::accumulate(first, last, 0.0, [mean](double value) { return sqr(value - mean); });
+        return std::accumulate(first, last, 0.0, [mean](double sum, double value) { return sum + sqr(value - mean); });
     }
 
     template <typename XForwardIterator, typename YForwardIterator> inline double covariance(XForwardIterator x_first, XForwardIterator x_last, double x_mean, YForwardIterator y_first, double y_mean)
     {
-        return std::accumulate(x_first, x_last, 0.0, [x_mean,y_mean,y_first](double value) mutable { return (value - x_mean) * (*y_first++ - y_mean); });
+        double sum = 0;
+        for (; x_first != x_last; ++x_first, ++y_first)
+            sum += (*x_first - x_mean) * (*y_first - y_mean);
+        return sum;
     }
 
 // ----------------------------------------------------------------------
@@ -93,10 +108,12 @@ namespace acmacs::statistics
         template <typename XForwardIterator, typename YForwardIterator> friend SimpleLinearRegression simple_linear_regression(XForwardIterator, XForwardIterator, YForwardIterator);
     };
 
+    inline std::ostream& operator<<(std::ostream& out, const SimpleLinearRegression& slr) { return out << "SimpleLinearRegression: slope:" << slr.slope() << " intercept:" << slr.intercept(); }
+
     template <typename XForwardIterator, typename YForwardIterator> inline SimpleLinearRegression simple_linear_regression(XForwardIterator x_first, XForwardIterator x_last, YForwardIterator y_first)
     {
-        const auto [x_mean, x_size] = mean_size(x_first, y_first);
-        const auto y_mean = mean(y_first, y_first + x_size);
+        const auto [x_mean, x_size] = mean_size(x_first, x_last);
+        const auto y_mean = mean(y_first, x_size);
         const auto slope = covariance(x_first, x_last, x_mean, y_first, y_mean) / variance(x_first, x_last, x_mean);
         return {slope, y_mean - slope * x_mean};
     }
