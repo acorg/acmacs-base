@@ -25,6 +25,7 @@ namespace acmacs
         inline Location(double aX, double aY) : x(aX), y(aY) {}
         inline Location(Scaled aX, Scaled aY) : x(aX.value()), y(aY.value()) {}
         inline Location(const std::vector<double>& aCoord) : x(aCoord[0]), y(aCoord[1]) {}
+        inline Location(const std::pair<double, double>& aCoord) : x(aCoord.first), y(aCoord.second) {}
         Location(const Size& s);
         inline void set(double aX, double aY)
         {
