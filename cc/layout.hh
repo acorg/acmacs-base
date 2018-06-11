@@ -133,38 +133,64 @@ namespace acmacs
 
     class LayoutInterface;
 
+    class LayoutConstIterator
+    {
+      public:
+        Coordinates operator*() const;
+        auto& operator++()
+        {
+            ++point_no_;
+            // do not skip disconnected points to avoid jumping over end iterator
+            return *this;
+        }
+        bool operator==(const LayoutConstIterator& rhs) const
+        {
+            if (&parent_ != &rhs.parent_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+            return point_no_ == rhs.point_no_;
+        }
+        bool operator!=(const LayoutConstIterator& rhs) const { return !operator==(rhs); }
+
+      private:
+        const LayoutInterface& parent_;
+        mutable size_t point_no_;
+
+        LayoutConstIterator(const LayoutInterface& parent, size_t point_no) : parent_{parent}, point_no_{point_no} {}
+
+        friend class LayoutInterface;
+
+    }; // class LayoutConstIterator
+
     class LayoutDimensionConstIterator
     {
-     public:
+      public:
         double operator*() const;
         auto& operator++()
-            {
-                ++point_no_;
-                  // do not skip disconnected points to avoid jumping over end iterator
-                return *this;
-            }
+        {
+            ++point_no_;
+            // do not skip disconnected points to avoid jumping over end iterator
+            return *this;
+        }
         bool operator==(const LayoutDimensionConstIterator& rhs) const
-            {
-                if (&parent_ != &rhs.parent_)
-                    throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
-                if (dimension_no_ != rhs.dimension_no_)
-                    throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
-                return point_no_ == rhs.point_no_;
-            }
+        {
+            if (&parent_ != &rhs.parent_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+            if (dimension_no_ != rhs.dimension_no_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
+            return point_no_ == rhs.point_no_;
+        }
         bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
 
-     private:
+      private:
         const LayoutInterface& parent_;
         mutable size_t point_no_;
         const size_t dimension_no_;
 
-        LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no)
-            : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no}
-            {}
+        LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
 
         friend class LayoutInterface;
 
-    }; // class LayoutDimensionIterator
+    }; // class LayoutDimensionConstIterator
 
     // ----------------------------------------------------------------------
 
@@ -205,8 +231,17 @@ namespace acmacs
         virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
         virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
 
+        LayoutConstIterator begin() const { return {*this, 0}; }
+        LayoutConstIterator end() const { return {*this, number_of_points()}; }
+        LayoutConstIterator begin_antigens(size_t /*number_of_antigens*/) const { return {*this, 0}; }
+        LayoutConstIterator end_antigens(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
+
         LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
         LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
         LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
         LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
 
@@ -221,6 +256,13 @@ namespace acmacs
         return s;
     }
 
+    inline Coordinates LayoutConstIterator::operator*() const
+    {
+        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+            ++point_no_; // skip disconnected points
+        return parent_.get(point_no_);
+    }
+
     inline double LayoutDimensionConstIterator::operator*() const
     {
         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
@@ -232,14 +274,16 @@ namespace acmacs
 
     class Layout : public virtual LayoutInterface, public std::vector<double>
     {
-      public:
+     public:
+        using Vec = std::vector<double>;
+
         Layout() = default;
         Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
-            : std::vector<double>(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions}
+            : Vec(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions}
         {
         }
         Layout(const Layout&) = default;
-        Layout(const LayoutInterface& aSource) : std::vector<double>(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
+        Layout(const LayoutInterface& aSource) : Vec(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
         Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
         Layout& operator=(const Layout&) = default;
 
@@ -258,37 +302,37 @@ namespace acmacs
 
         const Coordinates operator[](size_t aPointNo) const override
         {
-            return {begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
+            return {Vec::begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
         }
 
         double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const override { return !std::isnan(coordinate(point_no, 0)); }
         std::vector<double> as_flat_vector_double() const override { return *this; }
-        std::vector<float> as_flat_vector_float() const override { return {begin(), end()}; }
+        std::vector<float> as_flat_vector_float() const override { return {Vec::begin(), Vec::end()}; }
         void set(size_t aPointNo, const Coordinates& aCoordinates) override
         {
-            std::copy(aCoordinates.begin(), aCoordinates.end(), begin() + static_cast<decltype(begin())::difference_type>(aPointNo * number_of_dimensions()));
+            std::copy(aCoordinates.begin(), aCoordinates.end(), Vec::begin() + static_cast<decltype(Vec::begin())::difference_type>(aPointNo * number_of_dimensions()));
         }
 
         void set_nan(size_t aPointNo)
         {
-            const auto first{begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
+            const auto first{Vec::begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
             std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
         }
 
-        virtual void set(size_t point_no, size_t dimension_no, double value) override { std::vector<double>::operator[](point_no* number_of_dimensions() + dimension_no) = value; }
+        virtual void set(size_t point_no, size_t dimension_no, double value) override { Vec::operator[](point_no* number_of_dimensions() + dimension_no) = value; }
 
         void remove_points(const ReverseSortedIndexes& indexes, size_t base)
         {
             for (const auto index : indexes) {
-                const auto first = begin() + static_cast<difference_type>((index + base) * number_of_dimensions_);
+                const auto first = Vec::begin() + static_cast<difference_type>((index + base) * number_of_dimensions_);
                 erase(first, first + static_cast<difference_type>(number_of_dimensions_));
             }
         }
 
         void insert_point(size_t before, size_t base)
         {
-            insert(begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
+            insert(Vec::begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
         }
 
         std::vector<std::pair<double, double>> minmax() const;
