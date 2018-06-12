@@ -20,7 +20,7 @@ namespace acmacs
 
         template <typename V> double distance_with_direction(const V& vect) const
             {
-                return std::abs(slope() * vect[0] - vect[1] + intercept()) / std::sqrt(sqr(slope()) + 1);
+                return (slope() * vect[0] - vect[1] + intercept()) / std::sqrt(sqr(slope()) + 1);
             }
 
         template <typename V> double distance_to(const V& vect) const { return std::abs(distance_with_direction(vect)); }
