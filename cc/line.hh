@@ -25,6 +25,11 @@ namespace acmacs
 
         template <typename V> double distance_to(const V& vect) const { return std::abs(distance_with_direction(vect)); }
 
+        template <typename V> V project_on(const V& source) const
+            {
+                return source;
+            }
+
      private:
         double slope_ = 1;
         double intercept_ = 0;
