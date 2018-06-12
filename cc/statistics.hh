@@ -2,16 +2,14 @@
 
 #include <stdexcept>
 #include <numeric>
-#include <cmath>
-#include <iostream>
+
+#include "acmacs-base/line.hh"
 
 // ----------------------------------------------------------------------
 
 namespace acmacs::statistics
 {
     class Error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
-
-    constexpr double sqr(double value) { return value * value; }
 
 // ----------------------------------------------------------------------
 
@@ -111,26 +109,11 @@ namespace acmacs::statistics
 
 // ----------------------------------------------------------------------
 
-    class SimpleLinearRegression
+    class SimpleLinearRegression : public LineDefinedByEquation
     {
      public:
-        constexpr double slope() const { return slope_; }
-        constexpr double intercept() const { return intercept_; }
-
-        double distance_to(double x, double y) const // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-            {
-                return std::abs(slope() * x - y + intercept()) / std::sqrt(sqr(slope()) + 1);
-            }
-
-     private:
-        double slope_;
-        double intercept_ = 0;
-        SimpleLinearRegression(double slope, double intercept) : slope_{slope}, intercept_{intercept} {}
-
-        template <typename XForwardIterator, typename YForwardIterator> friend SimpleLinearRegression simple_linear_regression(XForwardIterator, XForwardIterator, YForwardIterator);
+        using LineDefinedByEquation::LineDefinedByEquation;
     };
-
-    inline std::ostream& operator<<(std::ostream& out, const SimpleLinearRegression& slr) { return out << "SimpleLinearRegression: slope:" << slr.slope() << " intercept:" << slr.intercept(); }
 
     template <typename XForwardIterator, typename YForwardIterator> inline SimpleLinearRegression simple_linear_regression(XForwardIterator x_first, XForwardIterator x_last, YForwardIterator y_first)
     {
