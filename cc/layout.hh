@@ -20,10 +20,12 @@ namespace acmacs
       public:
         using Vector::Vector;
 
+        Coordinates(Location2D loc) : Vector{loc.x(), loc.y()} {}
+        Coordinates(Location3D loc) : Vector{loc.x(), loc.y(), loc.z()} {}
+
         Coordinates transform(const Transformation& aTransformation) const
         {
-            const auto [x, y] = aTransformation.transform(operator[](0), operator[](1));
-            return {x, y};
+            return aTransformation.transform(static_cast<Location2D>(*this));
         }
 
         bool not_nan() const
@@ -31,10 +33,16 @@ namespace acmacs
             return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
         }
 
-        operator Location() const
+        operator Location2D() const
         {
             assert(size() == 2);
             return {operator[](0), operator[](1)};
+        }
+
+        operator Location3D() const
+        {
+            assert(size() == 3);
+            return {operator[](0), operator[](1), operator[](2)};
         }
 
     }; // class Coordinates

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"

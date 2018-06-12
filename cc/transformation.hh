@@ -4,8 +4,8 @@
 #include <cmath>
 #include <vector>
 
-#include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/location.hh"
 
 // ----------------------------------------------------------------------
 
@@ -71,9 +71,14 @@ namespace acmacs
                 d = r3;
             }
 
-        std::pair<double, double> transform(double x, double y) const
+        // Location2D transform(double x, double y) const
+        //     {
+        //         return {x * a + y * c, x * b + y * d};
+        //     }
+
+        Location2D transform(Location2D loc) const
             {
-                return std::make_pair(x * a + y * c, x * b + y * d);
+                return {loc.x() * a + loc.y() * c, loc.x() * b + loc.y() * d};
             }
 
         double determinant() const
@@ -90,6 +95,7 @@ namespace acmacs
                     throw singular{};
                 return {d / deter, - b / deter, -c / deter, a / deter};
             }
+
     }; // class Transformation
 
     inline std::string to_string(const Transformation& t)
