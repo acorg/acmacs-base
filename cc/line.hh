@@ -32,6 +32,11 @@ namespace acmacs
                         (slope() * (source[0] + slope() * source[1]) + intercept()) / a2b2()};
             }
 
+        template <typename V> V flip_over(const V& source) const
+            {
+                return source + (project_on(source) - source) * 2;
+            }
+
      private:
         double slope_ = 1;
         double intercept_ = 0;
