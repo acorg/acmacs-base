@@ -18,21 +18,25 @@ namespace acmacs
         constexpr double slope() const { return slope_; }
         constexpr double intercept() const { return intercept_; }
 
+          // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
         template <typename V> double distance_with_direction(const V& vect) const
             {
-                return (slope() * vect[0] - vect[1] + intercept()) / std::sqrt(sqr(slope()) + 1);
+                return (slope() * vect[0] - vect[1] + intercept()) / std::sqrt(a2b2());
             }
 
         template <typename V> double distance_to(const V& vect) const { return std::abs(distance_with_direction(vect)); }
 
         template <typename V> V project_on(const V& source) const
             {
-                return source;
+                return {(source[0] + slope() * source[1] - slope() * intercept()) / a2b2(),
+                        (slope() * (source[0] + slope() * source[1]) + intercept()) / a2b2()};
             }
 
      private:
         double slope_ = 1;
         double intercept_ = 0;
+
+        constexpr double a2b2() const { return sqr(slope()) + 1; }
 
     }; // class LineDefinedByEquation
 
