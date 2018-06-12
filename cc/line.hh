@@ -18,12 +18,12 @@ namespace acmacs
         constexpr double slope() const { return slope_; }
         constexpr double intercept() const { return intercept_; }
 
-        double distance_to(double x, double y) const // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        template <typename V> double distance_with_direction(const V& vect) const
             {
-                return std::abs(slope() * x - y + intercept()) / std::sqrt(sqr(slope()) + 1);
+                return std::abs(slope() * vect[0] - vect[1] + intercept()) / std::sqrt(sqr(slope()) + 1);
             }
 
-        template <typename V> double distance_to(const V& vect) const { return distance_to(vect[0], vect[1]); }
+        template <typename V> double distance_to(const V& vect) const { return std::abs(distance_with_direction(vect)); }
 
      private:
         double slope_ = 1;
