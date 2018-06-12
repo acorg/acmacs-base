@@ -19,30 +19,31 @@ namespace acmacs
     class Location
     {
       public:
-        double x, y;
+        double x = 0, y = 0;
 
-        inline Location() : x(0), y(0) {}
-        inline Location(double aX, double aY) : x(aX), y(aY) {}
-        inline Location(Scaled aX, Scaled aY) : x(aX.value()), y(aY.value()) {}
-        inline Location(const std::vector<double>& aCoord) : x(aCoord[0]), y(aCoord[1]) {}
-        inline Location(const std::pair<double, double>& aCoord) : x(aCoord.first), y(aCoord.second) {}
+        Location() = default;
+        Location(const Location& src) = default;
+        Location(double aX, double aY) : x(aX), y(aY) {}
+        Location(Scaled aX, Scaled aY) : x(aX.value()), y(aY.value()) {}
+        Location(const std::vector<double>& aCoord) : x(aCoord[0]), y(aCoord[1]) {}
+        Location(const std::pair<double, double>& aCoord) : x(aCoord.first), y(aCoord.second) {}
         Location(const Size& s);
-        inline void set(double aX, double aY)
-        {
-            x = aX;
-            y = aY;
-        }
 
-        [[nodiscard]] inline bool operator==(const Location& loc) const { return float_equal(x, loc.x) && float_equal(y, loc.y); }
-        [[nodiscard]] inline bool operator!=(const Location& loc) const { return !operator==(loc); }
+        Location& operator=(const Location& src) = default;
+        Location& operator=(const std::vector<double>& aCoord) { x = aCoord[0]; y = aCoord[1]; return *this; }
+        Location& operator=(std::pair<double, double> aCoord) { x = aCoord.first; y = aCoord.second; return *this; }
+        void set(double aX, double aY) { x = aX; y = aY; }
 
-        inline Location& operator-=(const Location& a)
+        [[nodiscard]] bool operator==(const Location& loc) const { return float_equal(x, loc.x) && float_equal(y, loc.y); }
+        [[nodiscard]] bool operator!=(const Location& loc) const { return !operator==(loc); }
+
+        Location& operator-=(const Location& a)
         {
             x -= a.x;
             y -= a.y;
             return *this;
         }
-        inline Location& operator+=(const Location& a)
+        Location& operator+=(const Location& a)
         {
             x += a.x;
             y += a.y;
@@ -50,41 +51,36 @@ namespace acmacs
         }
         Location& operator+=(const Size& a);
         Location& operator-=(const Size& a);
-        inline Location& operator+=(double s)
+        Location& operator+=(double s)
         {
             x += s;
             y += s;
             return *this;
         }
-        inline Location& operator-=(double s)
+        Location& operator-=(double s)
         {
             x -= s;
             y -= s;
             return *this;
         }
-        inline Location operator-() const { return {-x, -y}; }
+        Location operator-() const { return {-x, -y}; }
 
-        // inline std::string to_string() const { return "Location(" + std::to_string(x) + ", " + std::to_string(y) + ")"; }
+        // std::string to_string() const { return "Location(" + std::to_string(x) + ", " + std::to_string(y) + ")"; }
 
-        inline void min(const Location& a) noexcept
+        void min(const Location& a) noexcept
         {
             x = std::min(x, a.x);
             y = std::min(y, a.y);
         }
-        inline void max(const Location& a) noexcept
+        void max(const Location& a) noexcept
         {
             x = std::max(x, a.x);
             y = std::max(y, a.y);
         }
-        static inline Location center_of(const Location& a, const Location& b) { return {(a.x + b.x) / 2.0, (a.y + b.y) / 2.0}; }
+        static Location center_of(const Location& a, const Location& b) { return {(a.x + b.x) / 2.0, (a.y + b.y) / 2.0}; }
 
-        inline bool isnan() const noexcept { return std::isnan(x) || std::isnan(y); }
-        inline std::vector<double> to_vector() const noexcept { return {x, y}; }
-        inline void from_vector(const std::vector<double>& source) noexcept
-        {
-            x = source[0];
-            y = source[1];
-        }
+        bool isnan() const noexcept { return std::isnan(x) || std::isnan(y); }
+        std::vector<double> to_vector() const noexcept { return {x, y}; }
 
     }; // class Location
 
@@ -107,31 +103,31 @@ namespace acmacs
       public:
         double width, height;
 
-        inline Size() : width(0), height(0) {}
-        inline Size(double aWidth, double aHeight) : width(aWidth), height(aHeight)
+        Size() : width(0), height(0) {}
+        Size(double aWidth, double aHeight) : width(aWidth), height(aHeight)
         {
             assert(width >= 0);
             assert(height >= 0);
         }
-        inline Size(const Location& a, const Location& b) : width(std::abs(a.x - b.x)), height(std::abs(a.y - b.y))
+        Size(const Location& a, const Location& b) : width(std::abs(a.x - b.x)), height(std::abs(a.y - b.y))
         {
             assert(width >= 0);
             assert(height >= 0);
         }
-        inline void set(double aWidth, double aHeight)
+        void set(double aWidth, double aHeight)
         {
             width = aWidth;
             height = aHeight;
             assert(width >= 0);
             assert(height >= 0);
         }
-        constexpr inline double aspect() const noexcept { return width / height; }
-        constexpr inline bool empty() const noexcept { return float_zero(width) && float_zero(height); }
+        constexpr double aspect() const noexcept { return width / height; }
+        constexpr bool empty() const noexcept { return float_zero(width) && float_zero(height); }
 
-        [[nodiscard]] inline bool operator==(const Size& size) const { return float_equal(width, size.width) && float_equal(height, size.height); }
-        [[nodiscard]] inline bool operator!=(const Size& size) const { return !operator==(size); }
+        [[nodiscard]] bool operator==(const Size& size) const { return float_equal(width, size.width) && float_equal(height, size.height); }
+        [[nodiscard]] bool operator!=(const Size& size) const { return !operator==(size); }
 
-        // inline std::string to_string() const { return "Size(" + std::to_string(width) + ", " + std::to_string(height) + ")"; }
+        // std::string to_string() const { return "Size(" + std::to_string(width) + ", " + std::to_string(height) + ")"; }
 
         Size& operator+=(const Size& sz)
         {
@@ -202,9 +198,9 @@ namespace acmacs
     class Rectangle
     {
       public:
-        inline Rectangle(double x1, double y1, double x2, double y2) : top_left(std::min(x1, x2), std::min(y1, y2)), bottom_right(std::max(x1, x2), std::max(y1, y2)) {}
+        Rectangle(double x1, double y1, double x2, double y2) : top_left(std::min(x1, x2), std::min(y1, y2)), bottom_right(std::max(x1, x2), std::max(y1, y2)) {}
 
-        inline Rectangle transform(const Transformation& aTransformation) const
+        Rectangle transform(const Transformation& aTransformation) const
         {
             const auto[x1, y1] = aTransformation.transform(top_left.x, top_left.y);
             const auto[x2, y2] = aTransformation.transform(bottom_right.x, bottom_right.y);
@@ -212,7 +208,7 @@ namespace acmacs
         }
 
         // returns if passed point is within the rectangle
-        constexpr inline bool within(double x, double y) const { return x >= top_left.x && x <= bottom_right.x && y >= top_left.y && y <= bottom_right.y; }
+        constexpr bool within(double x, double y) const { return x >= top_left.x && x <= bottom_right.x && y >= top_left.y && y <= bottom_right.y; }
 
         Location top_left;
         Location bottom_right;
@@ -224,16 +220,16 @@ namespace acmacs
     class Circle
     {
       public:
-        inline Circle(double x, double y, double aRadius) : center{x, y}, radius{aRadius} {}
+        Circle(double x, double y, double aRadius) : center{x, y}, radius{aRadius} {}
 
-        inline Circle transform(const Transformation& aTransformation) const
+        Circle transform(const Transformation& aTransformation) const
         {
             const auto[x1, y1] = aTransformation.transform(center.x, center.y);
             return {x1, y1, radius};
         }
 
         // returns if passed point is within the circle
-        inline bool within(double x, double y) const { return distance(center, {x, y}) <= radius; }
+        bool within(double x, double y) const { return distance(center, {x, y}) <= radius; }
 
         Location center;
         double radius;
