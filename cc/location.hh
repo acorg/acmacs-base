@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 
 #include "acmacs-base/float.hh"
 
