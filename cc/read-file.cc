@@ -180,11 +180,19 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCom
 
 // ----------------------------------------------------------------------
 
-acmacs::file::temp::temp(std::string suffix)
-    : name(make_template() + suffix), fd(mkstemps(const_cast<char*>(name.c_str()), static_cast<int>(suffix.size())))
+acmacs::file::temp::temp(std::string prefix, std::string suffix)
+    : name(make_template(prefix) + suffix), fd(mkstemps(const_cast<char*>(name.c_str()), static_cast<int>(suffix.size())))
 {
     if (fd < 0)
         throw std::runtime_error(std::string("Cannot create temporary file using template ") + name + ": " + strerror(errno));
+
+} // acmacs::file::temp::temp
+
+// ----------------------------------------------------------------------
+
+acmacs::file::temp::temp(std::string suffix)
+    : acmacs::file::temp::temp("AD.", suffix)
+{
 
 } // acmacs::file::temp::temp
 
@@ -199,14 +207,14 @@ acmacs::file::temp::~temp()
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::file::temp::make_template()
+std::string acmacs::file::temp::make_template(std::string prefix)
 {
     const char* tdir = std::getenv("T");
     if (!tdir || *tdir != '/')
         tdir = std::getenv("TMPDIR");
     if (!tdir)
         tdir = "/tmp";
-    return tdir + std::string{"/AD.XXXXXXXX"};
+    return tdir + std::string{"/"} + prefix + "_.XXXXXXXX";
 
 } // acmacs::file::temp::make_template
 

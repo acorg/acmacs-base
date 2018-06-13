@@ -57,6 +57,7 @@ namespace acmacs::file
     class temp
     {
      public:
+        temp(std::string prefix, std::string suffix);
         temp(std::string suffix);
         ~temp();
 
@@ -68,7 +69,7 @@ namespace acmacs::file
         std::string name;
         int fd;
 
-        std::string make_template();
+        std::string make_template(std::string prefix);
 
     }; // class temp
 
