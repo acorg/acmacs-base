@@ -8,15 +8,16 @@
 #include <variant>
 #include <typeinfo>
 
+#include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
 class argc_argv
 {
  public:
-    class unrecognized_option : public std::runtime_error { public: inline unrecognized_option(std::string opt) : std::runtime_error("unrecognized command line option: " + opt) {} };
-    class option_not_found : public std::runtime_error { public: inline option_not_found(std::string opt) : std::runtime_error("internal: option_not_found: " + opt) {} };
-    class option_requires_argument : public std::runtime_error { public: inline option_requires_argument(std::string opt) : std::runtime_error("command line option " + opt + " requires argument") {} };
+    class unrecognized_option : public std::runtime_error { public: unrecognized_option(std::string opt) : std::runtime_error("unrecognized command line option: " + opt) {} };
+    class option_not_found : public std::runtime_error { public: option_not_found(std::string opt) : std::runtime_error("internal: option_not_found: " + opt) {} };
+    class option_requires_argument : public std::runtime_error { public: option_requires_argument(std::string opt) : std::runtime_error("command line option " + opt + " requires argument") {} };
     class argument_not_found : public std::runtime_error { public: using std::runtime_error::runtime_error; };
     class option_value_conversion_failed : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -29,23 +30,23 @@ class argc_argv
     class option_default : public option_default_base
     {
      public:
-        inline option_default(bool b) : option_default_base(b) {}
-        inline option_default(string s) : option_default_base(s) {}
-        inline option_default(strings ss) : option_default_base(ss) {}
-        inline option_default(long i) : option_default_base(i) {}
-        inline option_default(unsigned long i) : option_default_base(static_cast<long>(i)) {}
-        inline option_default(int i) : option_default_base(static_cast<long>(i)) {}
-        inline option_default(unsigned int i) : option_default_base(static_cast<long>(i)) {}
-        inline option_default(double d) : option_default_base(d) {}
+        option_default(bool b) : option_default_base(b) {}
+        option_default(string s) : option_default_base(s) {}
+        option_default(strings ss) : option_default_base(ss) {}
+        option_default(long i) : option_default_base(i) {}
+        option_default(unsigned long i) : option_default_base(static_cast<long>(i)) {}
+        option_default(int i) : option_default_base(static_cast<long>(i)) {}
+        option_default(unsigned int i) : option_default_base(static_cast<long>(i)) {}
+        option_default(double d) : option_default_base(d) {}
 
     }; // class option_default
 
     struct option_setting
     {
-        inline option_setting(const char* aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
-        inline option_setting(std::string aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
-        inline option_setting(std::string aOption, const option_default& aDefault) : option_(aOption), default_(aDefault) {}
-        inline option_setting(const char* aOption, option_default&& aDefault, const char* aDescription) : option_(aOption), default_(std::move(aDefault)), description_(aDescription) {}
+        option_setting(const char* aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
+        option_setting(std::string aOption, option_default&& aDefault) : option_(aOption), default_(std::move(aDefault)) {}
+        option_setting(std::string aOption, const option_default& aDefault) : option_(aOption), default_(aDefault) {}
+        option_setting(const char* aOption, option_default&& aDefault, const char* aDescription) : option_(aOption), default_(std::move(aDefault)), description_(aDescription) {}
 
         std::string option_;
         option_default default_;
@@ -58,7 +59,7 @@ class argc_argv
      private:
         bool present_ = false;
 
-        template <typename T> inline T get() const
+        template <typename T> T get() const
             {
                 using namespace std::string_literals;
                 try {
@@ -69,7 +70,7 @@ class argc_argv
                 }
             }
 
-        inline bool get_bool() const
+        bool get_bool() const
             {
                 using namespace std::string_literals;
                 if (auto* b = std::get_if<bool>(&default_); b)
@@ -83,23 +84,36 @@ class argc_argv
             }
 
      public:
-        inline option(std::string aOption, option_default&& aDefault) : option_setting(aOption, std::move(aDefault)), present_{true} {}
-        inline option(const option_setting& src) : option_setting(src) {}
+        option(std::string aOption, option_default&& aDefault) : option_setting(aOption, std::move(aDefault)), present_{true} {}
+        option(const option_setting& src) : option_setting(src) {}
 
-        constexpr inline bool present() const { return present_; }
+        constexpr bool present() const { return present_; }
 
-        inline operator bool() const { return get_bool(); }
-        inline operator std::string() const { return get<string>(); }
-        inline operator std::string_view() const { return get<string>(); }
-        inline operator strings() const { return get<strings>(); }
-        inline operator double() const { return get<double>(); }
-        inline operator long() const { return get<long>(); }
-        inline operator int() const { return static_cast<int>(get<long>()); }
-        inline operator unsigned int() const { return static_cast<unsigned int>(get<long>()); }
-        inline operator unsigned long() const { return static_cast<unsigned long>(get<long>()); }
+        operator bool() const { return get_bool(); }
+        operator std::string() const { return get<string>(); }
+        operator std::string_view() const { return get<string>(); }
+        operator strings() const { return get<strings>(); }
+        operator double() const { return get<double>(); }
+        operator long() const { return get<long>(); }
+        operator int() const { return static_cast<int>(get<long>()); }
+        operator unsigned int() const { return static_cast<unsigned int>(get<long>()); }
+        operator unsigned long() const { return static_cast<unsigned long>(get<long>()); }
 
-        inline std::string str() const { return get<string>(); }
-        inline std::string_view str_view() const { return get<string>(); }
+        std::string str() const { return get<string>(); }
+        std::string_view str_view() const { return get<string>(); }
+
+        std::string as_string() const
+        {
+            return std::visit(
+                [](auto&& arg) -> std::string {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, double>)
+                        return acmacs::to_string(arg, 8);
+                    else
+                        return acmacs::to_string(arg);
+                },
+                default_);
+        }
 
     }; // class option
 
@@ -108,10 +122,10 @@ class argc_argv
     const option& operator[](std::string aName) const;
 
       // returns number of arguments in the command line that are neither options nor option values
-    inline size_t number_of_arguments() const { return mArguments.size(); }
+    size_t number_of_arguments() const { return mArguments.size(); }
 
       // returns argument (neither option nor option value) by index, throws argument_not_found if aIndex >= number_of_arguments()
-    inline const char* operator[](size_t aIndex) const
+    const char* operator[](size_t aIndex) const
         {
             if (aIndex >= mArguments.size())
                 throw argument_not_found{"invalid argument index: " + std::to_string(aIndex) + ", total arguments in the command line: " + std::to_string(mArguments.size())};
@@ -119,7 +133,7 @@ class argc_argv
         }
 
       // returns argv[0]
-    inline const char* program() const { return mProgram; }
+    const char* program() const { return mProgram; }
 
     std::string usage_options(size_t aIndent = 2) const;
 
@@ -136,6 +150,11 @@ inline bool operator == (const argc_argv::option& aOpt, const char* aStr) { retu
 inline bool operator == (const char* aStr, const argc_argv::option& aOpt) { return static_cast<std::string_view>(aOpt) == aStr; }
 inline bool operator != (const argc_argv::option& aOpt, const char* aStr) { return !operator==(aOpt, aStr); }
 inline bool operator != (const char* aStr, const argc_argv::option& aOpt) { return !operator==(aStr, aOpt); }
+
+namespace acmacs
+{
+    inline std::string to_string(const argc_argv::option& opt) { return opt.as_string(); }
+}
 
 // ----------------------------------------------------------------------
 // gcc support
