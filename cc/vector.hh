@@ -5,6 +5,7 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <cassert>
 
 #include "acmacs-base/vector-math.hh"
 
@@ -64,6 +65,22 @@ namespace acmacs
         double distance(const Vector& aNother) const { return vector_math::distance<double>(begin(), end(), aNother.begin()); }
 
     }; // class Vector
+
+    inline Vector operator+(const Vector& left, const Vector& right)
+    {
+        assert(left.size() == right.size());
+        Vector result = left;
+        result += right;
+        return result;
+    }
+
+    inline Vector operator-(const Vector& left, const Vector& right)
+    {
+        assert(left.size() == right.size());
+        Vector result = left;
+        result -= right;
+        return result;
+    }
 
 } // namespace acmacs
 
