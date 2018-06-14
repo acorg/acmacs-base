@@ -236,7 +236,7 @@ namespace acmacs
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
         virtual Coordinates centroid() const;
 
-        virtual void set(size_t aPointNo, const Coordinates& aCoordinates) = 0;
+        virtual void set(size_t aPointNo, const acmacs::Vector& aCoordinates) = 0;
         virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
 
         LayoutConstIterator begin() const { return {*this, 0}; }
@@ -317,7 +317,8 @@ namespace acmacs
         bool point_has_coordinates(size_t point_no) const override { return !std::isnan(coordinate(point_no, 0)); }
         std::vector<double> as_flat_vector_double() const override { return *this; }
         std::vector<float> as_flat_vector_float() const override { return {Vec::begin(), Vec::end()}; }
-        void set(size_t aPointNo, const Coordinates& aCoordinates) override
+
+        void set(size_t aPointNo, const acmacs::Vector& aCoordinates) override
         {
             std::copy(aCoordinates.begin(), aCoordinates.end(), Vec::begin() + static_cast<decltype(Vec::begin())::difference_type>(aPointNo * number_of_dimensions()));
         }
