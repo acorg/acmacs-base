@@ -102,18 +102,7 @@ class argc_argv
         std::string str() const { return get<string>(); }
         std::string_view str_view() const { return get<string>(); }
 
-        std::string as_string() const
-        {
-            return std::visit(
-                [](auto&& arg) -> std::string {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, double>)
-                        return acmacs::to_string(arg, 8);
-                    else
-                        return acmacs::to_string(arg);
-                },
-                default_);
-        }
+        std::string as_string() const;
 
     }; // class option
 

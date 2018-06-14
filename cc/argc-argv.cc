@@ -134,6 +134,22 @@ std::string argc_argv::usage_options(size_t aIndent) const
 
 // ----------------------------------------------------------------------
 
+std::string argc_argv::option::as_string() const
+{
+    return std::visit(
+        [](auto&& arg) -> std::string {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, double>)
+                return acmacs::to_string(arg, 8);
+            else
+                return acmacs::to_string(arg);
+        },
+        default_);
+
+} // argc_argv::option::as_string
+
+// ----------------------------------------------------------------------
+
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
