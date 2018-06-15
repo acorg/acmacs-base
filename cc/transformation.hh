@@ -124,7 +124,7 @@ namespace acmacs
         template <typename S> double operator()(S row, S column) const { return operator[](static_cast<size_t>(row) * number_of_dimensions_ + static_cast<size_t>(column)); }
         template <typename S> double& translation(S dimension) { return operator[](number_of_dimensions_ * number_of_dimensions_ + static_cast<size_t>(dimension)); }
         template <typename S> double translation(S dimension) const { return operator[](number_of_dimensions_ * number_of_dimensions_ + static_cast<size_t>(dimension)); }
-        Transformation transformation() const { return {operator()(0, 0), operator()(0, 1), operator()(1, 0), operator()(1, 1)}; }
+        Transformation transformation() const { return {operator[](0), operator[](1), operator[](2), operator[](3)}; }
 
      private:
         size_t number_of_dimensions_;
