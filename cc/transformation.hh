@@ -6,6 +6,7 @@
 
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/location.hh"
+#include "acmacs-base/line.hh"
 
 // ----------------------------------------------------------------------
 
@@ -71,14 +72,17 @@ namespace acmacs
                 d = r3;
             }
 
-        // Location2D transform(double x, double y) const
-        //     {
-        //         return {x * a + y * c, x * b + y * d};
-        //     }
-
         Location2D transform(Location2D loc) const
             {
                 return {loc.x() * a + loc.y() * c, loc.x() * b + loc.y() * d};
+            }
+
+        LineDefinedByEquation transform(LineDefinedByEquation source) const
+            {
+                const auto p1 = transform(Location2D{0, source.intercept()});
+                const auto p2 = transform(Location2D{1, source.slope() + source.intercept()});
+                const auto slope = (p2.y() - p1.y()) / (p2.x() - p1.x());
+                return {slope, p1.y() - slope * p1.x()};
             }
 
         double determinant() const
