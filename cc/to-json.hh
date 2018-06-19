@@ -84,6 +84,11 @@ namespace to_json
             }
         }
 
+        template <typename Key, typename Value, typename ... Args> inline std::string object_append(std::string target, Options options, Key&& key, Value&& aValue, Args&& ... args)
+        {
+            return object_append(target, options, acmacs::to_string(key), std::forward<Value>(aValue), std::forward<Args>(args) ...);
+        }
+
         // template <typename Value, typename ... Args> inline std::string object_append(std::string target, std::string key, Value&& aValue, Args&& ... args)
         // {
         //     return object_append(target, option_default, key, std::forward<Value>(aValue));
@@ -114,16 +119,6 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
-    template <typename ... Args> inline std::string object(Args&& ... args)
-    {
-        return internal::object_append(std::string{}, option_default, std::forward<Args>(args) ...);
-    }
-
-    template <typename ... Args> inline std::string object(Options options, Args&& ... args)
-    {
-        return internal::object_append(std::string{}, options, std::forward<Args>(args) ...);
-    }
-
     template <typename Iterator, typename UnaryOperation, typename = if_iterator<Iterator>>
         inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op, Options options = option_default)
     {
@@ -141,14 +136,33 @@ namespace to_json
         std::string target = "{}";
         for (; first != last; ++first) {
             const auto [key, value] = *first;
-            target = internal::object_append(target, options, key, value, options);
+            target = internal::object_append(target, options, key, value);
         }
         return target;
     }
 
-    template <typename Value> inline std::string object(const std::map<std::string, Value>& aMap, Options options = option_default)
+    namespace internal
     {
-        return object(std::begin(aMap), std::end(aMap), options);
+        template <typename Arg> inline std::string object1(Arg&& arg)
+        {
+            return to_json::object(std::begin(arg), std::end(arg));
+        }
+    }
+
+    template <typename... Args> inline std::string object(Args&&... args)
+    {
+        if constexpr (sizeof...(args) == 1) {
+            return internal::object1(std::forward<Args>(args)...); // for to_json::object(const std::map<Key, Value>& aMap)
+        }
+        else if constexpr (sizeof...(args) > 0)
+            return internal::object_append(std::string{}, option_default, std::forward<Args>(args)...);
+        else
+            return "{}";
+    }
+
+    template <typename ... Args> inline std::string object(Options options, Args&& ... args)
+    {
+        return internal::object_append(std::string{}, options, std::forward<Args>(args) ...);
     }
 
     template <typename ... Args> inline std::string object_append(std::string target, Args&& ... args)

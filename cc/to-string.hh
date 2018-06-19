@@ -21,6 +21,7 @@ namespace acmacs
     inline std::string to_string(long src) { return std::to_string(src); }
     inline std::string to_string(unsigned long src) { return std::to_string(src); }
     inline std::string to_string(float src) { return std::to_string(src); }
+    inline std::string to_string(char src) { return std::string(1, src); }
 
     inline std::string to_string(double value, int precision = 32)
     {
