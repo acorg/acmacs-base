@@ -25,6 +25,7 @@ namespace virus_name
           // const std::regex international{"^([AB][^/]*)/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
         const std::regex international{std::string(re_international_name) + re_reassortant_passage + "$"};
         const std::regex international_name{re_international_name};
+        const std::regex international_name_with_extra{std::string(re_international_name) + "(?:\\s*(.+))?"};
 
         const std::regex passage_after_name{" (MDCK|SIAT|MK|E|X)[X\\?\\d]"}; // to extract cdc name only! NOT to extract passage!
 
@@ -86,14 +87,22 @@ namespace virus_name
         using namespace _internal;
         std::string location;
         std::smatch m;
-        if (std::regex_match(name, m, international))
+        if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
             location = m[3].str();
         else if (std::regex_search(name, m, cdc))
             location = "#" + m[1].str();
-        else if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
-            location = m[3].str();
         else
             throw Unrecognized{"No location in " + name};
+
+        // if (std::regex_match(name, m, international))
+        //     location = m[3].str();
+        // else if (std::regex_search(name, m, cdc))
+        //     location = "#" + m[1].str();
+        // else if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
+        //     location = m[3].str();
+        // else
+        //     throw Unrecognized{"No location in " + name};
+
         return location;
     }
 
@@ -116,7 +125,7 @@ namespace virus_name
     inline std::string_view virus_type(const std::string& name) // pass by reference! because we return string_view to it
     {
         std::smatch m;
-        if (std::regex_match(name, m, _internal::international))
+        if (std::regex_search(name, m, _internal::international_name))
             return {name.data() + m.position(1), static_cast<size_t>(m.length(1))};
         throw Unrecognized("No virus_type in " + name);
 
@@ -127,7 +136,7 @@ namespace virus_name
     inline std::string year(std::string name)
     {
         std::smatch m;
-        if (std::regex_match(name, m, _internal::international))
+        if (std::regex_search(name, m, _internal::international_name))
             return _internal::make_year(m);
         throw Unrecognized("No year in " + name);
 
@@ -150,12 +159,33 @@ namespace virus_name
             throw Unrecognized("Cannot split " + name);
     }
 
-// ----------------------------------------------------------------------
+      // split for names looking like international but with unrecognized "garbage" (extra) at the end
+    inline void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage, std::string& extra)
+    {
+        try {
+            split(name, virus_type, host, location, isolation, year, passage);
+        }
+        catch (Unrecognized&) {
+            std::smatch m;
+            if (std::regex_search(name, m, _internal::international_name_with_extra)) {
+                virus_type = m[1].str();
+                host = m[2].str();
+                location = m[3].str();
+                isolation = m[4].str();
+                year = _internal::make_year(m);
+                extra = m[7].str();
+            }
+            else
+                throw Unrecognized("Cannot split " + name);
+        }
+    }
 
-      // Extracts virus name without passage, reassortant, extra,
-      // etc. and calculates match threshold (to use with
-      // acmacs_chart::Antigens::find_by_name_matching), match threshold is a square
-      // of virus name length.
+    // ----------------------------------------------------------------------
+
+    // Extracts virus name without passage, reassortant, extra,
+    // etc. and calculates match threshold (to use with
+    // acmacs_chart::Antigens::find_by_name_matching), match threshold is a square
+    // of virus name length.
     inline size_t match_threshold(std::string name)
     {
         size_t result = 0;
