@@ -90,6 +90,8 @@ namespace virus_name
             location = m[3].str();
         else if (std::regex_search(name, m, cdc))
             location = "#" + m[1].str();
+        else if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
+            location = m[3].str();
         else
             throw Unrecognized{"No location in " + name};
         return location;
