@@ -112,6 +112,7 @@ namespace rjson
         std::string to_json() const { return "null"; }
         std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
         constexpr void remove_comments() {}
+        bool operator==(null) const { return true; }
         template <typename Index> [[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
         template <typename Index> [[noreturn]] value& operator[](Index) { throw field_not_found(); }
         template <typename T> [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
@@ -392,13 +393,16 @@ namespace rjson
         bool empty() const;
 
         bool operator==(const std::string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
+        // bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
         bool operator==(std::string_view aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        bool operator!=(std::string_view aToCompare) const { return ! operator==(aToCompare); }
+        // bool operator!=(std::string_view aToCompare) const { return ! operator==(aToCompare); }
         bool operator==(const string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
+        // bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
         bool operator==(const char* aToCompare) const { return std::get<string>(*this) == aToCompare; }
-        bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
+        // bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
+        bool operator==(null aToCompare) const { try { return std::get<null>(*this) == aToCompare; } catch (...) { return false; } }
+
+        template <typename T> bool operator!=(T&& to_compare) const { return !operator==(std::forward<T>(to_compare)); }
 
           // ----------------------------------------------------------------------
 
