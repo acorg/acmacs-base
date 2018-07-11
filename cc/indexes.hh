@@ -25,10 +25,10 @@ namespace acmacs
         void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end()), end()); }
     };
 
-    template <typename T> void remove(const ReverseSortedIndexes& indexes, std::vector<T>& data, size_t base_index = 0)
+    template <typename T> void remove(const ReverseSortedIndexes& indexes, std::vector<T>& data, ReverseSortedIndexes::difference_type base_index = 0)
     {
         for (auto index : indexes)
-            data.erase(data.begin() + static_cast<ReverseSortedIndexes::difference_type>(index + base_index));
+            data.erase(data.begin() + static_cast<ReverseSortedIndexes::difference_type>(index) + base_index);
     }
 }
 
