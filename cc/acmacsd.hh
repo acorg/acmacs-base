@@ -13,6 +13,8 @@ namespace acmacs
         using namespace std::string_literals;
         if (auto root = std::getenv("ACMACSD_ROOT"); root)
             return root;
+        if (auto r_home = std::getenv("R_HOME"); r_home) // running under R
+            return r_home + std::string("library/acmacs.r");
         throw std::runtime_error("ACMACSD_ROOT env is not set (for apache-mod-acmacs see /etc/apache2/envvars)");
     }
 
