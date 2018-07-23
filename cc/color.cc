@@ -372,6 +372,17 @@ std::vector<Color> Color::distinct(distinct_t dtype)
     return {std::begin(ana_colors), std::end(ana_colors)};
 }
 
+Color Color::distinct(size_t offset, distinct_t dtype)
+{
+    switch (dtype) {
+      case distinct_t::Ana:
+          return *(std::begin(ana_colors) + offset);
+      case distinct_t::GoogleMaps:
+          return *(std::begin(google_maps_2017_colors) + offset);
+    }
+    return *(std::begin(ana_colors) + offset);
+}
+
 // ----------------------------------------------------------------------
 
 namespace _internal
