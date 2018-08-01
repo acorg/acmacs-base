@@ -80,47 +80,55 @@ namespace virus_name
 // ----------------------------------------------------------------------
 
     using location_func_t = std::string (*)(std::string);
+    enum class prioritize_cdc_name { no, yes };
 
-      // returned cdc abbreviation starts with #
-    inline std::string location(std::string name)
+    inline std::string location_for_cdc_name(std::string name)
     {
-        using namespace _internal;
-        std::string location;
         std::smatch m;
-        if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
-            location = m[3].str();
-        else if (std::regex_search(name, m, cdc_name))
-            location = "#" + m[1].str();
-        else
-            throw Unrecognized{"No location in " + name};
-
-        // if (std::regex_match(name, m, international))
-        //     location = m[3].str();
-        // else if (std::regex_search(name, m, cdc_name))
-        //     location = "#" + m[1].str();
-        // else if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
-        //     location = m[3].str();
-        // else
-        //     throw Unrecognized{"No location in " + name};
-
-        return location;
+        if (std::regex_search(name, m, _internal::cdc_name))
+            return "#" + m[1].str();
+        throw Unrecognized{"No cdc abbreviation in " + name};
     }
 
-      // Faster version of location() for A(H3N2)/ and A(H1N1)/ names without host field
+    // returned cdc abbreviation starts with #
+    inline std::string location(std::string name, prioritize_cdc_name check_cdc_first = prioritize_cdc_name::no)
+    {
+        try {
+            if (check_cdc_first == prioritize_cdc_name::yes)
+                return location_for_cdc_name(name);
+        }
+        catch (Unrecognized&) {
+        }
+
+        std::smatch m;
+        if (std::regex_search(name, m, _internal::international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
+            return m[3].str();
+
+        try {
+            if (check_cdc_first == prioritize_cdc_name::no)
+                return location_for_cdc_name(name);
+        }
+        catch (Unrecognized&) {
+        }
+
+        throw Unrecognized{"No location in " + name};
+    }
+
+    // Faster version of location() for A(H3N2)/ and A(H1N1)/ names without host field
     inline std::string location_human_a(std::string name)
     {
         constexpr const size_t prefix_size = 8;
-        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ?  _internal::location_human(name, prefix_size) : location(name);
+        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ? _internal::location_human(name, prefix_size) : location(name);
     }
 
-      // Faster version of location() for B/ names without host field
+    // Faster version of location() for B/ names without host field
     inline std::string location_human_b(std::string name)
     {
         constexpr const size_t prefix_size = 2;
-        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ?  _internal::location_human(name, prefix_size) : location(name);
+        return (name.size() > (prefix_size + _internal::international_name_suffix_size) && name[prefix_size - 1] == '/') ? _internal::location_human(name, prefix_size) : location(name);
     }
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     inline std::string_view virus_type(const std::string& name) // pass by reference! because we return string_view to it
     {
@@ -131,7 +139,7 @@ namespace virus_name
 
     } // AntigenSerum::virus_type
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     inline std::string year(std::string name)
     {
@@ -142,7 +150,7 @@ namespace virus_name
 
     } // AntigenSerum::year
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     inline void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
     {
@@ -159,8 +167,9 @@ namespace virus_name
             throw Unrecognized("Cannot split " + name);
     }
 
-      // split for names looking like international but with unrecognized "garbage" (extra) at the end
-    inline void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage, std::string& extra)
+    // split for names looking like international but with unrecognized "garbage" (extra) at the end
+    inline void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage,
+                                 std::string& extra)
     {
         try {
             split(name, virus_type, host, location, isolation, year, passage);
@@ -191,17 +200,17 @@ namespace virus_name
         size_t result = 0;
         std::smatch m;
         if (std::regex_search(name, m, _internal::international_name)) {
-              // find end of year (m[6])
+            // find end of year (m[6])
             const auto end_of_year_offset = static_cast<size_t>(m[6].second - name.begin());
             result = end_of_year_offset * end_of_year_offset;
-              // std::cerr << "INFO: match_threshold: end_of_year_offset:" << end_of_year_offset << " name:" << name << std::endl;
+            // std::cerr << "INFO: match_threshold: end_of_year_offset:" << end_of_year_offset << " name:" << name << std::endl;
         }
         return result;
     }
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
-}
+} // namespace virus_name
 
 // ----------------------------------------------------------------------
 /// Local Variables:
