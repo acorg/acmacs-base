@@ -16,7 +16,7 @@ namespace virus_name
 #pragma GCC diagnostic ignored "-Wexit-time-destructors"
 #endif
 
-        const std::regex cdc{"^([A-Z][A-Z][A-Z]?) "};
+        const std::regex cdc_name{"^([A-Z][A-Z][A-Z]?)[ \\-]"}; // cdc names had location abbreviation separated with '-' earlier
 
         constexpr const char* re_international_name = "^(?:([AB][^/]*)/)?(?:([^/]+)/)?([^/]{2,})/0*([^/]+)/(19|20)?(\\d\\d)";
         constexpr const char* re_reassortant_passage = "(?:(?:\\s+|__)(.+))?";
@@ -89,14 +89,14 @@ namespace virus_name
         std::smatch m;
         if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
             location = m[3].str();
-        else if (std::regex_search(name, m, cdc))
+        else if (std::regex_search(name, m, cdc_name))
             location = "#" + m[1].str();
         else
             throw Unrecognized{"No location in " + name};
 
         // if (std::regex_match(name, m, international))
         //     location = m[3].str();
-        // else if (std::regex_search(name, m, cdc))
+        // else if (std::regex_search(name, m, cdc_name))
         //     location = "#" + m[1].str();
         // else if (std::regex_search(name, m, international_name)) // international name with possible "garbage" after year, e.g. A/TOKYO/UT-IMS2-1/2014_HY-PR8-HA-N121K
         //     location = m[3].str();
