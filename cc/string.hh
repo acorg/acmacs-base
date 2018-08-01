@@ -94,6 +94,13 @@ namespace string
         return result;
     }
 
+    inline std::string replace(std::string source, char look_for, char replace_with)
+    {
+        for (std::string::size_type pos = source.find(look_for); pos != std::string::npos; pos = source.find(look_for, pos + 1))
+            source[pos] = replace_with;
+        return source;
+    }
+
     template <typename ... Args> inline std::string replace(std::string source, std::string l1, std::string r1, std::string l2, std::string r2, Args ... args)
     {
         return replace(replace(source, l1, r1), l2, r2, args ...);
