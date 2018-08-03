@@ -13,6 +13,7 @@ TARGETS = \
     $(DIST)/test-rjson-load \
     $(DIST)/test-argc-argv \
     $(DIST)/test-string-split \
+    $(DIST)/test-date2 \
     $(DIST)/time-series-gen
 
 # ----------------------------------------------------------------------
