@@ -100,6 +100,7 @@ class Date
             }
         }
 
+ public:
     friend inline int days_between_dates(const Date& a, const Date& b)
         {
             return std::chrono::duration_cast<date::days>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
