@@ -27,3 +27,4 @@ cd "$TESTDIR"
 ../dist/test-rjson
 ../dist/test-argc-argv
 ../dist/test-string-split
+../dist/test-date2

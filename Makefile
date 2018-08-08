@@ -54,8 +54,9 @@ install: check-acmacsd-root install-acmacs-base
 
 lib: $(ACMACS_BASE_LIB)
 
-test: $(TARGETS)
+test: | $(TARGETS)
 	test/test
+.PHONY: test
 
 profile-rjson: $(DIST)/profile-rjson-load
 	env LLVM_PROFILE_FILE=/r/default.profraw $^ ~/ac/results/ssm/2017-0925-ssm/merges/niid-b-vic-hi.ace
