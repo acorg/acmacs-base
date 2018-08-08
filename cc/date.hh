@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef ACMACS_DATE2
+#ifdef ACMACS_DATE1
 #include "acmacs-base/date1.hh"
 #else
 
@@ -15,6 +15,7 @@ class Date
     enum Today { Today };
 
     Date() : date_(date::year(9999), date::month(99), date::day(99)) {}         // invalid date by default
+    Date(const Date&) = default;
     Date(enum Today) : date_{date::floor<date::days>(std::chrono::system_clock::now())} {}
     Date(const char* aText) { from_string(std::string(aText)); }
     Date(std::string aText) { from_string(aText); }
@@ -22,16 +23,16 @@ class Date
     Date(const date::year_month_day& src) : date_(src) {}
     Date(const date::sys_days& src) : date_(src) {}
     Date(int year, unsigned month, unsigned day) : date_(date::year(year), date::month(month), date::day(day)) {}
-    Date(const Date& src) = default;
     static inline Date today() { return Today; }
+
+    Date& operator=(const Date&) = default;
+    Date& operator=(std::string aText) { if (!aText.empty()) from_string(aText); return *this; }
+    Date& operator=(std::string_view aText) { if (!aText.empty()) from_string(aText); return *this; }
+    Date& operator=(const char* aText) { if (aText && *aText) from_string(std::string_view(aText)); return *this; }
 
     Date months_ago(int number_of_months) const { return date_ - date::months(number_of_months); }
     Date years_ago(int number_of_years) const { return date_ - date::years(number_of_years); }
     Date weeks_ago(int number_of_weeks) const { return static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); }
-
-    Date& operator=(std::string aText) { if (!aText.empty()) from_string(aText); return *this; }
-    Date& operator=(std::string_view aText) { if (!aText.empty()) from_string(aText); return *this; }
-    Date& operator=(const char* aText) { if (aText && *aText) from_string(std::string_view(aText)); return *this; }
 
     bool operator < (const Date& d) const { return date_ < d.date_; }
     bool operator == (const Date& d) const { return date_ == d.date_; }
@@ -99,6 +100,26 @@ class Date
             }
         }
 
+    friend inline int days_between_dates(const Date& a, const Date& b)
+        {
+            return std::chrono::duration_cast<date::days>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
+        }
+
+    friend inline int weeks_between_dates(const Date& a, const Date& b)
+        {
+            return std::chrono::duration_cast<date::weeks>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
+        }
+
+    friend inline int months_between_dates(const Date& a, const Date& b)
+        {
+            return std::chrono::duration_cast<date::months>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
+        }
+
+    friend inline int years_between_dates(const Date& a, const Date& b)
+        {
+            return std::chrono::duration_cast<date::years>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
+        }
+
 }; // class Date
 
 // ----------------------------------------------------------------------
@@ -110,51 +131,12 @@ inline std::ostream& operator << (std::ostream& out, const Date& aDate)
 
 // ----------------------------------------------------------------------
 
-// // returns negative if b is earlier than a
-// inline int months_between_dates(const Date& a, const Date& b)
-// {
-//     int months = 0;
-//     if (a && b) {
-//         if (b < a) {
-//             months = - months_between_dates(b, a);
-//         }
-//         else if (a < b) {
-//             Date aa = a;
-//             aa.increment_month(1);
-//             while (aa < b) {
-//                 aa.increment_month(1);
-//                 ++months;
-//             }
-//         }
-//     }
-//     return months;
-// }
-
 // inline int months_between_dates(const std::pair<Date, Date>& aDates)
 // {
 //     return months_between_dates(aDates.first, aDates.second);
 // }
 
 // ----------------------------------------------------------------------
-
-// // returns negative if b is earlier than a
-// inline int years_between_dates(const Date& a, const Date& b)
-// {
-//     int years = 0;
-//     if (a && b) {
-//         if (b < a) {
-//             years = - years_between_dates(b, a);
-//         }
-//         else {
-//             Date aa = a;
-//             while (aa < b) {
-//                 aa.increment_year(1);
-//                 ++years;
-//             }
-//         }
-//     }
-//     return years;
-// }
 
 // inline int years_between_dates(const std::pair<Date, Date>& aDates)
 // {
@@ -163,50 +145,9 @@ inline std::ostream& operator << (std::ostream& out, const Date& aDate)
 
 // ----------------------------------------------------------------------
 
-// // returns negative if b is earlier than a
-// inline int weeks_between_dates(const Date& a, const Date& b)
-// {
-//     int weeks = 0;
-//     if (a && b) {
-//         if (b < a) {
-//             weeks = - weeks_between_dates(b, a);
-//         }
-//         else {
-//             Date aa = a;
-//             while (aa < b) {
-//                 aa.increment_week(1);
-//                 ++weeks;
-//             }
-//         }
-//     }
-//     return weeks;
-// }
-
 // inline int weeks_between_dates(const std::pair<Date, Date>& aDates)
 // {
 //     return weeks_between_dates(aDates.first, aDates.second);
-// }
-
-// ----------------------------------------------------------------------
-
-// // returns negative if b is earlier than a
-// inline ssize_t days_between_dates(const Date& a, const Date& b)
-// {
-//     ssize_t days = 0;
-//     if (a && b) {
-//         if (b < a) {
-//             days = - days_between_dates(b, a);
-//         }
-//         else {
-//             try {
-//                 days = (b.gregorian() - a.gregorian()).days();
-//             }
-//             catch (std::exception& err) {
-//                 throw std::runtime_error("Cannot find days between \"" + a.display() + "\" and \"" + b.display() + "\": " + err.what());
-//             }
-//         }
-//     }
-//     return days;
 // }
 
 // ----------------------------------------------------------------------

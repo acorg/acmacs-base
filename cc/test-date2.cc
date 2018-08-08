@@ -2,9 +2,9 @@
 #include <vector>
 
 #include "acmacs-base/debug.hh"
-
-#define ACMACS_DATE2
 #include "acmacs-base/date.hh"
+
+// ----------------------------------------------------------------------
 
 inline static void my_assert(bool condition, std::string message)
 {
@@ -40,6 +40,10 @@ int main()
         my_assert(Date(2018, 8, 6) == for_beginning_of_week.beginning_of_week(), "beginning of week for " + for_beginning_of_week.display() + " ?-> " + for_beginning_of_week.beginning_of_week().display());
         Date for_next_week(2018, 7, 30);
         my_assert(Date(2018, 8, 6) == for_next_week.next_week(), "next week for " + for_next_week.display() + " ?-> " + for_next_week.next_week().display());
+        Date m1(2018, 7, 30), m2(2017, 8, 10);
+          // std::cout << m1 << ' ' << m2 << ' ' << months_between_dates(m1, m2) << ' ' << months_between_dates(m2, m1) << '\n';
+        my_assert(months_between_dates(m1, m2) == -11, "months_between_dates(2018, 2017)");
+        my_assert(months_between_dates(m2, m1) == 11, "months_between_dates(2017, 2018)");
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';
