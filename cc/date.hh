@@ -18,9 +18,13 @@ class Date
     Date(const char* aText) { from_string(std::string(aText)); }
     Date(std::string aText) { from_string(aText); }
     Date(std::string_view aText) { from_string(aText); }
+    Date(const date::year_month_day& src) : date_(src) {}
+    Date(int year, unsigned month, unsigned day) : date_(date::year(year), date::month(month), date::day(day)) {}
+    Date(const Date& src) = default;
     static inline Date today() { return Today; }
-    // static inline Date months_ago(int number_of_months) { return Date(Today).decrement_month(number_of_months); }
-    // static inline Date years_ago(int number_of_years) { return Date(Today).decrement_month(number_of_years * 12); }
+
+    Date months_ago(int number_of_months) const { return date_ - date::months(number_of_months); }
+    Date years_ago(int number_of_years) const { return date_ - date::years(number_of_years); }
     // static inline Date weeks_ago(int number_of_weeks) { return Date(Today).decrement_week(number_of_weeks); }
 
     Date& operator=(std::string aText) { if (!aText.empty()) from_string(aText); return *this; }
@@ -68,8 +72,6 @@ class Date
 
  private:
     date::year_month_day date_;
-
-    Date(const date::year_month_day& src) : date_(src) {}
 
     void from_string(std::string_view source)
         {
