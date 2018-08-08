@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef ACMACS_DATE1
-#include "acmacs-base/date1.hh"
-#else
-
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
 
@@ -129,31 +125,6 @@ inline std::ostream& operator << (std::ostream& out, const Date& aDate)
 {
     return out << aDate.display();
 }
-
-// ----------------------------------------------------------------------
-
-// inline int months_between_dates(const std::pair<Date, Date>& aDates)
-// {
-//     return months_between_dates(aDates.first, aDates.second);
-// }
-
-// ----------------------------------------------------------------------
-
-// inline int years_between_dates(const std::pair<Date, Date>& aDates)
-// {
-//     return years_between_dates(aDates.first, aDates.second);
-// }
-
-// ----------------------------------------------------------------------
-
-// inline int weeks_between_dates(const std::pair<Date, Date>& aDates)
-// {
-//     return weeks_between_dates(aDates.first, aDates.second);
-// }
-
-// ----------------------------------------------------------------------
-
-#endif  // ACMACS_DATE2
 
 // ----------------------------------------------------------------------
 /// Local Variables:
