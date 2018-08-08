@@ -13,9 +13,9 @@ class Date
  public:
     enum Today { Today };
 
-    Date() = default;
+    Date() : date_(date::year(9999), date::month(99), date::day(99)) {}         // invalid date by default
     Date(enum Today) : date_{date::floor<date::days>(std::chrono::system_clock::now())} {}
-    Date(const char* aText) { from_string(std::string_view(aText)); }
+    Date(const char* aText) { from_string(std::string(aText)); }
     Date(std::string aText) { from_string(aText); }
     Date(std::string_view aText) { from_string(aText); }
     static inline Date today() { return Today; }
@@ -71,26 +71,24 @@ class Date
 
     Date(const date::year_month_day& src) : date_(src) {}
 
-    // std::string format(const char* fmt) const
-    //     {
-    //         std::ostringstream stream;
-    //         stream.imbue(std::locale(std::locale::classic(), new boost::gregorian::date_facet(fmt)));
-    //         stream << mDate;
-    //         return stream.str();
-    //     }
-
     void from_string(std::string_view source)
         {
+            from_string(std::string(source));
         }
 
     void from_string(std::string source)
         {
-            // try {
-            //     return boost::gregorian::from_string(source);
-            // }
-            // catch (std::exception&) {
-            //     return boost::gregorian::from_undelimited_string(source);
-            // }
+            for (const char* format : {"%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%b %d %Y", "%D", "%b %d, %Y"}) {
+                std::istringstream in(source);
+                in >> date::parse(format, date_);
+                if (in) {
+                    if (date_.year() < date::year{30})
+                        date_ += date::years(2000);
+                    else if (date_.year() < date::year{100})
+                        date_ += date::years(1900);
+                    break;
+                }
+            }
         }
 
 }; // class Date
