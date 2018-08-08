@@ -18,15 +18,17 @@ class Date
  public:
     enum Today { Today };
 
-    Date() : mDate() {}
+    Date() = default;
+    Date(const Date&) = default;
     Date(enum Today) : mDate(boost::gregorian::day_clock::local_day()) {}
     template <typename S> Date(S&& aText) : mDate(from_string(std::string(std::forward<S>(aText)))) {}
     Date(boost::gregorian::date aBoostDate) : mDate(aBoostDate) {}
     static Date today() { return Today; }
-    static Date months_ago(int number_of_months) { return Date(Today).decrement_month(number_of_months); }
-    static Date years_ago(int number_of_years) { return Date(Today).decrement_month(number_of_years * 12); }
-    static Date weeks_ago(int number_of_weeks) { return Date(Today).decrement_week(number_of_weeks); }
+    Date months_ago(int number_of_months) const { return Date(*this).decrement_month(number_of_months); }
+    Date years_ago(int number_of_years) const { return Date(*this).decrement_month(number_of_years * 12); }
+    Date weeks_ago(int number_of_weeks) const { return Date(*this).decrement_week(number_of_weeks); }
 
+    Date& operator=(const Date&) = default;
     Date& operator=(std::string aText) { if (!aText.empty()) mDate = from_string(aText); return *this; }
     Date& operator=(const char* aText) { if (aText && *aText) mDate = from_string(aText); return *this; }
 
