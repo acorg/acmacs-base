@@ -34,6 +34,12 @@ int main()
         my_assert(Date(2018, 2, 8) == for_months_ago.months_ago(6), "6 months ago for " + for_months_ago.display() + " ?-> " + for_months_ago.months_ago(6).display());
         Date for_years_ago(2018, 8, 8);
         my_assert(Date(2012, 8, 8) == for_years_ago.years_ago(6), "6 years ago for " + for_years_ago.display() + " ?-> " + for_years_ago.years_ago(6).display());
+        Date for_weeks_ago(2018, 8, 8);
+        my_assert(Date(2018, 6, 27) == for_weeks_ago.weeks_ago(6), "6 weeks ago for " + for_weeks_ago.display() + " ?-> " + for_weeks_ago.weeks_ago(6).display());
+        Date for_beginning_of_week(2018, 8, 8);
+        my_assert(Date(2018, 8, 6) == for_beginning_of_week.beginning_of_week(), "beginning of week for " + for_beginning_of_week.display() + " ?-> " + for_beginning_of_week.beginning_of_week().display());
+        Date for_next_week(2018, 7, 30);
+        my_assert(Date(2018, 8, 6) == for_next_week.next_week(), "next week for " + for_next_week.display() + " ?-> " + for_next_week.next_week().display());
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';

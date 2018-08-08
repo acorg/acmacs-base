@@ -5,6 +5,7 @@
 #else
 
 #include "acmacs-base/date2.hh"
+#include "acmacs-base/week2.hh"
 
 // ----------------------------------------------------------------------
 
@@ -19,13 +20,14 @@ class Date
     Date(std::string aText) { from_string(aText); }
     Date(std::string_view aText) { from_string(aText); }
     Date(const date::year_month_day& src) : date_(src) {}
+    Date(const date::sys_days& src) : date_(src) {}
     Date(int year, unsigned month, unsigned day) : date_(date::year(year), date::month(month), date::day(day)) {}
     Date(const Date& src) = default;
     static inline Date today() { return Today; }
 
     Date months_ago(int number_of_months) const { return date_ - date::months(number_of_months); }
     Date years_ago(int number_of_years) const { return date_ - date::years(number_of_years); }
-    // static inline Date weeks_ago(int number_of_weeks) { return Date(Today).decrement_week(number_of_weeks); }
+    Date weeks_ago(int number_of_weeks) const { return static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); }
 
     Date& operator=(std::string aText) { if (!aText.empty()) from_string(aText); return *this; }
     Date& operator=(std::string_view aText) { if (!aText.empty()) from_string(aText); return *this; }
@@ -47,26 +49,30 @@ class Date
       // returns date for the 1st day of the year-month stored in this
     Date beginning_of_month() const { return date::year_month_day(date_.year(), date_.month(), date::day{1}); }
     Date beginning_of_year() const { return date::year_month_day(date_.year(), date::month{1}, date::day{1}); }
-    // Date beginning_of_week() const { return boost::gregorian::first_day_of_the_week_before(boost::gregorian::Monday).get_date(mDate); }
+    Date beginning_of_week() const
+        {
+            iso_week::year_weeknum_weekday yw(date_);
+            return {iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{date::Monday})};
+        }
 
-    // Date& increment_month(int number_of_months = 1) { mDate += boost::gregorian::months(number_of_months); return *this; }
-    // Date& decrement_month(int number_of_months = 1) { mDate -= boost::gregorian::months(number_of_months); return *this; }
-    // Date& increment_year(int number_of_years = 1) { mDate += boost::gregorian::years(number_of_years); return *this; }
-    // Date& decrement_year(int number_of_years = 1) { mDate -= boost::gregorian::years(number_of_years); return *this; }
-    // Date& increment_week(int number_of_weeks = 1) { mDate += boost::gregorian::weeks(number_of_weeks); return *this; }
-    // Date& decrement_week(int number_of_weeks = 1) { mDate -= boost::gregorian::weeks(number_of_weeks); return *this; }
+    Date& increment_month(int number_of_months = 1) { date_ += date::months(number_of_months); return *this; }
+    Date& decrement_month(int number_of_months = 1) { date_ -= date::months(number_of_months); return *this; }
+    Date& increment_year(int number_of_years = 1) { date_ += date::years(number_of_years); return *this; }
+    Date& decrement_year(int number_of_years = 1) { date_ -= date::years(number_of_years); return *this; }
+    Date& increment_week(int number_of_weeks = 1) { date_ = static_cast<date::sys_days>(date_) + date::weeks(number_of_weeks); return *this; }
+    Date& decrement_week(int number_of_weeks = 1) { date_ = static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); return *this; }
 
-    // Date next_month() const { return mDate + boost::gregorian::months(1); }
-    // Date next_year() const { return mDate + boost::gregorian::years(1); }
-    // Date next_week() const { return mDate + boost::gregorian::weeks(1); }
+    Date next_month() const { return date_ + date::months(1); }
+    Date next_year() const { return date_ + date::years(1); }
+    Date next_week() const { return {static_cast<date::sys_days>(date_) + date::weeks(1)}; }
 
-    // std::string month_3() const { return format("%b"); }
-    // std::string year_2() const { return format("%y"); }
-    // std::string year_4() const { return format("%Y"); }
-    // std::string month3_year2() const { return format("%b %y"); }
-    // std::string monthtext_year() const { return format("%B %Y"); }
-    // std::string year4_month2() const { return format("%Y-%m"); }
-    // std::string year4_month2_day2() const { return format("%Y-%m-%d"); }
+    std::string month_3() const { return date::format("%b", date_); }
+    std::string year_2() const { return date::format("%y", date_); }
+    std::string year_4() const { return date::format("%Y", date_); }
+    std::string month3_year2() const { return date::format("%b %y", date_); }
+    std::string monthtext_year() const { return date::format("%B %Y", date_); }
+    std::string year4_month2() const { return date::format("%Y-%m", date_); }
+    std::string year4_month2_day2() const { return date::format("%Y-%m-%d", date_); }
 
       //? const auto& gregorian() const { return date_; }
 
