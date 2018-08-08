@@ -1,6 +1,10 @@
 #pragma once
 
 #include <string>
+#include <variant>
+#include <functional>
+#include <iostream>
+#include <fstream>
 
 #include "acmacs-base/filesystem.hh"
 
@@ -27,17 +31,17 @@ namespace acmacs::file
     class read_access
     {
      public:
-        inline read_access() = default;
+        read_access() = default;
         read_access(std::string aFilename);
         ~read_access();
         read_access(const read_access&) = delete;
         read_access(read_access&&);
         read_access& operator=(const read_access&) = delete;
         read_access& operator=(read_access&&);
-        inline operator std::string() const { return decompress_if_necessary({mapped, len}); }
-        inline size_t size() const { return len; }
-        inline const char* data() const { return mapped; }
-        inline bool valid() const { return mapped != nullptr; }
+        operator std::string() const { return decompress_if_necessary({mapped, len}); }
+        size_t size() const { return len; }
+        const char* data() const { return mapped; }
+        bool valid() const { return mapped != nullptr; }
 
      private:
         int fd = -1;
@@ -72,6 +76,48 @@ namespace acmacs::file
         std::string make_template(std::string prefix);
 
     }; // class temp
+
+    class ifstream
+    {
+     public:
+        ifstream(std::string filename) : backend_(std::cin)
+            {
+                if (filename != "-")
+                    backend_ = std::ifstream(filename);
+            }
+
+        std::istream& stream()
+            {
+                return std::visit([](auto&& stream) -> std::istream& { return stream; }, backend_);
+            }
+
+        operator std::istream&() { return stream(); }
+
+     private:
+        std::variant<std::reference_wrapper<std::istream>,std::ifstream> backend_;
+    };
+
+    class ofstream
+    {
+     public:
+        ofstream(std::string filename) : backend_(std::cout)
+            {
+                if (filename == "=")
+                    backend_ = std::cerr;
+                else if (filename != "-")
+                    backend_ = std::ofstream(filename);
+            }
+
+        std::ostream& stream()
+            {
+                return std::visit([](auto&& stream) -> std::ostream& { return stream; }, backend_);
+            }
+
+        operator std::ostream&() { return stream(); }
+
+     private:
+        std::variant<std::reference_wrapper<std::ostream>,std::ofstream> backend_;
+    };
 
 } // namespace acmacs::file
 
