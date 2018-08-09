@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
 
@@ -83,7 +85,9 @@ class Date
 
     void from_string(std::string source)
         {
-            for (const char* format : {"%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%b %d %Y", "%D", "%b %d, %Y"}) {
+            using namespace date::literals;
+            date_ = 1999_y/99/99;
+            for (const char* format : {"%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
                 std::istringstream in(source);
                 in >> date::parse(format, date_);
                 if (in) {
@@ -91,9 +95,10 @@ class Date
                         date_ += date::years(2000);
                     else if (date_.year() < date::year{100})
                         date_ += date::years(1900);
-                    break;
+                    return;
                 }
             }
+            std::cerr << "ERROR: cannot parse date from \"" << source << "\"\n";
         }
 
  public:

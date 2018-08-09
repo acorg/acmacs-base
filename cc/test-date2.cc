@@ -25,9 +25,9 @@ int main()
         auto today = Date::today();
         std::cout << "today: " << today << '\n';
         using pairs_t = std::vector<std::pair<const char*, date::year_month_day>>;
-        for (auto& [source, expected] : pairs_t{{"05/04/17", 2017_y/5/4}, {"10/10/11", 2011_y/10/10}, {"9/11/2001", 2001_y/9/11}, {"9/11/88", 1988_y/9/11}, {"September 11, 2001", 2001_y/9/11}, {"September 11 2001", 2001_y/9/11}, {"2001-09-11", 2001_y/9/11}, {"13/10/11", 2011_y/10/13}}) {
+        for (auto& [source, expected] : pairs_t{{"05/04/17", 2017_y/5/4}, {"10/10/11", 2011_y/10/10}, {"9/11/2001", 2001_y/9/11}, {"9/11/88", 1988_y/9/11}, {"September 11, 2001", 2001_y/9/11}, {"September 11 2001", 2001_y/9/11}, {"Sep 11 2001", 2001_y/9/11}, {"2001-09-11", 2001_y/9/11}, {"13/10/11", 2011_y/10/13}}) {
             Date dat(source), exp(expected);
-            my_assert(dat == exp, dat.display() + " != " + exp.display());
+            my_assert(dat == exp, std::string(source) + " -> " + dat.display() + " != " + exp.display());
               // std::cout << "nine_eleven: " << nine_eleven_s << " --> " << nine_eleven << '\n';
         }
         Date for_months_ago(2018, 8, 8);
