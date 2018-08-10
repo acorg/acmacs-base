@@ -318,16 +318,16 @@ void Color::adjust_brightness(double value)
 
 static const char* ana_colors[] =
 {
-    "#03569b",
-    "#e72f27",
-    "#ffc808",
-    "#a2b324",
-    "#a5b8c7",
-    "#049457",
-    "#f1b066",
-    "#742f32",
-    "#9e806e",
-    "#75ada9",
+    "#03569b",                  // dark blue
+    "#e72f27",                  // dark red
+    "#ffc808",                  // yellow
+    "#a2b324",                  // dark green
+    "#a5b8c7",                  // grey
+    "#049457",                  // green
+    "#f1b066",                  // pale orange
+    "#742f32",                  // brown
+    "#9e806e",                  // brown
+    "#75ada9",                  // turquoise
     "#675b2c",
     "#a020f0",
     "#8b8989",
