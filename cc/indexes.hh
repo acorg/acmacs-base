@@ -1,6 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
+
+#include "acmacs-base/range.hh"
+
+// ----------------------------------------------------------------------
 
 namespace acmacs
 {
@@ -16,11 +21,17 @@ namespace acmacs
     class ReverseSortedIndexes : public Indexes
     {
      public:
+        explicit ReverseSortedIndexes() = default;
         explicit ReverseSortedIndexes(const Indexes& source) : Indexes(source) { sort(); }
+        explicit ReverseSortedIndexes(size_t range) : ReverseSortedIndexes(acmacs::filled_with_indexes(range)) {}
 
         void add(const Indexes& to_add) { insert(end(), to_add.begin(), to_add.end()); sort(); }
+        void remove(const Indexes& to_remove)
+        {
+            erase(std::remove_if(begin(), end(), [&to_remove](size_t ind) -> bool { return std::find(to_remove.begin(), to_remove.end(), ind) != to_remove.end(); }), end());
+        }
 
-     private:
+      private:
         static inline bool cmp(size_t i1, size_t i2) { return i1 > i2; }
         void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end()), end()); }
     };
