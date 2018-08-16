@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
 
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
@@ -129,6 +130,18 @@ class Date
 inline std::ostream& operator << (std::ostream& out, const Date& aDate)
 {
     return out << aDate.display();
+}
+
+// ----------------------------------------------------------------------
+
+// https://stackoverflow.com/questions/17223096/outputting-date-and-time-in-c-using-stdchrono
+inline std::string current_date_time()
+{
+    const auto now = std::chrono::system_clock::now();
+    const auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S %Z");
+    return ss.str();
 }
 
 // ----------------------------------------------------------------------
