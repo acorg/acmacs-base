@@ -132,6 +132,7 @@ namespace acmacs::string
 
     template <typename S> inline std::vector<double> split_into_double(const S& s)
     {
+        using namespace std::string_literals;
         auto extractor = [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); };
         for (const char* delim : {",", " ", ", "}) {
             try {
