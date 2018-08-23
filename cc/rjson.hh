@@ -40,8 +40,9 @@ namespace rjson
     {
      public:
         string() = default;
-        string(std::string aData) : mData{aData} {}
-        string(const char* aData) : mData{aData} {}
+        string(std::string aData) : mData(std::move(aData)) {}
+        string(const char* aData) : mData(aData) {}
+        string(const char* aData, size_t aLen) : mData(aData, aLen) {}
         string(const string&) = default;
         string& operator=(const string&) = default;
         string(string&&) = default;
@@ -122,7 +123,7 @@ namespace rjson
     class number
     {
      private:
-        inline static std::string make_value(double val, int precision = 32)
+        template <typename D> inline static std::string make_value(D val, int precision = 32)
             {
                 if (std::isnan(val))
                     throw numeric_value_is_nan{};
@@ -132,6 +133,7 @@ namespace rjson
      public:
         number() : mValue{"0.0"} {}
         number(double aSrc) : mValue{make_value(aSrc)} {}
+        number(long double aSrc) : mValue{make_value(aSrc)} {}
         number(double aSrc, int precision) : mValue{make_value(aSrc, precision)} {}
         number(std::string_view aData) : mValue{aData} {} // for parser
         number& operator=(double aSrc) { mValue = make_value(aSrc); return *this; }
@@ -158,6 +160,7 @@ namespace rjson
         integer(unsigned int aSrc) : mValue{acmacs::to_string(aSrc)} {}
         integer(long aSrc) : mValue{acmacs::to_string(aSrc)} {}
         integer(unsigned long aSrc) : mValue{acmacs::to_string(aSrc)} {}
+        integer(unsigned long long aSrc) : mValue{acmacs::to_string(aSrc)} {}
         integer(std::string_view aData) : mValue{aData} {} // for parser
         integer& operator=(int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
         integer& operator=(unsigned int aSrc) { mValue = acmacs::to_string(aSrc); return *this; }
@@ -966,7 +969,18 @@ namespace rjson
     {
         return std::visit([&](auto&& arg) -> std::string { return arg.to_json_pp(indent, emacs_indent, prefix); }, *this);
     }
-}
+} // namespace rjson
+
+// ----------------------------------------------------------------------
+
+namespace rjson::literals
+{
+    inline rjson::string operator"" _rj(const char* str, std::size_t len) { return rjson::string(str, len); }
+    inline rjson::string operator"" _rj(const char* str) { return rjson::string(str); }
+    inline rjson::integer operator"" _rj(unsigned long long i) { return i; }
+    inline rjson::number operator"" _rj(long double d) { return d; }
+
+} // namespace rjson::literals
 
 // ----------------------------------------------------------------------
 
