@@ -130,6 +130,19 @@ namespace acmacs::string
         return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); }, "double");
     }
 
+    template <typename S> inline std::vector<double> split_into_double(const S& s)
+    {
+        auto extractor = [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); };
+        for (const char* delim : {",", " ", ", "}) {
+            try {
+                return internal::split_into<S, double>(s, delim, extractor, "double");
+            }
+            catch (split_error&) {
+            }
+        }
+        throw split_error{"cannot read double's from \""s + s + "\""};
+    }
+
     // inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
     // {
     //     std::vector<std::string_view> result;
