@@ -20,19 +20,32 @@ namespace acmacs
     inline std::string to_string(unsigned src) { return std::to_string(src); }
     inline std::string to_string(long src) { return std::to_string(src); }
     inline std::string to_string(unsigned long src) { return std::to_string(src); }
+    inline std::string to_string(long long src) { return std::to_string(src); }
+    inline std::string to_string(unsigned long long src) { return std::to_string(src); }
     inline std::string to_string(float src) { return std::to_string(src); }
     inline std::string to_string(char src) { return std::string(1, src); }
 
-    inline std::string to_string(double value, int precision = 32)
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
+    namespace internal
     {
-        const auto num_digits_before_dot = static_cast<int>(std::log10(std::abs(value))) + 1;
-        constexpr const size_t buffer_size = 100;
-        char buffer[buffer_size + 1];
-        const int written = std::snprintf(buffer, buffer_size, "%.*g", precision + num_digits_before_dot, value);
-        if (written < 0 && static_cast<size_t>(written) >= buffer_size)
-            throw std::runtime_error("acmacs::to_string(double) internal error");
-        return {buffer, static_cast<size_t>(written)};
-    }
+        template <typename D> inline std::string to_string_double(D value, int precision, const char* format)
+        {
+            const auto num_digits_before_dot = static_cast<int>(std::log10(std::abs(value))) + 1;
+            constexpr const size_t buffer_size = 100;
+            char buffer[buffer_size + 1];
+            const int written = std::snprintf(buffer, buffer_size, format, precision + num_digits_before_dot, value);
+            if (written < 0 && static_cast<size_t>(written) >= buffer_size)
+                throw std::runtime_error("acmacs::to_string(double) internal error");
+            return {buffer, static_cast<size_t>(written)};
+        }
+    } // namespace internal
+#pragma GCC diagnostic pop
+
+    inline std::string to_string(double value, int precision = 32) { return internal::to_string_double(value, precision, "%.*g"); }
+    inline std::string to_string(long double value, int precision = 64) { return internal::to_string_double(value, precision, "%.*Lg"); }
 
     inline std::string to_string(std::string src) { return src; }
     inline std::string to_string(std::string_view src) { return std::string(src); }
