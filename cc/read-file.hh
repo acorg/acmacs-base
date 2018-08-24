@@ -92,6 +92,7 @@ namespace acmacs::file
             }
 
         operator std::istream&() { return stream(); }
+        std::string read() { return {std::istreambuf_iterator<char>(stream()), {}}; }
 
      private:
         std::variant<std::reference_wrapper<std::istream>,std::ifstream> backend_;
