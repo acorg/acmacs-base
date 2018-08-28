@@ -1,0 +1,297 @@
+#include <stack>
+#include <memory>
+
+#include "acmacs-base/rjson2.hh"
+#include "acmacs-base/read-file.hh"
+#include "acmacs-base/string.hh"
+
+// ----------------------------------------------------------------------
+
+namespace rjson2::parser_pop
+{
+    class SymbolHandler;
+
+    class StateTransitionNone {};
+    class StateTransitionPop {};
+
+    using HandlingResult = std::variant<StateTransitionNone, StateTransitionPop, std::unique_ptr<SymbolHandler>>;
+
+      // --------------------------------------------------
+
+    class Parser
+    {
+     public:
+        Parser();
+
+        void parse(std::string_view data);
+        value result_move();
+        void remove_emacs_indent();
+        void remove_comments();
+
+        constexpr auto pos() const noexcept { return pos_; }
+        constexpr auto line() const noexcept { return line_; }
+        constexpr auto column() const noexcept { return column_; }
+
+        inline void back() noexcept { --pos_; if (--column_ == 0) --line_; }
+        constexpr void newline() noexcept { ++line_; column_ = 0; }
+
+      private:
+        std::string_view source_;
+        size_t pos_ = 0, line_ = 1, column_ = 1;
+        std::stack<std::unique_ptr<SymbolHandler>> handlers_;
+
+        void pop();
+
+    }; // class Parser
+
+      // --------------------------------------------------
+
+    class SymbolHandler
+    {
+     public:
+        virtual ~SymbolHandler() = default;
+
+        [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
+            {
+                throw parse_error(aParser.line(), aParser.column(), std::string{"unexpected symbol: '"} + aSymbol + "' (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+            }
+
+        [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const
+            {
+                throw parse_error(aParser.line(), aParser.column(), std::move(aMessage));
+            }
+
+        [[noreturn]] inline void internal_error(Parser& aParser) const
+            {
+                throw parse_error(aParser.line(), aParser.column(), "internal error");
+            }
+
+        inline void newline(Parser& aParser) const
+            {
+                aParser.newline();
+            }
+
+        virtual inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser)
+            {
+                switch (aSymbol) {
+                  case ' ':
+                  case '\t':
+                  case '\r':
+                      break;
+                  case '\n':
+                      newline(aParser);
+                      break;
+                  default:
+                      unexpected(aSymbol, aParser);
+                }
+                return StateTransitionNone{};
+            }
+
+        virtual value value_move() = 0; //{ return null{}; }
+        virtual inline void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
+
+    }; // class SymbolHandler
+
+      // --------------------------------------------------
+
+    class ValueHandler : public SymbolHandler
+    {
+     public:
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
+
+        inline void subvalue(value&& subvalue, Parser& /*aParser*/) override
+            {
+                value_ = std::move(subvalue);
+                value_read_ = true;
+            }
+
+        inline value value_move() override { return std::move(value_); }
+        inline value& value() { return value_; }
+
+     protected:
+        constexpr bool value_read() const { return value_read_; }
+
+     private:
+        bool value_read_ = false;
+        class value value_;
+
+    }; // class ValueHandler
+
+      // --------------------------------------------------
+
+    class ToplevelHandler : public ValueHandler
+    {
+     public:
+        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result;
+                if (value_read())
+                    result = SymbolHandler::handle(aSymbol, aParser);
+                else
+                    result = ValueHandler::handle(aSymbol, aParser);
+                return result;
+            }
+
+    }; // class ToplevelHandler
+
+      // --------------------------------------------------
+
+    HandlingResult ValueHandler::handle(std::string_view::value_type aSymbol, Parser& aParser)
+    {
+        HandlingResult result = StateTransitionNone{};
+        if (value_read()) {
+            aParser.back();
+            result = StateTransitionPop{};
+        }
+        else {
+            // switch (aSymbol) {
+            //     case '"':
+            //         result = std::make_unique<StringHandler>(aParser);
+            //         break;
+            //     case '-':
+            //     case '+':
+            //     case '.':
+            //     case '0':
+            //     case '1':
+            //     case '2':
+            //     case '3':
+            //     case '4':
+            //     case '5':
+            //     case '6':
+            //     case '7':
+            //     case '8':
+            //     case '9':
+            //         result = std::make_unique<NumberHandler>(aParser);
+            //         aParser.back();
+            //         break;
+            //     case 't':
+            //         result = std::make_unique<BoolNullHandler>("rue", boolean{true});
+            //         break;
+            //     case 'f':
+            //         result = std::make_unique<BoolNullHandler>("alse", boolean{false});
+            //         break;
+            //     case 'n':
+            //         result = std::make_unique<BoolNullHandler>("ull", null{});
+            //         break;
+            //     case '{':
+            //         result = std::make_unique<ObjectHandler>();
+            //         break;
+            //     case '[':
+            //         result = std::make_unique<ArrayHandler>();
+            //         break;
+            //     default:
+            //         result = SymbolHandler::handle(aSymbol, aParser);
+            //         break;
+            // }
+        }
+        return result;
+    }
+
+    // --------------------------------------------------
+
+    inline Parser::Parser() { handlers_.emplace(new ToplevelHandler); }
+
+    inline void Parser::pop()
+    {
+        auto value{handlers_.top()->value_move()};
+        handlers_.pop();
+        handlers_.top()->subvalue(std::move(value), *this);
+    }
+
+    void Parser::parse(std::string_view data)
+    {
+        source_ = data;
+        for (pos_ = 0; pos_ < source_.size(); ++pos_, ++column_) {
+            const auto symbol = source_[pos_];
+            auto handling_result = handlers_.top()->handle(symbol, *this);
+            std::visit(
+                [this](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, std::unique_ptr<SymbolHandler>>) {
+                        this->handlers_.push(std::forward<T>(arg));
+                    }
+                    else if constexpr (std::is_same_v<T, StateTransitionPop>) {
+                        pop();
+                    }
+                },
+                handling_result);
+        }
+        if (handlers_.size() > 1)
+            pop();
+    }
+
+    inline value Parser::result_move()
+    {
+        return handlers_.top()->value_move();
+    }
+
+    void Parser::remove_emacs_indent()
+    {
+        auto& value = dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value();
+        if (auto* top_obj = std::get_if<object>(&value); top_obj) {
+            // try {
+            //     top_obj->delete_field("_");
+            // }
+            // catch (field_not_found&) {
+            // }
+        }
+    }
+
+    inline void Parser::remove_comments()
+    {
+        dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value().remove_comments();
+    }
+
+      // --------------------------------------------------
+
+    template <typename S> inline value parse_string(S data, remove_comments rc)
+    {
+        Parser parser{};
+        parser.parse(data);
+        parser.remove_emacs_indent();
+        if (rc == remove_comments::yes)
+            parser.remove_comments();
+        return parser.result_move();
+    }
+
+}
+
+// ----------------------------------------------------------------------
+
+rjson2::value rjson2::parse_string(std::string data, remove_comments rc)
+{
+    return parser_pop::parse_string(data, rc);
+
+} // rjson2::parse_string
+
+// ----------------------------------------------------------------------
+
+rjson2::value rjson2::parse_string(std::string_view data, remove_comments rc)
+{
+    return parser_pop::parse_string(data, rc);
+
+} // rjson2::parse_string
+
+// ----------------------------------------------------------------------
+
+rjson2::value rjson2::parse_string(const char* data, remove_comments rc)
+{
+    return parser_pop::parse_string(data, rc);
+
+} // rjson2::parse_string
+
+// ----------------------------------------------------------------------
+
+rjson2::value rjson2::parse_file(std::string filename, remove_comments rc)
+{
+    return parse_string(acmacs::file::read(filename), rc);
+
+} // rjson2::parse_file
+
+// ----------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------
+/// Local Variables:
+/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
+/// End:
