@@ -82,27 +82,20 @@ namespace rjson2
 
       // --------------------------------------------------
 
-    using number_base = std::variant<long, double, std::string>;
+    using number = std::variant<long, double, std::string>;
 
-    class number : public number_base
+    inline std::string to_string(const number& val)
     {
-     public:
-        using number_base::number_base;
+        auto visitor = [](auto&& arg) -> std::string {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+                return arg;
+            else
+                return acmacs::to_string(arg);
+        };
+        return std::visit(visitor, val);
+    }
 
-        friend inline std::string to_string(const number& val)
-        {
-            auto visitor = [](auto&& arg) -> std::string {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
-                    return arg;
-                else
-                    return acmacs::to_string(arg);
-            };
-            return std::visit(visitor, val);
-        }
-
-    }; // class number<>
-
-      // --------------------------------------------------
+    // --------------------------------------------------
 
     using value_base = std::variant<null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
 
