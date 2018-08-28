@@ -605,9 +605,8 @@ rjson2::value rjson2::parse_file(std::string filename, remove_comments rc)
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::to_string(const object& val)
+std::string rjson2::to_string(const object& val, bool space_after_comma)
 {
-    const bool space_after_comma = false;
     std::string result(1, '{');
     size_t size_at_comma = 0;
     for (const auto& [key, val2] : val.content_) {
@@ -635,9 +634,8 @@ std::string rjson2::to_string(const object& val)
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::to_string(const array& val)
+std::string rjson2::to_string(const array& val, bool space_after_comma)
 {
-    const bool space_after_comma = false;
     std::string result(1, '[');
     for (const auto& val2: val.content_) {
         result.append(to_string(val2));
@@ -655,6 +653,55 @@ std::string rjson2::to_string(const array& val)
         result.append(1, ']');
     return result;
 }
+
+// ----------------------------------------------------------------------
+
+// static inline bool is_simple(const rjson2::object& val, bool dive = true)
+// {
+//             return (!val.get_or_default(rjson::object::force_pp_key, false)
+//                     && (val.empty()
+//                         || (dive && std::all_of(val.begin(), val.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
+// }
+
+// static inline bool is_simple(const rjson2::array& val, bool dive = true)
+// {
+//     return val.empty() || (dive && std::all_of(val.begin(), val.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
+// }
+
+// ----------------------------------------------------------------------
+
+std::string rjson2::pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+{
+
+} // rjson2::pretty
+
+// ----------------------------------------------------------------------
+
+std::string rjson2::pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+{
+    // if (is_simple(val))
+    //     return to_string(val, true);
+
+    std::string result("[\n");
+    result.append(prefix + indent, ' ');
+    size_t size_before_comma = 0;
+    for (const auto& val2: val.content_) {
+        result.append(pretty(val2, indent, json_pp_emacs_indent::no, prefix + indent));
+        size_before_comma = result.size();
+        result.append(",\n");
+        result.append(prefix + indent, ' ');
+    }
+    if (result.back() == ' ') {
+        result.resize(size_before_comma);
+        result.append(1, '\n');
+        result.append(prefix, ' ');
+        result.append(1, ']');
+    }
+    else
+        result.append(1, ']');
+    return result;
+
+} // rjson2::pretty
 
 // ----------------------------------------------------------------------
 /// Local Variables:

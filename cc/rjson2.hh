@@ -55,7 +55,8 @@ namespace rjson2
 
         void remove_comments();
 
-        friend std::string to_string(const object& val);
+        friend std::string to_string(const object& val, bool space_after_comma);
+        friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
      private:
         std::map<std::string, value> content_;
@@ -73,7 +74,8 @@ namespace rjson2
 
         void remove_comments();
 
-        friend std::string to_string(const array& val);
+        friend std::string to_string(const array& val, bool space_after_comma);
+        friend std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
      private:
         std::vector<value> content_;
@@ -201,6 +203,9 @@ namespace rjson2
             content_.erase(found);
     }
 
+    std::string to_string(const object& val, bool space_after_comma = false);
+    std::string to_string(const array& val, bool space_after_comma = false);
+
     inline std::string to_string(const value& val)
     {
         auto visitor = [](auto&& arg) -> std::string {
@@ -213,6 +218,22 @@ namespace rjson2
                 return arg ? "true" : "false";
             else
                 return to_string(arg);
+        };
+        return std::visit(visitor, val);
+    }
+
+    std::string pretty(const value& val, size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0);
+    std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+    std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+
+    inline std::string pretty(const value& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+    {
+        auto visitor = [&val,indent,emacs_indent,prefix](auto&& arg) -> std::string {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                return pretty(arg, indent, emacs_indent, prefix);
+            else
+                return to_string(val);
         };
         return std::visit(visitor, val);
     }
