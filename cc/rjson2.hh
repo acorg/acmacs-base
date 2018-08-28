@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 // ----------------------------------------------------------------------
 
@@ -36,11 +37,7 @@ namespace rjson2
         // object& operator=(object&&) = default;
 
         void insert(value&& aKey, value&& aValue);
-        template <typename S> void remove(S key) // remove if key exists
-            {
-                if (const auto found = content_.find(key); found != content_.end())
-                    content_.erase(found);
-            }
+        template <typename S> void remove(S key);
 
         void remove_comments();
 
@@ -91,16 +88,7 @@ namespace rjson2
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
 
-        void remove_comments()
-        {
-            std::visit(
-                [](auto&& arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                        arg.remove_comments();
-                },
-                *this);
-        }
+        void remove_comments();
 
     }; // class value
 
@@ -155,6 +143,35 @@ namespace rjson2
     value parse_string(std::string_view data, remove_comments rc = remove_comments::yes);
     value parse_string(const char* data, remove_comments rc = remove_comments::yes);
     value parse_file(std::string filename, remove_comments rc = remove_comments::yes);
+
+} // namespace rjson2
+
+#ifndef __clang__
+namespace std
+{
+      // gcc 7.2 wants those, if we derive from std::variant
+    template<> struct variant_size<rjson2::value> : variant_size<rjson2::value_base> {};
+    template<size_t _Np> struct variant_alternative<_Np, rjson2::value> : variant_alternative<_Np, rjson2::value_base> {};
+}
+#endif
+
+namespace rjson2
+{
+    template <typename S> inline void object::remove(S key)
+    {
+        if (const auto found = content_.find(key); found != content_.end())
+            content_.erase(found);
+    }
+
+    inline void value::remove_comments()
+    {
+      std::visit([](auto &&arg) {
+          using T = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+              arg.remove_comments();
+      },
+      *this);
+    }
 
 } // namespace rjson2
 

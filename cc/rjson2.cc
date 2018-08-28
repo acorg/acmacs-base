@@ -258,14 +258,14 @@ namespace rjson2::parser_pop
             }
 
         value value_move() override { return std::move(value_); }
-        value& value() { return value_; }
+        auto& value_ref() { return value_; }
 
      protected:
         constexpr bool value_read() const { return value_read_; }
 
      private:
         bool value_read_ = false;
-        class value value_;
+        value value_;
 
     }; // class ValueHandler
 
@@ -545,7 +545,7 @@ namespace rjson2::parser_pop
 
     inline void Parser::remove_emacs_indent()
     {
-        auto& value = dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value();
+        auto& val = dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref();
         std::visit(
             [](auto&& arg) {
                 using T = std::decay_t<decltype(arg)>;
@@ -553,12 +553,12 @@ namespace rjson2::parser_pop
                     arg.remove("_");
                 }
             },
-            value);
+            val);
     }
 
     inline void Parser::remove_comments()
     {
-        dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value().remove_comments();
+        dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref().remove_comments();
     }
 
       // --------------------------------------------------
