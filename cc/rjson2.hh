@@ -35,6 +35,13 @@ namespace rjson2
         // object(object&&) = default;
         // object& operator=(object&&) = default;
 
+        void insert(value&& aKey, value&& aValue);
+        template <typename S> void remove(S key) // remove if key exists
+            {
+                if (const auto found = content_.find(key); found != content_.end())
+                    content_.erase(found);
+            }
+
         void remove_comments();
 
      private:
@@ -48,6 +55,8 @@ namespace rjson2
     {
      public:
         array() = default;
+
+        value& insert(value&& aValue); // returns ref to inserted
 
         void remove_comments();
 
@@ -97,12 +106,23 @@ namespace rjson2
 
       // --------------------------------------------------
 
+    inline value& array::insert(value&& aValue)
+    {
+        content_.push_back(std::move(aValue));
+        return content_.back();
+    }
+
     inline void array::remove_comments()
     {
         std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
     }
 
-    void object::remove_comments()
+    inline void object::insert(value&& aKey, value&& aValue)
+    {
+        content_.emplace(std::get<std::string>(std::move(aKey)), std::move(aValue));
+    }
+
+    inline void object::remove_comments()
     {
         auto is_comment_key = [](const std::string& key) -> bool { return !key.empty() && (key.front() == '?' || key.back() == '?'); };
         for (auto it = content_.begin(); it != content_.end(); /* no increment! */) {

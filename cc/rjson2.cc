@@ -271,6 +271,172 @@ namespace rjson2::parser_pop
 
       // --------------------------------------------------
 
+    class ObjectHandler : public SymbolHandler
+    {
+     private:
+        enum class Expected { Key, KeyAfterComma, Value, Colon, Comma };
+
+     public:
+        ObjectHandler() {}
+
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result = StateTransitionNone{};
+                switch (aSymbol) {
+                  case '}':
+                      switch (expected_) {
+                        case Expected::Key:
+                        case Expected::Comma:
+                            result = StateTransitionPop{};
+                            break;
+                        case Expected::KeyAfterComma:
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                        case Expected::Value:
+                        case Expected::Colon:
+                            unexpected(aSymbol, aParser);
+                      }
+                      break;
+                  case ',':
+                      switch (expected_) {
+                        case Expected::Comma:
+                            expected_ = Expected::KeyAfterComma;
+                            break;
+                        case Expected::Key:
+                            error(aParser, "unexpected comma right after the beginning of an object");
+                        case Expected::KeyAfterComma:
+                            error(aParser, "unexpected comma -- two successive commas?");
+                        case Expected::Value:
+                            error(aParser, "unexpected comma after colon"); // never comes here (processed by ValueHandler)
+                        case Expected::Colon:
+                            error(aParser, "unexpected comma, colon is expected there");
+                      }
+                      break;
+                  case ':':
+                      if (expected_ == Expected::Colon) {
+                          expected_ = Expected::Value;
+                          result = std::make_unique<ValueHandler>();
+                      }
+                      else
+                          unexpected(aSymbol, aParser);
+                      break;
+                  case '"':
+                      switch (expected_) {
+                        case Expected::Key:
+                        case Expected::KeyAfterComma:
+                        case Expected::Value:
+                            result = std::make_unique<StringHandler>(aParser);
+                            break;
+                        case Expected::Comma:
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
+                        case Expected::Colon:
+                            unexpected(aSymbol, aParser);
+                      }
+                      break;
+                  default:
+                      result = SymbolHandler::handle(aSymbol, aParser);
+                      break;
+                }
+                return result;
+            }
+
+        value value_move() override { return std::move(value_); }
+
+        void subvalue(value&& aSubvalue, Parser& aParser) override
+            {
+                switch (expected_) {
+                  case Expected::Key:
+                  case Expected::KeyAfterComma:
+                      key_ = std::move(aSubvalue);
+                      expected_ = Expected::Colon;
+                      break;
+                  case Expected::Value:
+                      value_.insert(std::move(key_), std::move(aSubvalue));
+                      expected_ = Expected::Comma;
+                      break;
+                  case Expected::Comma:
+                  case Expected::Colon:
+                      internal_error(aParser);
+                }
+            }
+
+     private:
+        object value_;
+        value key_;
+        Expected expected_ = Expected::Key;
+
+    }; //class ObjectHandler
+
+      // ----------------------------------------------------------------------
+
+    class ArrayHandler : public SymbolHandler
+    {
+     private:
+        enum class Expected { Value, ValueAfterComma, Comma };
+
+     public:
+        ArrayHandler() {}
+
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result = StateTransitionNone{};
+                switch (aSymbol) {
+                  case ']':
+                      switch (expected_) {
+                        case Expected::Value:
+                        case Expected::Comma:
+                            result = StateTransitionPop{};
+                            break;
+                        case Expected::ValueAfterComma:
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                      }
+                      break;
+                  case ',':
+                      switch (expected_) {
+                        case Expected::Value:
+                            error(aParser, "unexpected comma right after the beginning of an array");
+                        case Expected::Comma:
+                            expected_ = Expected::ValueAfterComma;
+                            break;
+                        case Expected::ValueAfterComma:
+                            error(aParser, "unexpected comma -- two successive commas?");
+                      }
+                      break;
+                  case '\n':
+                      newline(aParser);
+                      break;
+                  case ' ': case '\t':
+                      break;
+                  default:
+                      switch (expected_) {
+                        case Expected::Value:
+                        case Expected::ValueAfterComma:
+                            result = std::make_unique<ValueHandler>();
+                            aParser.back();
+                            expected_ = Expected::Comma;
+                            break;
+                        case Expected::Comma:
+                            error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
+                      }
+                      break;
+                }
+                return result;
+            }
+
+        value value_move() override { return std::move(value_); }
+
+        void subvalue(value&& aSubvalue, Parser& /*aParser*/) override
+            {
+                value_.insert(std::move(aSubvalue));
+            }
+
+     private:
+        array value_;
+        Expected expected_ = Expected::Value;
+
+    }; //class ArrayHandler
+
+      // ----------------------------------------------------------------------
+
     class ToplevelHandler : public ValueHandler
     {
      public:
@@ -325,12 +491,12 @@ namespace rjson2::parser_pop
                 case 'n':
                     result = std::make_unique<BoolNullHandler>("ull", null{});
                     break;
-                // case '{':
-                //     result = std::make_unique<ObjectHandler>();
-                //     break;
-                // case '[':
-                //     result = std::make_unique<ArrayHandler>();
-                //     break;
+                case '{':
+                    result = std::make_unique<ObjectHandler>();
+                    break;
+                case '[':
+                    result = std::make_unique<ArrayHandler>();
+                    break;
                 default:
                     result = SymbolHandler::handle(aSymbol, aParser);
                     break;
@@ -377,16 +543,17 @@ namespace rjson2::parser_pop
         return handlers_.top()->value_move();
     }
 
-    void Parser::remove_emacs_indent()
+    inline void Parser::remove_emacs_indent()
     {
         auto& value = dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value();
-        if (auto* top_obj = std::get_if<object>(&value); top_obj) {
-            // try {
-            //     top_obj->delete_field("_");
-            // }
-            // catch (field_not_found&) {
-            // }
-        }
+        std::visit(
+            [](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, object>) {
+                    arg.remove("_");
+                }
+            },
+            value);
     }
 
     inline void Parser::remove_comments()
