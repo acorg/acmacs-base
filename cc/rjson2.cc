@@ -31,8 +31,9 @@ namespace rjson2::parser_pop
         constexpr auto pos() const noexcept { return pos_; }
         constexpr auto line() const noexcept { return line_; }
         constexpr auto column() const noexcept { return column_; }
+        std::string_view data(size_t aBegin, size_t aEnd) const { return {source_.data() + aBegin, aEnd - aBegin}; }
 
-        inline void back() noexcept { --pos_; if (--column_ == 0) --line_; }
+        void back() noexcept { --pos_; if (--column_ == 0) --line_; }
         constexpr void newline() noexcept { ++line_; column_ = 0; }
 
       private:
@@ -51,27 +52,27 @@ namespace rjson2::parser_pop
      public:
         virtual ~SymbolHandler() = default;
 
-        [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
+        [[noreturn]] void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
             {
                 throw parse_error(aParser.line(), aParser.column(), std::string{"unexpected symbol: '"} + aSymbol + "' (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
             }
 
-        [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const
+        [[noreturn]] void error(Parser& aParser, std::string&& aMessage) const
             {
                 throw parse_error(aParser.line(), aParser.column(), std::move(aMessage));
             }
 
-        [[noreturn]] inline void internal_error(Parser& aParser) const
+        [[noreturn]] void internal_error(Parser& aParser) const
             {
                 throw parse_error(aParser.line(), aParser.column(), "internal error");
             }
 
-        inline void newline(Parser& aParser) const
+        void newline(Parser& aParser) const
             {
                 aParser.newline();
             }
 
-        virtual inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser)
+        virtual HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser)
             {
                 switch (aSymbol) {
                   case ' ':
@@ -88,25 +89,176 @@ namespace rjson2::parser_pop
             }
 
         virtual value value_move() = 0; //{ return null{}; }
-        virtual inline void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
+        virtual void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
     }; // class SymbolHandler
 
       // --------------------------------------------------
+
+    class StringEscapeHandler : public SymbolHandler
+    {
+     public:
+        HandlingResult handle(std::string_view::value_type /*aSymbol*/, Parser& /*aParser*/) override
+            {
+                return StateTransitionPop{};
+            }
+
+        value value_move() override { return {}; }
+
+    }; // class StringEscapeHandler
+
+      // ----------------------------------------------------------------------
+
+    class StringHandler : public SymbolHandler
+    {
+     public:
+        StringHandler(Parser& aParser) : parser_{aParser}, begin_{aParser.pos() + 1}, end_{0} {}
+
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result = StateTransitionNone{};
+                switch (aSymbol) {
+                  case '"':
+                      result = StateTransitionPop{};
+                      end_ = aParser.pos();
+                      break;
+                  case '\\':
+                      result = std::make_unique<StringEscapeHandler>();
+                      break;
+                  case '\n':
+                      newline(aParser);
+                      break;
+                  default:
+                      break;
+                }
+                return result;
+            }
+
+        value value_move() override
+            {
+                return parser_.data(begin_, end_);
+            }
+
+     private:
+        Parser& parser_;
+        size_t begin_, end_;
+
+    }; // class StringHandler
+
+      // ----------------------------------------------------------------------
+
+    class NumberHandler : public SymbolHandler
+    {
+     public:
+        NumberHandler(Parser& aParser) : parser_{aParser}, begin_{aParser.pos()}, end_{0} {}
+
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result = StateTransitionNone{};
+                end_ = aParser.pos() + 1;
+                switch (aSymbol) {
+                  case '0': case '1': case '2': case '3': case '4': case '5':
+                  case '6': case '7': case '8': case '9':
+                      sign_allowed_ = false;
+                      break;
+                  case '.':
+                      if (exponent_)
+                          unexpected(aSymbol, aParser);
+                      integer_ = false;
+                      sign_allowed_ = false;
+                      break;
+                  case 'e':
+                  case 'E':
+                      integer_ = false;
+                      exponent_ = true;
+                      sign_allowed_ = true;
+                      break;
+                  case '-':
+                  case '+':
+                      if (!sign_allowed_)
+                          unexpected(aSymbol, aParser);
+                      sign_allowed_ = false;
+                      break;
+                  default:
+                      result = StateTransitionPop{};
+                      end_ = aParser.pos();
+                      aParser.back();
+                      break;
+                }
+                return result;
+            }
+
+        value value_move() override
+            {
+                if (integer_)
+                    return number<long>{parser_.data(begin_, end_)};
+                else
+                    return number<double>{parser_.data(begin_, end_)};
+            }
+
+     private:
+        Parser& parser_;
+        size_t begin_, end_;
+        bool sign_allowed_ = true;
+        bool exponent_ = false;
+        bool integer_ = true;
+
+    }; // class NumberHandler
+
+      // ----------------------------------------------------------------------
+
+    class BoolNullHandler : public SymbolHandler
+    {
+     public:
+        BoolNullHandler(const char* aExpected, value&& aValue) : expected_{aExpected}, value_{std::move(aValue)} {}
+
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+            {
+                HandlingResult result = StateTransitionNone{};
+                switch (aSymbol) {
+                  case 'r': case 'u': case 'e':
+                  case 'a': case 'l': case 's':
+                      if (expected_[pos_] != aSymbol)
+                          unexpected(aSymbol, aParser);
+                      break;
+                  default:
+                      if (expected_[pos_] == 0) {
+                          result = StateTransitionPop{};
+                          aParser.back();
+                      }
+                      else {
+                          result = SymbolHandler::handle(aSymbol, aParser);
+                      }
+                }
+                ++pos_;
+                return result;
+            }
+
+        value value_move() override { return std::move(value_); }
+
+     private:
+        const char* expected_;
+        value value_;
+
+        size_t pos_ = 0;
+
+    }; // class BoolNullHandler
+
+      // ----------------------------------------------------------------------
 
     class ValueHandler : public SymbolHandler
     {
      public:
         HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
 
-        inline void subvalue(value&& subvalue, Parser& /*aParser*/) override
+        void subvalue(value&& subvalue, Parser& /*aParser*/) override
             {
                 value_ = std::move(subvalue);
                 value_read_ = true;
             }
 
-        inline value value_move() override { return std::move(value_); }
-        inline value& value() { return value_; }
+        value value_move() override { return std::move(value_); }
+        value& value() { return value_; }
 
      protected:
         constexpr bool value_read() const { return value_read_; }
@@ -122,7 +274,7 @@ namespace rjson2::parser_pop
     class ToplevelHandler : public ValueHandler
     {
      public:
-        inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+        HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
             {
                 HandlingResult result;
                 if (value_read())
@@ -144,45 +296,45 @@ namespace rjson2::parser_pop
             result = StateTransitionPop{};
         }
         else {
-            // switch (aSymbol) {
-            //     case '"':
-            //         result = std::make_unique<StringHandler>(aParser);
-            //         break;
-            //     case '-':
-            //     case '+':
-            //     case '.':
-            //     case '0':
-            //     case '1':
-            //     case '2':
-            //     case '3':
-            //     case '4':
-            //     case '5':
-            //     case '6':
-            //     case '7':
-            //     case '8':
-            //     case '9':
-            //         result = std::make_unique<NumberHandler>(aParser);
-            //         aParser.back();
-            //         break;
-            //     case 't':
-            //         result = std::make_unique<BoolNullHandler>("rue", boolean{true});
-            //         break;
-            //     case 'f':
-            //         result = std::make_unique<BoolNullHandler>("alse", boolean{false});
-            //         break;
-            //     case 'n':
-            //         result = std::make_unique<BoolNullHandler>("ull", null{});
-            //         break;
-            //     case '{':
-            //         result = std::make_unique<ObjectHandler>();
-            //         break;
-            //     case '[':
-            //         result = std::make_unique<ArrayHandler>();
-            //         break;
-            //     default:
-            //         result = SymbolHandler::handle(aSymbol, aParser);
-            //         break;
-            // }
+            switch (aSymbol) {
+                case '"':
+                    result = std::make_unique<StringHandler>(aParser);
+                    break;
+                case '-':
+                case '+':
+                case '.':
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    result = std::make_unique<NumberHandler>(aParser);
+                    aParser.back();
+                    break;
+                case 't':
+                    result = std::make_unique<BoolNullHandler>("rue", true);
+                    break;
+                case 'f':
+                    result = std::make_unique<BoolNullHandler>("alse", false);
+                    break;
+                case 'n':
+                    result = std::make_unique<BoolNullHandler>("ull", null{});
+                    break;
+                // case '{':
+                //     result = std::make_unique<ObjectHandler>();
+                //     break;
+                // case '[':
+                //     result = std::make_unique<ArrayHandler>();
+                //     break;
+                default:
+                    result = SymbolHandler::handle(aSymbol, aParser);
+                    break;
+            }
         }
         return result;
     }

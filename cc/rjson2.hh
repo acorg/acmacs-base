@@ -58,7 +58,18 @@ namespace rjson2
 
       // --------------------------------------------------
 
-    using value_base = std::variant<null, object, array, std::string, long, double, bool>; // null must be the first alternative, it is the default value;
+    template <typename N> class number : public std::variant<N, std::string>
+    {
+     public:
+        using base = std::variant<N, std::string>;
+        number(std::string_view src) : base(std::string(src)) {}
+        number(N src) : base(src) {}
+
+    }; // class number<>
+
+      // --------------------------------------------------
+
+    using value_base = std::variant<null, object, array, std::string, number<long>, number<double>, bool>; // null must be the first alternative, it is the default value;
 
     class value : public value_base
     {
@@ -66,7 +77,8 @@ namespace rjson2
         using value_base::operator=;
         using value_base::value_base;
         value(const value&) = default;
-          // value(value&&) = default;
+        value(value&&) = default;
+        value(std::string_view src) : value_base(std::string(src)) {}
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
 
@@ -85,7 +97,7 @@ namespace rjson2
 
       // --------------------------------------------------
 
-    void array::remove_comments()
+    inline void array::remove_comments()
     {
         std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
     }
