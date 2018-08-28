@@ -6,6 +6,8 @@
 #include <tuple>
 #include <cstdio>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 // ----------------------------------------------------------------------
 
@@ -77,6 +79,36 @@ namespace acmacs
     template <typename Element, typename ... Args> inline std::string to_string(const std::vector<Element>& src, Args&& ... args)
     {
         return to_string(src.begin(), src.end(), std::forward<Args>(args) ...);
+    }
+
+      // ----------------------------------------------------------------------
+
+    enum ShowBase { NotShowBase, ShowBase };
+    enum OutputCase { Uppercase, Lowercase };
+
+    template <typename T, typename = std::enable_if<std::is_integral<T>::value>> inline std::string to_hex_string(T aValue, enum ShowBase aShowBase, OutputCase aOutputCase = Uppercase)
+    {
+        std::ostringstream stream;
+          // stream << (aShowBase == ShowBase ? std::showbase : std::noshowbase);
+        if (aShowBase == ShowBase)
+            stream << "0x";
+        stream << std::setfill('0') << std::setw(sizeof(aValue)*2) << std::hex << std::noshowbase;
+        stream << (aOutputCase == Uppercase ? std::uppercase : std::nouppercase);
+        if constexpr (std::is_same_v<T, char> || std::is_same_v<T, unsigned char>) {
+                stream << static_cast<unsigned>(aValue);
+            }
+        else {
+            stream << aValue;
+        }
+        return stream.str();
+    }
+
+    template <typename T> inline std::string to_hex_string(const T* aPtr)
+    {
+        std::ostringstream stream;
+        const void* value = reinterpret_cast<const void*>(aPtr);
+        stream << value; // std::setfill('0') << std::setw(sizeof(value)*2) << std::hex << value;
+        return stream.str();
     }
 
 } // namespace acmacs
