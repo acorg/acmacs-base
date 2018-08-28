@@ -11,6 +11,7 @@ TARGETS = \
     $(DIST)/json-pp \
     $(DIST)/test-rjson \
     $(DIST)/test-rjson-load \
+    $(DIST)/test-rjson2 \
     $(DIST)/test-argc-argv \
     $(DIST)/test-string-split \
     $(DIST)/test-date2 \

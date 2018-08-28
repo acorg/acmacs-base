@@ -25,6 +25,7 @@ trap failed ERR
 # export LD_LIBRARY_PATH="${ACMACSD_ROOT}/lib:${LD_LIBRARY_PATH}"
 cd "$TESTDIR"
 ../dist/test-rjson
+../dist/test-rjson2
 ../dist/test-argc-argv
 ../dist/test-string-split
 ../dist/test-date2

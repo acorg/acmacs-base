@@ -3,7 +3,6 @@
 
 #include "acmacs-base/rjson2.hh"
 #include "acmacs-base/read-file.hh"
-#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -54,7 +53,7 @@ namespace rjson2::parser_pop
 
         [[noreturn]] void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
             {
-                throw parse_error(aParser.line(), aParser.column(), std::string{"unexpected symbol: '"} + aSymbol + "' (" + ::string::to_hex_string(static_cast<unsigned char>(aSymbol), ::string::ShowBase, ::string::Uppercase) + ")");
+                throw parse_error(aParser.line(), aParser.column(), std::string{"unexpected symbol: '"} + aSymbol + "' (" + acmacs::to_hex_string(static_cast<unsigned char>(aSymbol), acmacs::ShowBase, acmacs::Uppercase) + ")");
             }
 
         [[noreturn]] void error(Parser& aParser, std::string&& aMessage) const
@@ -164,12 +163,12 @@ namespace rjson2::parser_pop
                   case '.':
                       if (exponent_)
                           unexpected(aSymbol, aParser);
-                      integer_ = false;
+                      // integer_ = false;
                       sign_allowed_ = false;
                       break;
                   case 'e':
                   case 'E':
-                      integer_ = false;
+                      // integer_ = false;
                       exponent_ = true;
                       sign_allowed_ = true;
                       break;
@@ -190,10 +189,7 @@ namespace rjson2::parser_pop
 
         value value_move() override
             {
-                if (integer_)
-                    return number<long>{parser_.data(begin_, end_)};
-                else
-                    return number<double>{parser_.data(begin_, end_)};
+                return number(std::string(parser_.data(begin_, end_)));
             }
 
      private:
@@ -201,7 +197,7 @@ namespace rjson2::parser_pop
         size_t begin_, end_;
         bool sign_allowed_ = true;
         bool exponent_ = false;
-        bool integer_ = true;
+        // bool integer_ = true;
 
     }; // class NumberHandler
 
@@ -609,6 +605,56 @@ rjson2::value rjson2::parse_file(std::string filename, remove_comments rc)
 
 // ----------------------------------------------------------------------
 
+std::string rjson2::to_string(const object& val)
+{
+    const bool space_after_comma = false;
+    std::string result(1, '{');
+    size_t size_at_comma = 0;
+    for (const auto& [key, val2] : val.content_) {
+        // if (key != force_pp_key && key != no_pp_key) {
+            result.append(1, '"');
+            result.append(key);
+            result.append("\":");
+            if (space_after_comma)
+                result.append(1, ' ');
+            result.append(to_string(val2));
+            size_at_comma = result.size() + 1;
+            result.append(1, ',');
+            if (space_after_comma)
+                result.append(1, ' ');
+        // }
+    }
+    if (result.back() == ',' || result.back() == ' ') {
+        result.resize(size_at_comma);
+        result.back() = '}';
+    }
+    else
+        result.append(1, '}');
+    return result;
+}
+
+// ----------------------------------------------------------------------
+
+std::string rjson2::to_string(const array& val)
+{
+    const bool space_after_comma = false;
+    std::string result(1, '[');
+    for (const auto& val2: val.content_) {
+        result.append(to_string(val2));
+        result.append(1, ',');
+        if (space_after_comma)
+            result.append(1, ' ');
+    }
+    if (space_after_comma && result.size() > 2 && result.back() == ' ') {
+        result.resize(result.size() - 1);
+        result.back() = ']';
+    }
+    else if (result.back() == ',')
+        result.back() = ']';
+    else
+        result.append(1, ']');
+    return result;
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
