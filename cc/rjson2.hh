@@ -7,6 +7,7 @@
 #include <map>
 #include <algorithm>
 #include <stdexcept>
+#include <type_traits>
 
 #include "acmacs-base/to-string.hh"
 
@@ -109,6 +110,11 @@ namespace rjson2
         value(const value&) = default;
         value(value&&) = default;
         value(std::string_view src) : value_base(std::string(src)) {}
+        value(const char* src) : value_base(std::string(src)) {}
+        value(char* src) : value_base(std::string(src)) {}
+        template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> value(Uint src) : value_base(number(static_cast<long>(src))) {}
+        template <typename Dbl, typename std::enable_if<std::is_floating_point<Dbl>::value>::type* = nullptr> value(Dbl src) : value_base(number(static_cast<double>(src))) {}
+        value(bool src) : value_base(src) {}
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
 

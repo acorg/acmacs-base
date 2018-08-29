@@ -55,6 +55,22 @@ static const std::pair<std::vector<const char*>, std::variant<const char*, rjson
     {{R"({"a": 1, "b": ["ba", "bb"]})", R"({"b": ["BA", 3.3], "c": true})"}, R"({"a":1,"b":["BA",3.3],"c":true})"},
 };
 
+static const char* cText = "Zugriff auf alle";
+static const std::pair<rjson2::value, const char*> sSourceRJ[] = {
+    {{}, "null"},
+    {rjson2::null{}, "null"},
+    {{"Bundesstadt"}, R"("Bundesstadt")"},
+    {{std::string("Bundesstadt")}, R"("Bundesstadt")"},
+    {{std::string_view(cText)}, R"("Zugriff auf alle")"},
+    {{2012}, R"(2012)"},
+    {{+2012}, R"(2012)"},
+    {{-2012}, R"(-2012)"},
+    {{2012.25}, R"(2012.25)"},
+    {{+2012.5}, R"(2012.5)"},
+    {{-2012.125}, R"(-2012.125)"},
+    {{2012.33e2}, R"(201233)"},
+};
+
 #pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
@@ -105,6 +121,16 @@ int main()
             }, expected);
         }
     }
+
+    for (const auto& [val, expected]: sSourceRJ) {
+        const auto result = rjson2::to_string(val);
+        // std::cerr << "DEBUG: " << result << " == " << expected << '\n';
+        if (result != expected) {
+            std::cerr << "ERROR: after initialization %" << result << "%  expected: %" << expected << "%\n";
+            exit_code = 1;
+        }
+    }
+
     return exit_code;
 }
 
