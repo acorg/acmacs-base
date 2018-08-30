@@ -2,7 +2,8 @@
 
 #include "acmacs-base/argc-argv.hh"
 #include "acmacs-base/time-series.hh"
-#include "acmacs-base/rjson.hh"
+#include "acmacs-base/rjson2.hh"
+namespace rjson = rjson2;
 #include "acmacs-base/read-file.hh"
 
 using namespace std::string_literals;
@@ -14,14 +15,14 @@ template <typename TS> std::string gen(const Date& aStart, const Date& aEnd)
     rjson::array data;
     TS ts(aStart, aEnd);
     for (auto entry = ts.begin(); entry != ts.end(); ++entry) {
-        data.insert(rjson::object{{
-                    {"text_name", rjson::string{entry.text_name()}},
-                    {"numeric_name", rjson::string{entry.numeric_name()}},
-                    {"first_date", rjson::string{entry.first_date()}},
-                    {"after_last_date", rjson::string{entry.after_last_date()}},
-                }});
+        data.insert(rjson::object{
+                    {"text_name", entry.text_name()},
+                    {"numeric_name", entry.numeric_name()},
+                    {"first_date", entry.first_date()},
+                    {"after_last_date", entry.after_last_date()},
+                });
     }
-    return data.to_json_pp(2);
+    return rjson::pretty(data, 2);
 }
 
 // ----------------------------------------------------------------------
