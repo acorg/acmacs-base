@@ -46,7 +46,7 @@ namespace rjson2
         // object(object&&) = default;
         // object& operator=(object&&) = default;
 
-        constexpr bool empty() const { return content_.empty(); }
+        bool empty() const { return content_.empty(); }
 
         template <typename S> value* find(S key) { const auto found = content_.find(key); return found == content_.end() ? nullptr : &found->second; }
         template <typename S> const value* find(S key) const { const auto found = content_.find(key); return found == content_.end() ? nullptr : &*found; }
@@ -75,7 +75,7 @@ namespace rjson2
      public:
         array() = default;
 
-        constexpr bool empty() const { return content_.empty(); }
+        bool empty() const { return content_.empty(); }
 
         value& insert(value&& aValue); // returns ref to inserted
 
