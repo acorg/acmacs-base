@@ -74,6 +74,8 @@ namespace rjson2
     {
      public:
         array() = default;
+        array(std::initializer_list<value> init) : content_(init) {}
+        template <typename Iterator> array(Iterator first, Iterator last) : content_(first, last) {}
 
         bool empty() const { return content_.empty(); }
 

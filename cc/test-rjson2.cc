@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "acmacs-base/rjson2.hh"
+namespace rjson = rjson2;
 #include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
@@ -12,7 +13,7 @@
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-static const std::pair<std::vector<const char*>, std::variant<const char*, rjson2::parse_error>> sSource[] = {
+static const std::pair<std::vector<const char*>, std::variant<const char*, rjson::parse_error>> sSource[] = {
     {{R"(
           "Altogether elsewhere, \"vast\""  )"}, R"("Altogether elsewhere, \"vast\"")"},
     {{R"(  2017)"}, R"(2017)"},
@@ -27,22 +28,22 @@ static const std::pair<std::vector<const char*>, std::variant<const char*, rjson
     {{R"( false)"}, R"(false)"},
     {{R"(null)"}, R"(null)"},
     {{R"( { "a" : "b"}  )"}, R"({"a":"b"})"},
-    {{R"({x"a" : "b"}  )"}, rjson2::parse_error(1, 2, "unexpected symbol: 'x' (0x78)")},
-    {{R"({"a","b"})"}, rjson2::parse_error(1, 5, "unexpected comma, colon is expected there")},
-    {{R"({"a":,"b"})"}, rjson2::parse_error(1, 6, "unexpected symbol: ',' (0x2C)")},
-    {{R"({,})"}, rjson2::parse_error(1, 2, "unexpected comma right after the beginning of an object")},
+    {{R"({x"a" : "b"}  )"}, rjson::parse_error(1, 2, "unexpected symbol: 'x' (0x78)")},
+    {{R"({"a","b"})"}, rjson::parse_error(1, 5, "unexpected comma, colon is expected there")},
+    {{R"({"a":,"b"})"}, rjson::parse_error(1, 6, "unexpected symbol: ',' (0x2C)")},
+    {{R"({,})"}, rjson::parse_error(1, 2, "unexpected comma right after the beginning of an object")},
     {{R"( { "a" :   1234   }  )"}, R"({"a":1234})"},
     {{R"( { "a" : -1234}  )"}, R"({"a":-1234})"},
     {{R"( { "a" : 12.34}  )"}, R"({"a":12.34})"},
     {{R"( { "a" : true}  )"}, R"({"a":true})"},
     {{R"( { "a" : false}  )"}, R"({"a":false})"},
     {{R"( { "a" : null}  )"}, R"({"a":null})"},
-    {{R"( { "a" : null,}  )"}, rjson2::parse_error(1, 15, "unexpected } -- did you forget to remove last comma?")},
-    {{R"( { "a" : null "b": false}  )"}, rjson2::parse_error(1, 15, "unexpected \" -- did you forget comma?")},
-    {{R"( { "a" : null  ,  ,  "b": false}  )"}, rjson2::parse_error(1, 19, "unexpected comma -- two successive commas?")},
+    {{R"( { "a" : null,}  )"}, rjson::parse_error(1, 15, "unexpected } -- did you forget to remove last comma?")},
+    {{R"( { "a" : null "b": false}  )"}, rjson::parse_error(1, 15, "unexpected \" -- did you forget comma?")},
+    {{R"( { "a" : null  ,  ,  "b": false}  )"}, rjson::parse_error(1, 19, "unexpected comma -- two successive commas?")},
     {{R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )"}, R"({"a":{"b":1,"c":"c","d":null,"sub":{"xsub":false}}})"},
     {{R"([])"}, R"([])"},
-    {{R"([  ,  ])"}, rjson2::parse_error(1, 4, "unexpected comma right after the beginning of an array")},
+    {{R"([  ,  ])"}, rjson::parse_error(1, 4, "unexpected comma right after the beginning of an array")},
     {{R"(["a"])"}, R"(["a"])"},
     {{R"(["a",1])"}, R"(["a",1])"},
     {{R"([true,false,null,"aaa"])"}, R"([true,false,null,"aaa"])"},
@@ -56,9 +57,9 @@ static const std::pair<std::vector<const char*>, std::variant<const char*, rjson
 };
 
 static const char* cText = "Zugriff auf alle";
-static const std::pair<rjson2::value, const char*> sSourceRJ[] = {
+static const std::pair<rjson::value, const char*> sSourceRJ[] = {
     {{}, "null"},
-    {rjson2::null{}, "null"},
+    {rjson::null{}, "null"},
     {{"Bundesstadt"}, R"("Bundesstadt")"},
     {{std::string("Bundesstadt")}, R"("Bundesstadt")"},
     {{std::string_view(cText)}, R"("Zugriff auf alle")"},
@@ -69,6 +70,7 @@ static const std::pair<rjson2::value, const char*> sSourceRJ[] = {
     {{+2012.5}, R"(2012.5)"},
     {{-2012.125}, R"(-2012.125)"},
     {{2012.33e2}, R"(201233)"},
+    {rjson::array{1, 2.5, "three"}, R"([1,2.5,"three"])"},
 };
 
 #pragma GCC diagnostic pop
@@ -83,13 +85,13 @@ int main()
         const auto& to_parse_ref = to_parse; // to capture by lambda below, cannot capture to_parse (bug in llvm 4.0.1?)
         try {
             // std::cerr << "DEBUG: " << to_parse << '\n';
-            auto val = rjson2::parse_string(to_parse[0]);
+            auto val = rjson::parse_string(to_parse[0]);
             for (auto& to_parse_e: to_parse) {
                 if (&to_parse_e != &to_parse.front())
-                    val.update(rjson2::parse_string(to_parse_e));
+                    val.update(rjson::parse_string(to_parse_e));
             }
 
-            const auto result = rjson2::to_string(val);
+            const auto result = rjson::to_string(val);
             // std::cerr << "DEBUG: " << to_parse << " --> " << result << '\n';
             std::visit([&](auto&& aExpected) {
                 using T = std::decay_t<decltype(aExpected)>;
@@ -105,7 +107,7 @@ int main()
                 }
             }, expected);
         }
-        catch (rjson2::parse_error& err) {
+        catch (rjson::parse_error& err) {
             std::visit([&](auto&& aExpected) {
                 using T = std::decay_t<decltype(aExpected)>;
                 if constexpr (std::is_same_v<T, const char*>) {
@@ -123,7 +125,7 @@ int main()
     }
 
     for (const auto& [val, expected]: sSourceRJ) {
-        const auto result = rjson2::to_string(val);
+        const auto result = rjson::to_string(val);
         // std::cerr << "DEBUG: " << result << " == " << expected << '\n';
         if (result != expected) {
             std::cerr << "ERROR: after initialization %" << result << "%  expected: %" << expected << "%\n";
