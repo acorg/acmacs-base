@@ -46,6 +46,8 @@ namespace rjson2
         // object(object&&) = default;
         // object& operator=(object&&) = default;
 
+        constexpr bool empty() const { return content_.empty(); }
+
         template <typename S> value* find(S key) { const auto found = content_.find(key); return found == content_.end() ? nullptr : &found->second; }
         template <typename S> const value* find(S key) const { const auto found = content_.find(key); return found == content_.end() ? nullptr : &*found; }
 
@@ -56,11 +58,13 @@ namespace rjson2
 
         void remove_comments();
 
-        friend std::string to_string(const object& val, bool space_after_comma);
-        friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+        template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
 
      private:
         std::map<std::string, value> content_;
+
+        friend std::string to_string(const object& val, bool space_after_comma);
+        friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
     }; // class object
 
@@ -71,15 +75,19 @@ namespace rjson2
      public:
         array() = default;
 
+        constexpr bool empty() const { return content_.empty(); }
+
         value& insert(value&& aValue); // returns ref to inserted
 
         void remove_comments();
 
-        friend std::string to_string(const array& val, bool space_after_comma);
-        friend std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+        template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
 
      private:
         std::vector<value> content_;
+
+        friend std::string to_string(const array& val, bool space_after_comma);
+        friend std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
     }; // class array
 

@@ -657,24 +657,34 @@ std::string rjson::to_string(const array& val, bool space_after_comma)
 
 // ----------------------------------------------------------------------
 
-// static inline bool is_simple(const rjson::object& val, bool dive = true)
-// {
-//             return (!val.get_or_default(rjson::object::force_pp_key, false)
-//                     && (val.empty()
-//                         || (dive && std::all_of(val.begin(), val.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
-// }
+namespace rjson2
+{
+    enum class dive { no, yes };
+    template <typename RJ> static inline bool is_simple(RJ&&, dive = dive::yes) { return true; }
 
-// static inline bool is_simple(const rjson::array& val, bool dive = true)
-// {
-//     return val.empty() || (dive && std::all_of(val.begin(), val.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
-// }
+    template <> inline bool is_simple(const object& val, dive a_dive)
+    {
+        return val.empty() || (a_dive == dive::yes && val.all_of([](const auto& kv) -> bool { return is_simple(kv.second, dive::no); }));
+    }
+
+    template <> inline bool is_simple(const array& val, dive a_dive)
+    {
+        return val.empty() || ((a_dive == dive::yes) && val.all_of([](const auto& v) -> bool { return is_simple(v, dive::no); }));
+    }
+
+    template <> inline bool is_simple(const value& val, dive a_dive)
+    {
+        return std::visit([a_dive](auto&& arg) -> bool { return is_simple(arg, a_dive); }, val);
+    }
+
+} // namespace rjson2
 
 // ----------------------------------------------------------------------
 
 std::string rjson::pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
 {
-    // if (is_simple(val))
-    //     return to_string(val, true);
+    if (is_simple(val))
+        return to_string(val, true);
 
     std::string result(1, '{');
     if (emacs_indent == json_pp_emacs_indent::yes && indent) {
@@ -709,8 +719,8 @@ std::string rjson::pretty(const object& val, size_t indent, json_pp_emacs_indent
 
 std::string rjson::pretty(const array& val, size_t indent, json_pp_emacs_indent /*emacs_indent*/, size_t prefix)
 {
-    // if (is_simple(val))
-    //     return to_string(val, true);
+    if (is_simple(val))
+        return to_string(val, true);
 
     std::string result("[\n");
     size_t size_before_comma = 1;
