@@ -71,6 +71,9 @@ static const std::pair<rjson::value, const char*> sSourceRJ[] = {
     {{-2012.125}, R"(-2012.125)"},
     {{2012.33e2}, R"(201233)"},
     {rjson::array{1, 2.5, "three"}, R"([1,2.5,"three"])"},
+    {rjson::object{{"first", 1}, {"second", 2.5}, {"third", "three"}}, R"({"first":1,"second":2.5,"third":"three"})"},
+    {rjson::object{{"first", rjson::array{1, 2.5, "three"}}, {"second", rjson::object{{"first", 1}, {"second", 2.5}, {"third", "three"}}}, {"third", "three"}},
+     R"({"first":[1,2.5,"three"],"second":{"first":1,"second":2.5,"third":"three"},"third":"three"})"},
 };
 
 #pragma GCC diagnostic pop

@@ -40,7 +40,7 @@ namespace rjson2
     {
      public:
         object() = default;
-          // object(std::initializer_list<std::pair<string, value>> key_values);
+        object(std::initializer_list<std::pair<std::string, value>> key_values);
         // object(const object&) = default;
         // object& operator=(const object&) = default;
         // object(object&&) = default;
@@ -147,6 +147,8 @@ namespace rjson2
     {
         std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
     }
+
+    inline object::object(std::initializer_list<std::pair<std::string, value>> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
 
     inline void object::insert(value&& aKey, value&& aValue)
     {
