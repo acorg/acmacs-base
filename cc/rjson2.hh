@@ -114,6 +114,8 @@ namespace rjson2
         value(char* src) : value_base(std::string(src)) {}
         template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> value(Uint src) : value_base(number(static_cast<long>(src))) {}
         template <typename Dbl, typename std::enable_if<std::is_floating_point<Dbl>::value>::type* = nullptr> value(Dbl src) : value_base(number(static_cast<double>(src))) {}
+        value(int src) : value_base(number(static_cast<long>(src))) {} // gcc 7.2 wants it to disambiguate
+        value(double src) : value_base(number(src)) {} // gcc 7.2 wants it to disambiguate
         value(bool src) : value_base(src) {}
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
