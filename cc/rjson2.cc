@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "acmacs-base/rjson2.hh"
+namespace rjson = rjson2;
 #include "acmacs-base/read-file.hh"
 
 // ----------------------------------------------------------------------
@@ -573,39 +574,39 @@ namespace rjson2::parser_pop
 
 // ----------------------------------------------------------------------
 
-rjson2::value rjson2::parse_string(std::string data, remove_comments rc)
+rjson::value rjson::parse_string(std::string data, remove_comments rc)
 {
-    return parser_pop::parse_string(data, rc);
+    return rjson2::parser_pop::parse_string(data, rc);
 
-} // rjson2::parse_string
+} // rjson::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson2::value rjson2::parse_string(std::string_view data, remove_comments rc)
+rjson::value rjson::parse_string(std::string_view data, remove_comments rc)
 {
-    return parser_pop::parse_string(data, rc);
+    return rjson2::parser_pop::parse_string(data, rc);
 
-} // rjson2::parse_string
+} // rjson::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson2::value rjson2::parse_string(const char* data, remove_comments rc)
+rjson::value rjson::parse_string(const char* data, remove_comments rc)
 {
-    return parser_pop::parse_string(data, rc);
+    return rjson2::parser_pop::parse_string(data, rc);
 
-} // rjson2::parse_string
+} // rjson::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson2::value rjson2::parse_file(std::string filename, remove_comments rc)
+rjson::value rjson::parse_file(std::string filename, remove_comments rc)
 {
     return parse_string(acmacs::file::read(filename), rc);
 
-} // rjson2::parse_file
+} // rjson::parse_file
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::to_string(const object& val, bool space_after_comma)
+std::string rjson::to_string(const object& val, bool space_after_comma)
 {
     std::string result(1, '{');
     size_t size_at_comma = 0;
@@ -634,7 +635,7 @@ std::string rjson2::to_string(const object& val, bool space_after_comma)
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::to_string(const array& val, bool space_after_comma)
+std::string rjson::to_string(const array& val, bool space_after_comma)
 {
     std::string result(1, '[');
     for (const auto& val2: val.content_) {
@@ -656,35 +657,64 @@ std::string rjson2::to_string(const array& val, bool space_after_comma)
 
 // ----------------------------------------------------------------------
 
-// static inline bool is_simple(const rjson2::object& val, bool dive = true)
+// static inline bool is_simple(const rjson::object& val, bool dive = true)
 // {
 //             return (!val.get_or_default(rjson::object::force_pp_key, false)
 //                     && (val.empty()
 //                         || (dive && std::all_of(val.begin(), val.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
 // }
 
-// static inline bool is_simple(const rjson2::array& val, bool dive = true)
+// static inline bool is_simple(const rjson::array& val, bool dive = true)
 // {
 //     return val.empty() || (dive && std::all_of(val.begin(), val.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
 // }
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+std::string rjson::pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
 {
+    // if (is_simple(val))
+    //     return to_string(val, true);
 
-} // rjson2::pretty
+    std::string result(1, '{');
+    if (emacs_indent == json_pp_emacs_indent::yes && indent) {
+        result.append(indent - 1, ' ');
+        result.append("\"_\": \"-*- js-indent-level: " + std::to_string(indent) + " -*-\",\n");
+    }
+    else {
+        result.append(1, '\n');
+    }
+    size_t size_before_comma = result.size() - 1;
+    result.append(prefix + indent, ' ');
+    for (const auto& [key, val2] : val.content_) {
+        result.append("\"" + key + "\": ");
+        result.append(pretty(val2, indent, json_pp_emacs_indent::no, prefix + indent));
+        size_before_comma = result.size();
+        result.append(",\n");
+        result.append(prefix + indent, ' ');
+    }
+    if (result.back() == ' ') {
+        result.resize(size_before_comma);
+        result.append(1, '\n');
+        result.append(prefix, ' ');
+        result.append(1, '}');
+    }
+    else
+        result.append(1, '}');
+    return result;
+
+} // rjson::pretty
 
 // ----------------------------------------------------------------------
 
-std::string rjson2::pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+std::string rjson::pretty(const array& val, size_t indent, json_pp_emacs_indent /*emacs_indent*/, size_t prefix)
 {
     // if (is_simple(val))
     //     return to_string(val, true);
 
     std::string result("[\n");
+    size_t size_before_comma = 1;
     result.append(prefix + indent, ' ');
-    size_t size_before_comma = 0;
     for (const auto& val2: val.content_) {
         result.append(pretty(val2, indent, json_pp_emacs_indent::no, prefix + indent));
         size_before_comma = result.size();
@@ -695,13 +725,11 @@ std::string rjson2::pretty(const array& val, size_t indent, json_pp_emacs_indent
         result.resize(size_before_comma);
         result.append(1, '\n');
         result.append(prefix, ' ');
-        result.append(1, ']');
     }
-    else
-        result.append(1, ']');
+    result.append(1, ']');
     return result;
 
-} // rjson2::pretty
+} // rjson::pretty
 
 // ----------------------------------------------------------------------
 /// Local Variables:

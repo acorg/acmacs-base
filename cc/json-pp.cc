@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "rjson.hh"
+#include "rjson2.hh"
+namespace rjson = rjson2;
 
 int main(int argc, const char* const* argv)
 {
@@ -8,7 +9,7 @@ int main(int argc, const char* const* argv)
     if (argc == 2) {
         try {
             auto data = rjson::parse_file(argv[1]);
-            std::cout << data.to_json_pp(2, rjson::json_pp_emacs_indent::yes) << '\n';
+            std::cout << rjson::pretty(data, 2, rjson::json_pp_emacs_indent::yes) << '\n';
         }
         catch (std::exception& err) {
             std::cerr << "ERROR: " << err.what() << '\n';
