@@ -50,8 +50,6 @@ namespace rjson2
 
         template <typename S> const value& get(S key) const;
         template <typename S> value& operator[](S key);
-        template <typename S> value* find(S key) { const auto found = content_.find(key); return found == content_.end() ? nullptr : &found->second; }
-        template <typename S> const value* find(S key) const { const auto found = content_.find(key); return found == content_.end() ? nullptr : &*found; }
 
         void insert(value&& aKey, value&& aValue);
         template <typename S> void insert(S aKey, const value& aValue);
@@ -199,12 +197,8 @@ namespace rjson2
 
     inline void object::update(const object& to_merge)
     {
-        for (const auto& [new_key, new_value] : to_merge.content_) {
-            if (auto* old_value = find(new_key); old_value)
-                old_value->update(new_value);
-            else
-                insert(new_key, new_value);
-        }
+        for (const auto& [new_key, new_value] : to_merge.content_)
+            operator[](new_key).update(new_value);
     }
 
     inline void object::remove_comments()
@@ -361,7 +355,7 @@ namespace rjson2
 
     inline value& value::update(const value& to_merge)
     {
-        auto visitor = [](auto& arg1, auto&& arg2) {
+        auto visitor = [this](auto& arg1, auto&& arg2) {
             using T1 = std::decay_t<decltype(arg1)>;
             using T2 = std::decay_t<decltype(arg2)>;
             if constexpr (std::is_same_v<T1, T2>) {
@@ -370,6 +364,8 @@ namespace rjson2
                 else
                     arg1 = arg2;
             }
+            else if constexpr (std::is_same_v<T1, null>)
+                *this = arg2;
             else
                 throw merge_error(std::string{"cannot merge two rjson values of different types: %"}); //  + to_string(*this) + "% and %" + to_string(arg2));
         };
