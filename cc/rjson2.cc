@@ -7,6 +7,18 @@ namespace rjson = rjson2;
 
 // ----------------------------------------------------------------------
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#endif
+
+rjson::const_null rjson::ConstNull;
+
+#pragma GCC diagnostic pop
+
+// ----------------------------------------------------------------------
+
 namespace rjson2::parser_pop
 {
     class SymbolHandler;

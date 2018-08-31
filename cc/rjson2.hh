@@ -130,6 +130,10 @@ namespace rjson2
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
 
+        bool empty() const;
+        template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
+        template <typename Func> value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (value&)
+
         value& update(const value& to_merge);
         void remove_comments();
 
@@ -183,6 +187,20 @@ namespace rjson2
             }
         }
     }
+
+    // --------------------------------------------------
+
+    class const_null : public value
+    {
+     public:
+        const_null() = default;
+        const_null(const const_null&) = delete;
+        const_null(const_null&&) = delete;
+        const_null& operator=(const const_null&) = delete;
+        const_null& operator=(const_null&&) = delete;
+    };
+
+    extern const_null ConstNull;
 
     // --------------------------------------------------
 
@@ -256,6 +274,45 @@ namespace rjson2
                 return to_string(val);
         };
         return std::visit(visitor, val);
+    }
+
+    inline bool value::empty() const
+    {
+        return std::visit([](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array> || std::is_same_v<T, std::string>)
+                return arg.empty();
+            else if (std::is_same_v<T, null>)
+                return true;
+            else
+                return false;
+        }, *this);
+    }
+
+    template <typename Func> inline const value& value::find_if(Func func) const // returns ConstNull if not found, Func: bool (const value&)
+    {
+        return std::visit([&func,this](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                return arg.find_if(func);
+            else if (func(*this))
+                return *this;
+            else
+                return ConstNull;
+        }, *this);
+    }
+
+    template <typename Func> inline value& value::find_if(Func func) const // returns ConstNull if not found, Func: bool (value&)
+    {
+        return std::visit([&func,this](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                return arg.find_if(func);
+            else if (func(*this))
+                return *this;
+            else
+                return ConstNull;
+        }, *this);
     }
 
     inline value& value::update(const value& to_merge)
