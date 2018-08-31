@@ -48,6 +48,8 @@ namespace rjson2
 
         bool empty() const { return content_.empty(); }
 
+        template <typename S> const value& get(S key) const;
+        template <typename S> value& operator[](S key);
         template <typename S> value* find(S key) { const auto found = content_.find(key); return found == content_.end() ? nullptr : &found->second; }
         template <typename S> const value* find(S key) const { const auto found = content_.find(key); return found == content_.end() ? nullptr : &*found; }
 
@@ -131,6 +133,10 @@ namespace rjson2
         value& operator=(value&&) = default;
 
         bool empty() const;
+        bool is_null() const;
+        const value& get(std::string field_name) const; // if this is not object or field not present, returns ConstNull
+        value& operator[](std::string field_name);      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+
         template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
         template <typename Func> value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (value&)
 
@@ -140,6 +146,20 @@ namespace rjson2
     }; // class value
 
       // --------------------------------------------------
+
+    class const_null : public value
+    {
+     public:
+        const_null() = default;
+        const_null(const const_null&) = delete;
+        const_null(const_null&&) = delete;
+        const_null& operator=(const const_null&) = delete;
+        const_null& operator=(const_null&&) = delete;
+    };
+
+    extern const_null ConstNull;
+
+    // --------------------------------------------------
 
     inline value& array::insert(value&& aValue)
     {
@@ -153,6 +173,19 @@ namespace rjson2
     }
 
     inline object::object(std::initializer_list<std::pair<std::string, value>> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
+
+    template <typename S> inline const value& object::get(S key) const
+    {
+        if (const auto found = content_.find(key); found != content_.end())
+            return found->second;
+        else
+            return ConstNull;
+    }
+
+    template <typename S> inline value& object::operator[](S key)
+    {
+        return content_.emplace(std::string(key), value{}).first->second;
+    }
 
     inline void object::insert(value&& aKey, value&& aValue)
     {
@@ -187,20 +220,6 @@ namespace rjson2
             }
         }
     }
-
-    // --------------------------------------------------
-
-    class const_null : public value
-    {
-     public:
-        const_null() = default;
-        const_null(const const_null&) = delete;
-        const_null(const_null&&) = delete;
-        const_null& operator=(const const_null&) = delete;
-        const_null& operator=(const_null&&) = delete;
-    };
-
-    extern const_null ConstNull;
 
     // --------------------------------------------------
 
@@ -289,9 +308,34 @@ namespace rjson2
         }, *this);
     }
 
+    inline bool value::is_null() const
+    {
+        return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>) return true; else return false; }, *this);
+    }
+
+    inline const value& value::get(std::string field_name) const // if this is not object or field not present, returns ConstNull
+    {
+        return std::visit([&field_name](auto&& arg) -> const value& {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                return arg.get(field_name);
+            else
+                return ConstNull;
+        }, *this);
+    }
+
+    inline value& value::operator[](std::string field_name)      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+    {
+        return std::visit([&field_name](auto&& arg) -> value& {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                return arg[field_name];
+            else
+                return ConstNull;
+        }, *this);
+    }
+
     template <typename Func> inline const value& value::find_if(Func func) const // returns ConstNull if not found, Func: bool (const value&)
     {
-        return std::visit([&func,this](auto&& arg) {
+        return std::visit([&func,this](auto&& arg) -> const value& {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
                 return arg.find_if(func);
