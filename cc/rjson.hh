@@ -1,5 +1,12 @@
 #pragma once
 
+#ifdef RJSON2
+#error cannot use rjson1, rjson2 already included
+#endif
+#ifndef RJSON1
+#define RJSON1
+#endif
+
 #include <stdexcept>
 #include <variant>
 #include <string>
