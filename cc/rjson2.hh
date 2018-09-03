@@ -79,6 +79,9 @@ namespace rjson2
 
         bool empty() const { return content_.empty(); }
 
+        const value& get(size_t index) const; // if index out of range, returns ConstNull
+        value& operator[](size_t index);      // if index out of range, returns ConstNull
+
         value& insert(value&& aValue); // returns ref to inserted
 
         void remove_comments();
@@ -134,6 +137,10 @@ namespace rjson2
         bool is_null() const;
         const value& get(std::string field_name) const; // if this is not object or field not present, returns ConstNull
         value& operator[](std::string field_name);      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+        const value& operator[](std::string field_name) const { return get(field_name); }
+        const value& get(size_t index) const; // if this is not array or index out of range, returns ConstNull
+        value& operator[](size_t index);      // if this is not array or index out of range, returns ConstNull
+        const value& operator[](size_t index) const { return get(index); }
 
         template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
         template <typename Func> value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (value&)
@@ -158,6 +165,22 @@ namespace rjson2
     extern const_null ConstNull;
 
     // --------------------------------------------------
+
+    inline const value& array::get(size_t index) const // if index out of range, returns ConstNull
+    {
+        if (index < content_.size())
+            return content_[index];
+        else
+            return ConstNull;
+    }
+
+    inline value& array::operator[](size_t index)      // if index out of range, returns ConstNull
+    {
+        if (index < content_.size())
+            return content_[index];
+        else
+            return ConstNull;
+    }
 
     inline value& array::insert(value&& aValue)
     {
@@ -322,6 +345,26 @@ namespace rjson2
         return std::visit([&field_name](auto&& arg) -> value& {
             if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
                 return arg[field_name];
+            else
+                return ConstNull;
+        }, *this);
+    }
+
+    inline const value& value::get(size_t index) const // if this is not object or field not present, returns ConstNull
+    {
+        return std::visit([index](auto&& arg) -> const value& {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+                return arg.get(index);
+            else
+                return ConstNull;
+        }, *this);
+    }
+
+    inline value& value::operator[](size_t index)
+    {
+        return std::visit([index](auto&& arg) -> value& {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+                return arg[index];
             else
                 return ConstNull;
         }, *this);
