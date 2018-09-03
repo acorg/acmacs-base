@@ -56,6 +56,7 @@ namespace rjson2
         // object& operator=(object&&) = default;
 
         bool empty() const noexcept { return content_.empty(); }
+        size_t size() const noexcept { return content_.size(); }
 
         template <typename S> const value& get(S key) const noexcept;
         template <typename S> value& operator[](S key) noexcept;
@@ -87,6 +88,7 @@ namespace rjson2
         template <typename Iterator> array(Iterator first, Iterator last) : content_(first, last) {}
 
         bool empty() const noexcept { return content_.empty(); }
+        size_t size() const noexcept { return content_.size(); }
 
         const value& get(size_t index) const noexcept; // if index out of range, returns ConstNull
         value& operator[](size_t index) noexcept;      // if index out of range, returns ConstNull
@@ -191,6 +193,7 @@ namespace rjson2
         value& operator=(value&&) = default;
 
         bool empty() const noexcept;
+        size_t size() const noexcept; // returns 0 if neither array nor object nor string
         bool is_null() const noexcept;
         const value& get(std::string field_name) const noexcept; // if this is not object or field not present, returns ConstNull
         value& operator[](std::string field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
@@ -409,6 +412,17 @@ namespace rjson2
                 return true;
             else
                 return false;
+        }, *this);
+    }
+
+    inline size_t value::size() const noexcept
+    {
+        return std::visit([](auto&& arg) -> size_t {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array> || std::is_same_v<T, std::string>)
+                return arg.size();
+            else
+                return 0;
         }, *this);
     }
 
