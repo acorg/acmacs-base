@@ -212,9 +212,9 @@ namespace rjson2
         bool empty() const noexcept;
         size_t size() const noexcept; // returns 0 if neither array nor object nor string
         bool is_null() const noexcept;
-        const value& get(std::string field_name) const noexcept; // if this is not object or field not present, returns ConstNull
-        value& operator[](std::string field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
-        const value& operator[](std::string field_name) const  noexcept{ return get(field_name); }
+        template <typename S> const value& get(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
+        template <typename S> value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+        template <typename S> const value& operator[](S field_name) const  noexcept{ return get(field_name); }
         const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
         value& operator[](size_t index) noexcept;      // if this is not array or index out of range, returns ConstNull
         const value& operator[](size_t index) const noexcept { return get(index); }
@@ -225,6 +225,8 @@ namespace rjson2
         operator size_t() const;
         operator long() const;
         operator bool() const;
+        template <typename R> R get_or_default(R&& dflt) const;
+        std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
 
         value& update(const value& to_merge);
         void remove_comments();
@@ -279,7 +281,7 @@ namespace rjson2
     template <typename T> inline void array::copy_to(std::vector<T>& target) const
     {
         target.resize(size());
-        std::copy(content_.begin(), content_.end(), target.begin());
+        std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> const T& { return val; });
     }
 
     template <typename F> inline void array::for_each(F&& func) const
@@ -313,7 +315,7 @@ namespace rjson2
 
     template <typename S> inline const value& object::get(S key) const noexcept
     {
-        if (const auto found = content_.find(key); found != content_.end())
+        if (const auto found = content_.find(acmacs::to_string(key)); found != content_.end())
             return found->second;
         else
             return ConstNull;
@@ -514,7 +516,7 @@ namespace rjson2
         return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>) return true; else return false; }, *this);
     }
 
-    inline const value& value::get(std::string field_name) const noexcept // if this is not object or field not present, returns ConstNull
+    template <typename S> inline const value& value::get(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
     {
         return std::visit([&field_name](auto&& arg) -> const value& {
             if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
@@ -524,7 +526,7 @@ namespace rjson2
         }, *this);
     }
 
-    inline value& value::operator[](std::string field_name) noexcept      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+    template <typename S> inline value& value::operator[](S field_name) noexcept      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
     {
         return std::visit([&field_name](auto&& arg) -> value& {
             if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
@@ -610,6 +612,15 @@ namespace rjson2
         }, *this);
     }
 
+    template <typename R> inline R value::get_or_default(R&& dflt) const
+    {
+        return std::visit([this,&dflt](auto&& arg) -> R {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>)
+                return dflt;
+            else
+                return *this;
+        }, *this);
+    }
 
     inline value& value::update(const value& to_merge)
     {
@@ -660,9 +671,11 @@ namespace rjson2
     {
       std::visit([&target,&source](auto&& arg) {
           using TT = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<TT, object> || std::is_same_v<TT, array>)
+          if constexpr (std::is_same_v<TT, object>)
+              throw value_type_mismatch("array", source.actual_type());
+          else if constexpr (std::is_same_v<TT, array> && internal::has_member_begin<T>::value)
               arg.copy_to(std::forward<T>(target));
-          else
+          else if constexpr (!std::is_same_v<TT, null>)
               throw value_type_mismatch("object or array", source.actual_type());
       },
       source);
