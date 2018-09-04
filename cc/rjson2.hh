@@ -60,6 +60,7 @@ namespace rjson2
 
         template <typename S> const value& get(S key) const noexcept;
         template <typename S> value& operator[](S key) noexcept;
+        size_t max_index() const;
 
         void insert(value&& aKey, value&& aValue);
         template <typename S> void insert(S aKey, const value& aValue);
@@ -69,6 +70,11 @@ namespace rjson2
         void remove_comments();
 
         template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
+
+        template <typename T> void copy_to(T&& target) const;
+        template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+        template <typename F> void for_each(F&& func) const;
+        template <typename F> void for_each(F&& func);
 
      private:
         std::map<std::string, value> content_;
@@ -92,12 +98,18 @@ namespace rjson2
 
         const value& get(size_t index) const noexcept; // if index out of range, returns ConstNull
         value& operator[](size_t index) noexcept;      // if index out of range, returns ConstNull
+        size_t max_index() const { return content_.size() - 1; }
 
         value& insert(value&& aValue); // returns ref to inserted
 
         void remove_comments();
 
         template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
+
+        template <typename T> void copy_to(std::vector<T>& target) const;
+        template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+        template <typename F> void for_each(F&& func) const;
+        template <typename F> void for_each(F&& func);
 
      private:
         std::vector<value> content_;
@@ -201,6 +213,12 @@ namespace rjson2
         const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
         value& operator[](size_t index) noexcept;      // if this is not array or index out of range, returns ConstNull
         const value& operator[](size_t index) const noexcept { return get(index); }
+        size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
+
+        // template <typename T> void copy_to(T&& target) const;
+        // template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+        // template <typename F> void for_each(F&& func) const; // func: void(const rjson::value&)
+        // template <typename F> void for_each(F&& func);       // func: void(rjson::value&)
 
         operator const std::string&() const;
         operator double() const;
@@ -209,12 +227,11 @@ namespace rjson2
         operator bool() const;
 
         template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
-        template <typename Func> value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (value&)
+        template <typename Func> value& find_if(Func func); // returns ConstNull if not found, Func: bool (value&)
 
         value& update(const value& to_merge);
         void remove_comments();
 
-     private:
         std::string actual_type() const;
 
     }; // class value
@@ -262,6 +279,24 @@ namespace rjson2
         std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
     }
 
+    template <typename T> inline void array::copy_to(std::vector<T>& target) const
+    {
+        target.resize(size());
+        std::copy(content_.begin(), content_.end(), target.begin());
+    }
+
+    template <typename F> inline void array::for_each(F&& func) const
+    {
+        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
+    }
+
+    template <typename F> inline void array::for_each(F&& func)
+    {
+        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
+    }
+
+    // --------------------------------------------------
+
     inline object::object(std::initializer_list<std::pair<std::string, value>> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
 
     template <typename S> inline const value& object::get(S key) const noexcept
@@ -275,6 +310,14 @@ namespace rjson2
     template <typename S> inline value& object::operator[](S key) noexcept
     {
         return content_.emplace(std::string(key), value{}).first->second;
+    }
+
+    inline size_t object::max_index() const // assumes keys are size_t
+    {
+        size_t result = 0;
+        for ([[maybe_unused]] const auto& [key, _] : content_)
+            result = std::max(std::stoul(key), result);
+        return result;
     }
 
     inline void object::insert(value&& aKey, value&& aValue)
@@ -305,6 +348,16 @@ namespace rjson2
                 ++it;
             }
         }
+    }
+
+    template <typename F> inline void object::for_each(F&& func) const
+    {
+        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
+    }
+
+    template <typename F> inline void object::for_each(F&& func)
+    {
+        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
     }
 
     // --------------------------------------------------
@@ -454,8 +507,11 @@ namespace rjson2
     inline const value& value::get(size_t index) const noexcept // if this is not object or field not present, returns ConstNull
     {
         return std::visit([index](auto&& arg) -> const value& {
-            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, array>)
                 return arg.get(index);
+            else if constexpr (std::is_same_v<T, object>)
+                return arg.get(std::to_string(index));
             else
                 return ConstNull;
         }, *this);
@@ -464,8 +520,11 @@ namespace rjson2
     inline value& value::operator[](size_t index) noexcept
     {
         return std::visit([index](auto&& arg) -> value& {
-            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, array>)
                 return arg[index];
+            else if constexpr (std::is_same_v<T, object>)
+                return arg[std::to_string(index)];
             else
                 return ConstNull;
         }, *this);
@@ -535,7 +594,7 @@ namespace rjson2
         }, *this);
     }
 
-    template <typename Func> inline value& value::find_if(Func func) const // returns ConstNull if not found, Func: bool (value&)
+    template <typename Func> inline value& value::find_if(Func func) // returns ConstNull if not found, Func: bool (value&)
     {
         return std::visit([&func,this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -577,6 +636,55 @@ namespace rjson2
               arg.remove_comments();
       },
       *this);
+    }
+
+    inline size_t value::max_index() const
+    {
+      return std::visit([this](auto&& arg) -> size_t {
+          using T = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+              return arg.max_index();
+          else
+              throw value_type_mismatch("object or array", this->actual_type());
+      },
+      *this);
+    }
+
+      // ----------------------------------------------------------------------
+
+    template <typename T> inline void copy(const value& source, T&& target)
+    {
+      std::visit([&target,&source](auto&& arg) {
+          using TT = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<TT, object> || std::is_same_v<TT, array>)
+              arg.copy_to(std::forward<T>(target));
+          else
+              throw value_type_mismatch("object or array", source.actual_type());
+      },
+      source);
+    }
+
+    template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
+    {
+        std::visit([&target,&transformer,&source](auto&& arg) {
+          using TT = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<TT, object> || std::is_same_v<TT, array>)
+              arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+          else
+              throw value_type_mismatch("object or array", source.actual_type());
+      },
+      source);
+    }
+
+    template <typename Value, typename F> inline void for_each(Value&& value, F&& func) // func: void(const rjson::value&) or void(rjson::value&)
+    {
+        std::visit([&func, &value](auto&& arg) {
+            using TT = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<TT, object> || std::is_same_v<TT, array>)
+                arg.for_each(std::forward<F>(func));
+            else
+                throw value_type_mismatch("object or array", value.actual_type());
+        }, std::forward<Value>(value));
     }
 
 } // namespace rjson2
