@@ -48,8 +48,11 @@ namespace rjson2
     class object
     {
      public:
+        using content_t = std::map<std::string, value>;
+        using value_type = typename content_t::value_type;
+
         object() = default;
-        object(std::initializer_list<std::pair<std::string, value>> key_values);
+        object(std::initializer_list<value_type> key_values);
         // object(const object&) = default;
         // object& operator=(const object&) = default;
         // object(object&&) = default;
@@ -72,12 +75,12 @@ namespace rjson2
         template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
 
         template <typename T> void copy_to(T&& target) const;
-        template <typename T, typename F> void transform_to(std::vector<T>& target, F&& transformer) const;
+        template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
         template <typename F> void for_each(F&& func) const;
         template <typename F> void for_each(F&& func);
 
      private:
-        std::map<std::string, value> content_;
+        content_t content_;
 
         friend std::string to_string(const object& val, bool space_after_comma);
         friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
@@ -306,7 +309,7 @@ namespace rjson2
 
     // --------------------------------------------------
 
-    inline object::object(std::initializer_list<std::pair<std::string, value>> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
+    inline object::object(std::initializer_list<value_type> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
 
     template <typename S> inline const value& object::get(S key) const noexcept
     {
@@ -369,10 +372,22 @@ namespace rjson2
         std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
     }
 
-    template <typename T, typename F> inline void object::transform_to(std::vector<T>& target, F&& transformer) const
+    namespace internal
     {
-        target.resize(content_.size());
-        std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
+        template <typename T, typename = void> struct has_member_begin : std::false_type {};
+        template <typename T> struct has_member_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type {};
+    }
+
+    template <typename T, typename F> inline void object::transform_to(T&& target, F&& transformer) const
+    {
+        if constexpr (internal::has_member_begin<T>::value) {
+            target.resize(content_.size());
+            std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
+        }
+        else {
+            std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
+              //static_assert(internal::has_member_begin<T>::value, "rjson::object::transform not implemented for this target");
+        }
     }
 
     // --------------------------------------------------
@@ -655,35 +670,30 @@ namespace rjson2
 
     template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
     {
+          // std::is_const<typename std::remove_reference<const int&>::type>::value
         std::visit([&target,&transformer,&source](auto&& arg) {
           using TT = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<TT, object> || std::is_same_v<TT, array>)
+          if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const object::value_type&>)
+              arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+          else if constexpr (std::is_same_v<TT, array> && std::is_invocable_v<F, const value&>)
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
           else
-              throw value_type_mismatch("object or array", source.actual_type());
+              throw value_type_mismatch("object or array and corresponding transformer", source.actual_type());
       },
       source);
     }
 
-    template <typename Value> inline void for_each(Value&& val, std::function<void(Value&&)> func)
+    template <typename Value, typename F> inline void for_each(Value&& val, F&& func)
     {
+          // std::is_const<typename std::remove_reference<const int&>::type>::value
         std::visit([&func,&val](auto&& arg) {
             using TT = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<TT, array>)
+            if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const object::value_type&>)
+                arg.for_each(func);
+            else if constexpr (std::is_same_v<TT, array> && std::is_invocable_v<F, const value&>)
                 arg.for_each(func);
             else
-                throw value_type_mismatch("array", val.actual_type());
-        }, std::forward<Value>(val));
-    }
-
-    template <typename Value> inline void for_each(Value&& val, std::function<void(std::pair<std::string,value>&&)> func)
-    {
-        std::visit([&func,&val](auto&& arg) {
-            using TT = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<TT, object>)
-                arg.for_each(func);
-            else
-                throw value_type_mismatch("object", val.actual_type());
+                throw value_type_mismatch("object or array and corresponding callback", val.actual_type());
         }, std::forward<Value>(val));
     }
 
@@ -692,7 +702,7 @@ namespace rjson2
         return std::visit([&func,&value](auto&& arg) -> Value& {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, array>)
-                return arg.find_if(func);
+                 return arg.find_if(std::forward<Func>(func));
             // else if (func(*this))
             //     return *this;
             else
