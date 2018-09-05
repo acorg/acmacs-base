@@ -15,7 +15,7 @@ template <typename TS> std::string gen(const Date& aStart, const Date& aEnd)
     rjson::array data;
     TS ts(aStart, aEnd);
     for (auto entry = ts.begin(); entry != ts.end(); ++entry) {
-        data.insert(rjson::object{
+        data.append(rjson::object{
                     {"text_name", entry.text_name()},
                     {"numeric_name", entry.numeric_name()},
                     {"first_date", entry.first_date()},

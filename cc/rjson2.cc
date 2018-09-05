@@ -435,14 +435,14 @@ namespace rjson2::parser_pop
 
         void subvalue(value&& aSubvalue, Parser& /*aParser*/) override
             {
-                value_.insert(std::move(aSubvalue));
+                value_.append(std::move(aSubvalue));
             }
 
      private:
         array value_;
         Expected expected_ = Expected::Value;
 
-    }; //class ArrayHandler
+    }; // class ArrayHandler
 
       // ----------------------------------------------------------------------
 

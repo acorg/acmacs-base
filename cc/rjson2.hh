@@ -103,7 +103,7 @@ namespace rjson2
         value& operator[](size_t index) noexcept;      // if index out of range, returns ConstNull
         size_t max_index() const { return content_.size() - 1; }
 
-        value& insert(value&& aValue); // returns ref to inserted
+        value& append(value&& aValue); // returns ref to inserted
 
         void remove_comments();
 
@@ -208,6 +208,14 @@ namespace rjson2
         value(bool src) : value_base(src) {}
         value& operator=(const value&) = default;
         value& operator=(value&&) = default;
+        value& operator=(array&& src) { value_base::operator=(std::move(src)); return *this; }
+        value& operator=(object&& src) { value_base::operator=(std::move(src)); return *this; }
+        value& operator=(number&& src) { value_base::operator=(std::move(src)); return *this; }
+        value& operator=(int src) { value_base::operator=(number(static_cast<long>(src))); return *this; }
+        value& operator=(double src) { value_base::operator=(number(src)); return *this; }
+        value& operator=(bool src) { value_base::operator=(src); return *this; }
+        value& operator=(std::string src) { value_base::operator=(src); return *this; }
+        value& operator=(const char* src) { value_base::operator=(std::string(src)); return *this; }
 
         bool empty() const noexcept;
         size_t size() const noexcept; // returns 0 if neither array nor object nor string
@@ -218,6 +226,8 @@ namespace rjson2
         template <typename S, typename ... Args> const value& get(S field_name, Args&& ... args) const noexcept;
         value& operator[](size_t index) noexcept;      // if this is not array or index out of range, returns ConstNull
         const value& operator[](size_t index) const noexcept { return get(index); }
+        value& append(value&& aValue); // for array only, returns ref to inserted
+        value& append(double aValue) { return append(number(aValue)); }
         size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
         operator const std::string&() const;
@@ -270,7 +280,7 @@ namespace rjson2
             return ConstNull;
     }
 
-    inline value& array::insert(value&& aValue)
+    inline value& array::append(value&& aValue)
     {
         content_.push_back(std::move(aValue));
         return content_.back();
@@ -574,6 +584,16 @@ namespace rjson2
                 return arg[std::to_string(index)];
             else
                 return ConstNull;
+        }, *this);
+    }
+
+    inline value& value::append(value&& aValue)
+    {
+        return std::visit([&aValue,this](auto&& arg) -> value& {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+                return arg.append(std::move(aValue));
+            else
+                throw value_type_mismatch("array", actual_type());
         }, *this);
     }
 
