@@ -231,7 +231,7 @@ namespace rjson2
         value& append(double aValue) { return append(number(aValue)); }
         size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
-        operator const std::string&() const;
+        operator std::string() const;
         operator double() const;
         operator size_t() const;
         operator long() const;
@@ -307,10 +307,10 @@ namespace rjson2
         if constexpr (internal::has_member_begin<T>::value) {
             if constexpr (internal::has_member_resize<T>::value)
                 target.resize(size());
-            std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> T { return val; });
+            std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> decltype(*target.begin()) { return val; });
         }
         else {
-            std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> T { return val; });
+            std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> std::remove_reference_t<decltype(*target)> { return val; });
         }
     }
 
@@ -632,9 +632,9 @@ namespace rjson2
         }, *this);
     }
 
-    inline value::operator const std::string&() const
+    inline value::operator std::string() const
     {
-        return std::visit([this](auto&& arg) -> const std::string& {
+        return std::visit([this](auto&& arg) -> std::string {
             if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
                 return arg;
             else
