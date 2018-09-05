@@ -110,7 +110,7 @@ namespace rjson2
 
         template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
 
-        template <typename T> void copy_to(std::vector<T>& target) const;
+        template <typename T> void copy_to(T&& target) const;
         template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
         template <typename F> void for_each(F&& func) const;
         template <typename F> void for_each(F&& func);
@@ -265,6 +265,16 @@ namespace rjson2
 
     // --------------------------------------------------
 
+    namespace internal
+    {
+        template <typename T, typename = void> struct has_member_begin : std::false_type {};
+        template <typename T> struct has_member_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type {};
+        template <typename T, typename = void> struct has_member_resize : std::false_type {};
+        template <typename T> struct has_member_resize<T, std::void_t<decltype(std::declval<T>().resize(1))>> : std::true_type {};
+    }
+
+    // --------------------------------------------------
+
     inline const value& array::get(size_t index) const noexcept // if index out of range, returns ConstNull
     {
         if (index < content_.size())
@@ -292,10 +302,16 @@ namespace rjson2
         std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
     }
 
-    template <typename T> inline void array::copy_to(std::vector<T>& target) const
+    template <typename T> inline void array::copy_to(T&& target) const
     {
-        target.resize(size());
-        std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> T { return val; });
+        if constexpr (internal::has_member_begin<T>::value) {
+            if constexpr (internal::has_member_resize<T>::value)
+                target.resize(size());
+            std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> T { return val; });
+        }
+        else {
+            std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> T { return val; });
+        }
     }
 
     template <typename F> inline void array::for_each(F&& func) const
@@ -411,21 +427,16 @@ namespace rjson2
         std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
     }
 
-    namespace internal
-    {
-        template <typename T, typename = void> struct has_member_begin : std::false_type {};
-        template <typename T> struct has_member_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type {};
-    }
-
     template <typename T, typename F> inline void object::transform_to(T&& target, F&& transformer) const
     {
         if constexpr (internal::has_member_begin<T>::value) {
-            target.resize(content_.size());
+            if constexpr (internal::has_member_resize<T>::value)
+                target.resize(content_.size());
             std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
         }
         else {
             std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
-              //static_assert(internal::has_member_begin<T>::value, "rjson::object::transform not implemented for this target");
+            // static_assert(internal::has_member_begin<T>::value, "rjson::object::transform not implemented for this target");
         }
     }
 
