@@ -18,6 +18,7 @@
 #include <limits>
 
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/enumerate.hh"
 
 // ----------------------------------------------------------------------
 
@@ -299,17 +300,40 @@ namespace rjson2
 
     template <typename F> inline void array::for_each(F&& func) const
     {
-        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
+        for (auto [no, val] : acmacs::enumerate(content_)) {
+            if constexpr (std::is_invocable_v<F, const value&>)
+                func(val);
+            else if constexpr (std::is_invocable_v<F, const value&, size_t>)
+                func(val, no);
+            else
+                static_assert(std::is_invocable_v<F, const value&>, "array::for_each: unsupported func signature");
+        }
     }
 
     template <typename F> inline void array::for_each(F&& func)
     {
-        std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
+        for (auto [no, val] : acmacs::enumerate(content_)) {
+            if constexpr (std::is_invocable_v<F, value&>)
+                func(val);
+            else if constexpr (std::is_invocable_v<F, value&, size_t>)
+                func(val, no);
+            else
+                static_assert(std::is_invocable_v<F, value&>, "array::for_each: unsupported func signature");
+        }
     }
 
     template <typename T, typename F> inline void array::transform_to(T&& target, F&& transformer) const
     {
-        std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
+        if constexpr (std::is_invocable_v<F, const value&>) {
+            std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
+        }
+        else if constexpr (std::is_invocable_v<F, const value&, size_t>) {
+            for (auto [no, src] : acmacs::enumerate(content_))
+                *target++ = transformer(src, no);
+        }
+        else {
+            static_assert(std::is_invocable_v<F, const value&>, "rjson::array::transform_to: unsupported transformer signature");
+        }
     }
 
     template <typename Func> inline const value& array::find_if(Func func) const
@@ -718,12 +742,14 @@ namespace rjson2
 
     template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
     {
+        static_assert(std::is_invocable_v<F, const object::value_type&> || std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>, "rjson::transform: unsupported transformer signature");
+
           // std::is_const<typename std::remove_reference<const int&>::type>::value
         std::visit([&target,&transformer,&source](auto&& arg) {
           using TT = std::decay_t<decltype(arg)>;
           if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const object::value_type&>)
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
-          else if constexpr (std::is_same_v<TT, array> && std::is_invocable_v<F, const value&>)
+          else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>))
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
           else if constexpr (!std::is_same_v<TT, null>) // do not remove, essential!
               throw value_type_mismatch("object or array and corresponding transformer", source.actual_type());
@@ -733,12 +759,20 @@ namespace rjson2
 
     template <typename Value, typename F> inline void for_each(Value&& val, F&& func)
     {
+        static_assert(std::is_invocable_v<F, const object::value_type&>
+                      || std::is_invocable_v<F, object::value_type&>
+                      || std::is_invocable_v<F, const value&>
+                      || std::is_invocable_v<F, value&>
+                      || std::is_invocable_v<F, const value&, size_t>
+                      || std::is_invocable_v<F, value&, size_t>,
+                      "rjson::for_each: unsupported func signature");
+
           // std::is_const<typename std::remove_reference<const int&>::type>::value
         std::visit([&func,&val](auto&& arg) {
             using TT = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const object::value_type&>)
+            if constexpr (std::is_same_v<TT, object> && (std::is_invocable_v<F, const object::value_type&> || std::is_invocable_v<F, object::value_type&>))
                 arg.for_each(func);
-            else if constexpr (std::is_same_v<TT, array> && std::is_invocable_v<F, const value&>)
+            else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>))
                 arg.for_each(func);
             else
                 throw value_type_mismatch("object or array and corresponding callback", val.actual_type());
