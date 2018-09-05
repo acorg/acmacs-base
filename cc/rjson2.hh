@@ -725,7 +725,7 @@ namespace rjson2
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
           else if constexpr (std::is_same_v<TT, array> && std::is_invocable_v<F, const value&>)
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
-          else
+          else if constexpr (!std::is_same_v<TT, null>) // do not remove, essential!
               throw value_type_mismatch("object or array and corresponding transformer", source.actual_type());
       },
       source);
