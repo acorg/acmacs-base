@@ -33,6 +33,7 @@ namespace rjson2
 
     class value_type_mismatch : public std::runtime_error { public: value_type_mismatch(std::string requested_type, std::string actual_type, std::string source_ref) : std::runtime_error{"value type mismatch, requested: " + requested_type + ", stored: " + actual_type + source_ref} {} };
     class merge_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+    class const_null_modification_attempt : public std::runtime_error { public: const_null_modification_attempt() : std::runtime_error{"ConstNull modification attempt"} {} };
 
       // --------------------------------------------------
 
@@ -53,12 +54,11 @@ namespace rjson2
 
     class null
     {
-     // public:
-     //    null() = default;
-     //    null(const null&) = default;
-     //    null& operator=(const null&) = default;
+    };
 
-    }; // class null
+    class const_null
+    {
+    };
 
       // --------------------------------------------------
 
@@ -206,7 +206,7 @@ namespace rjson2
 
     // --------------------------------------------------
 
-    using value_base = std::variant<null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
+    using value_base = std::variant<null, const_null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
 
     class value : public value_base
     {
@@ -223,16 +223,17 @@ namespace rjson2
         value(int src) : value_base(number(static_cast<long>(src))) {} // gcc 7.2 wants it to disambiguate
         value(double src) : value_base(number(src)) {} // gcc 7.2 wants it to disambiguate
         value(bool src) : value_base(src) {}
-        value& operator=(const value&) = default;
-        value& operator=(value&&) = default;
-        value& operator=(array&& src) { value_base::operator=(std::move(src)); return *this; }
-        value& operator=(object&& src) { value_base::operator=(std::move(src)); return *this; }
-        value& operator=(number&& src) { value_base::operator=(std::move(src)); return *this; }
-        value& operator=(int src) { value_base::operator=(number(static_cast<long>(src))); return *this; }
-        value& operator=(double src) { value_base::operator=(number(src)); return *this; }
-        value& operator=(bool src) { value_base::operator=(src); return *this; }
-        value& operator=(std::string src) { value_base::operator=(src); return *this; }
-        value& operator=(const char* src) { value_base::operator=(std::string(src)); return *this; }
+
+        value& operator=(const value& val) { check_const_null(); value_base::operator=(val); return *this; }
+        value& operator=(value&& val) { check_const_null(); value_base::operator=(std::move(val)); return *this; }
+        value& operator=(array&& src) { check_const_null(); value_base::operator=(std::move(src)); return *this; }
+        value& operator=(object&& src) { check_const_null(); value_base::operator=(std::move(src)); return *this; }
+        value& operator=(number&& src) { check_const_null(); value_base::operator=(std::move(src)); return *this; }
+        value& operator=(int src) { check_const_null(); value_base::operator=(number(static_cast<long>(src))); return *this; }
+        value& operator=(double src) { check_const_null(); value_base::operator=(number(src)); return *this; }
+        value& operator=(bool src) { check_const_null(); value_base::operator=(src); return *this; }
+        value& operator=(std::string src) { check_const_null(); value_base::operator=(src); return *this; }
+        value& operator=(const char* src) { check_const_null(); value_base::operator=(std::string(src)); return *this; }
 
         bool empty() const noexcept;
         size_t size() const noexcept; // returns 0 if neither array nor object nor string
@@ -262,22 +263,14 @@ namespace rjson2
 
      private:
         template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
+        bool is_const_null() const noexcept;
+        void check_const_null() const { if (is_const_null()) throw const_null_modification_attempt{}; }
 
     }; // class value
 
       // --------------------------------------------------
 
-    class const_null : public value
-    {
-     public:
-        const_null() = default;
-        const_null(const const_null&) = delete;
-        const_null(const_null&&) = delete;
-        const_null& operator=(const const_null&) = delete;
-        const_null& operator=(const_null&&) = delete;
-    };
-
-    extern const_null ConstNull;
+    extern value ConstNull;
 
     // --------------------------------------------------
 
@@ -382,7 +375,7 @@ namespace rjson2
 
     template <typename S> inline value& object::operator[](S key) noexcept
     {
-        return content_.emplace(std::string(key), value{}).first->second;
+        return content_.emplace(acmacs::to_string(key), value{}).first->second;
     }
 
     inline size_t object::max_index() const // assumes keys are size_t
@@ -400,7 +393,13 @@ namespace rjson2
 
     template <typename S> inline void object::insert(S aKey, const value& aValue)
     {
-        content_.emplace(std::string(aKey), aValue);
+        content_.emplace(acmacs::to_string(aKey), aValue);
+    }
+
+    template <typename S> inline void object::remove(S key)
+    {
+        if (const auto found = content_.find(acmacs::to_string(key)); found != content_.end())
+            content_.erase(found);
     }
 
     inline void object::update(const object& to_merge)
@@ -479,12 +478,6 @@ namespace std
 
 namespace rjson2
 {
-    template <typename S> inline void object::remove(S key)
-    {
-        if (const auto found = content_.find(key); found != content_.end())
-            content_.erase(found);
-    }
-
     std::string to_string(const object& val, bool space_after_comma = false);
     std::string to_string(const array& val, bool space_after_comma = false);
 
@@ -494,6 +487,8 @@ namespace rjson2
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, null>)
                 return "null";
+            else if constexpr (std::is_same_v<T, const_null>)
+                return "*ConstNull";
             else if constexpr (std::is_same_v<T, std::string>)
                 return "\"" + arg + '"';
             else if constexpr (std::is_same_v<T, bool>)
@@ -526,6 +521,8 @@ namespace rjson2
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, null>)
                 return "null";
+            else if constexpr (std::is_same_v<T, const_null>)
+                return "ConstNull";
             else if (std::is_same_v<T, object>)
                 return "object";
             else if (std::is_same_v<T, array>)
@@ -547,7 +544,7 @@ namespace rjson2
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array> || std::is_same_v<T, std::string>)
                 return arg.empty();
-            else if (std::is_same_v<T, null>)
+            else if (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
                 return true;
             else
                 return false;
@@ -567,7 +564,12 @@ namespace rjson2
 
     inline bool value::is_null() const noexcept
     {
-        return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>) return true; else return false; }, *this);
+        return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>) return true; else return false; }, *this);
+    }
+
+    inline bool value::is_const_null() const noexcept
+    {
+        return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, const_null>) return true; else return false; }, *this);
     }
 
     template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
@@ -584,7 +586,7 @@ namespace rjson2
     {
         if (const auto& r1 = get1(field_name); !r1.is_null()) {
             if constexpr (sizeof...(args) > 0)
-                return get(args...);
+                return r1.get(args...);
             else
                 return r1;
         }
@@ -691,7 +693,8 @@ namespace rjson2
     template <typename R> inline R value::get_or_default(R&& dflt) const
     {
         return std::visit([this,&dflt](auto&& arg) -> R {
-            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>)
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
                 return dflt;
             else
                 return *this;
@@ -711,8 +714,10 @@ namespace rjson2
             }
             else if constexpr (std::is_same_v<T1, null>)
                 *this = arg2;
+            else if constexpr (std::is_same_v<T1, const_null>)
+                throw merge_error(std::string{"cannot update ConstNull"});
             else
-                throw merge_error(std::string{"cannot merge two rjson values of different types: %"}); //  + to_string(*this) + "% and %" + to_string(arg2));
+                throw merge_error(std::string{"cannot merge two rjson values of different types"}); // : %" + to_string(*this) + "% and %" + to_string(arg2));
         };
 
         std::visit(visitor, *this, to_merge);
@@ -751,7 +756,7 @@ namespace rjson2
               throw value_type_mismatch("array", source.actual_type(), DEBUG_LINE_FUNC);
           else if constexpr (std::is_same_v<TT, array>)
               arg.copy_to(std::forward<T>(target));
-          else if constexpr (!std::is_same_v<TT, null>)
+          else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
               throw value_type_mismatch("object or array", source.actual_type(), DEBUG_LINE_FUNC);
       },
       source);
@@ -768,7 +773,7 @@ namespace rjson2
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
           else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>))
               arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
-          else if constexpr (!std::is_same_v<TT, null>) // do not remove, essential!
+          else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
               throw value_type_mismatch("object or array and corresponding transformer", source.actual_type(), DEBUG_LINE_FUNC);
       },
       source);
@@ -791,7 +796,7 @@ namespace rjson2
                 arg.for_each(func);
             else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>))
                 arg.for_each(func);
-            else
+            else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
                 throw value_type_mismatch("object or array and corresponding callback", val.actual_type(), DEBUG_LINE_FUNC);
         }, std::forward<Value>(val));
     }
@@ -808,6 +813,13 @@ namespace rjson2
                 throw value_type_mismatch("array", value.actual_type(), DEBUG_LINE_FUNC);
                 // return ConstNull;
         }, std::forward<Value>(value));
+    }
+
+      // ----------------------------------------------------------------------
+
+    inline std::ostream& operator<<(std::ostream& out, const value& val)
+    {
+        return out << to_string(val);
     }
 
 } // namespace rjson2

@@ -13,7 +13,7 @@ namespace rjson = rjson2;
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-rjson::const_null rjson::ConstNull;
+rjson::value rjson::ConstNull{rjson::const_null{}};
 
 #pragma GCC diagnostic pop
 
