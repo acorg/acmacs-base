@@ -743,7 +743,7 @@ namespace rjson2
           using TT = std::decay_t<decltype(arg)>;
           if constexpr (std::is_same_v<TT, object>)
               throw value_type_mismatch("array", source.actual_type());
-          else if constexpr (std::is_same_v<TT, array> && internal::has_member_begin<T>::value)
+          else if constexpr (std::is_same_v<TT, array>)
               arg.copy_to(std::forward<T>(target));
           else if constexpr (!std::is_same_v<TT, null>)
               throw value_type_mismatch("object or array", source.actual_type());
