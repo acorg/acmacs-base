@@ -2,13 +2,19 @@
 
 // ----------------------------------------------------------------------
 
-namespace rjson::parser_pop
+namespace rjson
 {
-    value parse_string(std::string aJsonData, remove_comments aRemoveComments);
-    value parse_string(const std::string_view& aJsonData, remove_comments aRemoveComments);
-    value parse_string(const char* aJsonData, remove_comments aRemoveComments);
+    inline namespace v1
+    {
+        namespace parser_pop
+        {
+            value parse_string(std::string aJsonData, remove_comments aRemoveComments);
+            value parse_string(const std::string_view& aJsonData, remove_comments aRemoveComments);
+            value parse_string(const char* aJsonData, remove_comments aRemoveComments);
 
-} // namespace rjson::parser_pop
+        } // namespace parser_pop
+    }     // namespace v1
+} // namespace rjson
 
 // ----------------------------------------------------------------------
 /// Local Variables:

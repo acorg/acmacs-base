@@ -14,56 +14,56 @@ const char* std::bad_variant_access::what() const noexcept { return "bad_variant
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-rjson::value rjson::sNull{rjson::null{}};
-rjson::value rjson::sEmptyArray{rjson::array{}};
-rjson::value rjson::sEmptyObject{rjson::object{}};
+rjson::v1::value rjson::v1::sNull{rjson::v1::null{}};
+rjson::v1::value rjson::v1::sEmptyArray{rjson::v1::array{}};
+rjson::v1::value rjson::v1::sEmptyObject{rjson::v1::object{}};
 
 #pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_string(std::string aJsonData, rjson::remove_comments aRemoveComments)
+rjson::v1::value rjson::v1::parse_string(std::string aJsonData, rjson::v1::remove_comments aRemoveComments)
 {
     return parser_pop::parse_string(aJsonData, aRemoveComments);
 
-} // rjson::parse_string
+} // rjson::v1::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_string(std::string_view aJsonData, rjson::remove_comments aRemoveComments)
+rjson::v1::value rjson::v1::parse_string(std::string_view aJsonData, rjson::v1::remove_comments aRemoveComments)
 {
     return parser_pop::parse_string(aJsonData, aRemoveComments);
 
-} // rjson::parse_string
+} // rjson::v1::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_string(const char* aJsonData, rjson::remove_comments aRemoveComments)
+rjson::v1::value rjson::v1::parse_string(const char* aJsonData, rjson::v1::remove_comments aRemoveComments)
 {
     return parser_pop::parse_string(aJsonData, aRemoveComments);
 
-} // rjson::parse_string
+} // rjson::v1::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson::value rjson::parse_file(std::string aFilename, rjson::remove_comments aRemoveComments)
+rjson::v1::value rjson::v1::parse_file(std::string aFilename, rjson::v1::remove_comments aRemoveComments)
 {
     return parse_string(acmacs::file::read(aFilename), aRemoveComments);
 
-} // rjson::parse_file
+} // rjson::v1::parse_file
 
 // ----------------------------------------------------------------------
 
-static inline bool is_simple(const rjson::value& aValue, bool dive = true)
+static inline bool is_simple(const rjson::v1::value& aValue, bool dive = true)
 {
     auto visitor = [dive](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, rjson::object>) {
-            return (!arg.get_or_default(rjson::object::force_pp_key, false)
+        if constexpr (std::is_same_v<T, rjson::v1::object>) {
+            return (!arg.get_or_default(rjson::v1::object::force_pp_key, false)
                     && (arg.empty()
                         || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& kv) -> bool { return is_simple(kv.second, false); }))));
         }
-        else if constexpr (std::is_same_v<T, rjson::array>) {
+        else if constexpr (std::is_same_v<T, rjson::v1::array>) {
             return arg.empty() || (dive && std::all_of(arg.begin(), arg.end(), [](const auto& v) -> bool { return is_simple(v, false); }));
         }
         else {
@@ -75,7 +75,7 @@ static inline bool is_simple(const rjson::value& aValue, bool dive = true)
 
 // ----------------------------------------------------------------------
 
-std::string rjson::object::to_json(bool space_after_comma) const
+std::string rjson::v1::object::to_json(bool space_after_comma) const
 {
     std::string result(1, '{');
     size_t size_at_comma = 0;
@@ -100,13 +100,13 @@ std::string rjson::object::to_json(bool space_after_comma) const
         result.append(1, '}');
     return result;
 
-} // rjson::object::to_json
+} // rjson::v1::object::to_json
 
 // ----------------------------------------------------------------------
 
-std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
+std::string rjson::v1::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
 {
-    if (is_simple(*this) || get_or_default(rjson::object::no_pp_key, false))
+    if (is_simple(*this) || get_or_default(rjson::v1::object::no_pp_key, false))
         return to_json(true);
 
     std::string result;
@@ -140,20 +140,20 @@ std::string rjson::object::to_json_pp(size_t indent, json_pp_emacs_indent emacs_
         result.append(1, '}');
     return result;
 
-} // rjson::object::to_json_pp
+} // rjson::v1::object::to_json_pp
 
 // ----------------------------------------------------------------------
 
-void rjson::array::remove_comments()
+void rjson::v1::array::remove_comments()
 {
     for (auto& val: mContent)
         val.remove_comments();
 
-} // rjson::array::remove_comments
+} // rjson::v1::array::remove_comments
 
 // ----------------------------------------------------------------------
 
-std::string rjson::array::to_json(bool space_after_comma) const
+std::string rjson::v1::array::to_json(bool space_after_comma) const
 {
     std::string result(1, '[');
     for (const auto& val: mContent) {
@@ -172,11 +172,11 @@ std::string rjson::array::to_json(bool space_after_comma) const
         result.append(1, ']');
     return result;
 
-} // rjson::array::to_json
+} // rjson::v1::array::to_json
 
 // ----------------------------------------------------------------------
 
-std::string rjson::array::to_json_pp(size_t indent, json_pp_emacs_indent, size_t prefix) const
+std::string rjson::v1::array::to_json_pp(size_t indent, json_pp_emacs_indent, size_t prefix) const
 {
     if (is_simple(*this))
         return to_json(true);
@@ -200,11 +200,11 @@ std::string rjson::array::to_json_pp(size_t indent, json_pp_emacs_indent, size_t
         result.append(1, ']');
     return result;
 
-} // rjson::array::to_json_pp
+} // rjson::v1::array::to_json_pp
 
 // ----------------------------------------------------------------------
 
-rjson::value& rjson::value::update(const rjson::value& to_merge)
+rjson::v1::value& rjson::v1::value::update(const rjson::v1::value& to_merge)
 {
     auto visitor = [this](auto&& arg1, auto&& arg2) {
         using T1 = std::decay_t<decltype(arg1)>;
@@ -220,15 +220,15 @@ rjson::value& rjson::value::update(const rjson::value& to_merge)
     std::visit(visitor, *this, to_merge);
     return *this;
 
-} // rjson::value::update
+} // rjson::v1::value::update
 
 // ----------------------------------------------------------------------
 
-void rjson::object::update(const rjson::object& to_merge)
+void rjson::v1::object::update(const rjson::v1::object& to_merge)
 {
     for (const auto& [new_key, new_value]: to_merge) {
         try {
-            rjson::value& old_value = operator[](new_key);
+            rjson::v1::value& old_value = operator[](new_key);
             if (auto [old_n, old_i, new_n, new_i] = std::make_tuple(std::get_if<number>(&old_value), std::get_if<integer>(&old_value), std::get_if<number>(&new_value), std::get_if<integer>(&new_value));
                 (old_n || old_i) && (new_n || new_i)) {
                   // number replaced with integer and vice versa
@@ -243,11 +243,11 @@ void rjson::object::update(const rjson::object& to_merge)
         }
     }
 
-} // rjson::object::update
+} // rjson::v1::object::update
 
 // ----------------------------------------------------------------------
 
-void rjson::object::remove_comments()
+void rjson::v1::object::remove_comments()
 {
     for (auto it = mContent.begin(); it != mContent.end(); /* no increment! */) {
         if (it->first.is_comment_key()) {
@@ -259,7 +259,7 @@ void rjson::object::remove_comments()
         }
     }
 
-} // rjson::object::remove_comments
+} // rjson::v1::object::remove_comments
 
 // ----------------------------------------------------------------------
 /// Local Variables:
