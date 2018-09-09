@@ -1,15 +1,14 @@
 #include <iostream>
 
-#include "rjson2.hh"
-namespace rjson = rjson2;
+#include "rjson.hh"
 
 int main(int argc, const char* const* argv)
 {
     int exit_code = 0;
     if (argc == 2) {
         try {
-            auto data = rjson::parse_file(argv[1]);
-            std::cout << rjson::pretty(data, 2, rjson::json_pp_emacs_indent::yes) << '\n';
+            auto data = rjson::v2::parse_file(argv[1]);
+            std::cout << rjson::v2::pretty(data, 2, rjson::v2::json_pp_emacs_indent::yes) << '\n';
         }
         catch (std::exception& err) {
             std::cerr << "ERROR: " << err.what() << '\n';

@@ -24,7 +24,7 @@ SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 ACMACS_BASE_SOURCES = \
     virus-name.cc color.cc text-style.cc time-series.cc read-file.cc layout.cc \
     argc-argv.cc quicklook.cc timeit.cc gzip.cc \
-    rjson2.cc json-importer.cc rjson.cc rjson-parser-pop.cc
+    rjson.cc json-importer.cc rjson-v1.cc rjson-parser-pop-v1.cc
 
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc

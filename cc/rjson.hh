@@ -1,1175 +1,941 @@
 #pragma once
 
-#ifdef RJSON2
-#error cannot use rjson1, rjson2 already included
-#endif
-#ifndef RJSON1
-#define RJSON1
-#endif
-
-#include <stdexcept>
 #include <variant>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <map>
-#include <iostream>
-#include <cassert>
-#include <typeinfo>
-#include <optional>
+#include <algorithm>
+#include <stdexcept>
+#include <type_traits>
+#include <limits>
 
 #include "acmacs-base/debug.hh"
-#include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/enumerate.hh"
+#include "acmacs-base/rjson-v1.hh"
 
 // ----------------------------------------------------------------------
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v2
     {
-        class field_not_found : public std::runtime_error
-        {
-          public:
-            field_not_found(std::string aFieldName = std::string{"field_not_found"}) : std::runtime_error{aFieldName} {}
-        };
-        class field_type_mismatch : public std::runtime_error
-        {
-          public:
-            field_type_mismatch(std::string aFieldName = std::string{"field_type_mismatch"}) : std::runtime_error{aFieldName} {}
-        };
-        class numeric_value_is_nan : public std::runtime_error
-        {
-          public:
-            numeric_value_is_nan(std::string msg = std::string{"field is NaN"}) : std::runtime_error{msg} {}
-        };
-
         class value;
         class array;
         class object;
 
-        extern value sNull;
-        extern value sEmptyArray;
-        extern value sEmptyObject;
-
         enum class json_pp_emacs_indent { no, yes };
 
-        template <typename F> struct content_type;
-        template <typename F> using rjson_type = typename content_type<std::decay_t<F>>::type;
-
-        class string
+        class value_type_mismatch : public std::runtime_error
         {
           public:
-            string() = default;
-            string(std::string aData) : mData(std::move(aData)) {}
-            string(const char* aData) : mData(aData) {}
-            string(const char* aData, size_t aLen) : mData(aData, aLen) {}
-            string(const string&) = default;
-            string& operator=(const string&) = default;
-            string(string&&) = default;
-            string& operator=(string&&) = default;
-            std::string to_json() const { return std::string{"\""} + static_cast<std::string>(mData) + "\""; }
-            std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-            // explicit operator std::string() const { return mData; }
-            // const std::string& str() const { return mData; }
-            operator std::string_view() const { return mData; }
-            std::string_view strv() const { return mData; }
-            std::string str() const { return mData; }
-            string& operator=(std::string aSrc)
+            value_type_mismatch(std::string requested_type, std::string actual_type, std::string source_ref)
+                : std::runtime_error{"value type mismatch, requested: " + requested_type + ", stored: " + actual_type + source_ref}
             {
-                mData = aSrc;
-                return *this;
             }
-            bool operator==(const std::string& aToCompare) const { return mData == aToCompare; }
-            bool operator!=(const std::string& aToCompare) const { return !operator==(aToCompare); }
-            bool operator==(std::string_view aToCompare) const { return mData == aToCompare; }
-            bool operator!=(std::string_view aToCompare) const { return !operator==(aToCompare); }
-            bool operator==(const string& aToCompare) const { return mData == aToCompare.mData; }
-            bool operator!=(const string& aToCompare) const { return !operator==(aToCompare); }
-            bool operator==(const char* aToCompare) const { return mData == aToCompare; }
-            bool operator!=(const char* aToCompare) const { return !operator==(aToCompare); }
-            size_t size() const { return mData.size(); }
-            bool empty() const { return mData.empty(); }
-            char front() const { return mData.front(); }
-            char back() const { return mData.back(); }
-            bool operator<(const string& to_compare) const { return mData < to_compare.mData; }
-            void update(const string& to_merge) { mData = to_merge.mData; }
-            constexpr void remove_comments() {}
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>
-            [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
-
-            private : std::string mData;
-
-            bool is_comment_key() const { return !mData.empty() && (mData.front() == '?' || mData.back() == '?'); }
-
-            friend class object;
-
-        }; // class string
-
-        inline std::string operator+(std::string left, const string& right) { return left + right.str(); }
-
-        class boolean
+        };
+        class merge_error : public std::runtime_error
         {
           public:
-            boolean() : mValue{false} {}
-            boolean(bool aValue) : mValue{aValue} {}
-            std::string to_json() const { return mValue ? "true" : "false"; }
-            std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-            constexpr operator bool() const { return mValue; }
-            boolean& operator=(bool aSrc)
+            using std::runtime_error::runtime_error;
+        };
+        class const_null_modification_attempt : public std::runtime_error
+        {
+          public:
+            const_null_modification_attempt() : std::runtime_error{"ConstNull modification attempt"} {}
+        };
+
+        // --------------------------------------------------
+
+        namespace detail
+        {
+            template <typename T, typename = void> struct has_member_begin : std::false_type
             {
-                mValue = aSrc;
-                return *this;
-            }
-            void update(const boolean& to_merge) { mValue = to_merge.mValue; }
-            constexpr void remove_comments() {}
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>
-            [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
+            };
+            template <typename T> struct has_member_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type
+            {
+            };
+            template <typename T, typename = void> struct has_member_resize : std::false_type
+            {
+            };
+            template <typename T> struct has_member_resize<T, std::void_t<decltype(std::declval<T>().resize(1))>> : std::true_type
+            {
+            };
 
-            private : bool mValue;
+            template <typename T, typename = void> struct is_string : std::false_type
+            {
+            };
+            template <> struct is_string<const char*> : std::true_type
+            {
+            };
+            template <> struct is_string<std::string> : std::true_type
+            {
+            };
+            template <> struct is_string<std::string_view> : std::true_type
+            {
+            };
+        } // namespace detail
 
-        }; // class boolean
+        // --------------------------------------------------
 
         class null
         {
-          public:
-            null() {}
-            void update(const null&) {}
-            std::string to_json() const { return "null"; }
-            std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-            constexpr void remove_comments() {}
-            bool operator==(null) const { return true; }
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>[[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
+        };
 
-        }; // class null
-
-        class number
+        class const_null
         {
-          private:
-            template <typename D> inline static std::string make_value(D val, int precision = 32)
-            {
-                if (std::isnan(val))
-                    throw numeric_value_is_nan{};
-                return acmacs::to_string(val, precision);
-            }
+        };
 
-          public:
-            number() : mValue{"0.0"} {}
-            number(double aSrc) : mValue{make_value(aSrc)} {}
-            number(long double aSrc) : mValue{make_value(aSrc)} {}
-            number(double aSrc, int precision) : mValue{make_value(aSrc, precision)} {}
-            number(std::string_view aData) : mValue{aData} {} // for parser
-            number& operator=(double aSrc)
-            {
-                mValue = make_value(aSrc);
-                return *this;
-            }
-            std::string to_json() const { return mValue; }
-            std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-            operator double() const { return std::stod(mValue); }
-            void update(const number& to_merge) { mValue = to_merge.mValue; }
-            constexpr void remove_comments() {}
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>
-            [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
-
-            private :
-                // double mValue;
-                std::string mValue;
-
-        }; // class number
-
-        class integer
-        {
-          public:
-            integer() : mValue{"0"} {}
-            integer(int aSrc) : mValue{acmacs::to_string(aSrc)} {}
-            integer(unsigned int aSrc) : mValue{acmacs::to_string(aSrc)} {}
-            integer(long aSrc) : mValue{acmacs::to_string(aSrc)} {}
-            integer(unsigned long aSrc) : mValue{acmacs::to_string(aSrc)} {}
-            integer(unsigned long long aSrc) : mValue{acmacs::to_string(aSrc)} {}
-            integer(std::string_view aData) : mValue{aData} {} // for parser
-            integer& operator=(int aSrc)
-            {
-                mValue = acmacs::to_string(aSrc);
-                return *this;
-            }
-            integer& operator=(unsigned int aSrc)
-            {
-                mValue = acmacs::to_string(aSrc);
-                return *this;
-            }
-            integer& operator=(long aSrc)
-            {
-                mValue = acmacs::to_string(aSrc);
-                return *this;
-            }
-            integer& operator=(unsigned long aSrc)
-            {
-                mValue = acmacs::to_string(aSrc);
-                return *this;
-            }
-            std::string to_json() const { return mValue; }
-            std::string to_json_pp(size_t, json_pp_emacs_indent = json_pp_emacs_indent::no, size_t = 0) const { return to_json(); }
-            operator double() const { return std::stod(mValue); }
-            operator long() const { return std::stol(mValue); }
-            operator unsigned long() const { return std::stoul(mValue); }
-            operator int() const { return static_cast<int>(std::stol(mValue)); }
-            operator unsigned int() const { return static_cast<unsigned int>(std::stoul(mValue)); }
-            operator bool() const { return static_cast<int>(*this); } // using integer as bool
-            void update(const integer& to_merge) { mValue = to_merge.mValue; }
-            constexpr void remove_comments() {}
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>
-            [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
-
-            private : std::string mValue;
-
-        }; // class integer
+        // --------------------------------------------------
 
         class object
         {
           public:
+            using content_t = std::map<std::string, value>;
+            using value_type = typename content_t::value_type;
+
             object() = default;
-            object(std::initializer_list<std::pair<string, value>> key_values);
-            // ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
-            object(const object&) = default;            // required if explicit destructor provided
-            object& operator=(const object&) = default; // required if explicit destructor provided
-            object(object&&) = default;
-            object& operator=(object&&) = default;
+            object(std::initializer_list<value_type> key_values);
+            // object(const object&) = default;
+            // object& operator=(const object&) = default;
+            // object(object&&) = default;
+            // object& operator=(object&&) = default;
 
-            std::string to_json(bool space_after_comma = false) const;
-            std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
+            bool empty() const noexcept { return content_.empty(); }
+            size_t size() const noexcept { return content_.size(); }
 
-            void insert(const string& aKey, value&& aValue);
-            void insert(const string& aKey, const value& aValue);
+            template <typename S> const value& get(S key) const noexcept;
+            template <typename S> value& operator[](S key) noexcept;
+            size_t max_index() const;
+
             void insert(value&& aKey, value&& aValue);
-            size_t size() const { return mContent.size(); }
-            bool empty() const { return mContent.empty(); }
-
-            // if field is not in the object, throws field_not_found
-            const value& operator[](std::string aFieldName) const;
-            value& operator[](std::string aFieldName);
-            value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
-            value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
-            const value& one_of(std::initializer_list<std::string> aFieldOrder) const;
-            template <typename... Args> const value& one_of(Args... args) const { return one_of({args...}); }
-            const value& operator[](const char* aFieldName) const { return operator[](std::string{aFieldName}); }
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault);
-
-            template <typename T> std::optional<T> get(std::string aFieldName) const;
-            std::string get_string_or_throw(std::string aFieldName) const;
-
-            template <typename T> std::decay_t<T> get_or_default(std::string aFieldName, T&& aDefault) const;
-            std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
-
-            template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const;
-            bool exists(std::string aFieldName) const;
-            std::pair<bool, const value&> get_value_if(std::string aFieldName) const;
-            std::pair<bool, const object&> get_object_if(std::string aFieldName) const;
-            std::pair<bool, const array&> get_array_if(std::string aFieldName) const;
-            const object& get_or_empty_object(std::string aFieldName) const;
-            const array& get_or_empty_array(std::string aFieldName) const;
-
-            value& set_field(std::string aKey, value&& aValue);        // returns ref to inserted
-            value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
-            template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
-            template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
-            void set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision = 32);
-            template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
-            template <typename Container> void set_array_field_if_not_empty(std::string aKey, const Container& aContainer)
-            {
-                set_array_field_if_not_empty(aKey, std::begin(aContainer), std::end(aContainer));
-            }
-
-            void delete_field(string aKey); // throws field_not_found
-            void clear() { mContent.clear(); }
-
-            using const_iterator = decltype(std::declval<std::map<string, value>>().cbegin());
-            const_iterator begin() const { return mContent.begin(); }
-            const_iterator end() const { return mContent.end(); }
-            using iterator = decltype(std::declval<std::map<string, value>>().begin());
-            iterator begin() { return mContent.begin(); }
-            iterator end() { return mContent.end(); }
-
+            template <typename S> void insert(S aKey, const value& aValue);
+            template <typename S> void remove(S key);
             void update(const object& to_merge);
+
             void remove_comments();
 
-            static constexpr const char* const force_pp_key = "**rjson_pp**";
-            static constexpr const char* const no_pp_key = "**rjson_no_pp**";
+            template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
+
+            template <typename T> void copy_to(T&& target) const;
+            template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+            template <typename F> void for_each(F&& func) const;
+            template <typename F> void for_each(F&& func);
 
           private:
-            std::map<string, value> mContent;
+            content_t content_;
+
+            friend std::string to_string(const object& val, bool space_after_comma);
+            friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
         }; // class object
+
+        // --------------------------------------------------
 
         class array
         {
           public:
-            enum _use_iterator { use_iterator };
             array() = default;
-            array(array&&) = default;
-            array(const array&) = default;
-            template <typename Iterator> array(_use_iterator, Iterator first, Iterator last);
-            template <typename... Args> array(Args... args);
-            array& operator=(array&&) = default;
-            array& operator=(const array&) = default;
-            value& operator[](size_t index)
-            {
-                try {
-                    return mContent.at(index);
-                }
-                catch (std::out_of_range&) {
-                    throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size()));
-                }
-            }
-            value& operator[](int index)
-            {
-                try {
-                    return mContent.at(static_cast<decltype(mContent)::size_type>(index));
-                }
-                catch (std::out_of_range&) {
-                    throw field_not_found("No element " + acmacs::to_string(index) + " in rjson::array of size " + acmacs::to_string(size()));
-                }
-            }
-            template <typename Index>[[noreturn]] const value& operator[](Index) const { throw field_not_found(); }
-            template <typename Index>[[noreturn]] value& operator[](Index) { throw field_not_found(); }
-            template <typename T>
-            [[noreturn]] value& get_or_add(std::string, T&&) { throw field_not_found(); }
+            array(std::initializer_list<value> init) : content_(init) {}
+            template <typename Iterator> array(Iterator first, Iterator last) : content_(first, last) {}
 
-            void update(const array& to_merge)
-            {
-                mContent = to_merge.mContent;
-            } // replace content!
+            bool empty() const noexcept { return content_.empty(); }
+            size_t size() const noexcept { return content_.size(); }
+
+            const value& get(size_t index) const noexcept; // if index out of range, returns ConstNull
+            value& operator[](size_t index) noexcept;      // if index out of range, returns ConstNull
+            size_t max_index() const { return content_.size() - 1; }
+
+            value& append(value&& aValue); // returns ref to inserted
+
             void remove_comments();
-            std::string to_json(bool space_after_comma = false) const;
-            std::string to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::no, size_t prefix = 0) const;
 
-            value& insert(value&& aValue);      // returns ref to inserted
-            value& insert(const value& aValue); // returns ref to inserted
-            size_t size() const { return mContent.size(); }
-            bool empty() const { return mContent.empty(); }
-            const value& operator[](size_t index) const { return mContent.at(index); }
-            const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
-            void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
-            void erase(int index) { mContent.erase(mContent.begin() + index); }
-            void resize(size_t new_size);
-            void resize(size_t new_size, const value& to_insert);
-            void clear() { mContent.clear(); }
+            template <typename Func> inline bool all_of(Func func) const { return std::all_of(content_.begin(), content_.end(), func); }
 
-            using iterator = decltype(std::declval<const std::vector<value>>().begin());
-            using reverse_iterator = decltype(std::declval<const std::vector<value>>().rbegin());
-            iterator begin() const { return mContent.begin(); }
-            iterator end() const { return mContent.end(); }
-            iterator begin() { return mContent.begin(); }
-            iterator end() { return mContent.end(); }
-            reverse_iterator rbegin() const { return mContent.rbegin(); }
+            template <typename T> void copy_to(T&& target) const;
+            template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+            template <typename F> void for_each(F&& func) const;
+            template <typename F> void for_each(F&& func);
+            template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
+            template <typename Func> value& find_if(Func func);             // returns ConstNull if not found, Func: bool (value&)
 
           private:
-            std::vector<value> mContent;
+            std::vector<value> content_;
+
+            friend std::string to_string(const array& val, bool space_after_comma);
+            friend std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
         }; // class array
 
-        // ----------------------------------------------------------------------
+        // --------------------------------------------------
 
-        template <> struct content_type<double>
-        {
-            using type = rjson::number;
-        };
-        template <> struct content_type<long>
-        {
-            using type = rjson::integer;
-        };
-        template <> struct content_type<unsigned long>
-        {
-            using type = rjson::integer;
-        };
-        template <> struct content_type<int>
-        {
-            using type = rjson::integer;
-        };
-        template <> struct content_type<unsigned int>
-        {
-            using type = rjson::integer;
-        };
-        template <> struct content_type<bool>
-        {
-            using type = rjson::boolean;
-        };
-        template <> struct content_type<std::string>
-        {
-            using type = rjson::string;
-        };
-        template <> struct content_type<char*>
-        {
-            using type = rjson::string;
-        };
-        template <> struct content_type<const char*>
-        {
-            using type = rjson::string;
-        };
+        using number = std::variant<long, double, std::string>;
 
-        template <> struct content_type<null>
+        inline std::string to_string(const number& val)
         {
-            using type = rjson::null;
-        };
-        template <> struct content_type<object>
-        {
-            using type = rjson::object;
-        };
-        template <> struct content_type<array>
-        {
-            using type = rjson::array;
-        };
-        template <> struct content_type<string>
-        {
-            using type = rjson::string;
-        };
-        template <> struct content_type<boolean>
-        {
-            using type = rjson::boolean;
-        };
-        template <> struct content_type<number>
-        {
-            using type = rjson::number;
-        };
-        template <> struct content_type<integer>
-        {
-            using type = rjson::integer;
-        };
+            auto visitor = [](auto&& arg) -> std::string {
+                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+                    return arg;
+                else
+                    return acmacs::to_string(arg);
+            };
+            return std::visit(visitor, val);
+        }
 
-        template <typename FValue> value to_value(const FValue& aValue);
-        template <typename FValue> value to_value(FValue&& aValue);
+        inline double to_double(const number& val)
+        {
+            auto visitor = [](auto&& arg) -> double {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, long>)
+                    return static_cast<double>(arg);
+                else if constexpr (std::is_same_v<T, double>)
+                    return arg;
+                else if constexpr (std::is_same_v<T, std::string>)
+                    return std::stod(arg);
+                else
+                    return std::numeric_limits<double>::quiet_NaN();
+            };
+            return std::visit(visitor, val);
+        }
 
-        // ----------------------------------------------------------------------
+        inline size_t to_size_t(const number& val)
+        {
+            auto visitor = [](auto&& arg) -> size_t {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, long>)
+                    return static_cast<size_t>(arg);
+                else if constexpr (std::is_same_v<T, double>)
+                    return static_cast<size_t>(std::lround(arg));
+                else if constexpr (std::is_same_v<T, std::string>)
+                    return std::stoul(arg);
+                else
+                    return std::numeric_limits<size_t>::max();
+            };
+            return std::visit(visitor, val);
+        }
 
-        using value_base = std::variant<null, object, array, string, integer, number, boolean>; // null must be the first alternative, it is the default value;
+        inline long to_long(const number& val)
+        {
+            auto visitor = [](auto&& arg) -> long {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, long>)
+                    return arg;
+                else if constexpr (std::is_same_v<T, double>)
+                    return std::lround(arg);
+                else if constexpr (std::is_same_v<T, std::string>)
+                    return std::stol(arg);
+                else
+                    return std::numeric_limits<long>::max();
+            };
+            return std::visit(visitor, val);
+        }
+
+        // --------------------------------------------------
+
+        using value_base = std::variant<null, const_null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
 
         class value : public value_base
         {
           public:
             using value_base::operator=;
             using value_base::value_base;
-            value(const value&) = default; // otherwise it is deleted
-                                           // value(const value& aSrc) : value_base(aSrc) { std::cerr << "rjson::value copy " << aSrc.to_json() << '\n'; }
+            value(const value&) = default;
             value(value&&) = default;
-            // value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
-            value& operator=(const value&) = default; // otherwise it is deleted
-            value& operator=(value&&) = default;
-            // ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
+            value(std::string_view src) : value_base(std::string(src)) {}
+            value(const char* src) : value_base(std::string(src)) {}
+            value(char* src) : value_base(std::string(src)) {}
+            template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> value(Uint src) : value_base(number(static_cast<long>(src))) {}
+            template <typename Dbl, typename std::enable_if<std::is_floating_point<Dbl>::value>::type* = nullptr> value(Dbl src) : value_base(number(static_cast<double>(src))) {}
+            value(int src) : value_base(number(static_cast<long>(src))) {} // gcc 7.2 wants it to disambiguate
+            value(double src) : value_base(number(src)) {}                 // gcc 7.2 wants it to disambiguate
+            value(bool src) : value_base(src) {}
 
-            // ----------------------------------------------------------------------
-
-            operator unsigned long() const { return std::get<integer>(*this); }
-            operator long() const { return std::get<integer>(*this); }
-            operator unsigned int() const { return std::get<integer>(*this); }
-            operator int() const { return std::get<integer>(*this); }
-            // operator std::string() const { return std::get<string>(*this); }
-            // const std::string& str() const { return std::get<string>(*this).str(); }
-            operator std::string_view() const { return std::get<string>(*this); }
-            std::string_view strv() const { return std::get<string>(*this).strv(); }
-            std::string str() const { return std::get<string>(*this).str(); }
-
-            operator double() const
+            value& operator=(const value& val)
             {
-                if (auto ptr_n = std::get_if<number>(this))
-                    return *ptr_n;
-                else if (auto ptr_i = std::get_if<integer>(this))
-                    return *ptr_i;
-                else {
-                    std::cerr << "ERROR: cannot convert json to double (from rjson::number or rjson::integer): " << to_json() << '\n';
-                    throw std::bad_variant_access{};
-                }
+                check_const_null();
+                value_base::operator=(val);
+                return *this;
+            }
+            value& operator=(value&& val)
+            {
+                check_const_null();
+                value_base::operator=(std::move(val));
+                return *this;
+            }
+            value& operator=(array&& src)
+            {
+                check_const_null();
+                value_base::operator=(std::move(src));
+                return *this;
+            }
+            value& operator=(object&& src)
+            {
+                check_const_null();
+                value_base::operator=(std::move(src));
+                return *this;
+            }
+            value& operator=(number&& src)
+            {
+                check_const_null();
+                value_base::operator=(std::move(src));
+                return *this;
+            }
+            value& operator=(int src)
+            {
+                check_const_null();
+                value_base::operator=(number(static_cast<long>(src)));
+                return *this;
+            }
+            value& operator=(double src)
+            {
+                check_const_null();
+                value_base::operator=(number(src));
+                return *this;
+            }
+            value& operator=(bool src)
+            {
+                check_const_null();
+                value_base::operator=(src);
+                return *this;
+            }
+            value& operator=(std::string src)
+            {
+                check_const_null();
+                value_base::operator=(src);
+                return *this;
+            }
+            value& operator=(const char* src)
+            {
+                check_const_null();
+                value_base::operator=(std::string(src));
+                return *this;
             }
 
-            operator bool() const
-            {
-                if (auto ptr_n = std::get_if<boolean>(this))
-                    return *ptr_n;
-                else if (auto ptr_i = std::get_if<integer>(this))
-                    return *ptr_i;
-                else {
-                    std::cerr << "ERROR: cannot convert json to bool (from rjson::boolean or rjson::integer): " << to_json() << '\n';
-                    throw std::bad_variant_access{};
-                }
-            }
+            bool empty() const noexcept;
+            size_t size() const noexcept; // returns 0 if neither array nor object nor string
+            bool is_null() const noexcept;
+            template <typename S, typename = std::enable_if_t<detail::is_string<S>::value>>
+            value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+            const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
+            template <typename S, typename... Args, typename = std::enable_if_t<detail::is_string<S>::value>> const value& get(S field_name, Args&&... args) const noexcept;
+            value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
+            const value& operator[](size_t index) const noexcept { return get(index); }
+            template <typename S, typename = std::enable_if_t<detail::is_string<S>::value>> const value& operator[](S field_name) const noexcept { return get(field_name); }
+            value& append(value&& aValue); // for array only, returns ref to inserted
+            value& append(double aValue) { return append(number(aValue)); }
+            size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
-            operator const null&() const { return std::get<null>(*this); }
-            operator const boolean&() const { return std::get<boolean>(*this); }
-            operator const string&() const { return std::get<string>(*this); }
-            operator const integer&() const { return std::get<integer>(*this); }
-            operator const number&() const { return std::get<number>(*this); }
-            operator const object&() const { return std::get<object>(*this); }
-            operator const array&() const { return std::get<array>(*this); }
-            operator object&() { return std::get<object>(*this); }
-            operator array&() { return std::get<array>(*this); }
-
-            bool empty() const;
-
-            bool operator==(const std::string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-            // bool operator!=(const std::string& aToCompare) const { return ! operator==(aToCompare); }
-            bool operator==(std::string_view aToCompare) const { return std::get<string>(*this) == aToCompare; }
-            // bool operator!=(std::string_view aToCompare) const { return ! operator==(aToCompare); }
-            bool operator==(const string& aToCompare) const { return std::get<string>(*this) == aToCompare; }
-            // bool operator!=(const string& aToCompare) const { return ! operator==(aToCompare); }
-            bool operator==(const char* aToCompare) const { return std::get<string>(*this) == aToCompare; }
-            // bool operator!=(const char* aToCompare) const { return ! operator==(aToCompare); }
-            bool operator==(null aToCompare) const
-            {
-                try {
-                    return std::get<null>(*this) == aToCompare;
-                }
-                catch (...) {
-                    return false;
-                }
-            }
-
-            template <typename T> bool operator!=(T&& to_compare) const { return !operator==(std::forward<T>(to_compare)); }
-
-            // ----------------------------------------------------------------------
-
-            template <typename Index> const value& operator[](Index aIndex) const;
-
-            template <typename Index> value& operator[](Index aIndex)
-            {
-                return std::visit([&](auto&& arg) -> value& { return arg[aIndex]; }, *this);
-            }
-
-            template <typename T> std::optional<T> get(std::string aFieldName) const;
-            template <typename T> T get_or_default(std::string aFieldName, T&& aDefault) const;
-
-            std::string get_or_default(std::string aFieldName, const char* aDefault) const { return get_or_default<std::string>(aFieldName, aDefault); }
-
-            const object& get_or_empty_object(std::string aFieldName) const;
-            const array& get_or_empty_array(std::string aFieldName) const;
-
-            bool exists(std::string aFieldName) const
-            {
-                try {
-                    operator[](aFieldName);
-                    return true;
-                }
-                catch (field_not_found&) {
-                    return false;
-                }
-            }
-
-            template <typename R> std::pair<bool, const R&> get_R_if(std::string aFieldName) const
-            {
-                try {
-                    return {true, operator[](aFieldName)};
-                }
-                catch (std::exception&) {
-                    if constexpr (std::is_same_v<R, value>)
-                        return {false, sNull};
-                    else if constexpr (std::is_same_v<R, object>)
-                        return {false, sEmptyObject};
-                    else
-                        return {false, sEmptyArray};
-                }
-            }
-
-            std::pair<bool, const value&> get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
-            std::pair<bool, const object&> get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
-            std::pair<bool, const array&> get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
-
-            template <typename T> value& get_or_add(std::string aFieldName, T&& aDefault)
-            {
-                return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(aDefault)); }, *this);
-            }
-
-            template <typename T> value& get_or_add(std::string aFieldName, const T& aDefault)
-            {
-                T move_default{aDefault};
-                return std::visit([&](auto&& arg) -> value& { return arg.get_or_add(aFieldName, std::forward<T>(move_default)); }, *this);
-            }
-
-            template <typename F> value& set_field(std::string aFieldName, F&& aValue)
-            {
-                return std::visit(
-                    [&](auto&& arg) -> value& {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, object>)
-                            return arg.set_field(aFieldName, std::forward<F>(aValue));
-                        else
-                            throw field_not_found("No field \"" + aFieldName + "\" in rjson::value");
-                    },
-                    *this);
-            }
-
-            template <typename F> value& set_field(std::string aFieldName, const F& aValue)
-            {
-                return std::visit(
-                    [&](auto&& arg) -> value& {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, object>)
-                            return arg.set_field(aFieldName, aValue);
-                        else
-                            throw field_not_found("No field \"" + aFieldName + "\" in rjson::value");
-                    },
-                    *this);
-            }
-
-            void delete_field(std::string aFieldName);
+            operator std::string() const;
+            operator double() const;
+            operator size_t() const;
+            operator long() const;
+            operator bool() const;
+            template <typename R> R get_or_default(R&& dflt) const;
+            std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
 
             value& update(const value& to_merge);
-            void remove_comments(); // defined below as inline (gcc 7.2 cannot handle it inlined here)
+            void remove_comments();
 
-            std::string to_json() const;
-            std::string to_json_pp(size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0) const;
+            std::string actual_type() const;
+
+          private:
+            template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
+            bool is_const_null() const noexcept;
+            void check_const_null() const
+            {
+                if (is_const_null())
+                    throw const_null_modification_attempt{};
+            }
 
         }; // class value
 
-        // ----------------------------------------------------------------------
+        // --------------------------------------------------
 
-        template <> struct content_type<value>
-        {
-            using type = value;
-        };
+        extern value ConstNull;
 
-        template <typename FValue> inline value to_value(const FValue& aValue)
+        // --------------------------------------------------
+
+        inline const value& array::get(size_t index) const noexcept // if index out of range, returns ConstNull
         {
-            // return rjson_type<std::decay_t<FValue>>{aValue};
-            return rjson_type<FValue>{aValue};
+            if (index < content_.size())
+                return content_[index];
+            else
+                return ConstNull;
         }
 
-        template <typename FValue> inline value to_value(FValue&& aValue)
+        inline value& array::operator[](size_t index) noexcept // if index out of range, returns ConstNull
         {
-            // return rjson_type<std::decay_t<FValue>>{std::forward<FValue>(aValue)};
-            return rjson_type<FValue>{std::forward<FValue>(aValue)};
+            if (index < content_.size())
+                return content_[index];
+            else
+                return ConstNull;
         }
 
-        inline value to_value(double aValue, int precision) { return rjson::number(aValue, precision); }
-
-        // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(array&& aValue) { return aValue; }
-
-        // template <typename FValue> inline value to_value(const value& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(const object& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(const array& aValue) { return aValue; }
-
-        // ----------------------------------------------------------------------
-
-        template <typename Result> class value_visitor_base
+        inline value& array::append(value&& aValue)
         {
-          public:
-            class unexpected_value : public std::runtime_error
-            {
-              public:
-                using std::runtime_error::runtime_error;
-            };
+            content_.push_back(std::move(aValue));
+            return content_.back();
+        }
 
-            value_visitor_base() = default;
-            virtual ~value_visitor_base(){}
+        inline void array::remove_comments()
+        {
+            std::for_each(content_.begin(), content_.end(), [](auto& val) { val.remove_comments(); });
+        }
 
-                [[noreturn]] virtual Result
-                operator()(null& aValue)
-            {
-                throw_unexpected_value("unexpected value: " + aValue.to_json());
+        template <typename T> inline void array::copy_to(T&& target) const
+        {
+            if constexpr (detail::has_member_begin<T>::value) {
+                if constexpr (detail::has_member_resize<T>::value)
+                    target.resize(size());
+                std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> decltype(*target.begin()) { return val; });
             }
-            [[noreturn]] virtual Result operator()(object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            else {
+                std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> std::remove_reference_t<decltype(*target)> { return val; });
+            }
+        }
 
-            [[noreturn]] virtual Result operator()(const rjson::null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+        template <typename F> inline void array::for_each(F&& func) const
+        {
+            for (auto [no, val] : acmacs::enumerate(content_)) {
+                if constexpr (std::is_invocable_v<F, const value&>)
+                    func(val);
+                else if constexpr (std::is_invocable_v<F, const value&, size_t>)
+                    func(val, no);
+                else
+                    static_assert(std::is_invocable_v<F, const value&>, "array::for_each: unsupported func signature");
+            }
+        }
 
-          protected:
-            [[noreturn]] virtual void throw_unexpected_value(std::string aMessage) { throw unexpected_value{aMessage}; }
+        template <typename F> inline void array::for_each(F&& func)
+        {
+            for (auto [no, val] : acmacs::enumerate(content_)) {
+                if constexpr (std::is_invocable_v<F, value&>)
+                    func(val);
+                else if constexpr (std::is_invocable_v<F, value&, size_t>)
+                    func(val, no);
+                else
+                    static_assert(std::is_invocable_v<F, value&>, "array::for_each: unsupported func signature");
+            }
+        }
 
-        }; // class value_visitor_base
+        template <typename T, typename F> inline void array::transform_to(T&& target, F&& transformer) const
+        {
+            if constexpr (std::is_invocable_v<F, const value&>) {
+                std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
+            }
+            else if constexpr (std::is_invocable_v<F, const value&, size_t>) {
+                for (auto [no, src] : acmacs::enumerate(content_))
+                    *target++ = transformer(src, no);
+            }
+            else {
+                static_assert(std::is_invocable_v<F, const value&>, "rjson::array::transform_to: unsupported transformer signature");
+            }
+        }
 
-        // ----------------------------------------------------------------------
+        template <typename Func> inline const value& array::find_if(Func func) const { return *std::find_if(content_.begin(), content_.end(), func); }
+
+        template <typename Func> inline value& array::find_if(Func func) { return *std::find_if(content_.begin(), content_.end(), func); }
+
+        // --------------------------------------------------
+
+        inline object::object(std::initializer_list<value_type> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
+
+        template <typename S> inline const value& object::get(S key) const noexcept
+        {
+            if (const auto found = content_.find(acmacs::to_string(key)); found != content_.end())
+                return found->second;
+            else
+                return ConstNull;
+        }
+
+        template <typename S> inline value& object::operator[](S key) noexcept { return content_.emplace(acmacs::to_string(key), value{}).first->second; }
+
+        inline size_t object::max_index() const // assumes keys are size_t
+        {
+            size_t result = 0;
+            for ([[maybe_unused]] const auto& [key, _] : content_)
+                result = std::max(std::stoul(key), result);
+            return result;
+        }
+
+        inline void object::insert(value&& aKey, value&& aValue) { content_.emplace(std::get<std::string>(std::move(aKey)), std::move(aValue)); }
+
+        template <typename S> inline void object::insert(S aKey, const value& aValue) { content_.emplace(acmacs::to_string(aKey), aValue); }
+
+        template <typename S> inline void object::remove(S key)
+        {
+            if (const auto found = content_.find(acmacs::to_string(key)); found != content_.end())
+                content_.erase(found);
+        }
+
+        inline void object::update(const object& to_merge)
+        {
+            for (const auto& [new_key, new_value] : to_merge.content_)
+                operator[](new_key).update(new_value);
+        }
+
+        inline void object::remove_comments()
+        {
+            auto is_comment_key = [](const std::string& key) -> bool { return !key.empty() && (key.front() == '?' || key.back() == '?'); };
+            for (auto it = content_.begin(); it != content_.end(); /* no increment! */) {
+                if (is_comment_key(it->first)) {
+                    it = content_.erase(it);
+                }
+                else {
+                    it->second.remove_comments();
+                    ++it;
+                }
+            }
+        }
+
+        template <typename F> inline void object::for_each(F&& func) const { std::for_each(content_.begin(), content_.end(), std::forward<F>(func)); }
+
+        template <typename F> inline void object::for_each(F&& func) { std::for_each(content_.begin(), content_.end(), std::forward<F>(func)); }
+
+        template <typename T, typename F> inline void object::transform_to(T&& target, F&& transformer) const
+        {
+            if constexpr (detail::has_member_begin<T>::value) {
+                if constexpr (detail::has_member_resize<T>::value)
+                    target.resize(content_.size());
+                std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
+            }
+            else {
+                std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
+                // static_assert(detail::has_member_begin<T>::value, "rjson::object::transform not implemented for this target");
+            }
+        }
+
+        // --------------------------------------------------
 
         class parse_error : public std::exception
         {
           public:
-            parse_error(size_t aLine, size_t aColumn, std::string&& aMessage)
-                : mMessage{acmacs::to_string(aLine) + ":" + acmacs::to_string(aColumn) + ": " + std::move(aMessage)} //, mLine{aLine}, mColumn{aColumn}
-            {
-            }
-
-            const char* what() const noexcept override { return mMessage.c_str(); }
+            parse_error(size_t line, size_t column, std::string&& message) : message_{std::to_string(line) + ":" + std::to_string(column) + ": " + std::move(message)} {}
+            const char* what() const noexcept override { return message_.data(); }
 
           private:
-            std::string mMessage;
-            // size_t mLine, mColumn;
+            std::string message_;
 
         }; // class parse_error
 
-        class merge_error : public std::runtime_error
-        {
-          public:
-            using std::runtime_error::runtime_error;
-        };
+        enum class remove_comments { no, yes };
 
-        enum class remove_comments { No, Yes };
+        value parse_string(std::string data, remove_comments rc = remove_comments::yes);
+        value parse_string(std::string_view data, remove_comments rc = remove_comments::yes);
+        value parse_string(const char* data, remove_comments rc = remove_comments::yes);
+        value parse_file(std::string filename, remove_comments rc = remove_comments::yes);
 
-        value parse_string(std::string aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
-        value parse_string(std::string_view aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
-        value parse_string(const char* aJsonData, remove_comments aRemoveComments = remove_comments::Yes);
-        value parse_file(std::string aFilename, remove_comments aRemoveComments = remove_comments::Yes);
-
-    } // namespace v1
-
+    } // namespace v2
 } // namespace rjson
-
-// ----------------------------------------------------------------------
-// gcc support
-// ----------------------------------------------------------------------
 
 #ifndef __clang__
 namespace std
 {
-      // gcc 7.2 wants those, if we derive from std::variant
-    template<> struct variant_size<rjson::value> : variant_size<rjson::value_base> {};
-    template<size_t _Np> struct variant_alternative<_Np, rjson::value> : variant_alternative<_Np, rjson::value_base> {};
+      // gcc 7.3 wants those, if we derive from std::variant
+    template<> struct variant_size<rjson::v2::value> : variant_size<rjson::v2::value_base> {};
+    template<size_t _Np> struct variant_alternative<_Np, rjson::v2::value> : variant_alternative<_Np, rjson::v2::value_base> {};
 }
 #endif
 
-// ----------------------------------------------------------------------
-// inline
-// ----------------------------------------------------------------------
-
 namespace rjson
 {
-    inline namespace v1
+    namespace v2
     {
-        inline void object::insert(const string& aKey, value&& aValue) { mContent.emplace(aKey, std::move(aValue)); }
-        inline void object::insert(const string& aKey, const value& aValue) { mContent.emplace(aKey, aValue); }
-        inline void object::insert(value&& aKey, value&& aValue) { insert(std::get<string>(std::move(aKey)), std::move(aValue)); }
+        std::string to_string(const object& val, bool space_after_comma = false);
+        std::string to_string(const array& val, bool space_after_comma = false);
 
-        inline object::object(std::initializer_list<std::pair<string, value>> key_values)
+        inline std::string to_string(const value& val)
         {
-            for (const auto& [key, value] : key_values)
-                insert(key, value);
-        }
-
-        inline const value& object::operator[](std::string aFieldName) const
-        {
-            if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
-                return existing->second;
-            else
-                throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
-        }
-
-        inline value& object::operator[](std::string aFieldName)
-        {
-            if (const auto existing = mContent.find(aFieldName); existing != mContent.end())
-                return existing->second;
-            else
-                throw field_not_found("No field \"" + aFieldName + "\" in rjson::object");
-        }
-
-        inline const value& object::one_of(std::initializer_list<std::string> aFieldOrder) const
-        {
-            for (const auto& name : aFieldOrder) {
-                if (const auto existing = mContent.find(name); existing != mContent.end())
-                    return existing->second;
-            }
-            throw field_not_found("No fields \"" + acmacs::to_string(aFieldOrder.begin(), aFieldOrder.end()) + "\" in rjson::object");
-        }
-
-        template <typename T> inline std::optional<T> object::get(std::string aFieldName) const
-        {
-            static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
-            try {
-                const auto& val = operator[](aFieldName);
-                if constexpr (std::is_same_v<T, std::string>)
-                    return std::get<string>(val).str();
+            auto visitor = [](auto&& arg) -> std::string {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, null>)
+                    return "null";
+                else if constexpr (std::is_same_v<T, const_null>)
+                    return "*ConstNull";
+                else if constexpr (std::is_same_v<T, std::string>)
+                    return "\"" + arg + '"';
+                else if constexpr (std::is_same_v<T, bool>)
+                    return arg ? "true" : "false";
                 else
-                    return static_cast<T>(val);
-            }
-            catch (field_not_found&) {
-                return {};
-            }
-            catch (std::bad_variant_access&) {
-                const value& val = operator[](aFieldName);
-                return std::visit(
-                    [aFieldName](auto&& arg) -> T {
-                        using AT = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<AT, rjson::null>)
-                            return {};
-                        else
-                            throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() +
-                                                      " or rjson::null");
-                    },
-                    val);
-            }
+                    return to_string(arg);
+            };
+            return std::visit(visitor, val);
         }
 
-        inline std::string object::get_string_or_throw(std::string aFieldName) const { return std::get<string>(operator[](aFieldName)).str(); }
+        std::string pretty(const value& val, size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0);
+        std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+        std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
 
-        template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
+        inline std::string pretty(const value& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
         {
-            static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
-            const auto val = get<std::decay_t<T>>(aFieldName);
-            return val ? *val : std::forward<T>(aDefault);
-
-            // try {
-            //     return operator[](aFieldName);
-            // }
-            // catch (field_not_found&) {
-            //     return std::forward<T>(aDefault);
-            // }
-            // catch (std::bad_variant_access&) {
-            //     const value& val = operator[](aFieldName);
-            //     return std::visit([aFieldName,&aDefault](auto&& arg) -> T {
-            //         using AT = std::decay_t<decltype(arg)>;
-            //         if constexpr (std::is_same_v<AT, rjson::null>)
-            //             return std::forward<T>(aDefault);
-            //         else
-            //             throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() + " or
-            //             rjson::null");
-            //     }, val);
-            // }
-        }
-
-        template <> inline value& object::get_or_add(std::string aFieldName, value&& aDefault)
-        {
-            try {
-                return operator[](aFieldName);
-            }
-            catch (field_not_found&) {
-                return set_field(aFieldName, std::move(aDefault));
-            }
-        }
-
-        template <> inline value& object::get_or_add(std::string aFieldName, object&& aDefault)
-        {
-            try {
-                return operator[](aFieldName);
-            }
-            catch (field_not_found&) {
-                return set_field(aFieldName, std::move(aDefault));
-            }
-        }
-
-        template <typename T> inline value& object::get_or_add(std::string aFieldName, T&& aDefault) { return get_or_add(aFieldName, to_value(std::forward<T>(aDefault))); }
-
-        inline value& object::set_field(std::string aKey, value&& aValue) { return mContent.insert_or_assign(aKey, std::forward<value>(aValue)).first->second; }
-
-        inline value& object::set_field(const string& aKey, const value& aValue) { return mContent.insert_or_assign(aKey, aValue).first->second; }
-
-        template <typename T> inline void object::set_field_if_not_empty(std::string aKey, const T& aValue)
-        {
-            if (!aValue.empty())
-                set_field(aKey, to_value(aValue));
-        }
-
-        template <typename T> inline void object::set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault)
-        {
-            if (aValue != aDefault)
-                set_field(aKey, to_value(aValue));
-        }
-
-        inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision)
-        {
-            if (!std::isnan(aValue) && !float_equal(aValue, aDefault))
-                set_field(aKey, to_value(aValue, precision));
-        }
-
-        template <typename Iterator> inline void object::set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last)
-        {
-            if (first != last) {
-                array& ar = set_field(aKey, array{});
-                for (; first != last; ++first)
-                    ar.insert(rjson::to_value(*first));
-            }
-
-        } // object::set_array_field_if_not_empty
-
-        inline void object::delete_field(string aKey)
-        {
-            using namespace std::string_literals;
-            if (auto iter = mContent.find(aKey); iter != mContent.end())
-                mContent.erase(iter);
-            else
-                throw field_not_found("No field \""s + aKey + "\" in rjson::object, cannot delete it");
-        }
-
-        inline const object& object::get_or_empty_object(std::string aFieldName) const
-        {
-            try {
-                const auto& v = operator[](aFieldName);
-                if (std::get_if<null>(&v))
-                    return rjson::sEmptyObject;
-                return v;
-            }
-            catch (field_not_found&) {
-                return rjson::sEmptyObject;
-            }
-            catch (std::bad_variant_access&) {
-                std::cerr << "object::get_or_empty_object " << aFieldName << ": bad_variant_access\n";
-                throw;
-            }
-        }
-
-        inline const array& object::get_or_empty_array(std::string aFieldName) const
-        {
-            try {
-                const auto& v = operator[](aFieldName);
-                if (std::get_if<null>(&v))
-                    return rjson::sEmptyArray;
-                return v;
-            }
-            catch (field_not_found&) {
-                return rjson::sEmptyArray;
-            }
-            catch (std::bad_variant_access&) {
-                std::cerr << "object::get_or_empty_array " << aFieldName << ": bad_variant_access\n";
-                throw;
-            }
-        }
-
-        inline bool object::exists(std::string aFieldName) const
-        {
-            try {
-                operator[](aFieldName);
-                return true;
-            }
-            catch (field_not_found&) {
-                return false;
-            }
-        }
-
-        template <typename R> inline std::pair<bool, const R&> object::get_R_if(std::string aFieldName) const
-        {
-            try {
-                return {true, operator[](aFieldName)};
-            }
-            catch (std::exception&) {
-                if constexpr (std::is_same_v<R, value>)
-                    return {false, sNull};
-                else if constexpr (std::is_same_v<R, object>)
-                    return {false, sEmptyObject};
+            auto visitor = [&val, indent, emacs_indent, prefix](auto&& arg) -> std::string {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                    return pretty(arg, indent, emacs_indent, prefix);
                 else
-                    return {false, sEmptyArray};
-            }
+                    return to_string(val);
+            };
+            return std::visit(visitor, val);
         }
 
-        std::pair<bool, const value&> inline object::get_value_if(std::string aFieldName) const { return get_R_if<value>(aFieldName); }
-        std::pair<bool, const object&> inline object::get_object_if(std::string aFieldName) const { return get_R_if<object>(aFieldName); }
-        std::pair<bool, const array&> inline object::get_array_if(std::string aFieldName) const { return get_R_if<array>(aFieldName); }
-
-        // ----------------------------------------------------------------------
-
-        inline value& array::insert(value&& aValue)
-        {
-            mContent.push_back(std::move(aValue));
-            return mContent.back();
-        }
-        inline value& array::insert(const value& aValue)
-        {
-            mContent.push_back(aValue);
-            return mContent.back();
-        }
-
-        template <typename... Args> inline array::array(Args... args) { (insert(to_value(args)), ...); }
-
-        template <typename Iterator> inline array::array(array::_use_iterator, Iterator first, Iterator last)
-        {
-            for (; first != last; ++first)
-                insert(to_value(*first));
-        }
-
-        inline void array::resize(size_t new_size, const value& to_insert) { mContent.resize(new_size, to_insert); }
-        inline void array::resize(size_t new_size) { resize(new_size, null{}); }
-
-        // ----------------------------------------------------------------------
-
-        // gcc 7.2 wants the following functions to be defined here (not inside the class)
-
-        inline bool value::empty() const
+        inline std::string value::actual_type() const
         {
             return std::visit(
-                [&](auto&& arg) -> bool {
+                [](auto&& arg) -> std::string {
                     using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                    if constexpr (std::is_same_v<T, null>)
+                        return "null";
+                    else if constexpr (std::is_same_v<T, const_null>)
+                        return "ConstNull";
+                    else if (std::is_same_v<T, object>)
+                        return "object";
+                    else if (std::is_same_v<T, array>)
+                        return "array";
+                    else if (std::is_same_v<T, std::string>)
+                        return "std::string";
+                    else if (std::is_same_v<T, number>)
+                        return "number";
+                    else if (std::is_same_v<T, bool>)
+                        return "bool";
+                    else
+                        return "*unknown*";
+                },
+                *this);
+        }
+
+        inline bool value::empty() const noexcept
+        {
+            return std::visit(
+                [](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array> || std::is_same_v<T, std::string>)
                         return arg.empty();
+                    else if (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
+                        return true;
                     else
-                        throw std::bad_variant_access{};
+                        return false;
                 },
                 *this);
         }
 
-        inline void value::delete_field(std::string aFieldName)
+        inline size_t value::size() const noexcept
         {
             return std::visit(
-                [&](auto&& arg) {
+                [](auto&& arg) -> size_t {
                     using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object>)
-                        arg.delete_field(aFieldName);
+                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array> || std::is_same_v<T, std::string>)
+                        return arg.size();
                     else
-                        throw field_not_found("No field \"" + aFieldName + "\" in rjson::value, cannot delete it");
+                        return 0;
                 },
                 *this);
         }
 
-        template <typename Index> inline const value& value::operator[](Index aIndex) const
+        inline bool value::is_null() const noexcept
         {
-            return std::visit([&](auto&& arg) -> const value& { return arg[aIndex]; }, *this);
+            return std::visit(
+                [](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
+                        return true;
+                    else
+                        return false;
+                },
+                *this);
         }
 
-        template <typename T> inline std::optional<T> value::get(std::string aFieldName) const
+        inline bool value::is_const_null() const noexcept
         {
-            try {
-                return static_cast<const rjson::object&>(*this).get<T>(aFieldName);
-            }
-            catch (std::bad_variant_access&) {
-                std::cerr << "value::get called for non-object, stored variant alternative: " << index() << '\n';
-                throw;
-            }
+            return std::visit(
+                [](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, const_null>)
+                        return true;
+                    else
+                        return false;
+                },
+                *this);
         }
 
-        template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
+        template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
         {
-            try {
-                return static_cast<const rjson::object&>(*this).get_or_default(aFieldName, std::forward<T>(aDefault));
-            }
-            catch (std::bad_variant_access&) {
-                std::cerr << "value::get_or_default called for non-object, stored variant alternative: " << index() << '\n';
-                throw;
-            }
+            return std::visit(
+                [&field_name](auto&& arg) -> const value& {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                        return arg.get(field_name);
+                    else
+                        return ConstNull;
+                },
+                *this);
         }
 
-        inline const object& value::get_or_empty_object(std::string aFieldName) const
+        template <typename S, typename... Args, typename> const value& value::get(S field_name, Args&&... args) const noexcept
         {
-            try {
-                return operator[](aFieldName);
+            if (const auto& r1 = get1(field_name); !r1.is_null()) {
+                if constexpr (sizeof...(args) > 0)
+                    return r1.get(args...);
+                else
+                    return r1;
             }
-            catch (field_not_found&) {
-                return rjson::sEmptyObject;
-            }
-            catch (std::bad_variant_access&) {
-                const value& val = operator[](aFieldName);
-                return std::visit(
-                    [aFieldName](auto&& arg) -> const object& {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, rjson::null>)
-                            return rjson::sEmptyObject;
-                        else
-                            throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::object or rjson::null");
-                    },
-                    val);
-            }
+            else
+                return ConstNull;
         }
 
-        inline const array& value::get_or_empty_array(std::string aFieldName) const
+        template <typename S, typename>
+        inline value& value::operator[](S field_name) noexcept // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
         {
-            try {
-                return operator[](aFieldName);
-            }
-            catch (field_not_found&) {
-                return rjson::sEmptyArray;
-            }
-            catch (std::bad_variant_access&) {
-                const value& val = operator[](aFieldName);
-                return std::visit(
-                    [aFieldName](auto&& arg) -> const array& {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, rjson::null>)
-                            return rjson::sEmptyArray;
-                        else
-                            throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::array or rjson::null");
-                    },
-                    val);
-            }
+            return std::visit(
+                [&field_name](auto&& arg) -> value& {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                        return arg[field_name];
+                    else
+                        return ConstNull;
+                },
+                *this);
         }
 
-        template <> inline value& value::set_field(std::string aFieldName, value&& aValue)
+        inline const value& value::get(size_t index) const noexcept // if this is not object or field not present, returns ConstNull
         {
-            try {
-                return std::get<object>(*this).set_field(aFieldName, std::move(aValue));
-            }
-            catch (std::bad_variant_access&) {
-                std::cerr << "ERROR: rjson::value::set_field: not an object: " << to_json() << '\n';
-                throw;
-            }
+            return std::visit(
+                [index](auto&& arg) -> const value& {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, array>)
+                        return arg.get(index);
+                    else if constexpr (std::is_same_v<T, object>)
+                        return arg.get(std::to_string(index));
+                    else
+                        return ConstNull;
+                },
+                *this);
+        }
+
+        inline value& value::operator[](size_t index) noexcept
+        {
+            return std::visit(
+                [index](auto&& arg) -> value& {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, array>)
+                        return arg[index];
+                    else if constexpr (std::is_same_v<T, object>)
+                        return arg[std::to_string(index)];
+                    else
+                        return ConstNull;
+                },
+                *this);
+        }
+
+        inline value& value::append(value&& aValue)
+        {
+            return std::visit(
+                [&aValue, this](auto&& arg) -> value& {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+                        return arg.append(std::move(aValue));
+                    else
+                        throw value_type_mismatch("array", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator std::string() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> std::string {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+                        return arg;
+                    else
+                        throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator double() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> double {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
+                        return to_double(arg);
+                    else
+                        throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator size_t() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> size_t {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
+                        return to_size_t(arg);
+                    else
+                        throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator long() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> long {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
+                        return to_long(arg);
+                    else
+                        throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator bool() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> bool {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>)
+                        return arg;
+                    else
+                        throw value_type_mismatch("bool", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        template <typename R> inline R value::get_or_default(R&& dflt) const
+        {
+            return std::visit(
+                [this, &dflt](auto&& arg) -> R {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
+                        return dflt;
+                    else
+                        return *this;
+                },
+                *this);
+        }
+
+        inline value& value::update(const value& to_merge)
+        {
+            auto visitor = [this](auto& arg1, auto&& arg2) {
+                using T1 = std::decay_t<decltype(arg1)>;
+                using T2 = std::decay_t<decltype(arg2)>;
+                if constexpr (std::is_same_v<T1, T2>) {
+                    if constexpr (std::is_same_v<T1, object>)
+                        arg1.update(arg2);
+                    else
+                        arg1 = arg2;
+                }
+                else if constexpr (std::is_same_v<T1, null>)
+                    *this = arg2;
+                else if constexpr (std::is_same_v<T1, const_null>)
+                    throw merge_error(std::string{"cannot update ConstNull"});
+                else
+                    throw merge_error(std::string{"cannot merge two rjson values of different types"}); // : %" + to_string(*this) + "% and %" + to_string(arg2));
+            };
+
+            std::visit(visitor, *this, to_merge);
+            return *this;
         }
 
         inline void value::remove_comments()
         {
-            std::visit([](auto&& arg) -> void { arg.remove_comments(); }, *this);
+            std::visit(
+                [](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                        arg.remove_comments();
+                },
+                *this);
         }
 
-        inline std::string value::to_json() const
+        inline size_t value::max_index() const
         {
-            return std::visit([](auto&& arg) -> std::string { return arg.to_json(); }, *this);
+            return std::visit(
+                [this](auto&& arg) -> size_t {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                        return arg.max_index();
+                    else
+                        throw value_type_mismatch("object or array", this->actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
         }
 
-        inline std::string value::to_json_pp(size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix) const
+        // ----------------------------------------------------------------------
+
+        template <typename T> inline void copy(const value& source, T&& target)
         {
-            return std::visit([&](auto&& arg) -> std::string { return arg.to_json_pp(indent, emacs_indent, prefix); }, *this);
+            std::visit(
+                [&target, &source](auto&& arg) {
+                    using TT = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<TT, object>)
+                        throw value_type_mismatch("array", source.actual_type(), DEBUG_LINE_FUNC);
+                    else if constexpr (std::is_same_v<TT, array>)
+                        arg.copy_to(std::forward<T>(target));
+                    else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
+                        throw value_type_mismatch("object or array", source.actual_type(), DEBUG_LINE_FUNC);
+                },
+                source);
         }
 
-    } // namespace v1
+        template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
+        {
+            static_assert(std::is_invocable_v<F, const object::value_type&> || std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>,
+                          "rjson::transform: unsupported transformer signature");
+
+            // std::is_const<typename std::remove_reference<const int&>::type>::value
+            std::visit(
+                [&target, &transformer, &source](auto&& arg) {
+                    using TT = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const object::value_type&>)
+                        arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+                    else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>))
+                        arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+                    else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
+                        throw value_type_mismatch("object or array and corresponding transformer", source.actual_type(), DEBUG_LINE_FUNC);
+                },
+                source);
+        }
+
+        template <typename Value, typename F> inline void for_each(Value&& val, F&& func)
+        {
+            static_assert(std::is_invocable_v<F, const object::value_type&> || std::is_invocable_v<F, object::value_type&> || std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> ||
+                              std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>,
+                          "rjson::for_each: unsupported func signature");
+
+            // std::is_const<typename std::remove_reference<const int&>::type>::value
+            std::visit(
+                [&func, &val](auto&& arg) {
+                    using TT = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<TT, object> && (std::is_invocable_v<F, const object::value_type&> || std::is_invocable_v<F, object::value_type&>))
+                        arg.for_each(func);
+                    else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> ||
+                                                                     std::is_invocable_v<F, value&, size_t>))
+                        arg.for_each(func);
+                    else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
+                        throw value_type_mismatch("object or array and corresponding callback", val.actual_type(), DEBUG_LINE_FUNC);
+                },
+                std::forward<Value>(val));
+        }
+
+        template <typename Value, typename Func> inline auto find_if(Value&& value, Func&& func) // returns ConstNull if not found, Func: bool (value&&), throws if not array
+        {
+            return std::visit(
+                [&func, &value](auto&& arg) -> Value& {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, array>)
+                        return arg.find_if(std::forward<Func>(func));
+                    // else if (func(*this))
+                    //     return *this;
+                    else
+                        throw value_type_mismatch("array", value.actual_type(), DEBUG_LINE_FUNC);
+                    // return ConstNull;
+                },
+                std::forward<Value>(value));
+        }
+
+        // ----------------------------------------------------------------------
+
+        inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
+
+    } // namespace v2
 } // namespace rjson
-
-// ----------------------------------------------------------------------
-
-namespace rjson::literals
-{
-    inline namespace v1
-    {
-        inline rjson::string operator"" _rj(const char* str, std::size_t len) { return rjson::string(str, len); }
-        inline rjson::string operator"" _rj(const char* str) { return rjson::string(str); }
-        inline rjson::integer operator"" _rj(unsigned long long i) { return i; }
-        inline rjson::number operator"" _rj(long double d) { return d; }
-
-    } // namespace v1
-} // namespace rjson::literals
-
-// ----------------------------------------------------------------------
-
-namespace ad_sfinae
-{
-    template <typename T, typename = void> struct has_to_json : std::false_type { };
-    template <typename T> struct has_to_json<T, std::void_t<decltype(std::declval<const T>().to_json())>> : std::true_type { };
-}
-
-template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::value, std::ostream&>::type operator<<(std::ostream& out, const T& aValue)
-{
-    return out << aValue.to_json();
-}
-
-// ----------------------------------------------------------------------
-
-namespace acmacs
-{
-    inline std::string to_string(const rjson::string& src) { return src.str(); }
-    inline std::string to_string(const rjson::null&) { return "null"; }
-    inline std::string to_string(const rjson::object& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::array& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::integer& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::number& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::boolean& src) { return src.to_json(); }
-
-    inline std::string to_string(const rjson::value& src)
-    {
-        return std::visit([](auto&& arg) -> std::string { return acmacs::to_string(arg); }, src);
-    }
-
-}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
