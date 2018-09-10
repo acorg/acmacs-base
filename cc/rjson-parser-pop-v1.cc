@@ -122,7 +122,7 @@ namespace rjson
                     return StateTransitionNone{};
                 }
 
-                // virtual inline value value() const { return null{}; }
+                // virtual inline value val() const { return null{}; }
                 virtual value value_move() = 0; //{ return null{}; }
                 virtual inline void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
@@ -141,9 +141,9 @@ namespace rjson
                     mValueRead = true;
                 }
 
-                // inline value value() const override { return mValue; }
+                // inline value val() const override { return mValue; }
                 inline value value_move() override { return std::move(mValue); }
-                inline value& value() { return mValue; }
+                inline value& val() { return mValue; }
 
               protected:
                 inline bool value_read() const { return mValueRead; }
@@ -192,7 +192,7 @@ namespace rjson
                     return result;
                 }
 
-                // inline value value() const override
+                // inline value val() const override
                 //     {
                 //         return string{mParser.data(mBegin, mEnd)};
                 //     }
@@ -256,7 +256,7 @@ namespace rjson
                     return result;
                 }
 
-                // inline value value() const override
+                // inline value val() const override
                 //     {
                 //         if (mInteger)
                 //             return integer{mParser.data(mBegin, mEnd)};
@@ -314,7 +314,7 @@ namespace rjson
                     return result;
                 }
 
-                // inline value value() const override { return mValue; }
+                // inline value val() const override { return mValue; }
                 inline value value_move() override { return std::move(mValue); }
 
               private:
@@ -395,7 +395,7 @@ namespace rjson
                     return result;
                 }
 
-                // inline value value() const override { return mValue; }
+                // inline value val() const override { return mValue; }
                 inline value value_move() override { return std::move(mValue); }
 
                 inline void subvalue(value&& aSubvalue, Parser& aParser) override
@@ -481,7 +481,7 @@ namespace rjson
                     return result;
                 }
 
-                // inline value value() const override { return mValue; }
+                // inline value val() const override { return mValue; }
                 inline value value_move() override { return std::move(mValue); }
 
                 inline void subvalue(value&& aSubvalue, Parser& /*aParser*/) override { mValue.insert(std::move(aSubvalue)); }
@@ -528,7 +528,7 @@ namespace std
 
 // inline rjson::v1::value rjson::v1::parser_pop::Parser::result() const
 // {
-//     return mHandlers.top()->value();
+//     return mHandlers.top()->val();
 
 // } // rjson::v1::parser_pop::Parser::result
 
@@ -675,7 +675,7 @@ void rjson::v1::parser_pop::Parser::parse(std::string_view aJsonData)
 
 void rjson::v1::parser_pop::Parser::remove_emacs_indent()
 {
-    auto& value = dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->value();
+    auto& value = dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->val();
     if (auto* top_obj = std::get_if<rjson::v1::object>(&value); top_obj) {
         try {
             top_obj->delete_field("_");
@@ -690,7 +690,7 @@ void rjson::v1::parser_pop::Parser::remove_emacs_indent()
 
 inline void rjson::v1::parser_pop::Parser::remove_comments()
 {
-    dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->value().remove_comments();
+    dynamic_cast<ToplevelHandler*>(mHandlers.top().get())->val().remove_comments();
 
 } // rjson::v1::parser_pop::Parser::remove_comments
 
