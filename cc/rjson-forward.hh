@@ -4,7 +4,7 @@
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v1
     {
         class array;
         class object;

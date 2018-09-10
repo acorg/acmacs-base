@@ -14,7 +14,7 @@
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v1
     {
         namespace parser_pop
         {
@@ -46,8 +46,8 @@ namespace rjson
 
                 void parse(std::string_view aJsonData);
 
-                // rjson::value result() const;
-                rjson::value result_move();
+                // value result() const;
+                value result_move();
                 void remove_emacs_indent();
                 void remove_comments();
                 inline size_t pos() const { return mPos; }
@@ -57,14 +57,14 @@ namespace rjson
                 {
                     if (mPos)
                         return mSource[mPos - 1];
-                    throw rjson::parse_error(line(), pos(), "internal: no previous at the beginning of parsing");
+                    throw parse_error(line(), pos(), "internal: no previous at the beginning of parsing");
                 }
                 inline std::string data(size_t aBegin, size_t aEnd) const { return {mSource.data() + aBegin, aEnd - aBegin}; }
 
                 inline void back() noexcept
                 {
                     // if (!mPos)
-                    //     throw rjson::parse_error(line(), pos(), "internal: cannot back at the beginning of parsing");
+                    //     throw parse_error(line(), pos(), "internal: cannot back at the beginning of parsing");
                     --mPos;
                     --mColumn;
                     if (mColumn == 0)
@@ -95,14 +95,14 @@ namespace rjson
 
                     [[noreturn]] inline void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
                 {
-                    throw rjson::parse_error(aParser.line(), aParser.column(),
+                    throw parse_error(aParser.line(), aParser.column(),
                                              std::string{"unexpected symbol: '"} + aSymbol + "' (" + acmacs::to_hex_string(static_cast<unsigned char>(aSymbol), acmacs::ShowBase, acmacs::Uppercase) +
                                                  ")");
                 }
 
-                [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const { throw rjson::parse_error(aParser.line(), aParser.column(), std::move(aMessage)); }
+                [[noreturn]] inline void error(Parser& aParser, std::string&& aMessage) const { throw parse_error(aParser.line(), aParser.column(), std::move(aMessage)); }
 
-                [[noreturn]] inline void internal_error(Parser& aParser) const { throw rjson::parse_error(aParser.line(), aParser.column(), "internal error"); }
+                [[noreturn]] inline void internal_error(Parser& aParser) const { throw parse_error(aParser.line(), aParser.column(), "internal error"); }
 
                 inline void newline(Parser& aParser) const { aParser.newline(); }
 
@@ -122,9 +122,9 @@ namespace rjson
                     return StateTransitionNone{};
                 }
 
-                // virtual inline rjson::value value() const { return rjson::null{}; }
-                virtual rjson::value value_move() = 0; //{ return rjson::null{}; }
-                virtual inline void subvalue(rjson::value&& /*aSubvalue*/, Parser& /*aParser*/) {}
+                // virtual inline value value() const { return null{}; }
+                virtual value value_move() = 0; //{ return null{}; }
+                virtual inline void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
             }; // class SymbolHandler
 
@@ -135,22 +135,22 @@ namespace rjson
               public:
                 HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override;
 
-                inline void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override
+                inline void subvalue(value&& aSubvalue, Parser& /*aParser*/) override
                 {
                     mValue = std::move(aSubvalue);
                     mValueRead = true;
                 }
 
-                // inline rjson::value value() const override { return mValue; }
-                inline rjson::value value_move() override { return std::move(mValue); }
-                inline rjson::value& value() { return mValue; }
+                // inline value value() const override { return mValue; }
+                inline value value_move() override { return std::move(mValue); }
+                inline value& value() { return mValue; }
 
               protected:
                 inline bool value_read() const { return mValueRead; }
 
               private:
                 bool mValueRead = false;
-                rjson::value mValue;
+                class value mValue;
 
             }; // class ValueHandler
 
@@ -161,7 +161,7 @@ namespace rjson
               public:
                 inline HandlingResult handle(std::string_view::value_type /*aSymbol*/, Parser& /*aParser*/) override { return StateTransitionPop{}; }
 
-                inline rjson::value value_move() override { return {}; }
+                inline value value_move() override { return {}; }
 
             }; // class StringEscapeHandler
 
@@ -192,12 +192,12 @@ namespace rjson
                     return result;
                 }
 
-                // inline rjson::value value() const override
+                // inline value value() const override
                 //     {
-                //         return rjson::string{mParser.data(mBegin, mEnd)};
+                //         return string{mParser.data(mBegin, mEnd)};
                 //     }
 
-                inline rjson::value value_move() override { return rjson::string{mParser.data(mBegin, mEnd)}; }
+                inline value value_move() override { return string{mParser.data(mBegin, mEnd)}; }
 
               private:
                 Parser& mParser;
@@ -256,20 +256,20 @@ namespace rjson
                     return result;
                 }
 
-                // inline rjson::value value() const override
+                // inline value value() const override
                 //     {
                 //         if (mInteger)
-                //             return rjson::integer{mParser.data(mBegin, mEnd)};
+                //             return integer{mParser.data(mBegin, mEnd)};
                 //         else
-                //             return rjson::number{mParser.data(mBegin, mEnd)};
+                //             return number{mParser.data(mBegin, mEnd)};
                 //     }
 
-                inline rjson::value value_move() override
+                inline value value_move() override
                 {
                     if (mInteger)
-                        return rjson::integer{mParser.data(mBegin, mEnd)};
+                        return integer{mParser.data(mBegin, mEnd)};
                     else
-                        return rjson::number{mParser.data(mBegin, mEnd)};
+                        return number{mParser.data(mBegin, mEnd)};
                 }
 
               private:
@@ -286,7 +286,7 @@ namespace rjson
             class BoolNullHandler : public SymbolHandler
             {
               public:
-                inline BoolNullHandler(const char* aExpected, rjson::value&& aValue) : mExpected{aExpected}, mValue{std::move(aValue)} {}
+                inline BoolNullHandler(const char* aExpected, value&& aValue) : mExpected{aExpected}, mValue{std::move(aValue)} {}
 
                 inline HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
                 {
@@ -314,12 +314,12 @@ namespace rjson
                     return result;
                 }
 
-                // inline rjson::value value() const override { return mValue; }
-                inline rjson::value value_move() override { return std::move(mValue); }
+                // inline value value() const override { return mValue; }
+                inline value value_move() override { return std::move(mValue); }
 
               private:
                 const char* mExpected;
-                rjson::value mValue;
+                value mValue;
 
                 size_t mPos = 0;
 
@@ -395,10 +395,10 @@ namespace rjson
                     return result;
                 }
 
-                // inline rjson::value value() const override { return mValue; }
-                inline rjson::value value_move() override { return std::move(mValue); }
+                // inline value value() const override { return mValue; }
+                inline value value_move() override { return std::move(mValue); }
 
-                inline void subvalue(rjson::value&& aSubvalue, Parser& aParser) override
+                inline void subvalue(value&& aSubvalue, Parser& aParser) override
                 {
                     // std::cerr << "ObjectHandler::subvalue " << aSubvalue.to_json() << '\n';
                     switch (mExpected) {
@@ -418,8 +418,8 @@ namespace rjson
                 }
 
               private:
-                rjson::object mValue;
-                rjson::value mKey;
+                object mValue;
+                value mKey;
                 Expected mExpected = Expected::Key;
 
             }; // class ObjectHandler
@@ -481,13 +481,13 @@ namespace rjson
                     return result;
                 }
 
-                // inline rjson::value value() const override { return mValue; }
-                inline rjson::value value_move() override { return std::move(mValue); }
+                // inline value value() const override { return mValue; }
+                inline value value_move() override { return std::move(mValue); }
 
-                inline void subvalue(rjson::value&& aSubvalue, Parser& /*aParser*/) override { mValue.insert(std::move(aSubvalue)); }
+                inline void subvalue(value&& aSubvalue, Parser& /*aParser*/) override { mValue.insert(std::move(aSubvalue)); }
 
               private:
-                rjson::array mValue;
+                array mValue;
                 Expected mExpected = Expected::Value;
 
             }; // class ArrayHandler
@@ -544,7 +544,7 @@ inline rjson::v1::value rjson::v1::parser_pop::Parser::result_move()
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v1
     {
         namespace parser_pop
         {

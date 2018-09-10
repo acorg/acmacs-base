@@ -19,7 +19,7 @@
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v1
     {
         class field_not_found : public std::runtime_error
         {
@@ -233,7 +233,7 @@ namespace rjson
           public:
             object() = default;
             object(std::initializer_list<std::pair<string, value>> key_values);
-            // ~object() { std::cerr << "~rjson::object " << to_json(true) << '\n'; }
+            // ~object() { std::cerr << "~object " << to_json(true) << '\n'; }
             object(const object&) = default;            // required if explicit destructor provided
             object& operator=(const object&) = default; // required if explicit destructor provided
             object(object&&) = default;
@@ -251,7 +251,7 @@ namespace rjson
             // if field is not in the object, throws field_not_found
             const value& operator[](std::string aFieldName) const;
             value& operator[](std::string aFieldName);
-            value& operator[](const rjson::string& aFieldName) { return operator[](aFieldName.str()); }
+            value& operator[](const string& aFieldName) { return operator[](aFieldName.str()); }
             value& operator[](const char* aFieldName) { return operator[](std::string{aFieldName}); }
             const value& one_of(std::initializer_list<std::string> aFieldOrder) const;
             template <typename... Args> const value& one_of(Args... args) const { return one_of({args...}); }
@@ -377,68 +377,68 @@ namespace rjson
 
         template <> struct content_type<double>
         {
-            using type = rjson::number;
+            using type = number;
         };
         template <> struct content_type<long>
         {
-            using type = rjson::integer;
+            using type = integer;
         };
         template <> struct content_type<unsigned long>
         {
-            using type = rjson::integer;
+            using type = integer;
         };
         template <> struct content_type<int>
         {
-            using type = rjson::integer;
+            using type = integer;
         };
         template <> struct content_type<unsigned int>
         {
-            using type = rjson::integer;
+            using type = integer;
         };
         template <> struct content_type<bool>
         {
-            using type = rjson::boolean;
+            using type = boolean;
         };
         template <> struct content_type<std::string>
         {
-            using type = rjson::string;
+            using type = string;
         };
         template <> struct content_type<char*>
         {
-            using type = rjson::string;
+            using type = string;
         };
         template <> struct content_type<const char*>
         {
-            using type = rjson::string;
+            using type = string;
         };
 
         template <> struct content_type<null>
         {
-            using type = rjson::null;
+            using type = null;
         };
         template <> struct content_type<object>
         {
-            using type = rjson::object;
+            using type = object;
         };
         template <> struct content_type<array>
         {
-            using type = rjson::array;
+            using type = array;
         };
         template <> struct content_type<string>
         {
-            using type = rjson::string;
+            using type = string;
         };
         template <> struct content_type<boolean>
         {
-            using type = rjson::boolean;
+            using type = boolean;
         };
         template <> struct content_type<number>
         {
-            using type = rjson::number;
+            using type = number;
         };
         template <> struct content_type<integer>
         {
-            using type = rjson::integer;
+            using type = integer;
         };
 
         template <typename FValue> value to_value(const FValue& aValue);
@@ -642,7 +642,7 @@ namespace rjson
             return rjson_type<FValue>{std::forward<FValue>(aValue)};
         }
 
-        inline value to_value(double aValue, int precision) { return rjson::number(aValue, precision); }
+        inline value to_value(double aValue, int precision) { return number(aValue, precision); }
 
         // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
         template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
@@ -678,13 +678,13 @@ namespace rjson
             [[noreturn]] virtual Result operator()(number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
             [[noreturn]] virtual Result operator()(boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
 
-            [[noreturn]] virtual Result operator()(const rjson::null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
-            [[noreturn]] virtual Result operator()(const rjson::boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const integer& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const number& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
+            [[noreturn]] virtual Result operator()(const boolean& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
 
           protected:
             [[noreturn]] virtual void throw_unexpected_value(std::string aMessage) { throw unexpected_value{aMessage}; }
@@ -734,8 +734,8 @@ namespace rjson
 namespace std
 {
       // gcc 7.2 wants those, if we derive from std::variant
-    template<> struct variant_size<rjson::value> : variant_size<rjson::value_base> {};
-    template<size_t _Np> struct variant_alternative<_Np, rjson::value> : variant_alternative<_Np, rjson::value_base> {};
+    template<> struct variant_size<rjson::v1::value> : variant_size<rjson::v1::value_base> {};
+    template<size_t _Np> struct variant_alternative<_Np, rjson::v1::value> : variant_alternative<_Np, rjson::v1::value_base> {};
 }
 #endif
 
@@ -745,7 +745,7 @@ namespace std
 
 namespace rjson
 {
-    inline namespace v1
+    namespace v1
     {
         inline void object::insert(const string& aKey, value&& aValue) { mContent.emplace(aKey, std::move(aValue)); }
         inline void object::insert(const string& aKey, const value& aValue) { mContent.emplace(aKey, aValue); }
@@ -784,7 +784,7 @@ namespace rjson
 
         template <typename T> inline std::optional<T> object::get(std::string aFieldName) const
         {
-            static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
+            static_assert(!std::is_same_v<T, object> && !std::is_same_v<T, array>, "get returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
             try {
                 const auto& val = operator[](aFieldName);
                 if constexpr (std::is_same_v<T, std::string>)
@@ -800,7 +800,7 @@ namespace rjson
                 return std::visit(
                     [aFieldName](auto&& arg) -> T {
                         using AT = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<AT, rjson::null>)
+                        if constexpr (std::is_same_v<AT, null>)
                             return {};
                         else
                             throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(AT).name() + " expected convertible to " + typeid(T).name() +
@@ -814,7 +814,7 @@ namespace rjson
 
         template <typename T> inline std::decay_t<T> object::get_or_default(std::string aFieldName, T&& aDefault) const
         {
-            static_assert(!std::is_same_v<T, rjson::object> && !std::is_same_v<T, rjson::array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
+            static_assert(!std::is_same_v<T, object> && !std::is_same_v<T, array>, "get_or_default returns a copy, not a reference, use get_or_empty_object or get_or_empty_array");
             const auto val = get<std::decay_t<T>>(aFieldName);
             return val ? *val : std::forward<T>(aDefault);
 
@@ -886,7 +886,7 @@ namespace rjson
             if (first != last) {
                 array& ar = set_field(aKey, array{});
                 for (; first != last; ++first)
-                    ar.insert(rjson::to_value(*first));
+                    ar.insert(to_value(*first));
             }
 
         } // object::set_array_field_if_not_empty
@@ -905,11 +905,11 @@ namespace rjson
             try {
                 const auto& v = operator[](aFieldName);
                 if (std::get_if<null>(&v))
-                    return rjson::sEmptyObject;
+                    return sEmptyObject;
                 return v;
             }
             catch (field_not_found&) {
-                return rjson::sEmptyObject;
+                return sEmptyObject;
             }
             catch (std::bad_variant_access&) {
                 std::cerr << "object::get_or_empty_object " << aFieldName << ": bad_variant_access\n";
@@ -922,11 +922,11 @@ namespace rjson
             try {
                 const auto& v = operator[](aFieldName);
                 if (std::get_if<null>(&v))
-                    return rjson::sEmptyArray;
+                    return sEmptyArray;
                 return v;
             }
             catch (field_not_found&) {
-                return rjson::sEmptyArray;
+                return sEmptyArray;
             }
             catch (std::bad_variant_access&) {
                 std::cerr << "object::get_or_empty_array " << aFieldName << ": bad_variant_access\n";
@@ -1026,7 +1026,7 @@ namespace rjson
         template <typename T> inline std::optional<T> value::get(std::string aFieldName) const
         {
             try {
-                return static_cast<const rjson::object&>(*this).get<T>(aFieldName);
+                return static_cast<const object&>(*this).get<T>(aFieldName);
             }
             catch (std::bad_variant_access&) {
                 std::cerr << "value::get called for non-object, stored variant alternative: " << index() << '\n';
@@ -1037,7 +1037,7 @@ namespace rjson
         template <typename T> inline T value::get_or_default(std::string aFieldName, T&& aDefault) const
         {
             try {
-                return static_cast<const rjson::object&>(*this).get_or_default(aFieldName, std::forward<T>(aDefault));
+                return static_cast<const object&>(*this).get_or_default(aFieldName, std::forward<T>(aDefault));
             }
             catch (std::bad_variant_access&) {
                 std::cerr << "value::get_or_default called for non-object, stored variant alternative: " << index() << '\n';
@@ -1051,15 +1051,15 @@ namespace rjson
                 return operator[](aFieldName);
             }
             catch (field_not_found&) {
-                return rjson::sEmptyObject;
+                return sEmptyObject;
             }
             catch (std::bad_variant_access&) {
                 const value& val = operator[](aFieldName);
                 return std::visit(
                     [aFieldName](auto&& arg) -> const object& {
                         using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, rjson::null>)
-                            return rjson::sEmptyObject;
+                        if constexpr (std::is_same_v<T, null>)
+                            return sEmptyObject;
                         else
                             throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::object or rjson::null");
                     },
@@ -1073,15 +1073,15 @@ namespace rjson
                 return operator[](aFieldName);
             }
             catch (field_not_found&) {
-                return rjson::sEmptyArray;
+                return sEmptyArray;
             }
             catch (std::bad_variant_access&) {
                 const value& val = operator[](aFieldName);
                 return std::visit(
                     [aFieldName](auto&& arg) -> const array& {
                         using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, rjson::null>)
-                            return rjson::sEmptyArray;
+                        if constexpr (std::is_same_v<T, null>)
+                            return sEmptyArray;
                         else
                             throw field_type_mismatch("Type mismatch for value of \"" + aFieldName + "\", stored " + typeid(T).name() + " expected rjson::array or rjson::null");
                     },
@@ -1129,13 +1129,13 @@ namespace rjson
 
 // ----------------------------------------------------------------------
 
-namespace ad_sfinae
+namespace acmacs::sfinae
 {
     template <typename T, typename = void> struct has_to_json : std::false_type { };
     template <typename T> struct has_to_json<T, std::void_t<decltype(std::declval<const T>().to_json())>> : std::true_type { };
 }
 
-template <typename T> inline typename std::enable_if_t<ad_sfinae::has_to_json<T>::value, std::ostream&> operator<<(std::ostream& out, const T& aValue)
+template <typename T> inline typename std::enable_if_t<acmacs::sfinae::has_to_json<T>::value, std::ostream&> operator<<(std::ostream& out, const T& aValue)
 {
     return out << aValue.to_json();
 }
@@ -1144,15 +1144,15 @@ template <typename T> inline typename std::enable_if_t<ad_sfinae::has_to_json<T>
 
 namespace acmacs
 {
-    inline std::string to_string(const rjson::string& src) { return src.str(); }
-    inline std::string to_string(const rjson::null&) { return "null"; }
-    inline std::string to_string(const rjson::object& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::array& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::integer& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::number& src) { return src.to_json(); }
-    inline std::string to_string(const rjson::boolean& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::v1::string& src) { return src.str(); }
+    inline std::string to_string(const rjson::v1::null&) { return "null"; }
+    inline std::string to_string(const rjson::v1::object& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::v1::array& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::v1::integer& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::v1::number& src) { return src.to_json(); }
+    inline std::string to_string(const rjson::v1::boolean& src) { return src.to_json(); }
 
-    inline std::string to_string(const rjson::value& src)
+    inline std::string to_string(const rjson::v1::value& src)
     {
         return std::visit([](auto&& arg) -> std::string { return acmacs::to_string(arg); }, src);
     }
