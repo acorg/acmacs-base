@@ -356,8 +356,8 @@ namespace rjson
 
         template <typename T> inline void array::copy_to(T&& target) const
         {
-            if constexpr (acmacs::sfinae::container_with_iterator<T>::value) {
-                if constexpr (acmacs::sfinae::container_with_resize<T>::value)
+            if constexpr (acmacs::sfinae::container_has_iterator<T>) {
+                if constexpr (acmacs::sfinae::container_has_resize<T>)
                     target.resize(size());
                 std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> decltype(*target.begin()) { return val; });
             }
@@ -466,8 +466,8 @@ namespace rjson
 
         template <typename T, typename F> inline void object::transform_to(T&& target, F&& transformer) const
         {
-            if constexpr (acmacs::sfinae::container_with_iterator<T>::value) {
-                if constexpr (acmacs::sfinae::container_with_resize<T>::value)
+            if constexpr (acmacs::sfinae::container_has_iterator<T>) {
+                if constexpr (acmacs::sfinae::container_has_resize<T>)
                     target.resize(content_.size());
                 std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
             }

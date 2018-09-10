@@ -9,24 +9,46 @@ namespace acmacs::sfinae
 {
     inline namespace v1
     {
-        template <typename T, typename = void, typename = void> struct container_with_iterator : std::false_type
+        namespace detail
         {
-        };
-        // template <typename T> struct container_with_iterator<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type
-        // {
-        // };
-        template <typename T> struct container_with_iterator<T, decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())> : std::true_type
-        {
-        };
+            template <typename Default, typename AlwaysVoid, template <typename...> typename Op, typename... Args> struct detector
+            {
+                using value_t = std::false_type;
+                using type = Default;
+            };
 
-        template <typename T, typename = void> struct container_with_resize : std::false_type
-        {
-        };
-        template <typename T> struct container_with_resize<T, decltype(std::declval<T>().resize(1))> : std::true_type
-        {
-        };
+            template <typename Default, template <typename...> typename Op, typename... Args> struct detector<Default, std::void_t<Op<Args...>>, Op, Args...>
+            {
+                using value_t = std::true_type;
+                using type = Op<Args...>;
+            };
 
-          // ----------------------------------------------------------------------
+        } // namespace detail
+
+        template <template <typename...> typename Op, typename... Args> using is_detected = typename detail::detector<void, void, Op, Args...>::value_t;
+        template <template <typename...> typename Op, typename... Args> constexpr bool is_detected_v = is_detected<Op, Args...>::value;
+
+        template <template <typename...> typename Op, typename... Args> using detected_t = typename detail::detector<void, void, Op, Args...>::type;
+
+        template <typename Default, template <typename...> typename Op, typename... Args> using detected_or = detail::detector<Default, void, Op, Args...>;
+        template <typename Default, template <typename...> typename Op, typename... Args> using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+        // ----------------------------------------------------------------------
+
+        namespace detail
+        {
+            template <typename T> using container_begin_t = decltype(std::declval<T&>().begin());
+            template <typename T> using container_end_t = decltype(std::declval<T&>().end());
+            template <typename T> using container_resize_t = decltype(std::declval<T&>().resize(1));
+
+        } // namespace detail
+
+        template <typename T> constexpr bool container_has_begin = is_detected_v<detail::container_begin_t, T>;
+        template <typename T> constexpr bool container_has_end = is_detected_v<detail::container_end_t, T>;
+        template <typename T> constexpr bool container_has_iterator = container_has_begin<T>&& container_has_end<T>;
+        template <typename T> constexpr bool container_has_resize = is_detected_v<detail::container_resize_t, T>;
+
+        // ----------------------------------------------------------------------
 
         template <typename T> struct is_string : std::false_type
         {
@@ -43,7 +65,7 @@ namespace acmacs::sfinae
 
         template <typename T> inline constexpr bool is_string_v = is_string<T>::value;
 
-          // ----------------------------------------------------------------------
+        // ----------------------------------------------------------------------
 
     } // namespace v1
 } // namespace acmacs::sfinae
