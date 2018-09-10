@@ -10,9 +10,11 @@
 #include <type_traits>
 #include <limits>
 
+#include "acmacs-base/sfinae.hh"
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/enumerate.hh"
+#include "acmacs-base/rjson-forward.hh"
 #include "acmacs-base/rjson-v1.hh"
 
 // ----------------------------------------------------------------------
@@ -45,37 +47,6 @@ namespace rjson
           public:
             const_null_modification_attempt() : std::runtime_error{"ConstNull modification attempt"} {}
         };
-
-        // --------------------------------------------------
-
-        namespace detail
-        {
-            template <typename T, typename = void> struct has_member_begin : std::false_type
-            {
-            };
-            template <typename T> struct has_member_begin<T, std::void_t<decltype(std::declval<T>().begin())>> : std::true_type
-            {
-            };
-            template <typename T, typename = void> struct has_member_resize : std::false_type
-            {
-            };
-            template <typename T> struct has_member_resize<T, std::void_t<decltype(std::declval<T>().resize(1))>> : std::true_type
-            {
-            };
-
-            template <typename T, typename = void> struct is_string : std::false_type
-            {
-            };
-            template <> struct is_string<const char*> : std::true_type
-            {
-            };
-            template <> struct is_string<std::string> : std::true_type
-            {
-            };
-            template <> struct is_string<std::string_view> : std::true_type
-            {
-            };
-        } // namespace detail
 
         // --------------------------------------------------
 
@@ -315,13 +286,13 @@ namespace rjson
             bool empty() const noexcept;
             size_t size() const noexcept; // returns 0 if neither array nor object nor string
             bool is_null() const noexcept;
-            template <typename S, typename = std::enable_if_t<detail::is_string<S>::value>>
+            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>>
             value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
-            template <typename S, typename... Args, typename = std::enable_if_t<detail::is_string<S>::value>> const value& get(S field_name, Args&&... args) const noexcept;
+            template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
             value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
             const value& operator[](size_t index) const noexcept { return get(index); }
-            template <typename S, typename = std::enable_if_t<detail::is_string<S>::value>> const value& operator[](S field_name) const noexcept { return get(field_name); }
+            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& operator[](S field_name) const noexcept { return get(field_name); }
             value& append(value&& aValue); // for array only, returns ref to inserted
             value& append(double aValue) { return append(number(aValue)); }
             size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
@@ -385,8 +356,8 @@ namespace rjson
 
         template <typename T> inline void array::copy_to(T&& target) const
         {
-            if constexpr (detail::has_member_begin<T>::value) {
-                if constexpr (detail::has_member_resize<T>::value)
+            if constexpr (acmacs::sfinae::container_with_iterator<T>::value) {
+                if constexpr (acmacs::sfinae::container_with_resize<T>::value)
                     target.resize(size());
                 std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> decltype(*target.begin()) { return val; });
             }
@@ -495,14 +466,13 @@ namespace rjson
 
         template <typename T, typename F> inline void object::transform_to(T&& target, F&& transformer) const
         {
-            if constexpr (detail::has_member_begin<T>::value) {
-                if constexpr (detail::has_member_resize<T>::value)
+            if constexpr (acmacs::sfinae::container_with_iterator<T>::value) {
+                if constexpr (acmacs::sfinae::container_with_resize<T>::value)
                     target.resize(content_.size());
                 std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
             }
             else {
                 std::transform(content_.begin(), content_.end(), std::forward<T>(target), std::forward<F>(transformer));
-                // static_assert(detail::has_member_begin<T>::value, "rjson::object::transform not implemented for this target");
             }
         }
 

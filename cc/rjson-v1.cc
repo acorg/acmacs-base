@@ -2,6 +2,14 @@
 #include "rjson.hh"
 #include "rjson-parser-pop-v1.hh"
 
+// acmacs-chart-2
+// hidb-5
+// acmacs-draw
+// acmacs-map-draw
+// signature-page
+// acmacs-webserver
+// acmacs-api
+
 // ----------------------------------------------------------------------
 
 #ifdef __clang__

@@ -213,14 +213,6 @@ template <typename RW, typename Value> inline json_writer::writer<RW>& operator 
     return json_writer::write_object(aWriter, map_value);
 }
 
-template <typename RW, typename Key, typename std::enable_if<ad_sfinae::castable_to_char<Key>{}>::type* = nullptr>
-                      inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, Key aKey)
-{
-    const char k = static_cast<char>(aKey);
-    aWriter.Key(&k, 1, false);
-    return aWriter;
-}
-
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 

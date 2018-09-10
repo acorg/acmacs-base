@@ -1115,22 +1115,17 @@ namespace rjson
             return std::visit([&](auto&& arg) -> std::string { return arg.to_json_pp(indent, emacs_indent, prefix); }, *this);
         }
 
-    } // namespace v1
+        namespace literals
+        {
+            inline string operator"" _rj(const char* str, std::size_t len) { return string(str, len); }
+            inline string operator"" _rj(const char* str) { return string(str); }
+            inline integer operator"" _rj(unsigned long long i) { return i; }
+            inline number operator"" _rj(long double d) { return d; }
+
+        } // namespace literals
+
+    }     // namespace v1
 } // namespace rjson
-
-// ----------------------------------------------------------------------
-
-namespace rjson::literals
-{
-    inline namespace v1
-    {
-        inline rjson::string operator"" _rj(const char* str, std::size_t len) { return rjson::string(str, len); }
-        inline rjson::string operator"" _rj(const char* str) { return rjson::string(str); }
-        inline rjson::integer operator"" _rj(unsigned long long i) { return i; }
-        inline rjson::number operator"" _rj(long double d) { return d; }
-
-    } // namespace v1
-} // namespace rjson::literals
 
 // ----------------------------------------------------------------------
 
@@ -1140,7 +1135,7 @@ namespace ad_sfinae
     template <typename T> struct has_to_json<T, std::void_t<decltype(std::declval<const T>().to_json())>> : std::true_type { };
 }
 
-template <typename T> inline typename std::enable_if<ad_sfinae::has_to_json<T>::value, std::ostream&>::type operator<<(std::ostream& out, const T& aValue)
+template <typename T> inline typename std::enable_if_t<ad_sfinae::has_to_json<T>::value, std::ostream&> operator<<(std::ostream& out, const T& aValue)
 {
     return out << aValue.to_json();
 }
