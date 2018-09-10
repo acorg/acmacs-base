@@ -21,7 +21,7 @@
 
 namespace rjson
 {
-    namespace v2
+    inline namespace v2
     {
         class value;
         class array;
@@ -510,7 +510,7 @@ namespace std
 
 namespace rjson
 {
-    namespace v2
+    inline namespace v2
     {
         std::string to_string(const object& val, bool space_after_comma = false);
         std::string to_string(const array& val, bool space_after_comma = false);
