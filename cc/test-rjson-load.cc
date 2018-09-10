@@ -17,7 +17,7 @@ int main(int argc, const char** argv)
             const std::string source = acmacs::file::read(argv[1]);
             ti_read.report();
             Timeit ti_parse(std::string{"parsing json "});
-            const auto data = rjson::parse_string(source);
+            const auto data = rjson::v1::parse_string(source);
             ti_parse.report();
         }
         catch (std::exception& err) {
