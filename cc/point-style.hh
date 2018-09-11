@@ -71,7 +71,7 @@ namespace acmacs
 
     inline std::string to_string(const PointShape& shape) { return shape; }
 
-    template <> inline std::string to_string(const acmacs::internal::field_optional_with_default<PointShape>& shape)
+    template <> inline std::string to_string(const acmacs::detail::field_optional_with_default<PointShape>& shape)
     {
         if (shape.is_default())
             return acmacs::to_string(*shape) + "(default)";
@@ -84,7 +84,7 @@ namespace acmacs
     class PointStyle
     {
       public:
-        template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         [[nodiscard]] bool operator==(const PointStyle& rhs) const
         {

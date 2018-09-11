@@ -30,7 +30,7 @@ inline std::string name_encode(std::string aName)
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::internal
+namespace acmacs::detail
 {
     inline std::string::value_type hexchar_to_num(std::string::value_type c)
     {
@@ -44,7 +44,7 @@ inline std::string name_decode(std::string aName)
     std::string::size_type output_pos = 0;
     for (auto src = aName.cbegin(); src != aName.cend(); ++src) {
         if (*src == '%' && (aName.cend() - src) >= 3 && std::isxdigit(*(src+1)) && std::isxdigit(*(src+2))) {
-            using namespace acmacs::internal;
+            using namespace acmacs::detail;
             result[output_pos++] = static_cast<std::string::value_type>((hexchar_to_num(*(src+1)) << 4) | hexchar_to_num(*(src+2)));;
             src += 2;
         }

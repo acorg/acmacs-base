@@ -8,7 +8,7 @@
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::internal
+namespace acmacs::detail
 {
     template <typename T> class field_optional_with_default
     {
@@ -79,19 +79,19 @@ namespace acmacs::internal
         return mValue.has_value() && ! float_equal(mValue.value(), mDefault);
     }
 
-} // namespace acmacs::internal
+} // namespace acmacs::detail
 
 namespace acmacs
 {
-    template <typename T> inline std::string to_string(const acmacs::internal::field_optional_with_default<T>& field) { return field.to_string(); }
+    template <typename T> inline std::string to_string(const acmacs::detail::field_optional_with_default<T>& field) { return field.to_string(); }
 
 } // namespace acmacs
 
-namespace acmacs::internal
+namespace acmacs::detail
 {
     template <typename T> inline std::ostream& operator<<(std::ostream& s, const field_optional_with_default<T>& field) { return s << acmacs::to_string(field); }
 
-} // namespace acmacs::internal
+} // namespace acmacs::detail
 
 // ----------------------------------------------------------------------
 /// Local Variables:

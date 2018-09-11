@@ -9,7 +9,7 @@
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::internal
+namespace acmacs::detail
 {
     template <char Tag> class SizeScale
     {
@@ -38,13 +38,13 @@ namespace acmacs::internal
     };
 }
 
-using Pixels = acmacs::internal::SizeScale<'P'>; // size in pixels, indepenent from the surface internal coordinate system
-using Scaled = acmacs::internal::SizeScale<'S'>; // size in the surface internal coordinate system
+using Pixels = acmacs::detail::SizeScale<'P'>; // size in pixels, indepenent from the surface internal coordinate system
+using Scaled = acmacs::detail::SizeScale<'S'>; // size in the surface internal coordinate system
 
 // ----------------------------------------------------------------------
 
-using Aspect = acmacs::internal::SizeScale<'A'>;
-using Rotation = acmacs::internal::SizeScale<'R'>;
+using Aspect = acmacs::detail::SizeScale<'A'>;
+using Rotation = acmacs::detail::SizeScale<'R'>;
 
 #include "acmacs-base/global-constructors-push.hh"
 
@@ -76,11 +76,11 @@ namespace acmacs
 
 } // namespace acmacs
 
-namespace acmacs::internal
+namespace acmacs::detail
 {
     using ::operator<<;
 
-} // namespace acmacs::internal
+} // namespace acmacs::detail
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -100,7 +100,7 @@ namespace acmacs
     class TextStyle
     {
      public:
-        template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         TextStyle() = default;
         TextStyle(std::string font_name) : font_family{font_name} {}
@@ -126,7 +126,7 @@ namespace acmacs
     class LabelStyle
     {
      public:
-        template <typename T> using field = acmacs::internal::field_optional_with_default<T>;
+        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         [[nodiscard]] bool operator==(const LabelStyle& ls) const
             {
