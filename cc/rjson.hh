@@ -286,8 +286,7 @@ namespace rjson
             bool empty() const noexcept;
             size_t size() const noexcept; // returns 0 if neither array nor object nor string
             bool is_null() const noexcept;
-            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>>
-            value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
             value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
