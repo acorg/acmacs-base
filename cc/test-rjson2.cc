@@ -169,6 +169,31 @@ int main()
     v1 = rjson::v2::number{51L};
     assert(v1.is_number());
 
+    rjson::v2::value v2{rjson::v2::object{{"first", 1}, {"second", 2}}};
+    assert(v2.is_object());
+    assert(!v2.empty());
+    v2["third"] = 3;
+    assert(v2.get("third").is_number());
+    v2["third"] = 33;
+    assert(v2.get("third").is_number());
+    v2["first"] = rjson::v2::object{};
+    assert(v2.get("first").is_object());
+    v2["first"]["first"] = 11;
+    assert(v2.get("first", "first").is_number());
+
+    rjson::value v3{rjson::object{{"first", rjson::object{}}, {"second", rjson::object{}}}};
+    v3["third"] = 3;
+    assert(v3.get("third").is_number());
+    v3["third"] = 33;
+    assert(v3.get("third").is_number());
+    v3["first"] = 1111;
+    v3["first"] = rjson::v2::object{};
+    assert(v3.get("first").is_object());
+    v3.set("first", "aaa", "bbb") = 88;
+    assert(v3.get("first", "aaa", "bbb").is_number());
+    v3.set("first") = 88;
+    assert(v3.get("first").is_number());
+
     return exit_code;
 }
 
