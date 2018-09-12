@@ -119,7 +119,13 @@ void acmacs::file::backup(std::string aFilename)
     fs::path to_backup{aFilename};
     if (fs::exists(to_backup)) {
         fs::path backup_dir = to_backup.parent_path() / ".backup";
-        create_directory(backup_dir);
+        try {
+            create_directory(backup_dir);
+        }
+        catch (std::exception& err) {
+            std::cerr << "ERROR: cannot create directory " << backup_dir << ": " << err.what() << '\n';
+            throw;
+        }
 
         for (int version = 1; version < 1000; ++version) {
             char infix[10];
@@ -151,7 +157,7 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCom
         f = 2;
     }
     else {
-        if (aBackupFile == BackupFile::Yes)
+        if (aBackupFile == BackupFile::Yes && aFilename.substr(0, 4) != "/dev") // allow writing to /dev/ without making backup attempt
             backup(aFilename);
         f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
         if (f < 0)
