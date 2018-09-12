@@ -248,7 +248,6 @@ namespace rjson
                 }
 
             template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, char>>> value& assign(assign_priority_char&&, T&& src)
-            // value& assign(assign_priority_string&&, char src)
                 {
                     check_const_null();
                     value_base::operator=(std::string(1, src));
