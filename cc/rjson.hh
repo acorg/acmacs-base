@@ -208,6 +208,57 @@ namespace rjson
 
         class value : public value_base
         {
+         private:
+            struct assign_priority_value {};
+            struct assign_priority_string : public assign_priority_value {};
+            struct assign_priority_double : public assign_priority_string {};
+            struct assign_priority_int : public assign_priority_double {};
+
+            template <typename Int, typename = std::enable_if_t<(std::is_integral_v<std::decay_t<Int>> && !std::is_same_v<std::decay_t<Int>, bool> && !std::is_same_v<std::decay_t<Int>, char>)>> value& assign(assign_priority_int&&, Int&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(number(static_cast<long>(src)));
+                    return *this;
+                }
+
+            template <typename Float, typename = std::enable_if_t<std::is_floating_point_v<std::decay_t<Float>>>> value& assign(assign_priority_double&&, Float&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(number(static_cast<double>(src)));
+                    return *this;
+                }
+
+            template <typename T, typename = std::enable_if_t<(std::is_same_v<std::decay_t<T>, bool> || std::is_same_v<std::decay_t<T>, std::string>
+                                                               || std::is_same_v<std::decay_t<T>, value> || std::is_same_v<std::decay_t<T>, object> || std::is_same_v<std::decay_t<T>, array>
+                                                               || std::is_same_v<std::decay_t<T>, number> || std::is_same_v<std::decay_t<T>, null> || std::is_same_v<std::decay_t<T>, const_null>)>>
+                value& assign(assign_priority_value&&, T&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(std::forward<T>(src));
+                    return *this;
+                }
+
+            value& assign(assign_priority_string&&, const char* src)
+                {
+                    check_const_null();
+                    value_base::operator=(std::string(src));
+                    return *this;
+                }
+
+            // value& assign(assign_priority_string&&, char src)
+            //     {
+            //         check_const_null();
+            //         value_base::operator=(std::string(1, src));
+            //         return *this;
+            //     }
+
+            // value& assign(assign_priority_string&&, std::string_view src)
+            //     {
+            //         check_const_null();
+            //         value_base::operator=(std::string(src));
+            //         return *this;
+            //     }
+
           public:
             using value_base::operator=;
             using value_base::value_base;
@@ -222,73 +273,22 @@ namespace rjson
             value(double src) : value_base(number(src)) {}                 // gcc 7.2 wants it to disambiguate
             value(bool src) : value_base(src) {}
 
-            value& operator=(const value& val)
-            {
-                check_const_null();
-                value_base::operator=(val);
-                return *this;
-            }
-            value& operator=(value&& val)
-            {
-                check_const_null();
-                value_base::operator=(std::move(val));
-                return *this;
-            }
-            value& operator=(array&& src)
-            {
-                check_const_null();
-                value_base::operator=(std::move(src));
-                return *this;
-            }
-            value& operator=(object&& src)
-            {
-                check_const_null();
-                value_base::operator=(std::move(src));
-                return *this;
-            }
-            value& operator=(number&& src)
-            {
-                check_const_null();
-                value_base::operator=(std::move(src));
-                return *this;
-            }
-            value& operator=(int src)
-            {
-                check_const_null();
-                value_base::operator=(number(static_cast<long>(src)));
-                return *this;
-            }
-            value& operator=(double src)
-            {
-                check_const_null();
-                value_base::operator=(number(src));
-                return *this;
-            }
-            value& operator=(bool src)
-            {
-                check_const_null();
-                value_base::operator=(src);
-                return *this;
-            }
-            value& operator=(std::string src)
-            {
-                check_const_null();
-                value_base::operator=(src);
-                return *this;
-            }
-            value& operator=(const char* src)
-            {
-                check_const_null();
-                value_base::operator=(std::string(src));
-                return *this;
-            }
+            template <typename T> value& operator=(T&& src)
+                {
+                    return assign(assign_priority_int{}, std::forward<T>(src));
+                }
 
             bool empty() const noexcept;
             size_t size() const noexcept; // returns 0 if neither array nor object nor string
             bool is_null() const noexcept;
+            bool is_object() const noexcept;
+            bool is_array() const noexcept;
+            bool is_number() const noexcept;
+            bool is_bool() const noexcept;
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
+            template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& set(S field_name, Args&&... args) noexcept; // creates intermediate objects, if necessary
             value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
             const value& operator[](size_t index) const noexcept { return get(index); }
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& operator[](S field_name) const noexcept { return get(field_name); }
@@ -627,6 +627,26 @@ namespace rjson
                 *this);
         }
 
+        inline bool value::is_object() const noexcept
+        {
+            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, object>) return true; else return false; }, *this);
+        }
+
+        inline bool value::is_array() const noexcept
+        {
+            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, array>) return true; else return false; }, *this);
+        }
+
+        inline bool value::is_number() const noexcept
+        {
+            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, number>) return true; else return false; }, *this);
+        }
+
+        inline bool value::is_bool() const noexcept
+        {
+            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, bool>) return true; else return false; }, *this);
+        }
+
         template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
         {
             return std::visit(
@@ -649,6 +669,21 @@ namespace rjson
             }
             else
                 return ConstNull;
+        }
+
+        // creates intermediate objects, if necessary.
+        // if intermediate value exists and it is neither object nor null, returns ConstNull
+        template <typename S, typename... Args, typename> value& value::set(S field_name, Args&&... args) noexcept
+        {
+            auto& r1 = operator[](field_name);
+            if (r1.is_null())
+                r1 = object{};
+            else if (!r1.is_object())
+                return ConstNull;
+            if constexpr (sizeof...(args) > 0)
+                return r1.set(args...);
+            else
+                return r1;
         }
 
         template <typename S, typename>

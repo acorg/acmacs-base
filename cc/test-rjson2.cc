@@ -135,6 +135,22 @@ int main()
         }
     }
 
+    rjson::v2::value v1;
+    v1 = true;
+    assert(v1.is_bool());
+    v1 = 4;
+    assert(v1.is_number());
+    v1 = 4U;
+    assert(v1.is_number());
+    v1 = 4UL;
+    assert(v1.is_number());
+    v1 = 4.4;
+    assert(v1.is_number());
+    v1 = 4.4F;
+    assert(v1.is_number());
+    // v1 = 'C';
+    // assert(v1.is_null());
+
     return exit_code;
 }
 
