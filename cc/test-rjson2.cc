@@ -136,6 +136,8 @@ int main()
     }
 
     rjson::v2::value v1;
+    v1 = rjson::v2::value{};
+    assert(v1.is_null());
     v1 = true;
     assert(v1.is_bool());
     v1 = 4;
@@ -148,8 +150,24 @@ int main()
     assert(v1.is_number());
     v1 = 4.4F;
     assert(v1.is_number());
-    // v1 = 'C';
-    // assert(v1.is_null());
+    v1 = "const char*";
+    assert(v1.is_string());
+    v1 = std::string{"string"};
+    assert(v1.is_string());
+    v1 = std::string{};
+    assert(v1.is_string());
+    const char* const_char_ptr = "string";
+    std::string_view sv{const_char_ptr};
+    v1 = sv;
+    assert(v1.is_string());
+    v1 = 'C';
+    assert(v1.is_string());
+    v1 = rjson::v2::object{};
+    assert(v1.is_object());
+    v1 = rjson::v2::array{};
+    assert(v1.is_array());
+    v1 = rjson::v2::number{51L};
+    assert(v1.is_number());
 
     return exit_code;
 }

@@ -213,6 +213,8 @@ namespace rjson
             struct assign_priority_string : public assign_priority_value {};
             struct assign_priority_double : public assign_priority_string {};
             struct assign_priority_int : public assign_priority_double {};
+            struct assign_priority_char : public assign_priority_int {};
+            struct assign_priority_all : public assign_priority_char {};
 
             template <typename Int, typename = std::enable_if_t<(std::is_integral_v<std::decay_t<Int>> && !std::is_same_v<std::decay_t<Int>, bool> && !std::is_same_v<std::decay_t<Int>, char>)>> value& assign(assign_priority_int&&, Int&& src)
                 {
@@ -245,19 +247,20 @@ namespace rjson
                     return *this;
                 }
 
+            template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, char>>> value& assign(assign_priority_char&&, T&& src)
             // value& assign(assign_priority_string&&, char src)
-            //     {
-            //         check_const_null();
-            //         value_base::operator=(std::string(1, src));
-            //         return *this;
-            //     }
+                {
+                    check_const_null();
+                    value_base::operator=(std::string(1, src));
+                    return *this;
+                }
 
-            // value& assign(assign_priority_string&&, std::string_view src)
-            //     {
-            //         check_const_null();
-            //         value_base::operator=(std::string(src));
-            //         return *this;
-            //     }
+            template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string_view>>> value& assign(assign_priority_string&&, T&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(std::string(std::forward<T>(src)));
+                    return *this;
+                }
 
           public:
             using value_base::operator=;
@@ -275,16 +278,18 @@ namespace rjson
 
             template <typename T> value& operator=(T&& src)
                 {
-                    return assign(assign_priority_int{}, std::forward<T>(src));
+                    return assign(assign_priority_all{}, std::forward<T>(src));
                 }
 
-            bool empty() const noexcept;
-            size_t size() const noexcept; // returns 0 if neither array nor object nor string
             bool is_null() const noexcept;
             bool is_object() const noexcept;
             bool is_array() const noexcept;
+            bool is_string() const noexcept;
             bool is_number() const noexcept;
             bool is_bool() const noexcept;
+
+            bool empty() const noexcept;
+            size_t size() const noexcept; // returns 0 if neither array nor object nor string
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
@@ -629,22 +634,27 @@ namespace rjson
 
         inline bool value::is_object() const noexcept
         {
-            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, object>) return true; else return false; }, *this);
+            return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>) return true; else return false; }, *this);
         }
 
         inline bool value::is_array() const noexcept
         {
-            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, array>) return true; else return false; }, *this);
+            return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>) return true; else return false; }, *this);
+        }
+
+        inline bool value::is_string() const noexcept
+        {
+            return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>) return true; else return false; }, *this);
         }
 
         inline bool value::is_number() const noexcept
         {
-            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, number>) return true; else return false; }, *this);
+            return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>) return true; else return false; }, *this);
         }
 
         inline bool value::is_bool() const noexcept
         {
-            return std::visit([](auto&& arg) { using T = std::decay_t<decltype(arg)>; if constexpr (std::is_same_v<T, bool>) return true; else return false; }, *this);
+            return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>) return true; else return false; }, *this);
         }
 
         template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
