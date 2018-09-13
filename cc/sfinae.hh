@@ -9,6 +9,11 @@ namespace acmacs::sfinae
 {
     inline namespace v1
     {
+        template <typename T, typename U> struct decay_equiv : std::is_same<std::decay_t<T>, std::decay_t<U>>::type {};
+        template <typename T, typename U> constexpr bool decay_equiv_v = decay_equiv<T, U>::value;
+
+        // ----------------------------------------------------------------------
+
         namespace detail
         {
             template <typename Default, typename AlwaysVoid, template <typename...> typename Op, typename... Args> struct detector
@@ -48,22 +53,20 @@ namespace acmacs::sfinae
         template <typename T> constexpr bool container_has_iterator = container_has_begin<T>&& container_has_end<T>;
         template <typename T> constexpr bool container_has_resize = is_detected_v<detail::container_resize_t, T>;
 
+          // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
+        template <typename T> using iterator_t = decltype(*std::declval<T&>(), void(), ++std::declval<T&>(), void());
+
         // ----------------------------------------------------------------------
 
-        template <typename T> struct is_string : std::false_type
-        {
-        };
-        template <> struct is_string<const char*> : std::true_type
-        {
-        };
-        template <> struct is_string<std::string> : std::true_type
-        {
-        };
-        template <> struct is_string<std::string_view> : std::true_type
-        {
-        };
+        template <typename T> constexpr bool is_const_char_ptr_v = std::is_convertible_v<T, const char*>;
+        template <typename T> constexpr bool is_string_v = decay_equiv_v<T, std::string> || decay_equiv_v<T, std::string_view> || is_const_char_ptr_v<T>;
 
-        template <typename T> inline constexpr bool is_string_v = is_string<T>::value;
+        // ----------------------------------------------------------------------
+
+        // overload resolution dispatching (https://foonathan.net/blog/2015/11/16/overload-resolution-3.html)
+        template <int priority> struct dispatching_priority : dispatching_priority<priority - 1> {};
+        template <> struct dispatching_priority<0> {};
+        using dispatching_priority_top = dispatching_priority<10>;
 
         // ----------------------------------------------------------------------
 
