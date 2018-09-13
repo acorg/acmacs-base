@@ -146,7 +146,7 @@ namespace rjson
         inline std::string to_string(const number& val)
         {
             auto visitor = [](auto&& arg) -> std::string {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+                if constexpr (acmacs::sfinae::decay_equiv_v<decltype(arg), std::string>)
                     return arg;
                 else
                     return acmacs::to_string(arg);
@@ -209,55 +209,45 @@ namespace rjson
         class value : public value_base
         {
          private:
-            struct assign_priority_value {};
-            struct assign_priority_string : public assign_priority_value {};
-            struct assign_priority_double : public assign_priority_string {};
-            struct assign_priority_int : public assign_priority_double {};
-            struct assign_priority_char : public assign_priority_int {};
-            struct assign_priority_all : public assign_priority_char {};
-
-            template <typename Int, typename = std::enable_if_t<(std::is_integral_v<std::decay_t<Int>> && !std::is_same_v<std::decay_t<Int>, bool> && !std::is_same_v<std::decay_t<Int>, char>)>> value& assign(assign_priority_int&&, Int&& src)
-                {
-                    check_const_null();
-                    value_base::operator=(number(static_cast<long>(src)));
-                    return *this;
-                }
-
-            template <typename Float, typename = std::enable_if_t<std::is_floating_point_v<std::decay_t<Float>>>> value& assign(assign_priority_double&&, Float&& src)
-                {
-                    check_const_null();
-                    value_base::operator=(number(static_cast<double>(src)));
-                    return *this;
-                }
-
-            template <typename T, typename = std::enable_if_t<(std::is_same_v<std::decay_t<T>, bool> || std::is_same_v<std::decay_t<T>, std::string>
-                                                               || std::is_same_v<std::decay_t<T>, value> || std::is_same_v<std::decay_t<T>, object> || std::is_same_v<std::decay_t<T>, array>
-                                                               || std::is_same_v<std::decay_t<T>, number> || std::is_same_v<std::decay_t<T>, null> || std::is_same_v<std::decay_t<T>, const_null>)>>
-                value& assign(assign_priority_value&&, T&& src)
-                {
-                    check_const_null();
-                    value_base::operator=(std::forward<T>(src));
-                    return *this;
-                }
-
-            value& assign(assign_priority_string&&, const char* src)
-                {
-                    check_const_null();
-                    value_base::operator=(std::string(src));
-                    return *this;
-                }
-
-            template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, char>>> value& assign(assign_priority_char&&, T&& src)
+            template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, char>>>
+                value& assign(acmacs::sfinae::dispatching_priority<5>, T&& src)
                 {
                     check_const_null();
                     value_base::operator=(std::string(1, src));
                     return *this;
                 }
 
-            template <typename T, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string_view>>> value& assign(assign_priority_string&&, T&& src)
+            template <typename T, typename = std::enable_if_t<(acmacs::sfinae::decay_equiv_v<T, std::string_view> || acmacs::sfinae::is_const_char_ptr_v<T>)>>
+                value& assign(acmacs::sfinae::dispatching_priority<4>, T&& src)
                 {
                     check_const_null();
                     value_base::operator=(std::string(std::forward<T>(src)));
+                    return *this;
+                }
+
+            template <typename Float, typename = std::enable_if_t<std::is_floating_point_v<std::decay_t<Float>>>>
+                value& assign(acmacs::sfinae::dispatching_priority<2>, Float&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(number(static_cast<double>(src)));
+                    return *this;
+                }
+
+            template <typename Int, typename = std::enable_if_t<(std::is_integral_v<std::decay_t<Int>> && !std::is_same_v<std::decay_t<Int>, bool> && !std::is_same_v<std::decay_t<Int>, char>)>>
+                value& assign(acmacs::sfinae::dispatching_priority<1>, Int&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(number(static_cast<long>(src)));
+                    return *this;
+                }
+
+            template <typename T, typename = std::enable_if_t<(acmacs::sfinae::decay_equiv_v<T, bool> || acmacs::sfinae::decay_equiv_v<T, std::string>
+                                                               || acmacs::sfinae::decay_equiv_v<T, value> || acmacs::sfinae::decay_equiv_v<T, object> || acmacs::sfinae::decay_equiv_v<T, array>
+                                                               || acmacs::sfinae::decay_equiv_v<T, number> || acmacs::sfinae::decay_equiv_v<T, null> || acmacs::sfinae::decay_equiv_v<T, const_null>)>>
+                value& assign(acmacs::sfinae::dispatching_priority<0>, T&& src)
+                {
+                    check_const_null();
+                    value_base::operator=(std::forward<T>(src));
                     return *this;
                 }
 
@@ -279,7 +269,7 @@ namespace rjson
             value& operator=(value&&) = default;
             template <typename T> value& operator=(T&& src)
                 {
-                    return assign(assign_priority_all{}, std::forward<T>(src));
+                    return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src));
                 }
 
             bool is_null() const noexcept;
