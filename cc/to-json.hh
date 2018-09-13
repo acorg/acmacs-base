@@ -9,6 +9,7 @@
 
 // ----------------------------------------------------------------------
 
+#include "acmacs-base/sfinae.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/stream.hh" // for debugging
 
@@ -33,37 +34,24 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
-    template <typename T1, typename T2> using is_same_ = std::is_same<T1, std::decay_t<T2>>;
-
-    template <typename T> static inline constexpr bool is_const_char_ptr_v = is_same_<const char*, T>::value;
-    template <typename T> static inline constexpr bool is_string_v = is_same_<std::string, T>::value;
-    template <typename T> static inline constexpr bool is_string_view_v = is_same_<std::string_view, T>::value;
-    template <typename T> static inline constexpr bool is_raw_v = is_same_<raw, T>::value;
-
-      // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
-    template <typename T> using if_iterator = decltype(*std::declval<T&>(), void(), ++std::declval<T&>(), void());
-
-    template <typename T> using enable_if_not_const_char_ptr = std::enable_if_t<!is_const_char_ptr_v<T>>;
-
-// ----------------------------------------------------------------------
-
     template <typename T> inline std::string value(const std::vector<T>& aVector);
 
     template <typename T> inline std::string value(T&& aValue)
     {
-        if constexpr      (is_string_v<T>)                                       { return "\"" + aValue + "\""; }
-        else if constexpr (is_string_view_v<T>)                                  { return "\"" + std::string(aValue) + "\""; }
-        else if constexpr (is_raw_v<T>)                                          { return aValue; }
-        else if constexpr (is_const_char_ptr_v<T>)                               { return std::string{"\""} + aValue + "\""; }
-        else if constexpr (std::is_same<bool, std::decay_t<T>>::value)           { return aValue ? "true" : "false"; }
-        else if constexpr (std::is_same<std::nullptr_t, std::decay_t<T>>::value) { return "null"; }
-        else if constexpr (std::is_same<null_t, std::decay_t<T>>::value)         { return "null"; }
-        else if constexpr (std::is_same<undefined_t, std::decay_t<T>>::value)    { return "undefined"; }
-        else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer)     { return std::to_string(aValue); }
-        else if constexpr (std::is_same<double, std::decay_t<T>>::value)         { return acmacs::to_string(aValue); }
-        else if constexpr (std::is_same<float, std::decay_t<T>>::value)          { return std::to_string(aValue); }
-          // else if constexpr (std::is_floating_point<std::decay_t<T>>::value)       { return acmacs::to_string(aValue); }
-        else                                                                     { static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?"); /* compilation fails trying to instantiate this type */ }
+        using namespace acmacs::sfinae;
+        using namespace std::string_literals;
+        if constexpr (decay_equiv_v<T, std::string_view>)                    { return "\"" + std::string(aValue) + "\""; }
+        else if constexpr (is_string_v<T>)                                   { return "\""s + aValue + '"'; }
+        else if constexpr (decay_equiv_v<T, raw>)                            { return aValue; }
+        else if constexpr (decay_equiv_v<T, bool>)                           { return aValue ? "true" : "false"; }
+        else if constexpr (decay_equiv_v<T, std::nullptr_t>)                 { return "null"; }
+        else if constexpr (decay_equiv_v<T, null_t>)                         { return "null"; }
+        else if constexpr (decay_equiv_v<T, undefined_t>)                    { return "undefined"; }
+        else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer) { return std::to_string(aValue); }
+        else if constexpr (decay_equiv_v<T, double>)                         { return acmacs::to_string(aValue); }
+        else if constexpr (decay_equiv_v<T, float>)                          { return std::to_string(aValue); }
+          // else if constexpr (std::is_floating_point_v<std::decay_t<T>>)       { return acmacs::to_string(aValue); }
+        else                                                                 { static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?"); /* compilation fails trying to instantiate this type */ }
     }
 
 // ----------------------------------------------------------------------
@@ -119,7 +107,7 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
-    template <typename Iterator, typename UnaryOperation, typename = if_iterator<Iterator>>
+    template <typename Iterator, typename UnaryOperation, typename = acmacs::sfinae::iterator_t<Iterator>>
         inline std::string object(Iterator first, Iterator last, UnaryOperation unary_op, Options options = option_default)
     {
         std::string target = "{}";
@@ -130,7 +118,7 @@ namespace to_json
         return target;
     }
 
-    template <typename Iterator, typename = if_iterator<Iterator>, typename = enable_if_not_const_char_ptr<Iterator>>
+    template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>, typename = std::enable_if_t<!acmacs::sfinae::is_const_char_ptr_v<Iterator>>>
         inline std::string object(Iterator first, Iterator last, Options options = option_default)
     {
         std::string target = "{}";
@@ -182,7 +170,7 @@ namespace to_json
         return internal::array_append(std::string{}, std::forward<Args>(args) ...);
     }
 
-    template <typename Iterator, typename = if_iterator<Iterator>>
+    template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>>
         inline std::string array(Iterator first, Iterator last)
     {
         std::string target = "[]";
@@ -192,7 +180,7 @@ namespace to_json
         return target;
     }
 
-    template <typename Iterator, typename Transformer, typename = if_iterator<Iterator>>
+    template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>>
         inline std::string array(Iterator first, Iterator last, Transformer transformer)
     {
         std::string target = "[]";
