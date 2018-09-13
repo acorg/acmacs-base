@@ -275,6 +275,8 @@ namespace rjson
             value(double src) : value_base(number(src)) {}                 // gcc 7.2 wants it to disambiguate
             value(bool src) : value_base(src) {}
 
+            value& operator=(const value&) = default;
+            value& operator=(value&&) = default;
             template <typename T> value& operator=(T&& src)
                 {
                     return assign(assign_priority_all{}, std::forward<T>(src));
