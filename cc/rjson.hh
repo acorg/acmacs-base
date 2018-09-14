@@ -319,7 +319,7 @@ namespace rjson
 
         // --------------------------------------------------
 
-        extern value ConstNull;
+        extern value ConstNull, EmptyArray, EmptyObject;
 
         // --------------------------------------------------
 
@@ -1014,6 +1014,16 @@ namespace rjson
                 return val;
             else
                 return default_value;
+        }
+
+        template <typename... Args> inline const value& one_of(const value& source, const char* field_name, Args... args)
+        {
+            if (const auto& val = source[field_name]; !val.is_null())
+                return val;
+            if constexpr (sizeof...(args) > 0)
+                return one_of(source, args...);
+            else
+                return ConstNull;
         }
 
     } // namespace v2

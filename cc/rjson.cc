@@ -13,6 +13,8 @@
 #endif
 
 rjson::v2::value rjson::v2::ConstNull{rjson::v2::const_null{}};
+rjson::v2::value rjson::v2::EmptyArray{rjson::v2::array{}};
+rjson::v2::value rjson::v2::EmptyObject{rjson::v2::object{}};
 
 #pragma GCC diagnostic pop
 
