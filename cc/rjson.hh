@@ -241,7 +241,7 @@ namespace rjson
                     return *this;
                 }
 
-            template <typename T, typename = std::enable_if_t<(acmacs::sfinae::decay_equiv_v<T, bool> || acmacs::sfinae::decay_equiv_v<T, std::string>
+            template <typename T, typename = std::enable_if_t<(acmacs::sfinae::decay_equiv_v<T, bool> || std::is_base_of_v<std::string, std::decay_t<T>>
                                                                || acmacs::sfinae::decay_equiv_v<T, value> || acmacs::sfinae::decay_equiv_v<T, object> || acmacs::sfinae::decay_equiv_v<T, array>
                                                                || acmacs::sfinae::decay_equiv_v<T, number> || acmacs::sfinae::decay_equiv_v<T, null> || acmacs::sfinae::decay_equiv_v<T, const_null>)>>
                 value& assign(acmacs::sfinae::dispatching_priority<0>, T&& src)
@@ -938,6 +938,51 @@ namespace rjson
         // ----------------------------------------------------------------------
 
         inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
+
+        // ----------------------------------------------------------------------
+
+        inline void set_field_if_not_empty(value& target, const char* field_name, std::string source)
+        {
+            if (!source.empty())
+                target[field_name] = source;
+        }
+
+        namespace detail
+        {
+            template <typename T> constexpr bool equal(T first, T second)
+            {
+                if constexpr (std::is_same_v<T, double>)
+                    return float_equal(first, second);
+                else
+                    return first == second;
+            }
+        } // namespace detail
+
+        template <typename T> inline void set_field_if_not_default(value& target, const char* field_name, T aValue, T aDefault)
+        {
+            if (!detail::equal(aValue, aDefault))
+                target[field_name] = aValue;
+        }
+
+        inline void set_field_if_not_default(value& target, const char* field_name, double aValue, double aDefault, int precision)
+        {
+            if (!detail::equal(aValue, aDefault))
+                target[field_name] = number(acmacs::to_string(aValue, precision));
+        }
+
+        template <typename S, typename Iterator> inline void set_array_field_if_not_empty(value& target, S key, Iterator first, Iterator last)
+        {
+            if (first != last) {
+                auto& ar = target[key] = array{};
+                for (; first != last; ++first)
+                    ar.append(*first);
+            }
+        }
+
+        template <typename S, typename Container> inline void set_array_field_if_not_empty(value& target, S key, Container&& container)
+        {
+            set_array_field_if_not_empty(target, key, std::begin(container), std::end(container));
+        }
 
     } // namespace v2
 } // namespace rjson
