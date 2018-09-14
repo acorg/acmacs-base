@@ -1002,7 +1002,9 @@ namespace rjson
         template <typename T, typename = std::enable_if_t<!acmacs::sfinae::is_const_char_ptr_v<T>>>
             inline T get_or(const value& source, const char* field_name, T default_value)
         {
-            if (const auto& val = source[field_name]; !val.is_null())
+            if (source.is_null())
+                return default_value;
+            else if (const auto& val = source[field_name]; !val.is_null())
                 return val;
             else
                 return default_value;
@@ -1010,7 +1012,9 @@ namespace rjson
 
         inline std::string get_or(const value& source, const char* field_name, const char* default_value)
         {
-            if (const auto& val = source[field_name]; !val.is_null())
+            if (source.is_null())
+                return default_value;
+            else if (const auto& val = source[field_name]; !val.is_null())
                 return val;
             else
                 return default_value;
