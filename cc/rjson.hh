@@ -997,6 +997,25 @@ namespace rjson
             set_array_field_if_not_empty(target, key, std::begin(container), std::end(container));
         }
 
+        // ----------------------------------------------------------------------
+
+        template <typename T, typename = std::enable_if_t<!acmacs::sfinae::is_const_char_ptr_v<T>>>
+            inline T get_or(const value& source, const char* field_name, T default_value)
+        {
+            if (const auto& val = source[field_name]; !val.is_null())
+                return val;
+            else
+                return default_value;
+        }
+
+        inline std::string get_or(const value& source, const char* field_name, const char* default_value)
+        {
+            if (const auto& val = source[field_name]; !val.is_null())
+                return val;
+            else
+                return default_value;
+        }
+
     } // namespace v2
 } // namespace rjson
 
