@@ -293,6 +293,7 @@ namespace rjson
             size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
             operator std::string() const;
+            operator std::string_view() const;
             operator double() const;
             operator size_t() const;
             operator long() const;
@@ -748,6 +749,18 @@ namespace rjson
                 [this](auto&& arg) -> std::string {
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
                         return arg;
+                    else
+                        throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        inline value::operator std::string_view() const
+        {
+            return std::visit(
+                [this](auto&& arg) -> std::string_view {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+                        return std::string_view(arg);
                     else
                         throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
                 },
