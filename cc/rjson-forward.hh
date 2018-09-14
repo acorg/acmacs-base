@@ -9,6 +9,12 @@ namespace rjson
         class array;
         class object;
     }
+
+    inline namespace v2
+    {
+        class value;
+    }
+
 } // namespace rjson
 
 // ----------------------------------------------------------------------
