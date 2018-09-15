@@ -355,7 +355,11 @@ namespace rjson
             if constexpr (acmacs::sfinae::container_has_iterator<T>) {
                 if constexpr (acmacs::sfinae::container_has_resize<T>)
                     target.resize(size());
-                std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> decltype(*target.begin()) { return val; });
+                using dest_t = decltype(*target.begin());
+                if constexpr (std::is_convertible_v<const value&, dest_t>)
+                    std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> dest_t { return val; });
+                else
+                    std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> std::decay_t<dest_t> { return val; });
             }
             else {
                 std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> std::remove_reference_t<decltype(*target)> { return val; });
