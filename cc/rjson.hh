@@ -845,6 +845,8 @@ namespace rjson
                 }
                 else if constexpr (std::is_same_v<T1, null>)
                     *this = arg2;
+                else if constexpr (std::is_same_v<T2, null> || std::is_same_v<T2, const_null>)
+                    ;           // updating with null: do nothing
                 else if constexpr (std::is_same_v<T1, const_null>)
                     throw merge_error(std::string{"cannot update ConstNull"});
                 else
