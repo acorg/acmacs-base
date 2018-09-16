@@ -954,6 +954,13 @@ namespace rjson
                 std::forward<Value>(value));
         }
 
+        template <typename T> inline std::vector<T> as_vector(const value& source)
+        {
+            std::vector<T> result;
+            copy(source, result);
+            return result;
+        }
+
         // ----------------------------------------------------------------------
 
         inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
