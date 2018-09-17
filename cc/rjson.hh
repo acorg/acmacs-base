@@ -1086,6 +1086,14 @@ namespace rjson
                 return default_value;
         }
 
+        template <typename T> inline T get_or(const value& source, const T& default_value)
+        {
+            if (source.is_null())
+                return default_value;
+            else
+                return source;
+        }
+
         template <typename... Args> inline const value& one_of(const value& source, const char* field_name, Args... args)
         {
             if (const auto& val = source[field_name]; !val.is_null())
