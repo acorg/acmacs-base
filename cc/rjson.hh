@@ -168,39 +168,23 @@ namespace rjson
                     return std::numeric_limits<double>::quiet_NaN();
             };
             return std::visit(visitor, val);
-        }
+            }
 
-        inline size_t to_size_t(const number& val)
-        {
-            auto visitor = [](auto&& arg) -> size_t {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, long>)
-                    return static_cast<size_t>(arg);
-                else if constexpr (std::is_same_v<T, double>)
-                    return static_cast<size_t>(std::lround(arg));
-                else if constexpr (std::is_same_v<T, std::string>)
-                    return std::stoul(arg);
-                else
-                    return std::numeric_limits<size_t>::max();
-            };
-            return std::visit(visitor, val);
-        }
-
-        inline long to_long(const number& val)
-        {
-            auto visitor = [](auto&& arg) -> long {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, long>)
-                    return arg;
-                else if constexpr (std::is_same_v<T, double>)
-                    return std::lround(arg);
-                else if constexpr (std::is_same_v<T, std::string>)
-                    return std::stol(arg);
-                else
-                    return std::numeric_limits<long>::max();
-            };
-            return std::visit(visitor, val);
-        }
+            template <typename T> T to_integer(const number& val)
+            {
+                auto visitor = [](auto&& arg) -> T {
+                    using Arg = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<Arg, long>)
+                        return static_cast<T>(arg);
+                    else if constexpr (std::is_same_v<Arg, double>)
+                        return static_cast<T>(std::lround(arg));
+                    else if constexpr (std::is_same_v<Arg, std::string>)
+                        return static_cast<T>(std::stoul(arg));
+                    else
+                        return std::numeric_limits<T>::max();
+                };
+                return std::visit(visitor, val);
+            }
 
         // --------------------------------------------------
 
@@ -295,8 +279,12 @@ namespace rjson
             operator std::string() const;
             operator std::string_view() const;
             operator double() const;
-            operator size_t() const;
-            operator long() const;
+            operator size_t() const { return to_integer<size_t>(); }
+            operator long() const { return to_integer<long>(); }
+            operator int() const { return to_integer<int>(); }
+            operator unsigned() const { return to_integer<unsigned>(); }
+            operator short() const { return to_integer<short>(); }
+            operator unsigned short() const { return to_integer<unsigned short>(); }
             operator bool() const;
             template <typename R> R get_or_default(R&& dflt) const;
             std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
@@ -308,6 +296,7 @@ namespace rjson
 
           private:
             template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
+            template <typename T> T to_integer() const;
             bool is_const_null() const noexcept;
             void check_const_null() const
             {
@@ -783,24 +772,12 @@ namespace rjson
                 *this);
         }
 
-        inline value::operator size_t() const
+        template <typename T> inline T value::to_integer() const
         {
             return std::visit(
-                [this](auto&& arg) -> size_t {
+                [this](auto&& arg) -> T {
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
-                        return to_size_t(arg);
-                    else
-                        throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
-                },
-                *this);
-        }
-
-        inline value::operator long() const
-        {
-            return std::visit(
-                [this](auto&& arg) -> long {
-                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
-                        return to_long(arg);
+                        return rjson::to_integer<T>(arg);
                     else
                         throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
                 },
