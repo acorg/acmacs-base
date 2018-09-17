@@ -269,6 +269,7 @@ namespace rjson
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& set(S field_name, Args&&... args) noexcept; // creates intermediate objects, if necessary
+            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void remove(S field_name); // does nothing if field is not present, throws if this is not an object
             value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
             const value& operator[](size_t index) const noexcept { return get(index); }
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& operator[](S field_name) const noexcept { return get(field_name); }
@@ -666,19 +667,35 @@ namespace rjson
                 return ConstNull;
         }
 
-        // creates intermediate objects, if necessary.
-        // if intermediate value exists and it is neither object nor null, returns ConstNull
+          // creates intermediate objects, if necessary.
+          // if final key does not present, inserts null
+          // if intermediate value exists and it is neither object nor null, returns ConstNull
         template <typename S, typename... Args, typename> value& value::set(S field_name, Args&&... args) noexcept
         {
             auto& r1 = operator[](field_name);
-            if (r1.is_null())
-                r1 = object{};
+            if (r1.is_null()) {
+                if constexpr (sizeof...(args) > 0)
+                    r1 = object{};
+            }
             else if (!r1.is_object())
                 return ConstNull;
             if constexpr (sizeof...(args) > 0)
                 return r1.set(args...);
             else
                 return r1;
+        }
+
+        // does nothing if field is not present, throws if this is not an object
+        template <typename S, typename> void value::remove(S field_name)
+        {
+            return std::visit(
+                [&field_name,this](auto&& arg) -> const value& {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                        arg.remove(field_name);
+                    else
+                        throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
         }
 
         template <typename S, typename>
