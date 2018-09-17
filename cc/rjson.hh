@@ -42,6 +42,11 @@ namespace rjson
           public:
             using std::runtime_error::runtime_error;
         };
+        class array_index_out_of_range : public std::runtime_error
+        {
+         public:
+            array_index_out_of_range() : std::runtime_error{"array_index_out_of_range"} {}
+        };
         class const_null_modification_attempt : public std::runtime_error
         {
           public:
@@ -84,6 +89,7 @@ namespace rjson
             template <typename S> void insert(S aKey, const value& aValue);
             template <typename S> void remove(S key);
             void update(const object& to_merge);
+            void clear();
 
             void remove_comments();
 
@@ -119,6 +125,8 @@ namespace rjson
             size_t max_index() const { return content_.size() - 1; }
 
             value& append(value&& aValue); // returns ref to inserted
+            void remove(size_t index);
+            void clear();
 
             void remove_comments();
 
@@ -272,6 +280,8 @@ namespace rjson
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void remove(S field_name); // does nothing if field is not present, throws if this is not an object
             value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
             const value& operator[](size_t index) const noexcept { return get(index); }
+            void remove(size_t index); // if this is not array or index out of range, throws
+            void clear(); // if this is neither array nor object, throws
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& operator[](S field_name) const noexcept { return get(field_name); }
             value& append(value&& aValue); // for array only, returns ref to inserted
             value& append(double aValue) { return append(number(aValue)); }
@@ -333,6 +343,18 @@ namespace rjson
         {
             content_.push_back(std::move(aValue));
             return content_.back();
+        }
+
+        inline void array::remove(size_t index)
+        {
+            if (index >= content_.size())
+                throw array_index_out_of_range{};
+            content_.erase(content_.begin() + static_cast<decltype(content_.begin() - content_.begin())>(index));
+        }
+
+        inline void array::clear()
+        {
+            content_.clear();
         }
 
         inline void array::remove_comments()
@@ -434,6 +456,11 @@ namespace rjson
         {
             for (const auto& [new_key, new_value] : to_merge.content_)
                 operator[](new_key).update(new_value);
+        }
+
+        inline void object::clear()
+        {
+            content_.clear();
         }
 
         inline void object::remove_comments()
@@ -655,7 +682,7 @@ namespace rjson
                 *this);
         }
 
-        template <typename S, typename... Args, typename> const value& value::get(S field_name, Args&&... args) const noexcept
+        template <typename S, typename... Args, typename> inline const value& value::get(S field_name, Args&&... args) const noexcept
         {
             if (const auto& r1 = get1(field_name); !r1.is_null()) {
                 if constexpr (sizeof...(args) > 0)
@@ -670,7 +697,7 @@ namespace rjson
           // creates intermediate objects, if necessary.
           // if final key does not present, inserts null
           // if intermediate value exists and it is neither object nor null, returns ConstNull
-        template <typename S, typename... Args, typename> value& value::set(S field_name, Args&&... args) noexcept
+        template <typename S, typename... Args, typename> inline value& value::set(S field_name, Args&&... args) noexcept
         {
             auto& r1 = operator[](field_name);
             if (r1.is_null()) {
@@ -686,7 +713,7 @@ namespace rjson
         }
 
         // does nothing if field is not present, throws if this is not an object
-        template <typename S, typename> void value::remove(S field_name)
+        template <typename S, typename> inline void value::remove(S field_name)
         {
             return std::visit(
                 [&field_name,this](auto&& arg) -> const value& {
@@ -694,6 +721,34 @@ namespace rjson
                         arg.remove(field_name);
                     else
                         throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        // if this is not array or index out of range, throws
+        inline void value::remove(size_t index)
+        {
+            std::visit(
+                [index, this](auto&& arg) -> void {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+                        arg.remove(index);
+                    else
+                        throw value_type_mismatch("array", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        // if this is neither array nor object, throws
+        inline void value::clear()
+        {
+            std::visit(
+                [this](auto&& arg) -> void {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array> || std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                        arg.clear();
+                    else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>)
+                        ;
+                    else
+                        throw value_type_mismatch("array or object", actual_type(), DEBUG_LINE_FUNC);
                 },
                 *this);
         }
@@ -877,6 +932,10 @@ namespace rjson
 
         // ----------------------------------------------------------------------
 
+        template <typename T> inline value to_value(T&& source) { return std::forward<T>(source); }
+
+        // ----------------------------------------------------------------------
+
         template <typename T> inline void copy(const value& source, T&& target)
         {
             std::visit(
@@ -1035,6 +1094,12 @@ namespace rjson
                 return one_of(source, args...);
             else
                 return ConstNull;
+        }
+
+        template <typename T> inline void assign_if_not_null(const value& source, T& target)
+        {
+            if (!source.is_null())
+                target = to_value(source);
         }
 
     } // namespace v2
