@@ -715,8 +715,8 @@ namespace rjson
         // does nothing if field is not present, throws if this is not an object
         template <typename S, typename> inline void value::remove(S field_name)
         {
-            return std::visit(
-                [&field_name,this](auto&& arg) -> const value& {
+            std::visit(
+                [&field_name,this](auto&& arg) -> void {
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
                         arg.remove(field_name);
                     else
@@ -1094,6 +1094,14 @@ namespace rjson
                 return source;
         }
 
+        inline std::string get_or(const value& source, const char* default_value)
+        {
+            if (source.is_null())
+                return default_value;
+            else
+                return source;
+        }
+
         template <typename... Args> inline const value& one_of(const value& source, const char* field_name, Args... args)
         {
             if (const auto& val = source[field_name]; !val.is_null())
@@ -1107,7 +1115,13 @@ namespace rjson
         template <typename T> inline void assign_if_not_null(const value& source, T& target)
         {
             if (!source.is_null())
-                target = to_value(source);
+                target = source;
+        }
+
+        template <typename T, typename Converter> inline void assign_if_not_null(const value& source, T& target, Converter&& converter)
+        {
+            if (!source.is_null())
+                target = converter(source);
         }
 
     } // namespace v2
