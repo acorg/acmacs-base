@@ -991,7 +991,7 @@ namespace rjson
                 std::forward<Value>(val));
         }
 
-        template <typename Value, typename Func> inline auto find_if(Value&& value, Func&& func) // returns ConstNull if not found, Func: bool (value&&), throws if not array
+        template <typename Value, typename Func> inline auto& find_if(Value&& value, Func&& func) // returns ConstNull if not found, Func: bool (value&&), throws if not array
         {
             return std::visit(
                 [&func, &value](auto&& arg) -> Value& {
