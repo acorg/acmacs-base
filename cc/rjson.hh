@@ -138,6 +138,8 @@ namespace rjson
             template <typename F> void for_each(F&& func);
             template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
             template <typename Func> value& find_if(Func func);             // returns ConstNull if not found, Func: bool (value&)
+            template <typename Func> std::optional<size_t> find_index_if(Func func) const;
+            template <typename Func> std::optional<size_t> find_index_if(Func func);
 
           private:
             std::vector<value> content_;
@@ -417,8 +419,10 @@ namespace rjson
         }
 
         template <typename Func> inline const value& array::find_if(Func func) const { return *std::find_if(content_.begin(), content_.end(), func); }
-
         template <typename Func> inline value& array::find_if(Func func) { return *std::find_if(content_.begin(), content_.end(), func); }
+
+        template <typename Func> inline std::optional<size_t> array::find_index_if(Func func) const { if (auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
+        template <typename Func> inline std::optional<size_t> array::find_index_if(Func func) { if (auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
 
         // --------------------------------------------------
 
@@ -1003,6 +1007,19 @@ namespace rjson
                     else
                         throw value_type_mismatch("array", value.actual_type(), DEBUG_LINE_FUNC);
                     // return ConstNull;
+                },
+                std::forward<Value>(value));
+        }
+
+        template <typename Value, typename Func> inline std::optional<size_t> find_index_if(Value&& value, Func&& func) // Func: bool (value&&), throws if not array
+        {
+            return std::visit(
+                [&func, &value](auto&& arg) -> std::optional<size_t> {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, array>)
+                        return arg.find_index_if(std::forward<Func>(func));
+                    else
+                        throw value_type_mismatch("array", value.actual_type(), DEBUG_LINE_FUNC);
                 },
                 std::forward<Value>(value));
         }
