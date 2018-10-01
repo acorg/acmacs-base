@@ -1135,6 +1135,13 @@ namespace rjson
                 target = source;
         }
 
+        template <typename T> inline T& operator <<=(T& target, const value& source)
+        {
+            if (!source.is_null())
+                target = source;
+            return target;
+        }
+
         template <typename T, typename Converter> inline void assign_if_not_null(const value& source, T& target, Converter&& converter)
         {
             if (!source.is_null())
