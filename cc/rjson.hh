@@ -957,15 +957,22 @@ namespace rjson
 
         template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
         {
-            static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>,
+            static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, const std::string&, const value&> || std::is_invocable_v<F, const value&> ||
+                              std::is_invocable_v<F, const value&, size_t>,
                           "rjson::transform: unsupported transformer signature");
 
             // std::is_const<typename std::remove_reference<const int&>::type>::value
             std::visit(
                 [&target, &transformer, &source](auto&& arg) {
                     using TT = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const key_value_t&>)
-                        arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+                    if constexpr (std::is_same_v<TT, object>) {
+                        if constexpr (std::is_invocable_v<F, const key_value_t&>)
+                            arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
+                        else if constexpr (std::is_invocable_v<F, const std::string&, const value&>)
+                            arg.transform_to(std::forward<T>(target), [&transformer](const key_value_t& kv) { return transformer(kv.first, kv.second); });
+                        else
+                            throw value_type_mismatch("object and corresponding transformer", source.actual_type(), DEBUG_LINE_FUNC);
+                    }
                     else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>))
                         arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
                     else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
