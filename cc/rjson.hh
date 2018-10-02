@@ -1145,11 +1145,14 @@ namespace rjson
                 target = source;
         }
 
-        template <typename T> inline T& operator <<=(T& target, const value& source)
+        template <typename T> inline void assign_string_if_not_null(const value& source, T& target)
         {
-            if (!source.is_null())
-                target = source;
-            return target;
+            if (!source.is_null()) {
+                if constexpr (std::is_convertible_v<T, std::string_view>)
+                    target = static_cast<std::string_view>(source);
+                else
+                    target = static_cast<std::string>(source);
+            }
         }
 
         template <typename T, typename Converter> inline void assign_if_not_null(const value& source, T& target, Converter&& converter)

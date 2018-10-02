@@ -3,6 +3,7 @@
 #include <string>
 
 #include "acmacs-base/sfinae.hh"
+#include "acmacs-base/string.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
 #include "acmacs-base/field.hh"
