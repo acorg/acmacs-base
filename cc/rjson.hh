@@ -421,8 +421,8 @@ namespace rjson
             }
         }
 
-        template <typename Func> inline const value& array::find_if(Func func) const { return *std::find_if(content_.begin(), content_.end(), func); }
-        template <typename Func> inline value& array::find_if(Func func) { return *std::find_if(content_.begin(), content_.end(), func); }
+        template <typename Func> inline const value& array::find_if(Func func) const { if (const auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return *found; else return ConstNull; }
+        template <typename Func> inline value& array::find_if(Func func) { if (const auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return *found; else return ConstNull; }
 
         template <typename Func> inline std::optional<size_t> array::find_index_if(Func func) const { if (auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
         template <typename Func> inline std::optional<size_t> array::find_index_if(Func func) { if (auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
@@ -831,7 +831,7 @@ namespace rjson
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
                         return std::string_view(arg);
                     else
-                        throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
+                        throw value_type_mismatch("std::string_view", actual_type(), DEBUG_LINE_FUNC);
                 },
                 *this);
         }
