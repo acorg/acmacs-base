@@ -14,7 +14,7 @@ int main()
             const char* const argv[] = {"test-1", "-a", "--aa", "aaa", "aaaa"};
             argc_argv arg(std::end(argv) - std::begin(argv), argv, {{"-a", false}, {"--aa", "AAA"}, {"--bb", 77.0}});
             assert(arg.number_of_arguments() == 1);
-            assert(strcmp(arg[0], argv[4]) == 0);
+            assert(arg[0] == argv[4]);
             assert(static_cast<bool>(arg[argv[1]]));
             assert(static_cast<std::string_view>(arg[argv[2]]) == argv[3]);
             assert(static_cast<double>(arg["--bb"]) == 77.0);

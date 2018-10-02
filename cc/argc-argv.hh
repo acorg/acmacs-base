@@ -8,7 +8,7 @@
 #include <variant>
 #include <typeinfo>
 
-#include "acmacs-base/to-string.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -90,7 +90,7 @@ class argc_argv
         constexpr bool present() const { return present_; }
 
         operator bool() const { return get_bool(); }
-        operator std::string() const { return get<string>(); }
+        explicit operator std::string() const { return get<string>(); }
         operator std::string_view() const { return get<string>(); }
         operator strings() const { return get<strings>(); }
         operator double() const { return get<double>(); }
@@ -114,7 +114,7 @@ class argc_argv
     size_t number_of_arguments() const { return mArguments.size(); }
 
       // returns argument (neither option nor option value) by index, throws argument_not_found if aIndex >= number_of_arguments()
-    const char* operator[](size_t aIndex) const
+    std::string_view operator[](size_t aIndex) const
         {
             if (aIndex >= mArguments.size())
                 throw argument_not_found{"invalid argument index: " + std::to_string(aIndex) + ", total arguments in the command line: " + std::to_string(mArguments.size())};

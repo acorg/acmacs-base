@@ -13,7 +13,19 @@
 #include <functional>
 #include <cassert>
 
+#include "acmacs-base/sfinae.hh"
 #include "acmacs-base/to-string.hh"
+
+// ----------------------------------------------------------------------
+
+namespace std
+{
+    inline std::string operator+(std::string left, std::string_view right) { return left.append(right); }
+    inline std::string operator+(std::string_view left, std::string_view right) { return std::string(left) + right; }
+    inline std::string operator+(std::string_view left, std::string right) { return std::string(left) + right; }
+
+    inline unsigned long stoul(std::string_view src) { return stoul(std::string(src)); }
+}
 
 // ----------------------------------------------------------------------
 
@@ -73,7 +85,7 @@ namespace string
 
       // ----------------------------------------------------------------------
 
-    inline std::string replace(std::string source, std::string look_for, std::string replace_with)
+    template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> inline std::string replace(S source, std::string look_for, std::string replace_with)
     {
         std::string result;
         std::string::size_type start = 0;

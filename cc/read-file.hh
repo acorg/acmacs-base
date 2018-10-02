@@ -54,6 +54,7 @@ namespace acmacs::file
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes);
+    inline void write(std::string_view aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes) { write(std::string(aFilename), aData, aForceCompression, aBackupFile); }
     void backup(std::string aFilename);
 
       // ----------------------------------------------------------------------
@@ -85,6 +86,7 @@ namespace acmacs::file
                 if (filename != "-")
                     backend_ = std::ifstream(filename);
             }
+        ifstream(std::string_view filename) : ifstream(std::string(filename)) {}
 
         std::istream& stream()
             {
@@ -108,6 +110,7 @@ namespace acmacs::file
                 else if (filename != "-")
                     backend_ = std::ofstream(filename);
             }
+        ofstream(std::string_view filename) : ofstream(std::string(filename)) {}
 
         std::ostream& stream()
             {

@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "acmacs-base/sfinae.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
 #include "acmacs-base/field.hh"
@@ -19,8 +20,10 @@ namespace acmacs
         FontSlant(Value aFontSlant = Normal) : mFontSlant{aFontSlant} {}
         FontSlant(const FontSlant&) = default;
         FontSlant(std::string aFontSlant) { from(aFontSlant); }
+        FontSlant(std::string_view aFontSlant) { from(aFontSlant); }
         FontSlant& operator=(const FontSlant&) = default;
         FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
+        FontSlant& operator=(std::string_view aFontSlant) { from(aFontSlant); return *this; }
 
         operator std::string() const
             {
@@ -38,14 +41,15 @@ namespace acmacs
      private:
         Value mFontSlant;
 
-        void from(std::string aFontSlant)
+        template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontSlant)
             {
+                using namespace std::string_literals;
                 if (aFontSlant == "normal")
                     mFontSlant = Normal;
                 else if (aFontSlant == "italic")
                     mFontSlant = Italic;
                 else
-                    std::runtime_error("Unrecognized slant: " + aFontSlant);
+                    std::runtime_error("Unrecognized slant: "s + aFontSlant);
             }
 
     }; // class FontSlant
@@ -62,8 +66,10 @@ namespace acmacs
         FontWeight(Value aFontWeight = Normal) : mFontWeight{aFontWeight} {}
         FontWeight(const FontWeight&) = default;
         FontWeight(std::string aFontWeight) { from(aFontWeight); }
+        FontWeight(std::string_view aFontWeight) { from(aFontWeight); }
         FontWeight& operator=(const FontWeight&) = default;
         FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
+        FontWeight& operator=(std::string_view aFontWeight) { from(aFontWeight); return *this; }
 
         operator std::string() const
             {
@@ -81,14 +87,15 @@ namespace acmacs
      private:
         Value mFontWeight;
 
-        void from(std::string aFontWeight)
+        template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontWeight)
             {
+                using namespace std::string_literals;
                 if (aFontWeight == "normal")
                     mFontWeight = Normal;
                 else if (aFontWeight == "bold")
                     mFontWeight = Bold;
                 else
-                    std::runtime_error("Unrecognized weight: " + aFontWeight);
+                    std::runtime_error("Unrecognized weight: "s + aFontWeight);
             }
 
     }; // class FontWeight
@@ -104,6 +111,7 @@ namespace acmacs
 
         TextStyle() = default;
         TextStyle(std::string font_name) : font_family{font_name} {}
+        TextStyle(std::string_view font_name) : font_family(std::string(font_name)) {}
 
         [[nodiscard]] bool operator==(const TextStyle& ts) const
             {

@@ -291,7 +291,7 @@ namespace rjson
             value& append(double aValue) { return append(number(aValue)); }
             size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
-            operator std::string() const;
+            explicit operator std::string() const;
             operator std::string_view() const;
             operator double() const;
             operator size_t() const { return to_integer<size_t>(); }
@@ -375,10 +375,10 @@ namespace rjson
                 if constexpr (std::is_convertible_v<const value&, dest_t>)
                     std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> dest_t { return val; });
                 else
-                    std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> std::decay_t<dest_t> { return val; });
+                    std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> std::decay_t<dest_t> { return static_cast<std::decay_t<dest_t>>(val); });
             }
             else {
-                std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> std::remove_reference_t<decltype(*target)> { return val; });
+                std::transform(content_.begin(), content_.end(), std::forward<T>(target), [](const value& val) -> std::remove_reference_t<decltype(*target)> { return static_cast<std::remove_reference_t<decltype(*target)>>(val); });
             }
         }
 
@@ -888,7 +888,7 @@ namespace rjson
                     if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
                         return dflt;
                     else
-                        return *this;
+                        return static_cast<R>(*this);
                 },
                 *this);
         }
@@ -1103,7 +1103,7 @@ namespace rjson
                 return default_value;
         }
 
-        inline std::string get_or(const value& source, const char* field_name, const char* default_value)
+        inline std::string_view get_or(const value& source, const char* field_name, const char* default_value)
         {
             if (source.is_null())
                 return default_value;
@@ -1121,7 +1121,7 @@ namespace rjson
                 return source;
         }
 
-        inline std::string get_or(const value& source, const char* default_value)
+        inline std::string_view get_or(const value& source, const char* default_value)
         {
             if (source.is_null())
                 return default_value;
