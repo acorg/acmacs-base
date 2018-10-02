@@ -139,9 +139,9 @@ namespace rjson
             template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
             template <typename F> void for_each(F&& func) const;
             template <typename F> void for_each(F&& func);
-            template <typename Func> const value& find_if(Func func) const; // returns ConstNull if not found, Func: bool (const value&)
-            template <typename Func> value& find_if(Func func);             // returns ConstNull if not found, Func: bool (value&)
-            template <typename Func> std::optional<size_t> find_index_if(Func func) const;
+            template <typename Func> const value& find_if(Func&& func) const; // returns ConstNull if not found, Func: bool (const value&)
+            template <typename Func> value& find_if(Func&& func);             // returns ConstNull if not found, Func: bool (value&)
+            template <typename Func> std::optional<size_t> find_index_if(Func&& func) const;
 
           private:
             std::vector<value> content_;
@@ -420,10 +420,10 @@ namespace rjson
             }
         }
 
-        template <typename Func> inline const value& array::find_if(Func func) const { if (const auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return *found; else return ConstNull; }
-        template <typename Func> inline value& array::find_if(Func func) { if (const auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return *found; else return ConstNull; }
+        template <typename Func> inline const value& array::find_if(Func&& func) const { if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return *found; else return ConstNull; }
+        template <typename Func> inline value& array::find_if(Func&& func) { if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return *found; else return ConstNull; }
 
-        template <typename Func> inline std::optional<size_t> array::find_index_if(Func func) const { if (auto found = std::find_if(content_.begin(), content_.end(), func); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
+        template <typename Func> inline std::optional<size_t> array::find_index_if(Func&& func) const { if (auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
 
         // --------------------------------------------------
 
