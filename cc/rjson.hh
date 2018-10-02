@@ -127,6 +127,7 @@ namespace rjson
             size_t max_index() const { return content_.size() - 1; }
 
             value& append(value&& aValue); // returns ref to inserted
+            void replace(const array& to_replace) { content_.resize(to_replace.size()); std::copy(to_replace.content_.begin(), to_replace.content_.end(), content_.begin()); }
             void remove(size_t index);
             void clear();
 
@@ -543,23 +544,14 @@ namespace rjson
     {
         std::string to_string(const object& val, bool space_after_comma = false);
         std::string to_string(const array& val, bool space_after_comma = false);
+        inline std::string to_string(bool val) { return val ? "true" : "false"; }
+        inline std::string to_string(null) { return "null"; }
+        inline std::string to_string(const_null) { return "*ConstNull"; }
+        inline std::string to_string(std::string val) { return "\"" + val + '"'; }
 
         inline std::string to_string(const value& val)
         {
-            auto visitor = [](auto&& arg) -> std::string {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, null>)
-                    return "null";
-                else if constexpr (std::is_same_v<T, const_null>)
-                    return "*ConstNull";
-                else if constexpr (std::is_same_v<T, std::string>)
-                    return "\"" + arg + '"';
-                else if constexpr (std::is_same_v<T, bool>)
-                    return arg ? "true" : "false";
-                else
-                    return to_string(arg);
-            };
-            return std::visit(visitor, val);
+            return std::visit([](auto&& arg) -> std::string { return to_string(arg); }, val);
         }
 
         std::string pretty(const value& val, size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0);
@@ -900,14 +892,16 @@ namespace rjson
                 using T2 = std::decay_t<decltype(arg2)>;
                 if constexpr (std::is_same_v<T1, T2>) {
                     if constexpr (std::is_same_v<T1, object>)
-                        arg1.update(arg2);
+                        arg1.update(std::forward<decltype(arg2)>(arg2));
+                    else if constexpr (std::is_same_v<T1, array>)
+                        arg1.replace(std::forward<decltype(arg2)>(arg2));
                     else
-                        arg1 = arg2;
+                        arg1 = std::forward<decltype(arg2)>(arg2);
                 }
                 else if constexpr (std::is_same_v<T1, null>)
                     *this = arg2;
                 else if constexpr (std::is_same_v<T2, null> || std::is_same_v<T2, const_null>)
-                    ;           // updating with null: do nothing
+                    ; // updating with null: do nothing
                 else if constexpr (std::is_same_v<T1, const_null>)
                     throw merge_error(std::string{"cannot update ConstNull"});
                 else

@@ -14,7 +14,7 @@ trap on_exit EXIT
 
 function failed
 {
-    echo FAILED >&2
+    echo ERROR: "$@" FAILED >&2
     exit 1
 }
 
@@ -24,8 +24,8 @@ trap failed ERR
 
 # export LD_LIBRARY_PATH="${ACMACSD_ROOT}/lib:${LD_LIBRARY_PATH}"
 cd "$TESTDIR"
-../dist/test-rjson
-../dist/test-rjson2
-../dist/test-argc-argv
-../dist/test-string-split
-../dist/test-date2
+for test_prog in ../dist/test-rjson ../dist/test-rjson2 ../dist/test-argc-argv ../dist/test-string-split ../dist/test-date2; do
+    if ! ${test_prog}; then
+        failed ${test_prog}
+    fi
+done
