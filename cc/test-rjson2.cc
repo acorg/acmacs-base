@@ -75,6 +75,17 @@ static const std::pair<rjson::v2::value, const char*> sSourceRJ[] = {
      R"({"first":[1,2.5,"three"],"second":{"first":1,"second":2.5,"third":"three"},"third":"three"})"},
 };
 
+struct FindIfData
+{
+    const char* source;
+    const char* look_for;
+    const char* expected;
+};
+
+static const FindIfData s_find_if_data[] = {
+    {R"([{"arrow_color":"black","arrow_width":3,"display_name":"","label_color":"black","label_offset":[5,0],"label_position":"middle","label_rotation":0,"label_size":11,"label_style":{"family":"","slant":"normal","weight":"normal"},"line_width":0.8,"name":"","section_exclusion_tolerance":5,"section_inclusion_tolerance":10,"separator_color":"gray63","separator_width":0.5,"show":true,"show_section_size_in_label":true,"slot":-1}])", "no-name", "*ConstNull"},
+};
+
 #pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
@@ -193,6 +204,19 @@ int main()
     assert(v3.get("first", "aaa", "bbb").is_number());
     v3.set("first") = 88;
     assert(v3.get("first").is_number());
+
+    for (auto [source, look_for, expected]: s_find_if_data) {
+        try {
+            auto parsed = rjson::v2::parse_string(source);
+            const auto& found = rjson::v2::find_if(parsed, [look_for=look_for](const rjson::v2::value& val) { return static_cast<std::string_view>(val["name"]) == look_for; });
+            assert(rjson::v2::to_string(found) == expected);
+              // std::cerr << "DEBUG: found: " << found << '\n';
+        }
+        catch (rjson::v2::parse_error& err) {
+            std::cerr << "ERROR: parsing '" << source << "'\n  --> " << err.what() << '\n';
+            exit_code = 2;
+        }
+    }
 
     return exit_code;
 }

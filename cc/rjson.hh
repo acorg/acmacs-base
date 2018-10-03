@@ -239,7 +239,8 @@ namespace rjson
 
             template <typename T, typename = std::enable_if_t<(acmacs::sfinae::decay_equiv_v<T, bool> || std::is_base_of_v<std::string, std::decay_t<T>>
                                                                || acmacs::sfinae::decay_equiv_v<T, value> || acmacs::sfinae::decay_equiv_v<T, object> || acmacs::sfinae::decay_equiv_v<T, array>
-                                                               || acmacs::sfinae::decay_equiv_v<T, number> || acmacs::sfinae::decay_equiv_v<T, null> || acmacs::sfinae::decay_equiv_v<T, const_null>)>>
+                                                               || acmacs::sfinae::decay_equiv_v<T, number> || acmacs::sfinae::decay_equiv_v<T, null> || acmacs::sfinae::decay_equiv_v<T, const_null>
+                                                               )>>
                 value& assign(acmacs::sfinae::dispatching_priority<0>, T&& src)
                 {
                     check_const_null();
@@ -261,8 +262,8 @@ namespace rjson
             value(double src) : value_base(number(src)) {}                 // gcc 7.2 wants it to disambiguate
             value(bool src) : value_base(src) {}
 
-            value& operator=(const value&) = default;
-            value& operator=(value&&) = default;
+            value& operator=(const value& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, src); }
+            value& operator=(value&& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, std::move(src)); }
             template <typename T> value& operator=(T&& src)
                 {
                     return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src));
@@ -274,15 +275,16 @@ namespace rjson
             bool is_string() const noexcept;
             bool is_number() const noexcept;
             bool is_bool() const noexcept;
+            bool is_const_null() const noexcept;
 
             bool empty() const noexcept;
             size_t size() const noexcept; // returns 0 if neither array nor object nor string
-            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& operator[](S field_name) noexcept;      // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+            template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& operator[](S field_name); // if this is not object, throws value_type_mismatch; if field not present, inserts field with null value and returns it
             const value& get(size_t index) const noexcept; // if this is not array or index out of range, returns ConstNull
             template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> const value& get(S field_name, Args&&... args) const noexcept;
-            template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& set(S field_name, Args&&... args) noexcept; // creates intermediate objects, if necessary
+            template <typename S, typename... Args, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> value& set(S field_name, Args&&... args); // creates intermediate objects, if necessary
             template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void remove(S field_name); // does nothing if field is not present, throws if this is not an object
-            value& operator[](size_t index) noexcept; // if this is not array or index out of range, returns ConstNull
+            value& operator[](size_t index); // if this is neither array nor object or index is out of range, throws value_type_mismatch
             const value& operator[](size_t index) const noexcept { return get(index); }
             void remove(size_t index); // if this is not array or index out of range, throws
             void clear(); // if this is neither array nor object, throws
@@ -300,7 +302,8 @@ namespace rjson
             operator unsigned() const { return to_integer<unsigned>(); }
             operator short() const { return to_integer<short>(); }
             operator unsigned short() const { return to_integer<unsigned short>(); }
-            operator bool() const;
+            bool get_bool() const;
+              // operator bool() const { return get_bool(); }
             template <typename R> R get_or_default(R&& dflt) const;
             std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
 
@@ -312,7 +315,6 @@ namespace rjson
           private:
             template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
             template <typename T> T to_integer() const;
-            bool is_const_null() const noexcept;
             void check_const_null() const
             {
                 if (is_const_null())
@@ -420,10 +422,29 @@ namespace rjson
             }
         }
 
-        template <typename Func> inline const value& array::find_if(Func&& func) const { if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return *found; else return ConstNull; }
-        template <typename Func> inline value& array::find_if(Func&& func) { if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return *found; else return ConstNull; }
+        template <typename Func> inline const value& array::find_if(Func&& func) const
+        {
+            if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end())
+                return *found;
+            else
+                return ConstNull;
+        }
 
-        template <typename Func> inline std::optional<size_t> array::find_index_if(Func&& func) const { if (auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end()) return static_cast<size_t>(found - content_.begin()); else return {}; }
+        template <typename Func> inline value& array::find_if(Func&& func)
+        {
+            if (const auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end())
+                return *found;
+            else
+                return ConstNull;
+        }
+
+        template <typename Func> inline std::optional<size_t> array::find_index_if(Func&& func) const
+        {
+            if (auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end())
+                return static_cast<size_t>(found - content_.begin());
+            else
+                return {};
+        }
 
         // --------------------------------------------------
 
@@ -672,48 +693,6 @@ namespace rjson
             return std::visit([](auto&& arg) { if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>) return true; else return false; }, *this);
         }
 
-        template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
-        {
-            return std::visit(
-                [&field_name](auto&& arg) -> const value& {
-                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
-                        return arg.get(field_name);
-                    else
-                        return ConstNull;
-                },
-                *this);
-        }
-
-        template <typename S, typename... Args, typename> inline const value& value::get(S field_name, Args&&... args) const noexcept
-        {
-            if (const auto& r1 = get1(field_name); !r1.is_null()) {
-                if constexpr (sizeof...(args) > 0)
-                    return r1.get(args...);
-                else
-                    return r1;
-            }
-            else
-                return ConstNull;
-        }
-
-          // creates intermediate objects, if necessary.
-          // if final key does not present, inserts null
-          // if intermediate value exists and it is neither object nor null, returns ConstNull
-        template <typename S, typename... Args, typename> inline value& value::set(S field_name, Args&&... args) noexcept
-        {
-            auto& r1 = operator[](field_name);
-            if (r1.is_null()) {
-                if constexpr (sizeof...(args) > 0)
-                    r1 = object{};
-            }
-            else if (!r1.is_object())
-                return ConstNull;
-            if constexpr (sizeof...(args) > 0)
-                return r1.set(args...);
-            else
-                return r1;
-        }
-
         // does nothing if field is not present, throws if this is not an object
         template <typename S, typename> inline void value::remove(S field_name)
         {
@@ -755,17 +734,58 @@ namespace rjson
                 *this);
         }
 
-        template <typename S, typename>
-        inline value& value::operator[](S field_name) noexcept // if this is not object, returns ConstNull; if field not present, inserts field with null value and returns it
+        template <typename S, typename> inline value& value::operator[](S field_name) // if this is not object, throws value_type_mismatch; if field not present, inserts field with null value and returns it
         {
             return std::visit(
-                [&field_name](auto&& arg) -> value& {
+                [&field_name,this](auto&& arg) -> value& {
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
                         return arg[field_name];
+                    else
+                        throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
+                },
+                *this);
+        }
+
+        template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
+        {
+            return std::visit(
+                [&field_name](auto&& arg) -> const value& {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+                        return arg.get(field_name);
                     else
                         return ConstNull;
                 },
                 *this);
+        }
+
+        template <typename S, typename... Args, typename> inline const value& value::get(S field_name, Args&&... args) const noexcept
+        {
+            if (const auto& r1 = get1(field_name); !r1.is_null()) {
+                if constexpr (sizeof...(args) > 0)
+                    return r1.get(args...);
+                else
+                    return r1;
+            }
+            else
+                return ConstNull;
+        }
+
+        // creates intermediate objects, if necessary.
+        // if final key does not present, inserts null
+        // if intermediate value exists and it is neither object nor null, throws value_type_mismatch
+        template <typename S, typename... Args, typename> inline value& value::set(S field_name, Args&&... args)
+        {
+            auto& r1 = operator[](field_name);
+            if constexpr (sizeof...(args) > 0) { // intermediate object expected
+                if (r1.is_null())
+                    r1 = object{};
+                else if (!r1.is_object())
+                    throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
+                return r1.set(args...);
+            }
+            else {
+                return r1;
+            }
         }
 
         inline const value& value::get(size_t index) const noexcept // if this is not object or field not present, returns ConstNull
@@ -783,17 +803,17 @@ namespace rjson
                 *this);
         }
 
-        inline value& value::operator[](size_t index) noexcept
+        inline value& value::operator[](size_t index)
         {
             return std::visit(
-                [index](auto&& arg) -> value& {
+                [index,this](auto&& arg) -> value& {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, array>)
                         return arg[index];
                     else if constexpr (std::is_same_v<T, object>)
                         return arg[std::to_string(index)];
                     else
-                        return ConstNull;
+                        throw value_type_mismatch("array or object", actual_type(), DEBUG_LINE_FUNC);
                 },
                 *this);
         }
@@ -858,7 +878,7 @@ namespace rjson
                 *this);
         }
 
-        inline value::operator bool() const
+        inline bool value::get_bool() const
         {
             return std::visit(
                 [this](auto&& arg) -> bool {
@@ -877,8 +897,12 @@ namespace rjson
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
                         return dflt;
-                    else
-                        return static_cast<R>(*this);
+                    else {
+                        if constexpr (std::is_same_v<std::decay_t<R>, bool>)
+                            return get_bool();
+                        else
+                            return static_cast<R>(*this);
+                    }
                 },
                 *this);
         }
@@ -1006,18 +1030,16 @@ namespace rjson
 
         template <typename Value, typename Func> inline auto& find_if(Value&& value, Func&& func) // returns ConstNull if not found, Func: bool (value&&), throws if not array
         {
-            return std::visit(
+            auto& result = std::visit(
                 [&func, &value](auto&& arg) -> Value& {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, array>)
                         return arg.find_if(std::forward<Func>(func));
-                    // else if (func(*this))
-                    //     return *this;
                     else
                         throw value_type_mismatch("array", value.actual_type(), DEBUG_LINE_FUNC);
-                    // return ConstNull;
                 },
                 std::forward<Value>(value));
+            return result;
         }
 
         template <typename Value, typename Func> inline std::optional<size_t> find_index_if(const Value& value, Func&& func) // Func: bool (value&&), throws if not array
@@ -1096,8 +1118,12 @@ namespace rjson
         {
             if (source.is_null())
                 return default_value;
-            else if (const auto& val = source[field_name]; !val.is_null())
-                return val;
+            else if (const auto& val = source[field_name]; !val.is_null()) {
+                if constexpr (std::is_same_v<T, bool>)
+                    return val.get_bool();
+                else
+                    return val;
+            }
             else
                 return default_value;
         }
@@ -1116,8 +1142,12 @@ namespace rjson
         {
             if (source.is_null())
                 return default_value;
-            else
-                return source;
+            else {
+                if constexpr (std::is_same_v<T, bool>)
+                    return source.get_bool();
+                else
+                    return source;
+            }
         }
 
         inline std::string_view get_or(const value& source, const char* default_value)
