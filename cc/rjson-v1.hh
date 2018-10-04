@@ -354,8 +354,8 @@ namespace rjson
             bool empty() const { return mContent.empty(); }
             const value& operator[](size_t index) const { return mContent.at(index); }
             const value& operator[](int index) const { return mContent.at(static_cast<decltype(mContent)::size_type>(index)); }
-            void erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
-            void erase(int index) { mContent.erase(mContent.begin() + index); }
+            void erase(size_t index);
+            void erase(int index);
             void resize(size_t new_size);
             void resize(size_t new_size, const value& to_insert);
             void clear() { mContent.clear(); }
@@ -645,8 +645,8 @@ namespace rjson
         inline value to_value(double aValue, int precision) { return number(aValue, precision); }
 
         // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(object&& aValue) { return aValue; }
-        template <typename FValue> inline value to_value(array&& aValue) { return aValue; }
+        template <typename FValue> inline value to_value(object&& aValue) { return std::move(aValue); }
+        template <typename FValue> inline value to_value(array&& aValue) { return std::move(aValue); }
 
         // template <typename FValue> inline value to_value(const value& aValue) { return aValue; }
         template <typename FValue> inline value to_value(const object& aValue) { return aValue; }
@@ -664,13 +664,9 @@ namespace rjson
             };
 
             value_visitor_base() = default;
-            virtual ~value_visitor_base(){}
+            virtual ~value_visitor_base() {}
 
-                [[noreturn]] virtual Result
-                operator()(null& aValue)
-            {
-                throw_unexpected_value("unexpected value: " + aValue.to_json());
-            }
+            [[noreturn]] virtual Result operator()(null& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
             [[noreturn]] virtual Result operator()(object& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
             [[noreturn]] virtual Result operator()(array& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
             [[noreturn]] virtual Result operator()(string& aValue) { throw_unexpected_value("unexpected value: " + aValue.to_json()); }
@@ -985,6 +981,8 @@ namespace rjson
                 insert(to_value(*first));
         }
 
+    inline void array::erase(size_t index) { mContent.erase(mContent.begin() + static_cast<std::vector<value>::difference_type>(index)); }
+           inline void array::erase(int index) { mContent.erase(mContent.begin() + index); }
         inline void array::resize(size_t new_size, const value& to_insert) { mContent.resize(new_size, to_insert); }
         inline void array::resize(size_t new_size) { resize(new_size, null{}); }
 
