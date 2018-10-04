@@ -42,7 +42,7 @@ namespace to_json
         using namespace std::string_literals;
         if constexpr (decay_equiv_v<T, std::string_view>)                    { return "\"" + std::string(aValue) + "\""; }
         else if constexpr (is_string_v<T>)                                   { return "\""s + aValue + '"'; }
-        else if constexpr (decay_equiv_v<T, raw>)                            { return aValue; }
+        else if constexpr (decay_equiv_v<T, raw>)                            { return std::move(aValue); }
         else if constexpr (decay_equiv_v<T, bool>)                           { return aValue ? "true" : "false"; }
         else if constexpr (decay_equiv_v<T, std::nullptr_t>)                 { return "null"; }
         else if constexpr (decay_equiv_v<T, null_t>)                         { return "null"; }
