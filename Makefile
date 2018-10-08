@@ -9,13 +9,14 @@ MAKEFLAGS = -w
 TARGETS = \
     $(ACMACS_BASE_LIB) \
     $(DIST)/json-pp \
+    $(DIST)/time-series-gen \
     $(DIST)/test-rjson \
     $(DIST)/test-rjson-load \
     $(DIST)/test-rjson2 \
     $(DIST)/test-argc-argv \
     $(DIST)/test-string-split \
     $(DIST)/test-date2 \
-    $(DIST)/time-series-gen
+    $(DIST)/test-settings
 
 # ----------------------------------------------------------------------
 
