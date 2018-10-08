@@ -162,24 +162,23 @@ namespace acmacs::settings
 
           // --------------------------------------------------
 
-        template <typename T> class array_element : public base
+        template <typename T> class const_array_element : public base
         {
          public:
-            array_element(rjson::value& val, std::string path) : value_(val), content_(*this), path_(path) {}
-            array_element(const array_element& src) : value_(src.value_), content_(*this), path_(src.path_) {}
-            array_element(array_element&& src) : value_(std::move(src.value_)), content_(*this), path_(std::move(src.path_)) {}
-            array_element& operator=(const array_element& src) { value_ = src.value_; path_ = src.path_; }
-            array_element& operator=(array_element&& src) { value_ = std::move(src.value_); path_ = std::move(src.path_); }
+            const_array_element(const rjson::value& val, std::string path) : value_(const_cast<rjson::value&>(val)), content_(*this), path_(path) {}
+            const_array_element(const const_array_element& src) : value_(src.value_), content_(*this), path_(src.path_) {}
+            const_array_element(const_array_element&& src) : value_(std::move(src.value_)), content_(*this), path_(std::move(src.path_)) {}
+            const_array_element& operator=(const const_array_element& src) { value_ = src.value_; path_ = src.path_; }
+            const_array_element& operator=(const_array_element&& src) { value_ = std::move(src.value_); path_ = std::move(src.path_); }
             std::string path() const override { return path_; }
-            void inject_default() override { content_.inject_default(); }
-            T& operator*() { return content_; }
+            void inject_default() override {}
             const T& operator*() const { return content_; }
-            T* operator->() { return &content_; }
             const T* operator->() const { return &content_; }
 
          protected:
             rjson::value& set() override { return value_; }
             const rjson::value& get() const override { return value_; }
+            T& content() { return content_; }
 
          private:
             std::reference_wrapper<rjson::value> value_;
@@ -187,6 +186,17 @@ namespace acmacs::settings
             std::string path_;
 
             friend class object;
+        };
+
+        template <typename T> class array_element : public const_array_element<T>
+        {
+         public:
+            using const_array_element<T>::const_array_element;
+            using const_array_element<T>::operator*;
+            using const_array_element<T>::operator->;
+            void inject_default() override { const_array_element<T>::content().inject_default(); }
+            T& operator*() { return const_array_element<T>::content(); }
+            T* operator->() { return &const_array_element<T>::content(); }
         };
 
         template <typename T> class array : public container
@@ -197,10 +207,11 @@ namespace acmacs::settings
             void inject_default() override {}
             bool empty() const { return parent_.get().empty(); }
             size_t size() const { return parent_.get().size(); }
-            array_element<T> operator[](size_t index) const { return {get()[index], make_element_path(index)}; }
+            const_array_element<T> operator[](size_t index) const { return {get()[index], make_element_path(index)}; }
             array_element<T> operator[](size_t index) { return {set()[index], make_element_path(index)}; }
             array_element<T> append() { const size_t index = size(); array_element<T> res(set().append(rjson::object{}), make_element_path(index)); res.inject_default(); return res; }
             void clear() { set().clear(); }
+            template <typename F> std::optional<array_element<T>> find(F func) const;
 
          protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
