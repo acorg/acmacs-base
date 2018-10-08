@@ -111,8 +111,6 @@ namespace acmacs
         template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         TextStyle() = default;
-        TextStyle(const TextStyle&) = default;
-        TextStyle(TextStyle&&) = default;
         template <typename S, typename = sfinae::string_only_t<S>> TextStyle(S font_name) : font_family{acmacs::to_string(font_name)} {}
 
         [[nodiscard]] bool operator==(const TextStyle& ts) const
