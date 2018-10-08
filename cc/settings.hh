@@ -385,20 +385,20 @@ namespace acmacs::settings
           // specialisations
           // ----------------------------------------------------------------------
 
-        template <> bool field<bool>::extract(const rjson::value& from) const { return from.get_bool(); }
-        template <> std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
+        template <> inline bool field<bool>::extract(const rjson::value& from) const { return from.get_bool(); }
+        template <> inline std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
 
         template <> inline void field<Size>::assign(rjson::value& to, const Size& from) { to = rjson::array{from.width, from.height}; }
-        template <> Size field<Size>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
+        template <> inline Size field<Size>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
 
         template <> inline void field<Offset>::assign(rjson::value& to, const Offset& from) { to = rjson::array{from.x(), from.y()}; }
-        template <> Offset field<Offset>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
+        template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
 
         template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
-        template <> Color field<Color>::extract(const rjson::value& from) const { return Color(static_cast<std::string_view>(from)); }
+        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(static_cast<std::string_view>(from)); }
 
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from) { to = rjson::object{{"family", *from.font_family}, {"slant", static_cast<std::string>(*from.slant)}, {"weight", static_cast<std::string>(*from.weight)}}; }
-        template <> TextStyle field<TextStyle>::extract(const rjson::value& from) const
+        template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const
         {
             TextStyle style;
             assign_string_if_not_null(from["family"], style.font_family);
