@@ -211,7 +211,8 @@ namespace acmacs::settings
             array_element<T> operator[](size_t index) { return {set()[index], make_element_path(index)}; }
             array_element<T> append() { const size_t index = size(); array_element<T> res(set().append(rjson::object{}), make_element_path(index)); res.inject_default(); return res; }
             void clear() { set().clear(); }
-            template <typename F> std::optional<array_element<T>> find(F func) const;
+            template <typename F> std::optional<const_array_element<T>> find_if(F func) const;
+            template <typename F> std::optional<array_element<T>> find_if(F func);
 
          protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
@@ -299,6 +300,8 @@ namespace acmacs::settings
             array_element<T> operator[](size_t index) const { return content_[index]; }
             array_element<T> append() { return content_.append(); }
             void clear() { content_.clear(); }
+            template <typename F> std::optional<const_array_element<T>> find_if(F func) const { return content_.find_if(func); }
+            template <typename F> std::optional<array_element<T>> find_if(F func) { return content_.find_if(func); }
 
             array<T>& operator*() { return content_; }
             const array<T>& operator*() const { return content_; }
@@ -351,6 +354,22 @@ namespace acmacs::settings
                 for (const T& val : default_)
                     append(val);
             }
+        }
+
+        template <typename T> template <typename F> inline std::optional<const_array_element<T>> array<T>::find_if(F func) const
+        {
+            if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
+                return operator[](index);
+            else
+                return {};
+        }
+
+        template <typename T> template <typename F> inline std::optional<array_element<T>> array<T>::find_if(F func)
+        {
+            if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
+                return operator[](index);
+            else
+                return {};
         }
 
     } // namespace v1
