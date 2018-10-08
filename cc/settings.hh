@@ -9,6 +9,9 @@
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/rjson.hh"
+#include "acmacs-base/size.hh"
+#include "acmacs-base/color.hh"
+#include "acmacs-base/text-style.hh"
 
 // ----------------------------------------------------------------------
 
@@ -245,6 +248,10 @@ namespace acmacs::settings
 
          private:
             std::optional<T> default_;
+
+              // to be specialised for complex types
+            void assign(rjson::value& to, const T& from) { to = from; }
+            T extract(const rjson::value& from) const { return from; }
         };
 
         template <typename T> inline std::ostream& operator<<(std::ostream& out, const field<T>& fld) { return out << static_cast<T>(fld); }
@@ -330,26 +337,20 @@ namespace acmacs::settings
         {
             if (default_) {
                 if (auto& val = set(); val.is_null())
-                    val = *default_;
+                    assign(val, *default_);
             }
         }
 
         template <typename T> inline field<T>& field<T>::operator=(const T& source)
         {
-            set() = source;
+            assign(set(), source);
             return *this;
         }
 
         template <typename T> inline field<T>::operator T() const
         {
-            if (auto& val = get(); !val.is_null()) {
-                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
-                    return val.get_bool();
-                else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return std::string(val);
-                else
-                    return val;
-            }
+            if (auto& val = get(); !val.is_null())
+                return extract(val);
             else if (default_)
                 return *default_;
             else
@@ -378,6 +379,32 @@ namespace acmacs::settings
                 return operator[](*index);
             else
                 return {};
+        }
+
+          // ----------------------------------------------------------------------
+          // specialisations
+          // ----------------------------------------------------------------------
+
+        template <> bool field<bool>::extract(const rjson::value& from) const { return from.get_bool(); }
+        template <> std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
+
+        template <> inline void field<Size>::assign(rjson::value& to, const Size& from) { to = rjson::array{from.width, from.height}; }
+        template <> Size field<Size>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
+
+        template <> inline void field<Offset>::assign(rjson::value& to, const Offset& from) { to = rjson::array{from.x(), from.y()}; }
+        template <> Offset field<Offset>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
+
+        template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
+        template <> Color field<Color>::extract(const rjson::value& from) const { return Color(static_cast<std::string_view>(from)); }
+
+        template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from) { to = rjson::object{{"family", *from.font_family}, {"slant", static_cast<std::string>(*from.slant)}, {"weight", static_cast<std::string>(*from.weight)}}; }
+        template <> TextStyle field<TextStyle>::extract(const rjson::value& from) const
+        {
+            TextStyle style;
+            assign_string_if_not_null(from["family"], style.font_family);
+            assign_string_if_not_null(from["slant"], style.slant);
+            assign_string_if_not_null(from["weight"], style.weight);
+            return style;
         }
 
     } // namespace v1

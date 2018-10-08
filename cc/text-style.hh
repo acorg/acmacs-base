@@ -111,8 +111,9 @@ namespace acmacs
         template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         TextStyle() = default;
-        TextStyle(std::string font_name) : font_family{font_name} {}
-        TextStyle(std::string_view font_name) : font_family(std::string(font_name)) {}
+        TextStyle(const TextStyle&) = default;
+        TextStyle(TextStyle&&) = default;
+        template <typename S, typename = sfinae::string_only_t<S>> TextStyle(S font_name) : font_family{acmacs::to_string(font_name)} {}
 
         [[nodiscard]] bool operator==(const TextStyle& ts) const
             {
@@ -127,8 +128,10 @@ namespace acmacs
 
     inline std::string to_string(const TextStyle& style)
     {
-        return " S:" + to_string(*style.slant) + " W:" + to_string(*style.weight) + " f:" + to_string(*style.font_family);
+        return "{slant:" + to_string(*style.slant) + " weight:" + to_string(*style.weight) + " familiy:" + to_string(*style.font_family) + '}';
     }
+
+    inline std::ostream& operator<<(std::ostream& out, const TextStyle& ts) { return out << to_string(ts); }
 
 // ----------------------------------------------------------------------
 
