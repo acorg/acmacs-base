@@ -17,6 +17,8 @@ struct AAAtPos : public acmacs::settings::object
 struct Mod : public acmacs::settings::object
 {
     acmacs::settings::field<std::string> name{this, "N"};
+    acmacs::settings::field<double>      d1{this, "d1", 1.0/8.0};
+
     using acmacs::settings::object::object;
 };
 
@@ -24,8 +26,8 @@ struct Settings : public acmacs::settings::toplevel
 {
     acmacs::settings::field<std::string>    version{this, "  version", "signature-page-settings-v4"};
     acmacs::settings::field_object<AAAtPos> aa_at_pos{this, "aa_at_pos"};
-    acmacs::settings::field_array<double>   viewport{this, "viewport", {0.1, 0.2, 122}};
-      // acmacs::settings::field_array<Mod>      mods{this, "mods"};
+    acmacs::settings::field_array<double>   viewport{this, "viewport", {0.125, 0.25, 122}};
+    acmacs::settings::field_array_of<Mod>   mods{this, "mods"};
 };
 
 // ----------------------------------------------------------------------
@@ -37,8 +39,7 @@ int main()
     try {
         Settings s1;
         s1.inject_default();
-        s1.write_to_file("-");
-        std::cout << '\n';
+        std::cout << s1.pretty() << '\n';
 
         std::cout << "report_most_diverse_positions: " << s1.aa_at_pos->report_most_diverse_positions << '\n';
         s1.aa_at_pos->report_most_diverse_positions = true;
@@ -50,7 +51,14 @@ int main()
 
         std::cout << "aa_at_pos: " << s1.aa_at_pos << '\n';
         std::cout << "viewport: " << s1.viewport << '\n';
+        s1.viewport.append(s1.viewport[2]);
+        std::cout << "viewport: " << s1.viewport << '\n';
 
+        std::cout << '\n';
+        auto mod1 = s1.mods.append();
+        mod1->name = "first";
+        s1.mods.append()->name = "second";
+        std::cout << s1.pretty() << '\n';
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';
