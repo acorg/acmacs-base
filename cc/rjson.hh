@@ -269,6 +269,8 @@ namespace rjson
                     return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src));
                 }
 
+            template <typename T> bool operator==(T to_compare) const { return static_cast<T>(*this) == to_compare; }
+
             bool is_null() const noexcept;
             bool is_object() const noexcept;
             bool is_array() const noexcept;
