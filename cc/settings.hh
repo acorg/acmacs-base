@@ -17,6 +17,7 @@ namespace acmacs::settings
     {
         class field_base;
         class object;
+        template <typename T> class array;
 
           // --------------------------------------------------
 
@@ -43,15 +44,27 @@ namespace acmacs::settings
             virtual const rjson::value& get() const = 0;
 
             friend class object;
+            template <typename T> friend class array;
         };
 
           // --------------------------------------------------
 
         class container : public base
         {
-         protected:
-            virtual void register_field(field_base* fld) = 0;
+        };
 
+          // --------------------------------------------------
+
+        class object_base : public container
+        {
+         public:
+            void inject_default() override;
+
+         protected:
+            void register_field(field_base* fld) { fields_.push_back(fld); }
+
+         private:
+            std::vector<field_base*> fields_;
             friend class field_base;
         };
 
@@ -60,28 +73,14 @@ namespace acmacs::settings
         class field_base : public base
         {
          public:
-            field_base(container& parent, const char* name) : parent_(parent), name_(name) { parent.register_field(this); }
+            field_base(object_base& parent, const char* name) : parent_(parent), name_(name) { parent.register_field(this); }
             rjson::value& set() override { return parent_.set().set(name_); }
             const rjson::value& get() const override { return parent_.get().get(name_); }
             std::string path() const override { return parent_.path() + '.' + name_; }
 
          private:
-            container& parent_;
+            object_base& parent_;
             const char* name_;
-        };
-
-          // --------------------------------------------------
-
-        class object_base : public container
-        {
-         public:
-            void inject_default() override { std::for_each(fields_.begin(), fields_.end(), [](field_base* fld) { fld->inject_default(); }); }
-
-         protected:
-            void register_field(field_base* fld) override { fields_.push_back(fld); }
-
-         private:
-            std::vector<field_base*> fields_;
         };
 
           // --------------------------------------------------
@@ -119,6 +118,32 @@ namespace acmacs::settings
 
          private:
             base& parent_;
+
+            friend inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << obj.get(); }
+        };
+
+          // --------------------------------------------------
+
+        template <typename T> class array : public container
+        {
+         public:
+            array(base& parent) : parent_(parent) {}
+            std::string path() const override { return parent_.path(); }
+              // void inject_default() override { std::for_each(content_.begin(), content_.end(), [](T& elt) { elt.inject_default(); }); }
+            void inject_default() override { /* to be speciailized if T is object */ }
+            bool empty() const { return parent_.get().empty(); }
+            size_t size() const { return parent_.get().size(); }
+            T operator[](size_t index) const { return get()[index]; }
+            void append(const T& to_append) { set().append(to_append); }
+
+         protected:
+            rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
+            const rjson::value& get() const override { return parent_.get(); }
+
+         private:
+            base& parent_;
+
+            friend inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << arr.get(); }
         };
 
           // --------------------------------------------------
@@ -126,8 +151,8 @@ namespace acmacs::settings
         template <typename T> class field : public field_base
         {
          public:
-            field(container* parent, const char* name, T&& default_value) : field_base(*parent, name), default_(std::forward<T>(default_value)) { }
-            field(container* parent, const char* name) : field_base(*parent, name) { }
+            field(object_base* parent, const char* name, T&& default_value) : field_base(*parent, name), default_(std::forward<T>(default_value)) { }
+            field(object_base* parent, const char* name) : field_base(*parent, name) { }
             void inject_default() override;
 
             field& operator=(const T& source);
@@ -145,8 +170,10 @@ namespace acmacs::settings
         template <typename T> class field_object : public field_base
         {
          public:
-            field_object(container* parent, const char* name) : field_base(*parent, name), content_(*this) {}
+            field_object(object_base* parent, const char* name) : field_base(*parent, name), content_(*this) {}
             void inject_default() override { content_.inject_default(); }
+            T& operator*() { return content_; }
+            const T& operator*() const { return content_; }
             T* operator->() { return &content_; }
             const T* operator->() const { return &content_; }
 
@@ -154,9 +181,36 @@ namespace acmacs::settings
             T content_;
         };
 
-// **********************************************************************
-// implementation
-// **********************************************************************
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const field_object<T>& fld) { return out << *fld; }
+
+        // --------------------------------------------------
+
+        template <typename T> using if_basic_t = std::enable_if_t<(std::is_same_v<T, double> || std::is_same_v<T, size_t> || std::is_same_v<T, int> || std::is_same_v<T, long> || std::is_same_v<T, std::string>)>;
+
+        template <typename T, typename IF = if_basic_t<T>> class field_array : public field_base
+        {
+          public:
+            field_array(object_base* parent, const char* name) : field_base(*parent, name), content_(*this) {}
+            field_array(object_base* parent, const char* name, std::initializer_list<T> init) : field_base(*parent, name), content_(*this), default_{init} {}
+            void inject_default() override;
+            array<T>& operator*() { return content_; }
+            const array<T>& operator*() const { return content_; }
+
+          private:
+            array<T> content_;
+            std::vector<T> default_;
+        };
+
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const field_array<T>& fld) { return out << *fld; }
+
+        // **********************************************************************
+        // implementation
+        // **********************************************************************
+
+        inline void object_base::inject_default()
+        {
+            std::for_each(fields_.begin(), fields_.end(), [](field_base* fld) { fld->inject_default(); });
+        }
 
         template <typename T> inline void field<T>::inject_default()
         {
@@ -184,6 +238,14 @@ namespace acmacs::settings
                 return *default_;
             else
                 throw not_set(path());
+        }
+
+        template <typename T, typename IF> inline void field_array<T, IF>::inject_default()
+        {
+            if (content_.empty() && !default_.empty()) {
+                for (const T& val : default_)
+                    content_.append(val);
+            }
         }
 
     } // namespace v1

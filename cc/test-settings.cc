@@ -14,10 +14,18 @@ struct AAAtPos : public acmacs::settings::object
     using acmacs::settings::object::object;
 };
 
+struct Mod : public acmacs::settings::object
+{
+    acmacs::settings::field<std::string> name{this, "N"};
+    using acmacs::settings::object::object;
+};
+
 struct Settings : public acmacs::settings::toplevel
 {
-    acmacs::settings::field<std::string>    version{this, "version", "signature-page-settings-v4"};
+    acmacs::settings::field<std::string>    version{this, "  version", "signature-page-settings-v4"};
     acmacs::settings::field_object<AAAtPos> aa_at_pos{this, "aa_at_pos"};
+    acmacs::settings::field_array<double>   viewport{this, "viewport", {0.1, 0.2, 122}};
+      // acmacs::settings::field_array<Mod>      mods{this, "mods"};
 };
 
 // ----------------------------------------------------------------------
@@ -39,6 +47,9 @@ int main()
         std::cout << "line_length: " << s1.aa_at_pos->line_length << '\n';
         s1.aa_at_pos->line_length = 1.2;
         std::cout << "line_length: " << s1.aa_at_pos->line_length << '\n';
+
+        std::cout << "aa_at_pos: " << s1.aa_at_pos << '\n';
+        std::cout << "viewport: " << s1.viewport << '\n';
 
     }
     catch (std::exception& err) {
