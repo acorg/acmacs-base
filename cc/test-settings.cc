@@ -59,7 +59,7 @@ int main()
         mod1->name = "first";
         s1.mods.append()->name = "second";
         std::cout << s1.pretty() << '\n';
-        if (auto found = s1.mods.find_if([](const Mod& mod) { return static_cast<std::string>(mod.name) == "second"; }); found)
+        if (auto found = s1.mods.find_if([](const Mod& mod) { return mod.name == "second"; }); found)
             std::cout << "found: " << *found << '\n';
         else
             std::cout << "not found!\n";

@@ -236,6 +236,12 @@ namespace acmacs::settings
 
             field& operator=(const T& source);
             operator T() const;
+            bool operator==(T rhs) const { return static_cast<T>(*this) == rhs; }
+            bool operator!=(T rhs) const { return static_cast<T>(*this) != rhs; }
+            bool operator<(T rhs) const { return static_cast<T>(*this) < rhs; }
+            bool operator<=(T rhs) const { return static_cast<T>(*this) <= rhs; }
+            bool operator>(T rhs) const { return static_cast<T>(*this) > rhs; }
+            bool operator>=(T rhs) const { return static_cast<T>(*this) > rhs; }
 
          private:
             std::optional<T> default_;
@@ -339,6 +345,8 @@ namespace acmacs::settings
             if (auto& val = get(); !val.is_null()) {
                 if constexpr (std::is_same_v<std::decay_t<T>, bool>)
                     return val.get_bool();
+                else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+                    return std::string(val);
                 else
                     return val;
             }
@@ -359,7 +367,7 @@ namespace acmacs::settings
         template <typename T> template <typename F> inline std::optional<const_array_element<T>> array<T>::find_if(F func) const
         {
             if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
-                return operator[](index);
+                return operator[](*index);
             else
                 return {};
         }
@@ -367,7 +375,7 @@ namespace acmacs::settings
         template <typename T> template <typename F> inline std::optional<array_element<T>> array<T>::find_if(F func)
         {
             if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
-                return operator[](index);
+                return operator[](*index);
             else
                 return {};
         }
