@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <optional>
 #include <functional>
@@ -88,6 +89,7 @@ namespace acmacs::settings
             field_base(field_base&&) = delete;
             rjson::value& set() override { return parent_.set().set(name_); }
             const rjson::value& get() const override { return parent_.get().get(name_); }
+            virtual void remove() { parent_.set().remove(name_); }
             std::string path() const override { return parent_.path() + '.' + name_; }
 
          private:
@@ -233,7 +235,8 @@ namespace acmacs::settings
         template <typename T> class field : public field_base
         {
          public:
-            field(object_base* parent, const char* name, T&& default_value) : field_base(*parent, name), default_(std::forward<T>(default_value)) { }
+            field(object_base* parent, const char* name, const T& default_value) : field_base(*parent, name), default_(default_value) { }
+            field(object_base* parent, const char* name, T&& default_value) : field_base(*parent, name), default_(std::move(default_value)) { }
             field(object_base* parent, const char* name) : field_base(*parent, name) { }
             void inject_default() override;
 
@@ -387,6 +390,19 @@ namespace acmacs::settings
 
         template <> inline bool field<bool>::extract(const rjson::value& from) const { return from.get_bool(); }
         template <> inline std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
+
+        template <> inline void field<std::map<std::string, std::string>>::assign(rjson::value& to, const std::map<std::string, std::string>& from)
+        {
+            to = rjson::object{};
+            for (const auto& [key, val] : from)
+                to[key] = val;
+        }
+        template <> inline std::map<std::string, std::string> field<std::map<std::string, std::string>>::extract(const rjson::value& from) const
+        {
+            std::map<std::string, std::string> result;
+            rjson::for_each(from, [&result](const std::string& field_name, const rjson::value& item_value) { result.emplace(field_name, static_cast<std::string>(item_value)); });
+            return result;
+        }
 
         template <> inline void field<Size>::assign(rjson::value& to, const Size& from) { to = rjson::array{from.width, from.height}; }
         template <> inline Size field<Size>::extract(const rjson::value& from) const { return {from[0], from[1]}; }
