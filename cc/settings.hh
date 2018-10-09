@@ -112,7 +112,6 @@ namespace acmacs::settings
             void update_from_file(std::string filename) { value_.update(rjson::parse_file(filename)); }
             void write_to_file(std::string filename) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_))); }
 
-
          protected:
             rjson::value& set() override { if (value_.is_null()) value_ = rjson::object{}; return value_; }
             const rjson::value& get() const override { return value_; }
@@ -155,6 +154,8 @@ namespace acmacs::settings
             T append(const T& to_append) { return static_cast<T>(set().append(to_append)); }
             void erase(size_t index) { set().remove(index); }
             void clear() { set().clear(); }
+            void set(std::initializer_list<T> vals) { rjson::value& stored = set(); stored.clear(); for (auto val : vals) stored.append(std::move(val)); }
+            template <typename F> void for_each(F func) const { rjson::for_each(get(), [&func](const rjson::value& val) -> void { func(val); }); }
 
          protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
@@ -232,7 +233,7 @@ namespace acmacs::settings
             base& parent_;
 
             std::string make_element_path(size_t index) const { return path() + '[' + std::to_string(index) + ']'; }
-            friend inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << arr.get(); }
+            friend inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << arr.get(); }
         };
 
           // --------------------------------------------------
@@ -305,6 +306,10 @@ namespace acmacs::settings
             void append() { content_.append({}); }
             void erase(size_t index) { content_.erase(index); }
             void clear() { content_.clear(); }
+            using field_base::set;
+            void set(std::initializer_list<T> vals) { content_.set(vals); }
+            template <typename F> void for_each(F func) const { return content_.for_each(func); }
+            template <typename F> void for_each(F func) { return content_.for_each(func); }
 
             array_basic<T>& operator*() { return content_; }
             const array_basic<T>& operator*() const { return content_; }
@@ -343,6 +348,7 @@ namespace acmacs::settings
             array<T> content_;
         };
 
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const field_array_of<T>& fld) { return out << *fld; }
 
         // **********************************************************************
         // implementation
