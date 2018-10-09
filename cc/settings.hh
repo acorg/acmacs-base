@@ -127,6 +127,7 @@ namespace acmacs::settings
          public:
             object(base& parent) : parent_(parent) {}
             std::string path() const override { return parent_.path(); }
+            std::string to_json() const { return rjson::to_string(get()); }
 
          protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::object{}; return val; }
