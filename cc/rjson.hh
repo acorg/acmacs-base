@@ -832,6 +832,8 @@ namespace rjson
                 *this);
         }
 
+        template <> inline bool value::operator==(const char* to_compare) const { return static_cast<std::string_view>(*this) == to_compare; }
+
         inline value::operator std::string() const
         {
             return std::visit(
