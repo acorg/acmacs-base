@@ -437,7 +437,7 @@ namespace acmacs::settings
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func)
         {
-            rjson::for_each(get(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
+            rjson::for_each(set(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
         }
 
           // ----------------------------------------------------------------------
