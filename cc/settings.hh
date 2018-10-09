@@ -218,6 +218,8 @@ namespace acmacs::settings
             void clear() { set().clear(); }
             template <typename F> std::optional<const_array_element<T>> find_if(F func) const;
             template <typename F> std::optional<array_element<T>> find_if(F func);
+            template <typename F> void for_each(F func) const;
+            template <typename F> void for_each(F func);
 
          protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
@@ -318,6 +320,8 @@ namespace acmacs::settings
             void clear() { content_.clear(); }
             template <typename F> std::optional<const_array_element<T>> find_if(F func) const { return content_.find_if(func); }
             template <typename F> std::optional<array_element<T>> find_if(F func) { return content_.find_if(func); }
+            template <typename F> void for_each(F func) const { return content_.for_each(func); }
+            template <typename F> void for_each(F func) { return content_.for_each(func); }
 
             array<T>& operator*() { return content_; }
             const array<T>& operator*() const { return content_; }
@@ -382,6 +386,16 @@ namespace acmacs::settings
                 return operator[](*index);
             else
                 return {};
+        }
+
+        template <typename T> template <typename F> inline void array<T>::for_each(F func) const
+        {
+            rjson::for_each(get(), [&func](const rjson::value& val) -> void { const_array_element<T> elt(val, ""); func(*elt); });
+        }
+
+        template <typename T> template <typename F> inline void array<T>::for_each(F func)
+        {
+            rjson::for_each(get(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
         }
 
           // ----------------------------------------------------------------------
