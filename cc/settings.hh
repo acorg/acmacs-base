@@ -243,7 +243,13 @@ namespace acmacs::settings
             void inject_default() override;
 
             field& operator=(const T& source);
+            field& operator=(const field& source);
+            bool is_set() const;
+            bool is_set_or_has_default() const;
+            T get_or(T&& a_default) const;
+            T get_or(const T& a_default) const;
             operator T() const;
+            T operator*() const { return *this; }
             bool operator==(T rhs) const { return static_cast<T>(*this) == rhs; }
             bool operator!=(T rhs) const { return static_cast<T>(*this) != rhs; }
             bool operator<(T rhs) const { return static_cast<T>(*this) < rhs; }
@@ -354,6 +360,22 @@ namespace acmacs::settings
             return *this;
         }
 
+        template <typename T> inline field<T>& field<T>::operator=(const field<T>& source)
+        {
+            assign(set(), static_cast<T>(source));
+            return *this;
+        }
+
+        template <typename T> inline bool field<T>::is_set() const
+        {
+            return !get().is_null();
+        }
+
+        template <typename T> inline bool field<T>::is_set_or_has_default() const
+        {
+            return is_set() || default_;
+        }
+
         template <typename T> inline field<T>::operator T() const
         {
             if (auto& val = get(); !val.is_null())
@@ -362,6 +384,26 @@ namespace acmacs::settings
                 return *default_;
             else
                 throw not_set(path());
+        }
+
+        template <typename T> inline T field<T>::get_or(T&& a_default) const
+        {
+            try {
+                return *this;
+            }
+            catch (not_set&) {
+                return std::move(a_default);
+            }
+        }
+
+        template <typename T> inline T field<T>::get_or(const T& a_default) const
+        {
+            try {
+                return *this;
+            }
+            catch (not_set&) {
+                return a_default;
+            }
         }
 
         template <typename T> inline void field_array<T>::inject_default()
