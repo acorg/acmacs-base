@@ -152,7 +152,7 @@ namespace acmacs::settings
             size_t size() const { return parent_.get().size(); }
             T operator[](size_t index) const { return get()[index]; }
             rjson::value& operator[](size_t index) { return set()[index]; }
-            T append(const T& to_append) { return set().append(to_append); }
+            T append(const T& to_append) { return static_cast<T>(set().append(to_append)); }
             void clear() { set().clear(); }
 
          protected:
@@ -228,7 +228,7 @@ namespace acmacs::settings
          private:
             base& parent_;
 
-            std::string make_element_path(size_t index) { return path() + '[' + std::to_string(index) + ']'; }
+            std::string make_element_path(size_t index) const { return path() + '[' + std::to_string(index) + ']'; }
             friend inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << arr.get(); }
         };
 
