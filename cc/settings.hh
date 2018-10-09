@@ -153,6 +153,7 @@ namespace acmacs::settings
             T operator[](size_t index) const { return get()[index]; }
             rjson::value& operator[](size_t index) { return set()[index]; }
             T append(const T& to_append) { return static_cast<T>(set().append(to_append)); }
+            void erase(size_t index) { set().remove(index); }
             void clear() { set().clear(); }
 
          protected:
@@ -215,9 +216,11 @@ namespace acmacs::settings
             const_array_element<T> operator[](size_t index) const { return {get()[index], make_element_path(index)}; }
             array_element<T> operator[](size_t index) { return {set()[index], make_element_path(index)}; }
             array_element<T> append() { const size_t index = size(); array_element<T> res(set().append(rjson::object{}), make_element_path(index)); res.inject_default(); return res; }
+            void erase(size_t index) { set().remove(index); }
             void clear() { set().clear(); }
             template <typename F> std::optional<const_array_element<T>> find_if(F func) const;
             template <typename F> std::optional<array_element<T>> find_if(F func);
+            template <typename F> std::optional<size_t> find_index_if(F func) const;
             template <typename F> void for_each(F func) const;
             template <typename F> void for_each(F func);
 
@@ -250,6 +253,7 @@ namespace acmacs::settings
             T get_or(const T& a_default) const;
             operator T() const;
             T operator*() const { return *this; }
+            bool empty() const;
             bool operator==(T rhs) const { return static_cast<T>(*this) == rhs; }
             bool operator!=(T rhs) const { return static_cast<T>(*this) != rhs; }
             bool operator<(T rhs) const { return static_cast<T>(*this) < rhs; }
@@ -299,6 +303,7 @@ namespace acmacs::settings
             T operator[](size_t index) const { return content_[index]; }
             void append(const T& to_append) { content_.append(to_append); }
             void append() { content_.append({}); }
+            void erase(size_t index) { content_.erase(index); }
             void clear() { content_.clear(); }
 
             array_basic<T>& operator*() { return content_; }
@@ -321,11 +326,13 @@ namespace acmacs::settings
             bool empty() const { return content_.empty(); }
             size_t size() const { return content_.size(); }
             array_element<T> operator[](size_t index) { return content_[index]; }
-            array_element<T> operator[](size_t index) const { return content_[index]; }
+            const_array_element<T> operator[](size_t index) const { return content_[index]; }
             array_element<T> append() { return content_.append(); }
+            void erase(size_t index) { content_.erase(index); }
             void clear() { content_.clear(); }
             template <typename F> std::optional<const_array_element<T>> find_if(F func) const { return content_.find_if(func); }
             template <typename F> std::optional<array_element<T>> find_if(F func) { return content_.find_if(func); }
+            template <typename F> std::optional<size_t> find_index_if(F func) const { return content_.find_index_if(func); }
             template <typename F> void for_each(F func) const { return content_.for_each(func); }
             template <typename F> void for_each(F func) { return content_.for_each(func); }
 
@@ -406,6 +413,21 @@ namespace acmacs::settings
             }
         }
 
+        namespace detail { template <typename E> using has_empty_t = decltype(std::declval<E&>().empty()); }
+
+        template <typename T> inline bool field<T>::empty() const
+        {
+            try {
+                if constexpr (acmacs::sfinae::is_detected_v<detail::has_empty_t, T>)
+                    return static_cast<T>(*this).empty();
+                else
+                    return false;
+            }
+            catch (not_set&) {
+                return true;
+            }
+        }
+
         template <typename T> inline void field_array<T>::inject_default()
         {
             if (empty() && !default_.empty()) {
@@ -428,6 +450,11 @@ namespace acmacs::settings
                 return operator[](*index);
             else
                 return {};
+        }
+
+        template <typename T> template <typename F> inline std::optional<size_t> array<T>::find_index_if(F func) const
+        {
+            return rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); });
         }
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func) const
