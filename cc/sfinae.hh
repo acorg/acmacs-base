@@ -60,6 +60,7 @@ namespace acmacs::sfinae
 
         template <typename T> constexpr bool is_const_char_ptr_v = std::is_convertible_v<T, const char*>;
         template <typename T> constexpr bool is_string_v = decay_equiv_v<T, std::string> || decay_equiv_v<T, std::string_view> || is_const_char_ptr_v<T>;
+        template <typename T> constexpr bool is_const_char_or_string_view_v = decay_equiv_v<T, std::string_view> || is_const_char_ptr_v<T>;
         template <typename T> using string_only_t = std::enable_if_t<is_string_v<T>>;
 
         // ----------------------------------------------------------------------

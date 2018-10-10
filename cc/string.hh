@@ -21,8 +21,9 @@
 namespace std
 {
     inline std::string operator+(std::string left, std::string_view right) { return left.append(right); }
-    inline std::string operator+(std::string_view left, std::string_view right) { return std::string(left) + right; }
     inline std::string operator+(std::string_view left, std::string right) { return std::string(left) + right; }
+    template <typename S, typename=std::enable_if_t<acmacs::sfinae::is_const_char_or_string_view_v<S>>> inline std::string operator+(S left, std::string_view right) { return std::string(left) + right; }
+    template <typename S, typename=std::enable_if_t<acmacs::sfinae::is_const_char_or_string_view_v<S>>> inline std::string operator+(S left, const char* right) { return std::string(left) + right; }
 
     inline unsigned long stoul(std::string_view src) { return stoul(std::string(src)); }
 }
