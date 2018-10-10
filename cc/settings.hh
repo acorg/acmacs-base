@@ -431,35 +431,37 @@ namespace acmacs::settings
             }
         }
 
+        template <typename T> template <typename F> inline std::optional<size_t> array<T>::find_index_if(F func) const
+        {
+            if (const auto& rjval = get(); !rjval.is_null())
+                return rjson::find_index_if(rjval, [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); });
+            return {};
+        }
+
         template <typename T> template <typename F> inline std::optional<const_array_element<T>> array<T>::find_if(F func) const
         {
-            if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
+            if (const auto index = find_index_if(func); index)
                 return operator[](*index);
-            else
-                return {};
+            return {};
         }
 
         template <typename T> template <typename F> inline std::optional<array_element<T>> array<T>::find_if(F func)
         {
-            if (const auto index = rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); }); index)
+            if (const auto index = find_index_if(func); index)
                 return operator[](*index);
-            else
-                return {};
-        }
-
-        template <typename T> template <typename F> inline std::optional<size_t> array<T>::find_index_if(F func) const
-        {
-            return rjson::find_index_if(get(), [&func](const rjson::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); });
+            return {};
         }
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func) const
         {
-            rjson::for_each(get(), [&func](const rjson::value& val) -> void { const_array_element<T> elt(val, ""); func(*elt); });
+            if (const auto& rjval = get(); !rjval.is_null())
+                rjson::for_each(rjval, [&func](const rjson::value& val) -> void { const_array_element<T> elt(val, ""); func(*elt); });
         }
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func)
         {
-            rjson::for_each(set(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
+            if (!get().is_null())
+                rjson::for_each(set(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
         }
 
           // ----------------------------------------------------------------------
