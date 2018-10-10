@@ -45,13 +45,8 @@ namespace acmacs::settings
             virtual void inject_default() = 0;
             virtual std::string path() const = 0;
 
-         protected:
             virtual rjson::value& set() = 0;
             virtual const rjson::value& get() const = 0;
-
-            friend class object;
-            template <typename T> friend class array_basic;
-            template <typename T> friend class array;
         };
 
           // --------------------------------------------------
@@ -89,6 +84,7 @@ namespace acmacs::settings
             field_base(field_base&&) = delete;
             rjson::value& set() override { return parent_.set().set(name_); }
             const rjson::value& get() const override { return parent_.get().get(name_); }
+            bool is_set() const { return !get().is_null(); }
             virtual void remove() { parent_.set().remove(name_); }
             std::string path() const override { return parent_.path() + '.' + name_; }
 
@@ -112,7 +108,6 @@ namespace acmacs::settings
             void update_from_file(std::string filename) { value_.update(rjson::parse_file(filename)); }
             void write_to_file(std::string filename) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_))); }
 
-         protected:
             rjson::value& set() override { if (value_.is_null()) value_ = rjson::object{}; return value_; }
             const rjson::value& get() const override { return value_; }
 
@@ -129,17 +124,16 @@ namespace acmacs::settings
             std::string path() const override { return parent_.path(); }
             std::string to_json() const { return rjson::to_string(get()); }
 
-         protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::object{}; return val; }
             const rjson::value& get() const override { return parent_.get(); }
 
          private:
             base& parent_;
-
-            friend inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << obj.get(); }
         };
 
-          // --------------------------------------------------
+        inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << obj.get(); }
+
+        // --------------------------------------------------
 
         template <typename T> class array_basic : public container
         {
@@ -158,17 +152,16 @@ namespace acmacs::settings
             void set(std::initializer_list<T> vals) { rjson::value& stored = set(); stored.clear(); for (auto val : vals) stored.append(std::move(val)); }
             template <typename F> void for_each(F func) const { rjson::for_each(get(), [&func](const rjson::value& val) -> void { func(val); }); }
 
-         protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
             const rjson::value& get() const override { return parent_.get(); }
 
          private:
             base& parent_;
-
-            friend inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << arr.get(); }
         };
 
-          // --------------------------------------------------
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << arr.get(); }
+
+        // --------------------------------------------------
 
         template <typename T> class const_array_element : public base
         {
@@ -183,9 +176,10 @@ namespace acmacs::settings
             const T& operator*() const { return content_; }
             const T* operator->() const { return &content_; }
 
-         protected:
             rjson::value& set() override { return value_; }
             const rjson::value& get() const override { return value_; }
+
+         protected:
             T& content() { return content_; }
 
          private:
@@ -226,7 +220,6 @@ namespace acmacs::settings
             template <typename F> void for_each(F func) const;
             template <typename F> void for_each(F func);
 
-         protected:
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
             const rjson::value& get() const override { return parent_.get(); }
 
@@ -234,10 +227,11 @@ namespace acmacs::settings
             base& parent_;
 
             std::string make_element_path(size_t index) const { return path() + '[' + std::to_string(index) + ']'; }
-            friend inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << arr.get(); }
         };
 
-          // --------------------------------------------------
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << arr.get(); }
+
+        // --------------------------------------------------
 
         template <typename T> class field : public field_base
         {
@@ -249,7 +243,6 @@ namespace acmacs::settings
 
             field& operator=(const T& source);
             field& operator=(const field& source);
-            bool is_set() const;
             bool is_set_or_has_default() const;
             T get_or(T&& a_default) const;
             T get_or(const T& a_default) const;
@@ -378,11 +371,6 @@ namespace acmacs::settings
         {
             assign(set(), static_cast<T>(source));
             return *this;
-        }
-
-        template <typename T> inline bool field<T>::is_set() const
-        {
-            return !get().is_null();
         }
 
         template <typename T> inline bool field<T>::is_set_or_has_default() const
