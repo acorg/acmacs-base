@@ -133,7 +133,7 @@ namespace acmacs
 
     }; // struct Area
 
-    inline std::string to_string(const Area& area, int precision = 32) { return to_string(area.min, precision) + ' ' + to_string(area.max, precision); }
+    inline std::string to_string(const Area& area, size_t precision = 32) { return to_string(area.min, precision) + ' ' + to_string(area.max, precision); }
 
     inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
 

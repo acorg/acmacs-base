@@ -180,23 +180,23 @@ namespace rjson
                     return std::numeric_limits<double>::quiet_NaN();
             };
             return std::visit(visitor, val);
-            }
+        }
 
-            template <typename T> T to_integer(const number& val)
-            {
-                auto visitor = [](auto&& arg) -> T {
-                    using Arg = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<Arg, long>)
-                        return static_cast<T>(arg);
-                    else if constexpr (std::is_same_v<Arg, double>)
-                        return static_cast<T>(std::lround(arg));
-                    else if constexpr (std::is_same_v<Arg, std::string>)
-                        return static_cast<T>(std::stoul(arg));
-                    else
-                        return std::numeric_limits<T>::max();
-                };
-                return std::visit(visitor, val);
-            }
+        template <typename T> T to_integer(const number& val)
+        {
+            auto visitor = [](auto&& arg) -> T {
+                using Arg = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<Arg, long>)
+                    return static_cast<T>(arg);
+                else if constexpr (std::is_same_v<Arg, double>)
+                    return static_cast<T>(std::lround(arg));
+                else if constexpr (std::is_same_v<Arg, std::string>)
+                    return static_cast<T>(std::stoul(arg));
+                else
+                    return std::numeric_limits<T>::max();
+            };
+            return std::visit(visitor, val);
+        }
 
         // --------------------------------------------------
 
@@ -1095,7 +1095,7 @@ namespace rjson
                 target[field_name] = aValue;
         }
 
-        inline void set_field_if_not_default(value& target, const char* field_name, double aValue, double aDefault, int precision)
+        inline void set_field_if_not_default(value& target, const char* field_name, double aValue, double aDefault, size_t precision)
         {
             if (!detail::equal(aValue, aDefault))
                 target[field_name] = number(acmacs::to_string(aValue, precision));

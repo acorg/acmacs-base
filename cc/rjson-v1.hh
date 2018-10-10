@@ -145,7 +145,7 @@ namespace rjson
         class number
         {
           private:
-            template <typename D> inline static std::string make_value(D val, int precision = 32)
+            template <typename D> inline static std::string make_value(D val, size_t precision = 32)
             {
                 if (std::isnan(val))
                     throw numeric_value_is_nan{};
@@ -156,7 +156,7 @@ namespace rjson
             number() : mValue{"0.0"} {}
             number(double aSrc) : mValue{make_value(aSrc)} {}
             number(long double aSrc) : mValue{make_value(aSrc)} {}
-            number(double aSrc, int precision) : mValue{make_value(aSrc, precision)} {}
+            number(double aSrc, size_t precision) : mValue{make_value(aSrc, precision)} {}
             number(std::string_view aData) : mValue{aData} {} // for parser
             number& operator=(double aSrc)
             {
@@ -278,7 +278,7 @@ namespace rjson
             value& set_field(const string& aKey, const value& aValue); // returns ref to inserted
             template <typename T> void set_field_if_not_empty(std::string aKey, const T& aValue);
             template <typename T> void set_field_if_not_default(std::string aKey, const T& aValue, const T& aDefault);
-            void set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision = 32);
+            void set_field_if_not_default(std::string aKey, double aValue, double aDefault, size_t precision = 32);
             template <typename Iterator> void set_array_field_if_not_empty(std::string aKey, Iterator first, Iterator last);
             template <typename Container> void set_array_field_if_not_empty(std::string aKey, const Container& aContainer)
             {
@@ -642,7 +642,7 @@ namespace rjson
             return rjson_type<FValue>{std::forward<FValue>(aValue)};
         }
 
-        inline value to_value(double aValue, int precision) { return number(aValue, precision); }
+        inline value to_value(double aValue, size_t precision) { return number(aValue, precision); }
 
         // template <typename FValue> inline value to_value(value&& aValue) { return aValue; }
         template <typename FValue> inline value to_value(object&& aValue) { return std::move(aValue); }
@@ -871,7 +871,7 @@ namespace rjson
                 set_field(aKey, to_value(aValue));
         }
 
-        inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault, int precision)
+        inline void object::set_field_if_not_default(std::string aKey, double aValue, double aDefault, size_t precision)
         {
             if (!std::isnan(aValue) && !float_equal(aValue, aDefault))
                 set_field(aKey, to_value(aValue, precision));

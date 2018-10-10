@@ -31,23 +31,35 @@ namespace acmacs
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
-    namespace internal
+    namespace detail
     {
-        template <typename D> inline std::string to_string_double(D value, int precision, const char* format)
+        template <typename D> inline std::string to_string_double(D value, size_t precision, const char* format, size_t truncate_zeros_threshold = 12)
         {
             const auto num_digits_before_dot = static_cast<int>(std::log10(std::abs(value))) + 1;
             constexpr const size_t buffer_size = 100;
             char buffer[buffer_size + 1];
-            const int written = std::snprintf(buffer, buffer_size, format, precision + num_digits_before_dot, value);
+            int written = std::snprintf(buffer, buffer_size, format, static_cast<int>(precision) + num_digits_before_dot, value);
             if (written < 0 && static_cast<size_t>(written) >= buffer_size)
                 throw std::runtime_error("acmacs::to_string(double) internal error");
-            return {buffer, static_cast<size_t>(written)};
+            std::string_view result(buffer, static_cast<size_t>(written));
+            if (truncate_zeros_threshold > 0) {
+                // calculate zeros after dot
+                if (auto dot = result.find('.'); dot != std::string_view::npos) {
+                    constexpr const char* many_zeros = "0000000000000000000000000000000000000000000000000000000000000000";
+                    constexpr const char* many_nines = "9999999999999999999999999999999999999999999999999999999999999999";
+                    if (const auto zeros_pos = result.find(std::string_view(many_zeros, truncate_zeros_threshold), dot + 1); zeros_pos != std::string_view::npos)
+                        return to_string_double(value, zeros_pos - dot + 1, format, 0);
+                    if (const auto nines_pos = result.find(std::string_view(many_nines, truncate_zeros_threshold), dot + 1); nines_pos != std::string_view::npos)
+                        return to_string_double(value, nines_pos - dot + 1, format, 0);
+                }
+            }
+            return std::string(result);
         }
-    } // namespace internal
+    } // namespace detail
 #pragma GCC diagnostic pop
 
-    inline std::string to_string(double value, int precision = 32) { return internal::to_string_double(value, precision, "%.*g"); }
-    inline std::string to_string(long double value, int precision = 64) { return internal::to_string_double(value, precision, "%.*Lg"); }
+    inline std::string to_string(double value, size_t precision = 32) { return detail::to_string_double(value, precision, "%.*g"); }
+    inline std::string to_string(long double value, size_t precision = 64) { return detail::to_string_double(value, precision, "%.*Lg"); }
 
     inline std::string to_string(std::string src) { return src; }
     inline std::string to_string(std::string_view src) { return std::string(src); }
