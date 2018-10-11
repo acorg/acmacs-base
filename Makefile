@@ -10,8 +10,6 @@ TARGETS = \
     $(ACMACS_BASE_LIB) \
     $(DIST)/json-pp \
     $(DIST)/time-series-gen \
-    $(DIST)/test-rjson \
-    $(DIST)/test-rjson-load \
     $(DIST)/test-rjson2 \
     $(DIST)/test-argc-argv \
     $(DIST)/test-string-split \
@@ -26,7 +24,7 @@ SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 ACMACS_BASE_SOURCES = \
     virus-name.cc color.cc text-style.cc time-series.cc read-file.cc layout.cc \
     argc-argv.cc quicklook.cc timeit.cc gzip.cc \
-    rjson.cc json-importer.cc rjson-v1.cc rjson-parser-pop-v1.cc
+    rjson.cc json-importer.cc
 
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc

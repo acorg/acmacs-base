@@ -1,4 +1,5 @@
 #pragma once
+#error Obsolete
 
 #include <stdexcept>
 #include <variant>

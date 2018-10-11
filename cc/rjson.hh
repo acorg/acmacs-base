@@ -14,8 +14,8 @@
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/enumerate.hh"
+#include "acmacs-base/float.hh"
 #include "acmacs-base/rjson-forward.hh"
-#include "acmacs-base/rjson-v1.hh"
 
 // ----------------------------------------------------------------------
 

@@ -1,3 +1,5 @@
+#error Obsolete
+
 #include "read-file.hh"
 #include "rjson.hh"
 #include "rjson-parser-pop-v1.hh"
