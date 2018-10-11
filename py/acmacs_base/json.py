@@ -19,10 +19,10 @@ def _json_simple(d):
 
 # ----------------------------------------------------------------------
 
-def dumps(data, separators=[',', ': '], indent=None, compact=True, sort_keys=False, simple=_json_simple, one_line_max_width=200):
+def dumps(data, separators=[',', ': '], indent=None, compact=True, sort_keys=False, simple=_json_simple, one_line_max_width=200, object_fields_sorting_key=None):
     # module_logger.info('json.dumps: {!r}'.format(data))
     if indent is not None and compact:
-        data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple, one_line_max_width=one_line_max_width)
+        data = _json_dumps(data, indent=indent, indent_increment=indent, simple=simple, one_line_max_width=one_line_max_width, object_fields_sorting_key=object_fields_sorting_key)
     else:
         data = json.dumps(data, separators=separators, indent=indent, sort_keys=sort_keys)
         if indent:
@@ -44,7 +44,7 @@ class JSONEncoder (json.JSONEncoder):
 
 # ----------------------------------------------------------------------
 
-def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, toplevel=True, one_line_max_width=200):
+def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, toplevel=True, one_line_max_width=200, object_fields_sorting_key=None):
     """More compact dumper with wide lines."""
 
     def end(symbol, indent):
@@ -56,7 +56,7 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
 
     def make_one_line(data):
         if isinstance(data, set):
-            s = json.dumps(sorted(data), sort_keys=True, cls=JSONEncoder)
+            s = json.dumps(sorted(data, key=object_fields_sorting_key), cls=JSONEncoder)
         else:
             s = json.dumps(data, sort_keys=True, cls=JSONEncoder)
         return s
@@ -66,9 +66,9 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
             r = ["{{{:<{}s}\"_\":\"-*- js-indent-level: {} -*-\",".format("", indent_increment - 1, indent_increment)]
         else:
             r = ["{"]
-        for no, k in enumerate(sorted(data), start=1):
+        for no, k in enumerate(sorted(data, key=object_fields_sorting_key), start=1):
             comma = "," if no < len(data) else ""
-            r.append("{:{}s}{}: {}{}".format("", indent, json.dumps(k, cls=JSONEncoder), _json_dumps(data[k], indent + indent_increment, indent_increment, simple=simple, toplevel=False), comma))
+            r.append("{:{}s}{}: {}{}".format("", indent, json.dumps(k, cls=JSONEncoder), _json_dumps(data[k], indent + indent_increment, indent_increment, simple=simple, toplevel=False, object_fields_sorting_key=object_fields_sorting_key), comma))
         r.append(end("}", indent))
         return r
 
@@ -86,7 +86,7 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
             r.append("[")
             for no, v in enumerate(data, start=1):
                 comma = "," if no < len(data) else ""
-                r.append("{:{}s}{}{}".format("", indent, _json_dumps(v, indent + indent_increment, indent_increment, simple=simple, toplevel=False), comma))
+                r.append("{:{}s}{}{}".format("", indent, _json_dumps(v, indent + indent_increment, indent_increment, simple=simple, toplevel=False, object_fields_sorting_key=object_fields_sorting_key), comma))
             r.append(end("]", indent))
         else:
             raise ValueError("Cannot serialize: {!r}".format(data))
@@ -107,11 +107,11 @@ def read_json(path :Path):
 
 # ----------------------------------------------------------------------
 
-def write_json(path :Path, data, indent=2, compact=True):
+def write_json(path :Path, data, indent=2, compact=True, object_fields_sorting_key=None):
     from .files import backup_file
     backup_file(path)
     from .files import write_binary
-    write_binary(path=path, data=(dumps(data, indent=indent, compact=compact, sort_keys=True) + "\n").encode("utf-8"))
+    write_binary(path=path, data=(dumps(data, indent=indent, compact=compact, sort_keys=True, object_fields_sorting_key=object_fields_sorting_key) + "\n").encode("utf-8"))
 
 # ======================================================================
 ### Local Variables:
