@@ -256,11 +256,18 @@ namespace rjson
             value(std::string_view src) : value_base(std::string(src)) {}
             value(const char* src) : value_base(std::string(src)) {}
             value(char* src) : value_base(std::string(src)) {}
-            template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> value(Uint src) : value_base(number(static_cast<long>(src))) {}
-            template <typename Dbl, typename std::enable_if<std::is_floating_point<Dbl>::value>::type* = nullptr> value(Dbl src) : value_base(number(static_cast<double>(src))) {}
-            value(int src) : value_base(number(static_cast<long>(src))) {} // gcc 7.2 wants it to disambiguate
-            value(double src) : value_base(number(src)) {}                 // gcc 7.2 wants it to disambiguate
             value(bool src) : value_base(src) {}
+
+              // template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> value(Uint src) : value_base(number(static_cast<long>(src))) {}
+              // template <typename Dbl, typename std::enable_if<std::is_floating_point<Dbl>::value>::type* = nullptr> value(Dbl src) : value_base(number(static_cast<double>(src))) {}
+
+             // gcc 7.3 wants it to disambiguate
+            value(int src) : value_base(number(static_cast<long>(src))) {}
+            value(unsigned src) : value_base(number(static_cast<long>(src))) {}
+            value(long src) : value_base(number(src)) {}
+            value(unsigned long src) : value_base(number(static_cast<long>(src))) {}
+            value(double src) : value_base(number(src)) {}
+            value(float src) : value_base(number(static_cast<double>(src))) {}
 
             value& operator=(const value& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, src); }
             value& operator=(value&& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, std::move(src)); }
