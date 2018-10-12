@@ -57,6 +57,12 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
     def make_one_line(data):
         if isinstance(data, set):
             s = json.dumps(sorted(data, key=object_fields_sorting_key), cls=JSONEncoder)
+        elif isinstance(data, dict):
+            s = "{"
+            for no, k in enumerate(sorted(data, key=object_fields_sorting_key), start=1):
+                comma = ", " if no < len(data) else ""
+                s += "{}: {}{}".format(json.dumps(k, cls=JSONEncoder), _json_dumps(data[k], indent=0, indent_increment=None, simple=simple, toplevel=False, object_fields_sorting_key=object_fields_sorting_key), comma)
+            s += "}"
         else:
             s = json.dumps(data, sort_keys=True, cls=JSONEncoder)
         return s
@@ -76,7 +82,7 @@ def _json_dumps(data, indent=2, indent_increment=None, simple=_json_simple, topl
 
     if indent_increment is None:
         indent_increment = indent
-    if simple(data):
+    if indent == 0 or simple(data):
         s = make_one_line(data)
     else:
         r = []
