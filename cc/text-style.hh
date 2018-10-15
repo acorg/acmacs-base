@@ -3,10 +3,10 @@
 #include <string>
 
 #include "acmacs-base/sfinae.hh"
-#include "acmacs-base/string.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
 #include "acmacs-base/field.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -44,13 +44,12 @@ namespace acmacs
 
         template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontSlant)
             {
-                using namespace std::string_literals;
                 if (aFontSlant == "normal")
                     mFontSlant = Normal;
                 else if (aFontSlant == "italic")
                     mFontSlant = Italic;
                 else
-                    std::runtime_error("Unrecognized slant: "s + aFontSlant);
+                    std::runtime_error(::string::concat("Unrecognized slant: ", aFontSlant));
             }
 
     }; // class FontSlant
@@ -90,13 +89,12 @@ namespace acmacs
 
         template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontWeight)
             {
-                using namespace std::string_literals;
                 if (aFontWeight == "normal")
                     mFontWeight = Normal;
                 else if (aFontWeight == "bold")
                     mFontWeight = Bold;
                 else
-                    std::runtime_error("Unrecognized weight: "s + aFontWeight);
+                    std::runtime_error(::string::concat("Unrecognized weight: ", aFontWeight));
             }
 
     }; // class FontWeight
@@ -126,7 +124,7 @@ namespace acmacs
 
     inline std::string to_string(const TextStyle& style)
     {
-        return "{slant:" + to_string(*style.slant) + " weight:" + to_string(*style.weight) + " familiy:" + to_string(*style.font_family) + '}';
+        return ::string::concat("{slant:", to_string(*style.slant), " weight:", to_string(*style.weight), " familiy:", *style.font_family, '}');
     }
 
     inline std::ostream& operator<<(std::ostream& out, const TextStyle& ts) { return out << to_string(ts); }
@@ -160,8 +158,7 @@ namespace acmacs
 
     inline std::string to_string(const LabelStyle& style)
     {
-        return " shown:" + to_string(*style.shown) + " p:" + to_string(*style.offset) + " s:" + to_string(*style.size) +
-                " c:" + to_string(*style.color) + " r:" + to_string(*style.rotation) + " i:" + acmacs::to_string(*style.interline, 2) + ' ' + to_string(style.style);
+        return ::string::concat(" shown:", *style.shown, " p:", to_string(*style.offset), " s:", to_string(*style.size), " c:", to_string(*style.color), " r:", to_string(*style.rotation), " i:", to_string(*style.interline, 2), ' ', to_string(style.style));
     }
 
 } // namespace acmacs

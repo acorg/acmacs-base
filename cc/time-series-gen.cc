@@ -46,13 +46,13 @@ int main(int argc, char* const argv[])
                 start = args[1];
             }
             catch (std::exception& err) {
-                throw std::runtime_error("Cannot parse date from \""s + args[1] + "\": " + err.what());
+                throw std::runtime_error(string::concat("Cannot parse date from \"", args[1], "\": ", err.what()));
             }
             try {
                 end = args[2];
             }
             catch (std::exception& err) {
-                throw std::runtime_error("Cannot parse date from \""s + args[2] + "\": " + err.what());
+                throw std::runtime_error(string::concat("Cannot parse date from \"", args[2], "\": ", err.what()));
             }
             std::string json;
             if (args[0] == "monthly"s) {
@@ -65,7 +65,7 @@ int main(int argc, char* const argv[])
                 json = gen<WeeklyTimeSeries>(start, end);
             }
             else {
-                throw std::runtime_error("Unrecognized period: \""s + args[0] + "\", expected: monthly yearly weekly");
+                throw std::runtime_error(string::concat("Unrecognized period: \"", args[0], "\", expected: monthly yearly weekly"));
             }
             if (args.number_of_arguments() > 3)
                 acmacs::file::write(args[3], json);

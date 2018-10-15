@@ -312,7 +312,7 @@ namespace rjson
             operator short() const { return to_integer<short>(); }
             operator unsigned short() const { return to_integer<unsigned short>(); }
             bool get_bool() const;
-              // operator bool() const { return get_bool(); }
+            explicit operator bool() const { return get_bool(); }
             template <typename R> R get_or_default(R&& dflt) const;
             std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
 

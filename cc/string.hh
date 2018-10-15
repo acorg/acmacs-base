@@ -20,11 +20,6 @@
 
 namespace std
 {
-    inline std::string operator+(std::string left, std::string_view right) { return left.append(right); }
-    inline std::string operator+(std::string_view left, std::string right) { return std::string(left) + right; }
-    template <typename S, typename=std::enable_if_t<acmacs::sfinae::is_const_char_or_string_view_v<S>>> inline std::string operator+(S left, std::string_view right) { return std::string(left) + right; }
-    template <typename S, typename=std::enable_if_t<acmacs::sfinae::is_const_char_or_string_view_v<S>>> inline std::string operator+(S left, const char* right) { return std::string(left) + right; }
-
     inline unsigned long stoul(std::string_view src) { return stoul(std::string(src)); }
 }
 
@@ -291,6 +286,25 @@ namespace string
                 ++dist;
         }
         return dist;
+    }
+
+// ----------------------------------------------------------------------
+
+    namespace detail
+    {
+        template <typename S> inline std::string concat_to_string(S src) { return acmacs::to_string(src); }
+        template <> inline std::string concat_to_string(double src) { return acmacs::to_string(src, 4); }
+        template <> inline std::string concat_to_string(long double src) { return acmacs::to_string(src, 4); }
+    }
+
+    template <typename S1, typename S2, typename... Args> inline std::string concat(S1 s1, S2 s2, Args... args)
+    {
+        auto result = detail::concat_to_string(s1);
+        result.append(detail::concat_to_string(s2));
+        if constexpr (sizeof...(args) > 0)
+            return concat(result, args...);
+        else
+            return result;
     }
 
 // ----------------------------------------------------------------------

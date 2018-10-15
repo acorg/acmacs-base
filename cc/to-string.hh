@@ -13,11 +13,6 @@
 
 namespace acmacs
 {
-    // template <typename T> inline std::string to_string(T aSrc)
-    // {
-    //     return std::to_string(aSrc);
-    // }
-
     inline std::string to_string(int src) { return std::to_string(src); }
     inline std::string to_string(unsigned src) { return std::to_string(src); }
     inline std::string to_string(long src) { return std::to_string(src); }
