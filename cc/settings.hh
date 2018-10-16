@@ -468,7 +468,7 @@ namespace acmacs::settings
           // specialisations
           // ----------------------------------------------------------------------
 
-        template <> inline bool field<bool>::extract(const rjson::value& from) const { return from.get_bool(); }
+        template <> inline bool field<bool>::extract(const rjson::value& from) const { return static_cast<bool>(from); }
         template <> inline std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
 
         template <> inline void field<std::map<std::string, std::string>>::assign(rjson::value& to, const std::map<std::string, std::string>& from)

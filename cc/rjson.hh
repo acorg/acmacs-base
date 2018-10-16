@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <variant>
 #include <string>
 #include <string_view>
@@ -895,6 +896,12 @@ namespace rjson
                 [this](auto&& arg) -> bool {
                     if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>)
                         return arg;
+                    else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>) {
+                        const auto val = rjson::to_integer<int>(arg);
+                        if (val != 0 && val != 1)
+                            std::cerr << "WARNING: requested bool, stored number: " << to_string(arg) << DEBUG_LINE_FUNC << '\n';
+                        return val;
+                    }
                     else
                         throw value_type_mismatch("bool", actual_type(), DEBUG_LINE_FUNC);
                 },
@@ -908,12 +915,8 @@ namespace rjson
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
                         return dflt;
-                    else {
-                        if constexpr (std::is_same_v<std::decay_t<R>, bool>)
-                            return get_bool();
-                        else
-                            return static_cast<R>(*this);
-                    }
+                    else
+                        return static_cast<R>(*this);
                 },
                 *this);
         }
@@ -1129,12 +1132,8 @@ namespace rjson
         {
             if (source.is_null())
                 return default_value;
-            else if (const auto& val = source[field_name]; !val.is_null()) {
-                if constexpr (std::is_same_v<T, bool>)
-                    return val.get_bool();
-                else
-                    return val;
-            }
+            else if (const auto& val = source[field_name]; !val.is_null())
+                return static_cast<T>(val);
             else
                 return default_value;
         }
@@ -1153,12 +1152,8 @@ namespace rjson
         {
             if (source.is_null())
                 return default_value;
-            else {
-                if constexpr (std::is_same_v<T, bool>)
-                    return source.get_bool();
-                else
-                    return source;
-            }
+            else
+                return static_cast<T>(source);
         }
 
         inline std::string_view get_or(const value& source, const char* default_value)
