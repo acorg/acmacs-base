@@ -34,7 +34,10 @@ class Date
     Date weeks_ago(int number_of_weeks) const { return static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); }
 
     bool operator < (const Date& d) const { return date_ < d.date_; }
+    bool operator > (const Date& d) const { return date_ > d.date_; }
     bool operator == (const Date& d) const { return date_ == d.date_; }
+    bool operator != (const Date& d) const { return date_ != d.date_; }
+    bool operator <= (const Date& d) const { return date_ <= d.date_; }
     bool operator >= (const Date& d) const { return date_ >= d.date_; }
 
     bool empty() const { return !date_.ok(); }
