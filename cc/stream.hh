@@ -10,9 +10,12 @@
 #include <functional>
 #include <iterator>
 
-// forward for polyfill::make_ostream_joiner
-template <typename Stream, typename V1, typename V2> Stream& operator << (Stream& out, const std::pair<V1, V2>& aPair);
-template <typename Stream, typename Value> Stream& operator << (Stream& out, const std::vector<Value>& aCollection);
+namespace std
+{
+    // forward for polyfill::make_ostream_joiner
+    template <typename Stream, typename V1, typename V2> Stream& operator<<(Stream& out, const std::pair<V1, V2>& aPair);
+    template <typename Stream, typename Value> Stream& operator<<(Stream& out, const std::vector<Value>& aCollection);
+} // namespace std
 
 #include "acmacs-base/iterator.hh"
 #include "acmacs-base/sfinae.hh"
@@ -45,36 +48,38 @@ namespace stream_internal
 
 // ----------------------------------------------------------------------
 
-template <typename Stream, typename Value> inline Stream& operator << (Stream& out, const std::vector<Value>& aCollection)
-{
-    return stream_internal::write_to_stream(out, aCollection, "[", "]", ", ");
-}
-
-// ----------------------------------------------------------------------
-
-template <typename Stream, typename Value> inline Stream& operator << (Stream& out, const std::set<Value>& aCollection)
-{
-    return stream_internal::write_to_stream(out, aCollection, "{", "}", ", ");
-}
-
-// ----------------------------------------------------------------------
-
-template <typename Stream, typename Key, typename Value> inline Stream& operator << (Stream& out, const std::map<Key, Value>& aCollection)
-{
-    out << '{';
-    std::transform(std::begin(aCollection), std::end(aCollection), polyfill::make_ostream_joiner(out, ", "), [](const auto& elt) { std::ostringstream os; os << '<' << elt.first << ">: <" << elt.second << '>'; return os.str(); });
-    return out << '}';
-}
-
-// ----------------------------------------------------------------------
-
 namespace std
 {
-    template <typename Stream, typename Value> inline Stream& operator << (Stream& out, const std::pair<Value*, Value*>& aRange)
+    template <typename Stream, typename Value> inline Stream& operator<<(Stream& out, const std::vector<Value>& aCollection)
+    {
+        return stream_internal::write_to_stream(out, aCollection, "[", "]", ", ");
+    }
+
+    // ----------------------------------------------------------------------
+
+    template <typename Stream, typename Value> inline Stream& operator<<(Stream& out, const std::set<Value>& aCollection) { return stream_internal::write_to_stream(out, aCollection, "{", "}", ", "); }
+
+    // ----------------------------------------------------------------------
+
+    template <typename Stream, typename Key, typename Value> inline Stream& operator<<(Stream& out, const std::map<Key, Value>& aCollection)
+    {
+        out << '{';
+        std::transform(std::begin(aCollection), std::end(aCollection), polyfill::make_ostream_joiner(out, ", "), [](const auto& elt) {
+            std::ostringstream os;
+            os << '<' << elt.first << ">: <" << elt.second << '>';
+            return os.str();
+        });
+        return out << '}';
+    }
+
+    // ----------------------------------------------------------------------
+
+    template <typename Stream, typename Value> inline Stream& operator<<(Stream& out, const std::pair<Value*, Value*>& aRange)
     {
         return stream_internal::write_to_stream(out, aRange.first, aRange.second, "[", "]", ", ");
     }
-}
+
+} // namespace std
 
 // ----------------------------------------------------------------------
 
