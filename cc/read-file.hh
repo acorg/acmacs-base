@@ -117,6 +117,7 @@ namespace acmacs::file
                 return std::visit([](auto&& stream) -> std::ostream& { return stream; }, backend_);
             }
 
+        std::ostream& operator*() { return stream(); }
         operator std::ostream&() { return stream(); }
 
      private:
