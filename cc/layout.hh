@@ -282,15 +282,13 @@ namespace acmacs
 
     class Layout : public virtual LayoutInterface, public std::vector<double>
     {
-     public:
+      public:
         using Vec = std::vector<double>;
 
         Layout() = default;
-        Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions)
-            : Vec(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions}
-        {
-        }
         Layout(const Layout&) = default;
+        Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions) : Vec(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions} {}
+        Layout(size_t aNumberOfDimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{aNumberOfDimensions} {}
         Layout(const LayoutInterface& aSource) : Vec(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
         Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
         Layout& operator=(const Layout&) = default;
