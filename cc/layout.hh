@@ -45,6 +45,13 @@ namespace acmacs
             return {operator[](0), operator[](1), operator[](2)};
         }
 
+        Coordinates& mean_with(const Coordinates& another)
+        {
+            for (size_t dim = 0; dim < size(); ++dim)
+                (*this)[dim] = ((*this)[dim] + another[dim]) / 2.0;
+            return *this;
+        }
+
     }; // class Coordinates
 
     inline std::ostream& operator<<(std::ostream& s, const Coordinates& c)
