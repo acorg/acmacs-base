@@ -292,12 +292,12 @@ namespace string
 
     namespace detail
     {
-        template <typename S> inline std::string concat_to_string(S src)
+        template <typename S> inline std::string concat_to_string(S src, size_t precision = 6)
         {
             if constexpr (std::is_convertible_v<S, std::string>)
                 return static_cast<std::string>(src);
             else if constexpr (std::is_same_v<S, double> || std::is_same_v<S, long double>)
-                return acmacs::to_string(src, 4);
+                return acmacs::to_string(src, precision);
             else
                 return acmacs::to_string(src);
         }
@@ -309,6 +309,16 @@ namespace string
         result.append(detail::concat_to_string(s2));
         if constexpr (sizeof...(args) > 0)
             return concat(result, args...);
+        else
+            return result;
+    }
+
+    template <typename S1, typename S2, typename... Args> inline std::string concat_precise(S1 s1, S2 s2, Args... args)
+    {
+        auto result = detail::concat_to_string(s1, 32);
+        result.append(detail::concat_to_string(s2, 32));
+        if constexpr (sizeof...(args) > 0)
+            return concat_precise(result, args...);
         else
             return result;
     }
