@@ -25,14 +25,12 @@ namespace acmacs
     class Transformation : public detail::TransformationBase
     {
      public:
-//#        double a = 1.0, b = 0.0, c = 0.0, d = 1.0;
-
-        Transformation() : detail::TransformationBase{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0} {}
+        Transformation(size_t num_dim = 2) : detail::TransformationBase{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{num_dim} {}
         Transformation(const Transformation&) = default;
         Transformation(double a11, double a12, double a21, double a22) : detail::TransformationBase{a11, a12, 0.0, 0.0, a21, a22, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{2} {}
         Transformation& operator=(const Transformation&) = default;
         Transformation& operator=(Transformation&&) = default;
-        bool operator==(const Transformation& rhs) const { return std::equal(begin(), end(), rhs.begin()); } // float_equal(a, o.a) && float_equal(b, o.b) && float_equal(c, o.c) && float_equal(d, o.d); }
+        bool operator==(const Transformation& rhs) const { return std::equal(begin(), end(), rhs.begin()); }
         bool operator!=(const Transformation& rhs) const { return ! operator==(rhs); }
 
         void reset() { operator=(Transformation()); }
