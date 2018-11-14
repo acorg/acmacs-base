@@ -53,6 +53,29 @@ namespace acmacs
                 return {};
             }
 
+        template <typename Iterator> Transformation& set(Iterator first, size_t size)
+            {
+                switch (size) {
+                  case 4:
+                      _x(0, 0) = *first++;
+                      _x(0, 1) = *first++;
+                      _x(1, 0) = *first++;
+                      _x(1, 1) = *first++;
+                      break;
+                  case 9:
+                      _x(0, 0) = *first++;
+                      _x(0, 1) = *first++;
+                      _x(0, 2) = *first++;
+                      _x(1, 0) = *first++;
+                      _x(1, 1) = *first++;
+                      _x(1, 2) = *first++;
+                      _x(2, 0) = *first++;
+                      _x(2, 1) = *first++;
+                      _x(2, 2) = *first++;
+                }
+                return *this;
+            }
+
           // 2D --------------------------------------------------
 
         constexpr double  a() const { return _x(0, 0); }
