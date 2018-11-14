@@ -25,7 +25,13 @@ namespace acmacs
 
         Coordinates transform(const Transformation& aTransformation) const
         {
-            return aTransformation.transform(static_cast<Location2D>(*this));
+            switch (size()) {
+                case 2:
+                    return aTransformation.transform(static_cast<Location2D>(*this));
+                case 3:
+                    return aTransformation.transform(static_cast<Location3D>(*this));
+            }
+            return {};
         }
 
         bool not_nan() const

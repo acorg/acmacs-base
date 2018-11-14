@@ -162,6 +162,19 @@ namespace acmacs
                 return {d() / deter, - b() / deter, -c() / deter, a() / deter};
             }
 
+          // 3D --------------------------------------------------
+
+        Location3D transform(Location3D loc) const
+            {
+                return {
+                    loc.x() * _x(0, 0) + loc.y() * _x(1, 0) + loc.z() * _x(2, 0),
+                    loc.x() * _x(0, 1) + loc.y() * _x(1, 1) + loc.z() * _x(2, 1),
+                    loc.x() * _x(0, 2) + loc.y() * _x(1, 2) + loc.z() * _x(2, 2)
+                };
+            }
+
+          // -----------------------------------------------------
+
         size_t number_of_dimensions = 2;
 
     }; // class Transformation
