@@ -685,50 +685,109 @@ namespace rjson
 {
     inline namespace v2
     {
-        enum class dive { no, yes };
-        template <typename RJ> static inline bool is_simple(RJ&&, dive = dive::yes) { return true; }
+//#        enum class dive { no, yes };
 
-        template <> inline bool is_simple(const object& val, dive a_dive)
-        {
-            return val.empty() || (a_dive == dive::yes && val.all_of([](const auto& kv) -> bool { return is_simple(kv.second, dive::no); }));
-        }
+//#        template <typename RJ> static inline bool is_simple(RJ&&, dive = dive::yes) { return true; }
+//#
+//#        template <> inline bool is_simple(const object& val, dive a_dive)
+//#        {
+//#            return val.empty() || (a_dive == dive::yes && val.all_of([](const auto& kv) -> bool { return is_simple(kv.second, dive::no); }));
+//#        }
+//#
+//#        template <> inline bool is_simple(const array& val, dive a_dive)
+//#        {
+//#            return val.empty() || ((a_dive == dive::yes) && val.all_of([](const auto& v) -> bool { return is_simple(v, dive::no); }));
+//#        }
+//#
+//#        template <> inline bool is_simple(const value& val, dive a_dive)
+//#        {
+//#            return std::visit([a_dive](auto&& arg) -> bool { return is_simple(arg, a_dive); }, val);
+//#        }
 
-        template <> inline bool is_simple(const array& val, dive a_dive)
-        {
-            return val.empty() || ((a_dive == dive::yes) && val.all_of([](const auto& v) -> bool { return is_simple(v, dive::no); }));
-        }
-
-        template <> inline bool is_simple(const value& val, dive a_dive)
-        {
-            return std::visit([a_dive](auto&& arg) -> bool { return is_simple(arg, a_dive); }, val);
-        }
+        static std::string pretty(const value& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
+        std::string pretty(const object& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
+        std::string pretty(const array& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
 
     } // namespace v2
 } // namespace rjson
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
+bool rjson::v2::PrettyHandler::is_simple(const object& val, dive a_dive) const
 {
-    if (is_simple(val))
+    return val.empty() || (a_dive == dive::yes && val.all_of([this](const auto& kv) -> bool { return is_simple(kv.second, dive::no); }));
+
+} // rjson::v2::PrettyHandler::is_simple
+
+// ----------------------------------------------------------------------
+
+bool rjson::v2::PrettyHandler::is_simple(const array& val, dive a_dive) const
+{
+    return val.empty() || ((a_dive == dive::yes) && val.all_of([this](const auto& v) -> bool { return is_simple(v, dive::no); }));
+
+} // rjson::v2::PrettyHandler::is_simple
+
+// ----------------------------------------------------------------------
+
+bool rjson::v2::PrettyHandler::is_simple(const value& val, dive a_dive) const
+{
+    auto visitor = [a_dive, this](auto&& arg) -> bool {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+            return is_simple(arg, a_dive);
+        else
+            return true;
+    };
+    return std::visit(visitor, val);
+
+} // rjson::v2::PrettyHandler::is_simple
+
+// ----------------------------------------------------------------------
+
+std::string rjson::v2::pretty(const value& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix)
+{
+    auto visitor = [&val, &pretty_handler, emacs_indent, prefix](auto&& arg) -> std::string {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+            return pretty(arg, emacs_indent, pretty_handler, prefix);
+        else
+            return to_string(val);
+    };
+    return std::visit(visitor, val);
+
+} // rjson::v2::pretty
+
+// ----------------------------------------------------------------------
+
+std::string rjson::v2::pretty(const value& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler)
+{
+    return pretty(val, emacs_indent, pretty_handler, 0);
+
+} // rjson::v2::pretty
+
+// ----------------------------------------------------------------------
+
+std::string rjson::v2::pretty(const object& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix)
+{
+    if (pretty_handler.is_simple(val, PrettyHandler::dive::yes))
         return to_string(val, true);
 
     std::string result(1, '{');
-    if (emacs_indent == json_pp_emacs_indent::yes && indent) {
-        result.append(indent - 1, ' ');
-        result.append("\"_\": \"-*- js-indent-level: " + std::to_string(indent) + " -*-\",\n");
+    if (emacs_indent == emacs_indent::yes && pretty_handler.indent()) {
+        result.append(pretty_handler.indent() - 1, ' ');
+        result.append("\"_\": \"-*- js-indent-level: " + std::to_string(pretty_handler.indent()) + " -*-\",\n");
     }
     else {
         result.append(1, '\n');
     }
     size_t size_before_comma = result.size() - 1;
-    result.append(prefix + indent, ' ');
+    result.append(prefix + pretty_handler.indent(), ' ');
     for (const auto& [key, val2] : val.content_) {
         result.append("\"" + key + "\": ");
-        result.append(pretty(val2, indent, json_pp_emacs_indent::no, prefix + indent));
+        result.append(pretty(val2, emacs_indent::no, pretty_handler, prefix + pretty_handler.indent()));
         size_before_comma = result.size();
         result.append(",\n");
-        result.append(prefix + indent, ' ');
+        result.append(prefix + pretty_handler.indent(), ' ');
     }
     if (result.back() == ' ') {
         result.resize(size_before_comma);
@@ -744,19 +803,19 @@ std::string rjson::v2::pretty(const object& val, size_t indent, json_pp_emacs_in
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::pretty(const array& val, size_t indent, json_pp_emacs_indent /*emacs_indent*/, size_t prefix)
+std::string rjson::v2::pretty(const array& val, emacs_indent /*emacs_indent*/, const PrettyHandler& pretty_handler, size_t prefix)
 {
-    if (is_simple(val))
+    if (pretty_handler.is_simple(val, PrettyHandler::dive::yes))
         return to_string(val, true);
 
     std::string result("[\n");
     size_t size_before_comma = 1;
-    result.append(prefix + indent, ' ');
+    result.append(prefix + pretty_handler.indent(), ' ');
     for (const auto& val2: val.content_) {
-        result.append(pretty(val2, indent, json_pp_emacs_indent::no, prefix + indent));
+        result.append(pretty(val2, emacs_indent::no, pretty_handler, prefix + pretty_handler.indent()));
         size_before_comma = result.size();
         result.append(",\n");
-        result.append(prefix + indent, ' ');
+        result.append(prefix + pretty_handler.indent(), ' ');
     }
     if (result.back() == ' ') {
         result.resize(size_before_comma);

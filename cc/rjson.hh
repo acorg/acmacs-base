@@ -27,8 +27,9 @@ namespace rjson
         class value;
         class array;
         class object;
+        class PrettyHandler;
 
-        enum class json_pp_emacs_indent { no, yes };
+        enum class emacs_indent { no, yes };
 
         class value_type_mismatch : public std::runtime_error
         {
@@ -105,7 +106,7 @@ namespace rjson
             content_t content_;
 
             friend std::string to_string(const object& val, bool space_after_comma);
-            friend std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+            friend std::string pretty(const object& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
 
         }; // class object
 
@@ -148,7 +149,7 @@ namespace rjson
             std::vector<value> content_;
 
             friend std::string to_string(const array& val, bool space_after_comma);
-            friend std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
+            friend std::string pretty(const array& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
 
         }; // class array
 
@@ -571,34 +572,6 @@ namespace rjson
 {
     inline namespace v2
     {
-        std::string to_string(const object& val, bool space_after_comma = false);
-        std::string to_string(const array& val, bool space_after_comma = false);
-        inline std::string to_string(bool val) { return val ? "true" : "false"; }
-        inline std::string to_string(null) { return "null"; }
-        inline std::string to_string(const_null) { return "*ConstNull"; }
-        inline std::string to_string(std::string val) { return "\"" + val + '"'; }
-
-        inline std::string to_string(const value& val)
-        {
-            return std::visit([](auto&& arg) -> std::string { return to_string(arg); }, val);
-        }
-
-        std::string pretty(const value& val, size_t indent = 2, json_pp_emacs_indent emacs_indent = json_pp_emacs_indent::yes, size_t prefix = 0);
-        std::string pretty(const object& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
-        std::string pretty(const array& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix);
-
-        inline std::string pretty(const value& val, size_t indent, json_pp_emacs_indent emacs_indent, size_t prefix)
-        {
-            auto visitor = [&val, indent, emacs_indent, prefix](auto&& arg) -> std::string {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                    return pretty(arg, indent, emacs_indent, prefix);
-                else
-                    return to_string(val);
-            };
-            return std::visit(visitor, val);
-        }
-
         inline std::string value::actual_type() const
         {
             return std::visit(
@@ -1078,10 +1051,6 @@ namespace rjson
 
         // ----------------------------------------------------------------------
 
-        inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
-
-        // ----------------------------------------------------------------------
-
         inline void set_field_if_not_empty(value& target, const char* field_name, std::string source)
         {
             if (!source.empty())
@@ -1195,6 +1164,55 @@ namespace rjson
             if (!source.is_null())
                 target = converter(source);
         }
+
+    } // namespace v2
+} // namespace rjson
+
+// ----------------------------------------------------------------------
+// to string and pretty
+// ----------------------------------------------------------------------
+
+namespace rjson
+{
+    inline namespace v2
+    {
+        std::string to_string(const object& val, bool space_after_comma = false);
+        std::string to_string(const array& val, bool space_after_comma = false);
+        inline std::string to_string(bool val) { return val ? "true" : "false"; }
+        inline std::string to_string(null) { return "null"; }
+        inline std::string to_string(const_null) { return "*ConstNull"; }
+        inline std::string to_string(std::string val) { return "\"" + val + '"'; }
+
+        inline std::string to_string(const value& val)
+        {
+            return std::visit([](auto&& arg) -> std::string { return to_string(arg); }, val);
+        }
+
+        inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
+
+          // ----------------------------------------------------------------------
+
+        class PrettyHandler
+        {
+          public:
+            enum class dive { no, yes };
+            PrettyHandler() = default;
+            PrettyHandler(size_t indent) : indent_{indent} {}
+            virtual ~PrettyHandler() = default;
+
+            size_t indent() const { return indent_; }
+
+            virtual bool is_simple(const object& val, dive a_dive) const;
+            virtual bool is_simple(const array& val, dive a_dive) const;
+
+         protected:
+            virtual bool is_simple(const value& val, dive a_dive) const;
+
+         private:
+            size_t indent_ = 2;
+        };
+
+        std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
 
     } // namespace v2
 } // namespace rjson

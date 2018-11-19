@@ -21,7 +21,7 @@ template <typename TS> std::string gen(const Date& aStart, const Date& aEnd)
                     {"after_last_date", entry.after_last_date()},
                 });
     }
-    return rjson::v2::pretty(data, 2);
+    return rjson::v2::pretty(data);
 }
 
 // ----------------------------------------------------------------------

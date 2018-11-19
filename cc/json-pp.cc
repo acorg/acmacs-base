@@ -8,7 +8,7 @@ int main(int argc, const char* const* argv)
     if (argc == 2) {
         try {
             auto data = rjson::v2::parse_file(argv[1]);
-            std::cout << rjson::v2::pretty(data, 2, rjson::v2::json_pp_emacs_indent::yes) << '\n';
+            std::cout << rjson::v2::pretty(data) << '\n';
         }
         catch (std::exception& err) {
             std::cerr << "ERROR: " << err.what() << '\n';
