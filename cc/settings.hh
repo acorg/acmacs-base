@@ -106,7 +106,7 @@ namespace acmacs::settings
 
             void read_from_file(std::string filename) { value_ = rjson::parse_file(filename); }
             void update_from_file(std::string filename) { value_.update(rjson::parse_file(filename)); }
-            void write_to_file(std::string filename) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_))); }
+            void write_to_file(std::string filename, rjson::emacs_indent emacs_indent = rjson::emacs_indent::yes, const rjson::PrettyHandler& pretty_handler = rjson::PrettyHandler{}) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_, emacs_indent, pretty_handler))); }
 
             rjson::value& set() override { if (value_.is_null()) value_ = rjson::object{}; return value_; }
             const rjson::value& get() const override { return value_; }
