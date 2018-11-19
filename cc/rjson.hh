@@ -30,6 +30,7 @@ namespace rjson
         class PrettyHandler;
 
         enum class emacs_indent { no, yes };
+        enum class space_after_comma { no, yes };
 
         class value_type_mismatch : public std::runtime_error
         {
@@ -105,8 +106,9 @@ namespace rjson
           private:
             content_t content_;
 
-            friend std::string to_string(const object& val, bool space_after_comma);
-            friend std::string pretty(const object& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
+            friend std::string to_string(const object& val, space_after_comma, const PrettyHandler&);
+            friend std::string pretty(const object& val, emacs_indent, const PrettyHandler&, size_t prefix);
+            friend class PrettyHandler;
 
         }; // class object
 
@@ -148,8 +150,9 @@ namespace rjson
           private:
             std::vector<value> content_;
 
-            friend std::string to_string(const array& val, bool space_after_comma);
-            friend std::string pretty(const array& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
+            friend std::string to_string(const array& val, space_after_comma, const PrettyHandler&);
+            friend std::string pretty(const array& val, emacs_indent, const PrettyHandler&, size_t prefix);
+            friend class PrettyHandler;
 
         }; // class array
 
@@ -1176,8 +1179,31 @@ namespace rjson
 {
     inline namespace v2
     {
-        std::string to_string(const object& val, bool space_after_comma = false);
-        std::string to_string(const array& val, bool space_after_comma = false);
+        class PrettyHandler
+        {
+          public:
+            enum class dive { no, yes };
+            PrettyHandler() = default;
+            PrettyHandler(size_t indent) : indent_{indent} {}
+            virtual ~PrettyHandler() = default;
+
+            size_t indent() const { return indent_; }
+
+            virtual bool is_simple(const object& val, dive a_dive) const;
+            virtual bool is_simple(const array& val, dive a_dive) const;
+            virtual std::vector<object::content_t::const_iterator> sorted(const object& val) const;
+
+         protected:
+            virtual bool is_simple(const value& val, dive a_dive) const;
+
+         private:
+            size_t indent_ = 2;
+        };
+
+          // ----------------------------------------------------------------------
+
+        std::string to_string(const object& val);
+        std::string to_string(const array& val);
         inline std::string to_string(bool val) { return val ? "true" : "false"; }
         inline std::string to_string(null) { return "null"; }
         inline std::string to_string(const_null) { return "*ConstNull"; }
@@ -1191,26 +1217,6 @@ namespace rjson
         inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
 
           // ----------------------------------------------------------------------
-
-        class PrettyHandler
-        {
-          public:
-            enum class dive { no, yes };
-            PrettyHandler() = default;
-            PrettyHandler(size_t indent) : indent_{indent} {}
-            virtual ~PrettyHandler() = default;
-
-            size_t indent() const { return indent_; }
-
-            virtual bool is_simple(const object& val, dive a_dive) const;
-            virtual bool is_simple(const array& val, dive a_dive) const;
-
-         protected:
-            virtual bool is_simple(const value& val, dive a_dive) const;
-
-         private:
-            size_t indent_ = 2;
-        };
 
         std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
 
