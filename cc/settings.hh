@@ -150,6 +150,7 @@ namespace acmacs::settings
             void erase(size_t index) { set().remove(index); }
             void clear() { set().clear(); }
             void set(std::initializer_list<T> vals) { rjson::value& stored = set(); stored.clear(); for (auto val : vals) stored.append(std::move(val)); }
+            template <typename Iter> void set(Iter first, Iter last) { rjson::value& stored = set(); stored.clear(); for (; first != last; ++first) stored.append(*first); }
             template <typename F> void for_each(F func) const { rjson::for_each(get(), [&func](const rjson::value& val) -> void { func(val); }); }
 
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::array{}; return val; }
@@ -302,6 +303,7 @@ namespace acmacs::settings
             void clear() { content_.clear(); }
             using field_base::set;
             void set(std::initializer_list<T> vals) { content_.set(vals); }
+            template <typename Iter> void set(Iter first, Iter last) { content_.set(first, last); }
             template <typename F> void for_each(F func) const { return content_.for_each(func); }
             template <typename F> void for_each(F func) { return content_.for_each(func); }
 
