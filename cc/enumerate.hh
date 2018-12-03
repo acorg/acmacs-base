@@ -20,7 +20,7 @@ namespace acmacs
             inline enumerate_iterator(index_type aIndex, iterator aIterator) : index(aIndex), iter(aIterator) {}
             inline enumerate_iterator& operator++() { ++index; ++iter; return *this; }
             inline bool operator!=(const enumerate_iterator &other) const { return iter != other.iter; }
-            inline std::pair<index_type&, reference> operator*() { return {index, *iter}; }
+            inline std::pair<index_type, reference> operator*() { return {index, *iter}; }
 
          private:
             index_type index;
