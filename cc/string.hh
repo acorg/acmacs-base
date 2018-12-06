@@ -292,7 +292,7 @@ namespace string
 
     namespace detail
     {
-        template <typename S> inline std::string concat_to_string(S src, size_t precision = 6)
+        template <typename S> inline std::string concat_to_string(S src, [[maybe_unused]] size_t precision = 6)
         {
             if constexpr (std::is_convertible_v<S, std::string>)
                 return static_cast<std::string>(src);
