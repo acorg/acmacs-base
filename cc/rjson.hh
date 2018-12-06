@@ -457,7 +457,13 @@ namespace rjson
             if (auto found = std::find_if(content_.begin(), content_.end(), std::forward<Func>(func)); found != content_.end())
                 return static_cast<size_t>(found - content_.begin());
             else
-                return {};
+
+#pragma GCC diagnostic push
+#if __GNUC__ == 8
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+                return std::optional<size_t>{};
+#pragma GCC diagnostic pop
         }
 
         // --------------------------------------------------
