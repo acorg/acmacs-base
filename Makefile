@@ -55,9 +55,8 @@ install: check-acmacsd-root install-acmacs-base
 
 lib: $(ACMACS_BASE_LIB)
 
-test: | $(TARGETS)
+test: install | $(TARGETS)
 	test/test
-.PHONY: test
 
 profile-rjson: $(DIST)/profile-rjson-load
 	env LLVM_PROFILE_FILE=/r/default.profraw $^ ~/ac/results/ssm/2017-0925-ssm/merges/niid-b-vic-hi.ace
@@ -78,6 +77,8 @@ install-acmacs-base: $(TARGETS) # $(PCH)
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 	if [ -f $(PCH) ]; then ln -sf $(abspath $(PCH)) $(AD_INCLUDE)/acmacs-base; fi
 	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
+
+.PHONY: install check-acmacsd-root install-acmacs-base test
 
 # ----------------------------------------------------------------------
 
