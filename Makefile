@@ -64,11 +64,11 @@ RTAGS_TARGET = $(ACMACS_BASE_LIB)
 # ----------------------------------------------------------------------
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
-	printf "%-16s %s\n" "SHARED" $@
-	$(call make_shared,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+	$(call echo_shared_lib,$@)
+	$(call make_shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 $(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
-	printf "%-16s %s\n" "LINK" $@
+	$(call echo_link_exe,$@)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS) $(AD_RPATH)
 
 # ----------------------------------------------------------------------
