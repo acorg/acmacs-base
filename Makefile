@@ -65,7 +65,7 @@ RTAGS_TARGET = $(ACMACS_BASE_LIB)
 
 $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIST)
 	$(call echo_shared_lib,$@)
-	$(call make_shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
+	$(call make_shared_lib,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
 $(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
 	$(call echo_link_exe,$@)
