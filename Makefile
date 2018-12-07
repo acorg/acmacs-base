@@ -14,6 +14,7 @@ TARGETS = \
 
 all: install-acmacs-base
 
+CONFIGURE_BOOST = 1
 include $(ACMACSD_ROOT)/share/Makefile.config
 
 # ----------------------------------------------------------------------
@@ -34,7 +35,7 @@ TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = -L$(BOOST_LIB_PATH) -lboost_date_time $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(CXX_LIBS)
+ACMACS_BASE_LDLIBS = $(L_BOOST) -lboost_date_time $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(CXX_LIBS)
 
 # ----------------------------------------------------------------------
 
@@ -67,7 +68,7 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 	$(call echo_shared_lib,$@)
 	$(call make_shared_lib,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR)) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LDLIBS)
 
-$(DIST)/%: $(BUILD)/%.o | $(ACMACS_BASE_LIB)
+$(DIST)/%: $(BUILD)/%.o | $(DIST) $(ACMACS_BASE_LIB)
 	$(call echo_link_exe,$@)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS) $(AD_RPATH)
 
