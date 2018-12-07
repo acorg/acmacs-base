@@ -170,8 +170,8 @@ namespace acmacs::settings
         {
          public:
             const_array_element(const rjson::value& val, std::string path) : value_(const_cast<rjson::value&>(val)), content_(*this), path_(path) {}
-            const_array_element(const const_array_element& src) : value_(src.value_), content_(*this), path_(src.path_) {}
-            const_array_element(const_array_element&& src) : value_(std::move(src.value_)), content_(*this), path_(std::move(src.path_)) {}
+            const_array_element(const const_array_element& src) : base(src), value_(src.value_), content_(*this), path_(src.path_) {}
+            const_array_element(const_array_element&& src) : base(std::move(src)), value_(std::move(src.value_)), content_(*this), path_(std::move(src.path_)) {}
             const_array_element& operator=(const const_array_element& src) { value_ = src.value_; path_ = src.path_; }
             const_array_element& operator=(const_array_element&& src) { value_ = std::move(src.value_); path_ = std::move(src.path_); }
             std::string path() const override { return path_; }
