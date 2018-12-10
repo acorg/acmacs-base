@@ -74,10 +74,10 @@ namespace acmacs
 
             class argv
             {
-              public:
+              protected:
                 argv(int argc, const char* const argv[]);
 
-             private:
+              private:
                 std::string_view prog_name_;
                 std::vector<detail::option_base*> options_;
                 std::vector<std::string_view> args_;
@@ -108,7 +108,7 @@ namespace acmacs
 
             template <> void option<bool>::show(std::ostream& out) const
             {
-                if (value_)
+                // if (value_)
                     show_names(out);
             }
 

@@ -8,7 +8,7 @@ using namespace acmacs::argv;
 
 struct Options : public argv
 {
-    using argv::argv;
+    Options(int a_argc, const char* const a_argv[]) : argv(a_argc, a_argv) {}
 
     option<bool> a{*this, 'a', "a-enable"};
     option<bool> b{*this, 'b'};

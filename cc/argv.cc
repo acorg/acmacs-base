@@ -43,7 +43,7 @@ acmacs::argv::v2::argv::argv(int argc, const char* const argv[])
         for (const auto& err: errors_)
             std::cerr << "ERROR: " << err << '\n';
     }
-    if (!errors_.empty() || show_help_) {
+    if (!errors_.empty() /* || show_help_ */) {
         std::cerr << "SHOW HELP\n";
         std::exit(errors_.empty() ? 0 : 1);
     }
@@ -56,8 +56,12 @@ void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg)
 {
     if ((*arg)[0] == '-') {
         if ((*arg)[1] == '-') {
-            if ((*arg)[2])
-                ;               // long opt
+            if ((*arg)[2]) {    // long opt
+                if (auto* opt = find(std::string_view(*arg + 2)); opt)
+                    opt->add(arg);
+                else
+                    errors_.push_back(std::string("unrecognized option: ") + *arg);
+            }
             else
                 args_.push_back(*arg); // just two dashes
         }
@@ -81,6 +85,7 @@ void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg)
 
 void acmacs::argv::v2::argv::register_option(acmacs::argv::v2::detail::option_base* opt)
 {
+    std::cerr << "DEBUG: register_option " << (opt->short_name() ? opt->short_name() : ' ') << ' ' << opt->long_name() << '\n';
     options_.push_back(opt);
 
 } // acmacs::argv::v2::argv::register_option
@@ -89,7 +94,8 @@ void acmacs::argv::v2::argv::register_option(acmacs::argv::v2::detail::option_ba
 
 acmacs::argv::v2::detail::option_base* acmacs::argv::v2::argv::find(char short_name)
 {
-    const auto found = std::find_if(options_.begin(), options_.end(), [short_name](const auto* opt) -> bool { return opt->short_name() == short_name; });
+    std::cerr << "DEBUG: find short " << short_name << '\n';
+    const auto found = std::find_if(options_.begin(), options_.end(), [short_name](const auto* opt) -> bool { std::cerr << "DEBUG: find short " << short_name << " in " << opt->short_name() << '\n'; return opt->short_name() == short_name; });
     if (found != options_.end())
         return *found;
     else
@@ -101,6 +107,7 @@ acmacs::argv::v2::detail::option_base* acmacs::argv::v2::argv::find(char short_n
 
 acmacs::argv::v2::detail::option_base* acmacs::argv::v2::argv::find(std::string_view long_name)
 {
+    std::cerr << "DEBUG: find long " << long_name << '\n';
     const auto found = std::find_if(options_.begin(), options_.end(), [long_name](const auto* opt) -> bool { return opt->long_name() == long_name; });
     if (found != options_.end())
         return *found;
