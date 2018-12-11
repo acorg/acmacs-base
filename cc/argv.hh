@@ -36,7 +36,9 @@ namespace acmacs
                     virtual ~option_base() = default;
 
                     virtual void add(cmd_line_iter& arg, cmd_line_iter last) = 0;
+                    virtual void add(std::string_view arg) = 0;
                     std::string names() const noexcept;
+                    constexpr bool has_name() const noexcept { return short_name_ || !long_name_.empty(); }
                     constexpr std::string_view description() const noexcept { return description_; }
                     virtual std::string get_default() const noexcept = 0;
                     virtual bool has_arg() const noexcept { return true; }
@@ -45,12 +47,13 @@ namespace acmacs
 
                     constexpr char short_name() const noexcept { return short_name_; }
                     constexpr std::string_view long_name() const noexcept { return long_name_; }
+                    constexpr std::string_view arg_name() const noexcept { return arg_name_; }
 
                   protected:
                     constexpr void use_arg(char short_name) noexcept { short_name_ = short_name; }
                     constexpr void use_arg(const char* long_name) noexcept { long_name_ = long_name; }
                     constexpr void use_arg(desc&& description) noexcept { description_ = std::move(description); }
-                    constexpr void use_arg(arg_name&& an) noexcept { arg_name_ = std::move(an); }
+                    constexpr void use_arg(struct arg_name&& an) noexcept { arg_name_ = std::move(an); }
                     constexpr void use_arg(enum mandatory&&) noexcept { mandatory_ = true; }
 
                   private:
@@ -62,13 +65,14 @@ namespace acmacs
 
                 }; // class option_base
 
-                template <typename T> T to_value(const char* source);
-                  // template <> inline const char* to_value<const char*>(const char* source) { return source; }
-                template <> inline string to_value<string>(const char* source) { return source; }
-                template <> inline int to_value<int>(const char* source) { return std::stoi(source); }
-                template <> inline long to_value<long>(const char* source) { return std::stol(source); }
-                template <> inline unsigned long to_value<unsigned long>(const char* source) { return std::stoul(source); }
-                template <> inline double to_value<double>(const char* source) { return std::stod(source); }
+                template <typename T> T to_value(std::string_view source);
+                  // template <> inline const char* to_value<const char*>(std::string_view source) { return source; }
+                template <> inline string to_value<string>(std::string_view source) { return source; }
+                template <> inline int to_value<int>(std::string_view source) { return std::stoi(std::string(source)); }
+                template <> inline long to_value<long>(std::string_view source) { return std::stol(std::string(source)); }
+                template <> inline unsigned long to_value<unsigned long>(std::string_view source) { return std::stoul(std::string(source)); }
+                template <> inline double to_value<double>(std::string_view source) { return std::stod(std::string(source)); }
+                template <> inline bool to_value<bool>(std::string_view source) { return std::stoi(std::string(source)); }
 
                 template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
@@ -98,6 +102,8 @@ namespace acmacs
                     value_ = detail::to_value<T>(*arg);
                 }
 
+                void add(std::string_view arg) override { value_ = detail::to_value<T>(arg); }
+
               protected:
                 using detail::option_base::use_arg;
                 constexpr void use_arg(dflt<T>&& def) { default_ = static_cast<T>(def); }
@@ -120,6 +126,8 @@ namespace acmacs
             template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
             template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
+
+            template <typename T> using argument = option<T>;
 
             // ----------------------------------------------------------------------
 

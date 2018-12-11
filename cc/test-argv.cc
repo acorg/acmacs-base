@@ -19,6 +19,9 @@ struct Options : public argv
     option<int> i{*this, 'i', "ii", dflt{-1167}, desc{"int"}};
     option<size_t> s{*this, 's', "size", dflt{1267UL}, desc{"size_t"}};
     option<double> f{*this, 'f', "float", dflt{13.67}, desc{"float"}};
+
+    argument<string> source{*this, arg_name{"source"}, mandatory};
+    argument<string> output{*this, arg_name{"output"}, dflt{""}};
 };
 
 // ----------------------------------------------------------------------
@@ -42,6 +45,8 @@ int main(int argc, const char* const argv[])
         std::cout << "i: " << opt.i << '\n';
         std::cout << "s: " << opt.s << '\n';
         std::cout << "f: " << opt.f << '\n';
+        std::cout << "source: " << opt.source << '\n';
+        std::cout << "output: " << opt.output << '\n';
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';

@@ -8,19 +8,6 @@
 
 // ----------------------------------------------------------------------
 
-// std::ostream& acmacs::argv::v2::operator<<(std::ostream& out, const argv& args)
-// {
-//     out << "argv0: " << args.prog_name_ << '\n';
-//     for (const auto* opt : args.options_)
-//         out << *opt << '\n';
-//     for (const auto& arg : args.args_)
-//         out << '"' << arg << "\"\n";
-//     return out;
-
-// } // acmacs::argv::v2::operator<<
-
-// ----------------------------------------------------------------------
-
 std::string acmacs::argv::v2::detail::option_base::names() const noexcept
 {
     std::string result;
@@ -53,9 +40,18 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
         if (arg != command_line.end())
             ++arg;
     }
+    auto specified_arg = args_.begin();
+    for (auto opt = options_.begin(); opt != options_.end() && specified_arg != args_.end(); ++opt) {
+        if (!(*opt)->has_name()) {
+            (*opt)->add(*specified_arg);
+            ++specified_arg;
+        }
+    }
+    if (specified_arg != args_.end())
+        errors_.push_back(std::to_string(args_.end() - specified_arg) + " extra argument(s) given at the command line");
     for (const auto* opt : options_) {
         if (opt->mandatory() && !opt->has_value())
-            errors_.push_back(std::string("mandatory switch not given: ") + opt->names());
+            errors_.push_back(std::string("mandatory ") + (opt->has_name() ? "switch" : "argument") + " not given: " + opt->names());
     }
     if (errors_.empty() && !show_help_)
         return true;
@@ -87,14 +83,33 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 void acmacs::argv::v2::argv::show_help(std::ostream& out) const
 {
     const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
-    out << "Usage: " << prog_name_ << " [options]\n";
+    out << "Usage: " << prog_name_ << " [options]";
     for (const auto* opt : options_) {
-        out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names();
-        if (opt->mandatory())
-            out << " (MANDATORY)";
-        if (const auto dflt = opt->get_default(); !dflt.empty())
-            out << " (def: " << dflt << ')';
-        out << ' ' << opt->description() << '\n';
+        if (!opt->has_name()) {
+            out << ' ';
+            if (opt->mandatory())
+                out << '<';
+            else
+                out << '[';
+            out << opt->arg_name();
+            if (const auto dflt = opt->get_default(); !dflt.empty())
+                out << ": " << dflt;
+            if (opt->mandatory())
+                out << '>';
+            else
+                out << ']';
+        }
+    }
+    out << '\n';
+    for (const auto* opt : options_) {
+        if (opt->has_name()) {
+            out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names();
+            if (opt->mandatory())
+                out << " (MANDATORY)";
+            if (const auto dflt = opt->get_default(); !dflt.empty())
+                out << " (def: " << dflt << ')';
+            out << ' ' << opt->description() << '\n';
+        }
     }
 
 } // acmacs::argv::v2::argv::show_help
