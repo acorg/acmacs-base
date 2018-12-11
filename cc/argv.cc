@@ -1,5 +1,7 @@
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
+#include <numeric>
 #include <cstdlib>
 
 #include "acmacs-base/argv.hh"
@@ -31,6 +33,10 @@ std::string acmacs::argv::v2::detail::option_base::names() const
     if (!long_name_.empty()) {
         result.append("--");
         result.append(long_name_);
+    }
+    if (has_arg()) {
+        result.append(1, ' ');
+        result.append(arg_name_);
     }
     return result;
 
@@ -75,9 +81,13 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 
 void acmacs::argv::v2::argv::show_help(std::ostream& out) const
 {
+    const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
     out << "Usage: " << prog_name_ << " [options]\n";
     for (const auto* opt : options_) {
-        out << "  " << opt->names() << "  " << opt->description() << '\n';
+        out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names() << "  " << opt->description();
+        if (const auto dflt = opt->get_default(); !dflt.empty())
+            out << " (default: " << dflt << ')';
+        out << '\n';
     }
 
 } // acmacs::argv::v2::argv::show_help

@@ -13,6 +13,12 @@ struct Options : public argv
     option<bool> a{*this, 'a', "a-enable"};
     option<bool> b{*this, 'b'};
     option<bool> c{*this, "c-enable"};
+    option<string> d{*this, 'd', "ds", desc{"DS"}};
+    option<string> e{*this, 'e', "ee", dflt{"ee-ee"}, arg_name{"E_ARG"}, desc{"EE"}};
+    option<string> m{*this, 'm', "mm", mandatory, desc{"MM (mandatory)"}};
+    option<int> i{*this, 'i', "ii", dflt{-1167}, desc{"int"}};
+    option<size_t> s{*this, 's', "size", dflt{1267UL}, desc{"size_t"}};
+    option<double> f{*this, 'f', "float", dflt{13.67}, desc{"float"}};
 };
 
 // ----------------------------------------------------------------------
@@ -27,6 +33,15 @@ int main(int argc, const char* const argv[])
         // std::cout << opt << '\n';
 
         Options opt(argc, argv);
+        std::cout << "a: " << opt.a << '\n';
+        std::cout << "b: " << opt.b << '\n';
+        std::cout << "c: " << opt.c << '\n';
+        std::cout << "d: " << opt.d << '\n';
+        std::cout << "e: " << opt.e << '\n';
+        std::cout << "m: " << opt.m << '\n';
+        std::cout << "i: " << opt.i << '\n';
+        std::cout << "s: " << opt.s << '\n';
+        std::cout << "f: " << opt.f << '\n';
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';

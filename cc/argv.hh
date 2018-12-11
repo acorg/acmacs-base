@@ -1,8 +1,10 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <vector>
+#include <optional>
 
 // ----------------------------------------------------------------------
 
@@ -13,13 +15,19 @@ namespace acmacs
         inline namespace v2
         {
             class argv;
-
-            class desc : public std::string_view { public: using std::string_view::string_view; };
             using string = std::string_view;
+
+            struct desc : public std::string_view { using std::string_view::string_view; };
+            struct arg_name : public std::string_view { using std::string_view::string_view; };
+            enum mandatory { mandatory };
+            template <typename T> struct dflt { dflt(T&& val) : value{std::move(val)} {} T value; explicit operator T() const { return value; } };
+            dflt(const char*) -> dflt<string>;
 
             namespace detail
             {
                 using cmd_line_iter = std::vector<const char*>::const_iterator;
+
+                constexpr bool false_ = false;
 
                 class option_base
                 {
@@ -30,6 +38,9 @@ namespace acmacs
                     virtual void add(cmd_line_iter& arg) = 0;
                     std::string names() const;
                     constexpr std::string_view description() const { return description_; }
+                    virtual std::string get_default() const = 0;
+                    virtual bool has_arg() const { return true; }
+                    virtual bool has_value() const = 0;
 
                     constexpr char short_name() const { return short_name_; }
                     constexpr std::string_view long_name() const { return long_name_; }
@@ -38,16 +49,29 @@ namespace acmacs
                     constexpr void use_arg(char short_name) { short_name_ = short_name; }
                     constexpr void use_arg(const char* long_name) { long_name_ = long_name; }
                     constexpr void use_arg(desc&& description) { description_ = std::move(description); }
+                    constexpr void use_arg(arg_name&& an) { arg_name_ = std::move(an); }
+                    constexpr void use_arg(enum mandatory&&) { mandatory_ = true; }
 
                   private:
                     char short_name_ = 0;
                     std::string_view long_name_;
                     std::string_view description_;
+                    std::string_view arg_name_{"ARG"};
+                    bool mandatory_ = false;
+
                 }; // class option_base
 
                 template <typename T> T to_value(const char* source);
-                template <> inline const char* to_value<const char*>(const char* source) { return source; }
+                  // template <> inline const char* to_value<const char*>(const char* source) { return source; }
                 template <> inline string to_value<string>(const char* source) { return source; }
+                template <> inline int to_value<int>(const char* source) { return std::stoi(source); }
+                template <> inline long to_value<long>(const char* source) { return std::stol(source); }
+                template <> inline unsigned long to_value<unsigned long>(const char* source) { return std::stoul(source); }
+                template <> inline double to_value<double>(const char* source) { return std::stod(source); }
+
+                template <typename T> std::string to_string(const T& source) { return std::to_string(source); }
+                // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
+                template <> std::string to_string(const string& source) { return '"' + std::string(source) + '"'; }
 
             } // namespace detail
 
@@ -58,16 +82,21 @@ namespace acmacs
               public:
                 template <typename... Args> option(argv& parent, Args&&... args) : option_base(parent) { use_args(std::forward<Args>(args)...); }
 
-                constexpr operator const T&() const { return value_; }
+                constexpr operator const T&() const { if (value_) return *value_; else return *default_; }
+                std::string get_default() const override { if (!default_) return {}; return detail::to_string(*default_); }
+                bool has_arg() const override { return true; }
+                bool has_value() const override { return value_.has_value(); }
 
                 void add(detail::cmd_line_iter& arg) override { value_ = detail::to_value<T>(*arg++); }
                 // void show(std::ostream& out) const override;
 
               protected:
                 using detail::option_base::use_arg;
+                constexpr void use_arg(dflt<T>&& def) { default_ = static_cast<T>(def); }
 
               private:
-                T value_;
+                std::optional<T> value_;
+                std::optional<T> default_;
 
                 template <typename Arg, typename... Args> void use_args(Arg&& arg, Args&&... args)
                 {
@@ -76,6 +105,13 @@ namespace acmacs
                         use_args(std::forward<Args>(args)...);
                 }
             }; // class option<T>
+
+            template <typename T> inline std::ostream& operator << (std::ostream& out, const option<T>& opt) { return out << static_cast<const T&>(opt); }
+
+            template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/) { value_ = true; }
+            template <> bool option<bool>::has_arg() const { return false; }
+            template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
+            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
 
             // ----------------------------------------------------------------------
 
@@ -122,16 +158,6 @@ namespace acmacs
 
             // ----------------------------------------------------------------------
 
-            template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/)
-            {
-                value_ = true;
-            }
-
-            // template <> void option<bool>::show(std::ostream& out) const
-            // {
-            //     if (value_)
-            //         show_names(out);
-            // }
 
         } // namespace v2
     }     // namespace argv
