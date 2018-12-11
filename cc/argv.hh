@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <string_view>
 #include <vector>
 
@@ -13,6 +14,8 @@ namespace acmacs
         {
             class argv;
 
+            class desc : public std::string_view { public: using std::string_view::string_view; };
+            using string = std::string_view;
 
             namespace detail
             {
@@ -25,7 +28,8 @@ namespace acmacs
                     virtual ~option_base() = default;
 
                     virtual void add(cmd_line_iter& arg) = 0;
-                    virtual void show(std::ostream& out) const = 0;
+                    std::string names() const;
+                    constexpr std::string_view description() const { return description_; }
 
                     constexpr char short_name() const { return short_name_; }
                     constexpr std::string_view long_name() const { return long_name_; }
@@ -33,14 +37,17 @@ namespace acmacs
                   protected:
                     constexpr void use_arg(char short_name) { short_name_ = short_name; }
                     constexpr void use_arg(const char* long_name) { long_name_ = long_name; }
-                    void show_names(std::ostream& out) const;
+                    constexpr void use_arg(desc&& description) { description_ = std::move(description); }
 
                   private:
                     char short_name_ = 0;
                     std::string_view long_name_;
+                    std::string_view description_;
                 }; // class option_base
 
-                inline std::ostream& operator<<(std::ostream& out, const option_base& opt) { opt.show(out); return out; }
+                template <typename T> T to_value(const char* source);
+                template <> inline const char* to_value<const char*>(const char* source) { return source; }
+                template <> inline string to_value<string>(const char* source) { return source; }
 
             } // namespace detail
 
@@ -53,8 +60,8 @@ namespace acmacs
 
                 constexpr operator const T&() const { return value_; }
 
-                void add(detail::cmd_line_iter& arg) override;
-                void show(std::ostream& out) const override;
+                void add(detail::cmd_line_iter& arg) override { value_ = detail::to_value<T>(*arg++); }
+                // void show(std::ostream& out) const override;
 
               protected:
                 using detail::option_base::use_arg;
@@ -72,18 +79,32 @@ namespace acmacs
 
             // ----------------------------------------------------------------------
 
+            class show_help : public std::exception {};
+            class errors : public std::exception {};
+
             class argv
             {
-              protected:
-                argv(int argc, const char* const argv[]);
+             public:
+                using errors_t = std::vector<std::string>;
+                enum class on_error { exit, raise, return_false };
+                  // returns true on success
+                bool parse(int argc, const char* const argv[], on_error on_err = on_error::exit);
+
+                constexpr const errors_t& errors() const { return errors_; }
+                void show_help(std::ostream& out) const;
+
+                virtual ~argv() = default;
+
+             protected:
+                argv() = default;
 
               private:
                 std::string_view prog_name_;
                 std::vector<detail::option_base*> options_;
                 std::vector<std::string_view> args_;
-                std::vector<std::string> errors_;
+                errors_t errors_;
 
-                option<bool> show_help_{*this, 'h', "help"};
+                option<bool> show_help_{*this, 'h', "help", desc{"show this help screen"}};
 
                 void use(detail::cmd_line_iter& arg);
                 detail::option_base* find(char short_name);
@@ -106,11 +127,11 @@ namespace acmacs
                 value_ = true;
             }
 
-            template <> void option<bool>::show(std::ostream& out) const
-            {
-                // if (value_)
-                    show_names(out);
-            }
+            // template <> void option<bool>::show(std::ostream& out) const
+            // {
+            //     if (value_)
+            //         show_names(out);
+            // }
 
         } // namespace v2
     }     // namespace argv
