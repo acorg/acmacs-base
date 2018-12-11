@@ -2,11 +2,17 @@
 
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
 
 // ----------------------------------------------------------------------
+
+namespace acmacs
+{
+    class date_parse_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+}
 
 class Date
 {
@@ -91,7 +97,7 @@ class Date
         {
             using namespace date::literals;
             date_ = 1999_y/99/99;
-            for (const char* format : {"%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
+            for (const char* format : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
                 std::istringstream in(source);
                 in >> date::parse(format, date_);
                 if (in) {
@@ -102,7 +108,7 @@ class Date
                     return;
                 }
             }
-            std::cerr << "ERROR: cannot parse date from \"" << source << "\"\n";
+            throw acmacs::date_parse_error("cannot parse date from \"" + source + '"');
         }
 
  public:
