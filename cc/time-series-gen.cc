@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "acmacs-base/argc-argv.hh"
+#include "acmacs-base/argv.hh"
+#include "acmacs-base/string.hh"
 #include "acmacs-base/time-series.hh"
 #include "acmacs-base/rjson.hh"
 #include "acmacs-base/read-file.hh"
@@ -26,52 +27,40 @@ template <typename TS> std::string gen(const Date& aStart, const Date& aEnd)
 
 // ----------------------------------------------------------------------
 
+using namespace acmacs::argv;
+
+struct Options : public argv
+{
+    Options(int a_argc, const char* const a_argv[], on_error on_err = on_error::exit) : argv() { parse(a_argc, a_argv, on_err); }
+
+    argument<str> period{*this, arg_name{"monthly|yearly|weekly"}, mandatory};
+    argument<Date> start{*this, arg_name{"start-date"}, mandatory};
+    argument<Date> end{*this, arg_name{"end-date"}, mandatory};
+    argument<str> output{*this, arg_name{"output.json"}, dflt{""}};
+};
+
 int main(int argc, char* const argv[])
 {
     int exit_code = 0;
     try {
-        argc_argv args(argc, argv, {
-                {"--verbose", false},
-                {"-h", false},
-                {"--help", false},
-                {"-v", false},
-                        });
-        if (args["-h"] || args["--help"] || args.number_of_arguments() < 3) {
-            std::cerr << "Usage: " << args.program() << " [options] <monthly|yearly|weekly> <start-date> <end-date> [<output.json>]\n" << args.usage_options() << '\n';
-            exit_code = 1;
+        Options opt(argc, argv);
+        std::string json;
+        if (opt.period == "monthly") {
+            json = gen<MonthlyTimeSeries>(opt.start, opt.end);
+        }
+        else if (opt.period == "yearly") {
+            json = gen<YearlyTimeSeries>(opt.start, opt.end);
+        }
+        else if (opt.period == "weekly") {
+            json = gen<WeeklyTimeSeries>(opt.start, opt.end);
         }
         else {
-            Date start, end;
-            try {
-                start = args[1];
-            }
-            catch (std::exception& err) {
-                throw std::runtime_error(string::concat("Cannot parse date from \"", args[1], "\": ", err.what()));
-            }
-            try {
-                end = args[2];
-            }
-            catch (std::exception& err) {
-                throw std::runtime_error(string::concat("Cannot parse date from \"", args[2], "\": ", err.what()));
-            }
-            std::string json;
-            if (args[0] == "monthly"s) {
-                json = gen<MonthlyTimeSeries>(start, end);
-            }
-            else if (args[0] == "yearly"s) {
-                json = gen<YearlyTimeSeries>(start, end);
-            }
-            else if (args[0] == "weekly"s) {
-                json = gen<WeeklyTimeSeries>(start, end);
-            }
-            else {
-                throw std::runtime_error(string::concat("Unrecognized period: \"", args[0], "\", expected: monthly yearly weekly"));
-            }
-            if (args.number_of_arguments() > 3)
-                acmacs::file::write(args[3], json);
-            else
-                std::cout << json << '\n';
+            throw std::runtime_error(string::concat("Unrecognized period: \"", static_cast<str>(opt.period), "\", expected: monthly yearly weekly"));
         }
+        if (opt.output.has_value())
+            acmacs::file::write(opt.output, json);
+        else
+            std::cout << json << '\n';
     }
     catch (std::exception& err) {
         std::cerr << "ERROR: " << err.what() << '\n';

@@ -15,13 +15,13 @@ namespace acmacs
         inline namespace v2
         {
             class argv;
-            using string = std::string_view;
+            using str = std::string_view;
 
             struct desc : public std::string_view { using std::string_view::string_view; };
             struct arg_name : public std::string_view { using std::string_view::string_view; };
             enum mandatory { mandatory };
             template <typename T> struct dflt { dflt(T&& val) : value{std::move(val)} {} T value; explicit operator T() const { return value; } };
-            dflt(const char*) -> dflt<string>;
+            dflt(const char*) -> dflt<str>;
 
             namespace detail
             {
@@ -65,9 +65,9 @@ namespace acmacs
 
                 }; // class option_base
 
-                template <typename T> T to_value(std::string_view source);
+                template <typename T> T to_value(std::string_view source) { return source; }
                   // template <> inline const char* to_value<const char*>(std::string_view source) { return source; }
-                template <> inline string to_value<string>(std::string_view source) { return source; }
+                // template <> inline string to_value<string>(std::string_view source) { return source; }
                 template <> inline int to_value<int>(std::string_view source) { return std::stoi(std::string(source)); }
                 template <> inline long to_value<long>(std::string_view source) { return std::stol(std::string(source)); }
                 template <> inline unsigned long to_value<unsigned long>(std::string_view source) { return std::stoul(std::string(source)); }
@@ -76,7 +76,7 @@ namespace acmacs
 
                 template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
-                template <> std::string to_string(const string& source) noexcept { return '"' + std::string(source) + '"'; }
+                template <> std::string to_string(const str& source) noexcept { return '"' + std::string(source) + '"'; }
 
                 class invalid_option_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -90,6 +90,8 @@ namespace acmacs
                 template <typename... Args> option(argv& parent, Args&&... args) : option_base(parent) { use_args(std::forward<Args>(args)...); }
 
                 constexpr operator const T&() const { if (value_.has_value()) return *value_; else return *default_; }
+                template <typename R> constexpr bool operator == (const R& rhs) const { return static_cast<const T&>(*this) == rhs; }
+                template <typename R> constexpr bool operator != (const R& rhs) const { return !operator==(rhs); }
                 std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
