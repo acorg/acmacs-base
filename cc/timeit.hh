@@ -27,20 +27,35 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-enum class report_time { No, Yes };
+enum class report_time { no, yes };
+
+constexpr report_time do_report_time(bool do_report) { return do_report ? report_time::yes : report_time::no; }
+
+// class report_time_t
+// {
+//  public:
+//     report_time_t() = default;
+//     report_time_t(bool do_report) : report_time_{do_report ? report_time::yes : report_time::no} {}
+//     constexpr operator report_time() const noexcept { return report_time_; }
+
+//  private:
+//     report_time report_time_{report_time::yes};
+// };
+
+// ----------------------------------------------------------------------
 
 class Timeit
 {
  public:
-    inline Timeit(std::string msg, report_time aReport = report_time::Yes, std::ostream& out = std::cerr)
+    inline Timeit(std::string msg, report_time aReport = report_time::yes, std::ostream& out = std::cerr)
         : message_(msg), out_stream_(out), report_(aReport), start_{acmacs::timestamp()} {}
 
     inline ~Timeit() { report(); }
 
     inline void report()
         {
-            if (report_ == report_time::Yes) {
-                report_ = report_time::No;
+            if (report_ == report_time::yes) {
+                report_ = report_time::no;
                 out_stream_ << message_ << acmacs::to_string(acmacs::elapsed(start_)) << '\n';
             }
         }
@@ -53,8 +68,6 @@ class Timeit
     report_time report_;
     acmacs::timestamp_t start_;
 };
-
-constexpr report_time do_report_time(bool do_report) { return do_report ? report_time::Yes : report_time::No; }
 
 // ----------------------------------------------------------------------
 /// Local Variables:
