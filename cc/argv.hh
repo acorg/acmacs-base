@@ -35,22 +35,23 @@ namespace acmacs
                     option_base(argv& parent);
                     virtual ~option_base() = default;
 
-                    virtual void add(cmd_line_iter& arg) = 0;
-                    std::string names() const;
-                    constexpr std::string_view description() const { return description_; }
-                    virtual std::string get_default() const = 0;
-                    virtual bool has_arg() const { return true; }
-                    virtual bool has_value() const = 0;
+                    virtual void add(cmd_line_iter& arg, cmd_line_iter last) = 0;
+                    std::string names() const noexcept;
+                    constexpr std::string_view description() const noexcept { return description_; }
+                    virtual std::string get_default() const noexcept = 0;
+                    virtual bool has_arg() const noexcept { return true; }
+                    virtual bool has_value() const noexcept = 0;
+                    constexpr bool mandatory() const noexcept { return mandatory_; }
 
-                    constexpr char short_name() const { return short_name_; }
-                    constexpr std::string_view long_name() const { return long_name_; }
+                    constexpr char short_name() const noexcept { return short_name_; }
+                    constexpr std::string_view long_name() const noexcept { return long_name_; }
 
                   protected:
-                    constexpr void use_arg(char short_name) { short_name_ = short_name; }
-                    constexpr void use_arg(const char* long_name) { long_name_ = long_name; }
-                    constexpr void use_arg(desc&& description) { description_ = std::move(description); }
-                    constexpr void use_arg(arg_name&& an) { arg_name_ = std::move(an); }
-                    constexpr void use_arg(enum mandatory&&) { mandatory_ = true; }
+                    constexpr void use_arg(char short_name) noexcept { short_name_ = short_name; }
+                    constexpr void use_arg(const char* long_name) noexcept { long_name_ = long_name; }
+                    constexpr void use_arg(desc&& description) noexcept { description_ = std::move(description); }
+                    constexpr void use_arg(arg_name&& an) noexcept { arg_name_ = std::move(an); }
+                    constexpr void use_arg(enum mandatory&&) noexcept { mandatory_ = true; }
 
                   private:
                     char short_name_ = 0;
@@ -69,9 +70,11 @@ namespace acmacs
                 template <> inline unsigned long to_value<unsigned long>(const char* source) { return std::stoul(source); }
                 template <> inline double to_value<double>(const char* source) { return std::stod(source); }
 
-                template <typename T> std::string to_string(const T& source) { return std::to_string(source); }
+                template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
-                template <> std::string to_string(const string& source) { return '"' + std::string(source) + '"'; }
+                template <> std::string to_string(const string& source) noexcept { return '"' + std::string(source) + '"'; }
+
+                class invalid_option_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
             } // namespace detail
 
@@ -82,13 +85,18 @@ namespace acmacs
               public:
                 template <typename... Args> option(argv& parent, Args&&... args) : option_base(parent) { use_args(std::forward<Args>(args)...); }
 
-                constexpr operator const T&() const { if (value_) return *value_; else return *default_; }
-                std::string get_default() const override { if (!default_) return {}; return detail::to_string(*default_); }
-                bool has_arg() const override { return true; }
-                bool has_value() const override { return value_.has_value(); }
+                constexpr operator const T&() const { if (value_.has_value()) return *value_; else return *default_; }
+                std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
+                bool has_arg() const noexcept override { return true; }
+                bool has_value() const noexcept override { return value_.has_value(); }
 
-                void add(detail::cmd_line_iter& arg) override { value_ = detail::to_value<T>(*arg++); }
-                // void show(std::ostream& out) const override;
+                void add(detail::cmd_line_iter& arg, detail::cmd_line_iter last) override
+                {
+                    ++arg;
+                    if (arg == last)
+                        throw detail::invalid_option_value{"requires argument"};
+                    value_ = detail::to_value<T>(*arg);
+                }
 
               protected:
                 using detail::option_base::use_arg;
@@ -108,8 +116,8 @@ namespace acmacs
 
             template <typename T> inline std::ostream& operator << (std::ostream& out, const option<T>& opt) { return out << static_cast<const T&>(opt); }
 
-            template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/) { value_ = true; }
-            template <> bool option<bool>::has_arg() const { return false; }
+            template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/, detail::cmd_line_iter /*last*/) { value_ = true; }
+            template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
             template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
 
@@ -142,7 +150,7 @@ namespace acmacs
 
                 option<bool> show_help_{*this, 'h', "help", desc{"show this help screen"}};
 
-                void use(detail::cmd_line_iter& arg);
+                void use(detail::cmd_line_iter& arg, detail::cmd_line_iter last);
                 detail::option_base* find(char short_name);
                 detail::option_base* find(std::string_view long_name);
 

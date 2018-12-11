@@ -15,7 +15,7 @@ struct Options : public argv
     option<bool> c{*this, "c-enable"};
     option<string> d{*this, 'd', "ds", desc{"DS"}};
     option<string> e{*this, 'e', "ee", dflt{"ee-ee"}, arg_name{"E_ARG"}, desc{"EE"}};
-    option<string> m{*this, 'm', "mm", mandatory, desc{"MM (mandatory)"}};
+    option<string> m{*this, 'm', "mm", mandatory, desc{"MM"}};
     option<int> i{*this, 'i', "ii", dflt{-1167}, desc{"int"}};
     option<size_t> s{*this, 's', "size", dflt{1267UL}, desc{"size_t"}};
     option<double> f{*this, 'f', "float", dflt{13.67}, desc{"float"}};

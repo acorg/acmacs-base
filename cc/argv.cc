@@ -21,7 +21,7 @@
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::argv::v2::detail::option_base::names() const
+std::string acmacs::argv::v2::detail::option_base::names() const noexcept
 {
     std::string result;
     if (short_name_) {
@@ -48,8 +48,15 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 {
     prog_name_ = argv[0];
     const std::vector command_line(argv + 1, argv + argc);
-    for (auto arg = command_line.begin(); arg != command_line.end(); ++arg)
-        use(arg);
+    for (auto arg = command_line.begin(); arg != command_line.end(); ) {
+        use(arg, command_line.end());
+        if (arg != command_line.end())
+            ++arg;
+    }
+    for (const auto* opt : options_) {
+        if (opt->mandatory() && !opt->has_value())
+            errors_.push_back(std::string("mandatory switch not given: ") + opt->names());
+    }
     if (errors_.empty() && !show_help_)
         return true;
     else {
@@ -57,10 +64,8 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
           case on_error::exit:
               for (const auto& err: errors_)
                   std::cerr << "ERROR: " << err << '\n';
-              if (show_help_) {
-                  std::cerr << '\n';
-                  show_help(std::cerr);
-              }
+              std::cerr << '\n';
+              show_help(std::cerr);
               std::exit(errors_.empty() ? 0 : 1);
           case on_error::raise:
               if (errors_.empty())
@@ -84,42 +89,50 @@ void acmacs::argv::v2::argv::show_help(std::ostream& out) const
     const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
     out << "Usage: " << prog_name_ << " [options]\n";
     for (const auto* opt : options_) {
-        out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names() << "  " << opt->description();
+        out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names();
+        if (opt->mandatory())
+            out << " (MANDATORY)";
         if (const auto dflt = opt->get_default(); !dflt.empty())
-            out << " (default: " << dflt << ')';
-        out << '\n';
+            out << " (def: " << dflt << ')';
+        out << ' ' << opt->description() << '\n';
     }
 
 } // acmacs::argv::v2::argv::show_help
 
 // ----------------------------------------------------------------------
 
-void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg)
+void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg, detail::cmd_line_iter last)
 {
-    if ((*arg)[0] == '-') {
-        if ((*arg)[1] == '-') {
-            if ((*arg)[2]) {    // long opt
-                if (auto* opt = find(std::string_view(*arg + 2)); opt)
-                    opt->add(arg);
+    const detail::cmd_line_iter arg_save = arg;
+    try {
+        if ((*arg)[0] == '-') {
+            if ((*arg)[1] == '-') {
+                if ((*arg)[2]) { // long opt
+                    if (auto* opt = find(std::string_view(*arg + 2)); opt)
+                        opt->add(arg, last);
+                    else
+                        errors_.push_back(std::string("unrecognized option: ") + *arg);
+                }
                 else
-                    errors_.push_back(std::string("unrecognized option: ") + *arg);
+                    args_.push_back(*arg); // just two dashes
+            }
+            else if ((*arg)[1]) { // short opts
+                for (const char* short_name = *arg + 1; *short_name; ++short_name) {
+                    if (auto* opt = find(*short_name); opt)
+                        opt->add(arg, last);
+                    else
+                        errors_.push_back(std::string("unrecognized option: -") + *short_name);
+                }
             }
             else
-                args_.push_back(*arg); // just two dashes
-        }
-        else if ((*arg)[1]) {   // short opts
-            for (const char* short_name = *arg + 1; *short_name; ++short_name) {
-                if (auto* opt = find(*short_name); opt)
-                    opt->add(arg);
-                else
-                    errors_.push_back(std::string("unrecognized option: -") + *short_name);
-            }
+                args_.push_back(*arg); // just dash
         }
         else
-            args_.push_back(*arg); // just dash
+            args_.push_back(*arg);
     }
-    else
-        args_.push_back(*arg);
+    catch (detail::invalid_option_value& err) {
+        errors_.push_back(std::string(*arg_save) + ": " + err.what());
+    }
 
 } // acmacs::argv::v2::argv::use
 
