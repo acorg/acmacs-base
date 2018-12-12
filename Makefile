@@ -45,6 +45,7 @@ lib: $(ACMACS_BASE_LIB)
 
 test: install-acmacs-base | $(TARGETS)
 	test/test
+.PHONY: test
 
 # ----------------------------------------------------------------------
 
