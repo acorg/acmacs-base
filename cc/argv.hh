@@ -90,6 +90,7 @@ namespace acmacs
                 template <typename... Args> option(argv& parent, Args&&... args) : option_base(parent) { use_args(std::forward<Args>(args)...); }
 
                 constexpr operator const T&() const { if (value_.has_value()) return *value_; else return *default_; }
+                constexpr const T& get() const { return static_cast<const T&>(*this); }
                 template <typename R> constexpr bool operator == (const R& rhs) const { return static_cast<const T&>(*this) == rhs; }
                 template <typename R> constexpr bool operator != (const R& rhs) const { return !operator==(rhs); }
                 std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
