@@ -6,6 +6,8 @@
 #include <vector>
 #include <optional>
 
+#include "acmacs-base/string.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs
@@ -16,6 +18,7 @@ namespace acmacs
         {
             class argv;
             using str = std::string_view;
+            using str_array = std::vector<std::string_view>;
 
             struct desc : public std::string_view { using std::string_view::string_view; };
             struct arg_name : public std::string_view { using std::string_view::string_view; };
@@ -77,6 +80,7 @@ namespace acmacs
                 template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
                 template <> std::string to_string(const str& source) noexcept { return '"' + std::string(source) + '"'; }
+                template <> std::string to_string(const str_array& source) noexcept { return '"' + string::join("\" \"", source) + '"'; }
 
                 class invalid_option_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -102,7 +106,7 @@ namespace acmacs
                     ++arg;
                     if (arg == last)
                         throw detail::invalid_option_value{"requires argument"};
-                    value_ = detail::to_value<T>(*arg);
+                    add(*arg);
                 }
 
                 void add(std::string_view arg) override { value_ = detail::to_value<T>(arg); }
@@ -123,12 +127,14 @@ namespace acmacs
                 }
             }; // class option<T>
 
-            template <typename T> inline std::ostream& operator << (std::ostream& out, const option<T>& opt) { return out << static_cast<const T&>(opt); }
+            template <typename T> inline std::ostream& operator << (std::ostream& out, const option<T>& opt) { return out << opt.get(); }
 
             template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/, detail::cmd_line_iter /*last*/) { value_ = true; }
             template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
             template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
+
+            template <> void option<str_array>::add(std::string_view arg) { if (!value_) value_ = str_array{arg}; else value_->push_back(arg); }
 
             template <typename T> using argument = option<T>;
 
