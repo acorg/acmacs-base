@@ -12,8 +12,9 @@
 
 namespace acmacs::file
 {
-    enum class ForceCompression { No, Yes };
-    enum class BackupFile { No, Yes };
+    enum class force_compression { no, yes };
+    enum class backup_file { no, yes };
+    enum class backup_move { no, yes };
 
       // ----------------------------------------------------------------------
 
@@ -53,10 +54,11 @@ namespace acmacs::file
     inline read_access read(std::string aFilename) { return {aFilename}; }
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
-    void write(std::string aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes);
-    inline void write(std::string_view aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes) { write(std::string(aFilename), aData, aForceCompression, aBackupFile); }
-    void backup(const fs::path& to_backup, const fs::path& backup_dir);
-    inline void backup(const fs::path& to_backup) { backup(to_backup, to_backup.parent_path() / ".backup"); }
+    void write(std::string aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes);
+    inline void write(std::string_view aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes) { write(std::string(aFilename), aData, aForceCompression, aBackupFile); }
+
+    void backup(const fs::path& to_backup, const fs::path& backup_dir, backup_move bm = backup_move::no);
+    inline void backup(const fs::path& to_backup, backup_move bm = backup_move::no) { backup(to_backup, to_backup.parent_path() / ".backup", bm); }
 
       // ----------------------------------------------------------------------
 

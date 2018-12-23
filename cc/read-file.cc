@@ -115,7 +115,7 @@ std::string acmacs::file::read_from_file_descriptor(int fd, size_t chunk_size)
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir)
+void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir, backup_move bm)
 {
     if (fs::exists(to_backup)) {
         try {
@@ -126,14 +126,24 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir)
             throw;
         }
 
-        const auto today = '.' + Date::today().display("%Y%m%d") + '-';
+        auto extension = to_backup.extension();
+        auto stem = to_backup.stem();
+        if ((extension == ".bz2" || extension == ".xz" || extension == ".gz") && !stem.extension().empty()) {
+            extension = stem.extension();
+            extension += to_backup.extension();
+            stem = stem.stem();
+        }
+        const auto today = Date::today().display("%Y%m%d");
         for (int version = 1; version < 1000; ++version) {
-            char infix[10];
-            std::sprintf(infix, "~%03d~", version);
-            fs::path new_name = backup_dir / (to_backup.stem().string() + today + infix + to_backup.extension().string());
+            char infix[4];
+            std::sprintf(infix, "%03d", version);
+            fs::path new_name = backup_dir / (stem.string() + ".~" + today + '-' + infix + '~' + extension.string());
             if (!fs::exists(new_name) || version == 999) {
                 try {
-                    fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
+                    if (bm == backup_move::yes)
+                        fs::rename(to_backup, new_name); // if new_name exists it will be removed before doing rename
+                    else
+                        fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
                 }
                 catch (std::exception& err) {
                     std::cerr << "WARNING: backing up \"" << to_backup << "\" to \"" << new_name << "\" failed: " << err.what() << '\n';
@@ -147,7 +157,7 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir)
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCompression aForceCompression, BackupFile aBackupFile)
+void acmacs::file::write(std::string aFilename, std::string_view aData, force_compression aForceCompression, backup_file aBackupFile)
 {
     int f = -1;
     if (aFilename == "-") {
@@ -157,14 +167,14 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, ForceCom
         f = 2;
     }
     else {
-        if (aBackupFile == BackupFile::Yes && aFilename.substr(0, 4) != "/dev") // allow writing to /dev/ without making backup attempt
+        if (aBackupFile == backup_file::yes && aFilename.substr(0, 4) != "/dev") // allow writing to /dev/ without making backup attempt
             backup(aFilename);
         f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
         if (f < 0)
             throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
     }
     try {
-        if (aForceCompression == ForceCompression::Yes || (aFilename.size() > 3 && (string::ends_with(aFilename, ".xz") || string::ends_with(aFilename, ".gz")))) {
+        if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (string::ends_with(aFilename, ".xz") || string::ends_with(aFilename, ".gz")))) {
             const auto compressed = string::ends_with(aFilename, ".gz") ? gzip_compress(aData) : xz_compress(aData);
             if (::write(f, compressed.data(), compressed.size()) < 0)
                 throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
