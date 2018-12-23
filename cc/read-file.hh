@@ -55,7 +55,8 @@ namespace acmacs::file
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes);
     inline void write(std::string_view aFilename, std::string_view aData, ForceCompression aForceCompression = ForceCompression::No, BackupFile aBackupFile = BackupFile::Yes) { write(std::string(aFilename), aData, aForceCompression, aBackupFile); }
-    void backup(std::string aFilename);
+    void backup(const fs::path& to_backup, const fs::path& backup_dir);
+    inline void backup(const fs::path& to_backup) { backup(to_backup, to_backup.parent_path() / ".backup"); }
 
       // ----------------------------------------------------------------------
 

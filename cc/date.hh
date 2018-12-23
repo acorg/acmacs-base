@@ -52,7 +52,7 @@ class Date
     auto month() const { return static_cast<unsigned>(date_.month()); }
     auto day() const { return static_cast<unsigned>(date_.day()); }
 
-    std::string display() const { return date_.ok() ? date::format("%Y-%m-%d", date_) : std::string{"*invalid-date*"}; }
+    std::string display(const char* format = "%Y-%m-%d") const { return date_.ok() ? date::format(format, date_) : std::string{"*invalid-date*"}; }
     operator std::string() const { return display(); }
 
       // returns date for the 1st day of the year-month stored in this

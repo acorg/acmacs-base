@@ -151,6 +151,7 @@ namespace acmacs
                   // returns true on success
                 bool parse(int argc, const char* const argv[], on_error on_err = on_error::exit);
 
+                constexpr auto program_name() const { return prog_name_; }
                 constexpr const errors_t& errors() const { return errors_; }
                 void show_help(std::ostream& out) const;
 

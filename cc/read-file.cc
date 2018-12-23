@@ -11,6 +11,7 @@
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
 #include "acmacs-base/gzip.hh"
+#include "acmacs-base/date.hh"
 #include "acmacs-base/string.hh"
 #include "acmacs-base/read-file.hh"
 
@@ -114,23 +115,22 @@ std::string acmacs::file::read_from_file_descriptor(int fd, size_t chunk_size)
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::backup(std::string aFilename)
+void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir)
 {
-    fs::path to_backup{aFilename};
     if (fs::exists(to_backup)) {
-        fs::path backup_dir = to_backup.parent_path() / ".backup";
         try {
-            create_directory(backup_dir);
+            fs::create_directory(backup_dir);
         }
         catch (std::exception& err) {
             std::cerr << "ERROR: cannot create directory " << backup_dir << ": " << err.what() << '\n';
             throw;
         }
 
+        const auto today = '.' + Date::today().display("%Y%m%d") + '-';
         for (int version = 1; version < 1000; ++version) {
             char infix[10];
-            std::sprintf(infix, ".~%03d~", version);
-            fs::path new_name = backup_dir / (to_backup.stem().string() + infix + to_backup.extension().string());
+            std::sprintf(infix, "~%03d~", version);
+            fs::path new_name = backup_dir / (to_backup.stem().string() + today + infix + to_backup.extension().string());
             if (!fs::exists(new_name) || version == 999) {
                 try {
                     fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
