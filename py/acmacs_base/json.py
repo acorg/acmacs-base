@@ -107,17 +107,21 @@ loads = json.loads
 
 # ----------------------------------------------------------------------
 
-def read_json(path :Path):
+def read(path :Path):
     from .files import read_text
     return loads(read_text(path))
 
+read_json = read
+
 # ----------------------------------------------------------------------
 
-def write_json(path :Path, data, indent=2, compact=True, object_fields_sorting_key=None):
+def write(path :Path, data, indent=2, compact=True, object_fields_sorting_key=None):
     from .files import backup_file
     backup_file(path)
     from .files import write_binary
     write_binary(path=path, data=(dumps(data, indent=indent, compact=compact, sort_keys=True, object_fields_sorting_key=object_fields_sorting_key) + "\n").encode("utf-8"))
+
+write_json = write
 
 # ======================================================================
 ### Local Variables:
