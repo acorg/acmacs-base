@@ -104,6 +104,8 @@ void acmacs::argv::v2::argv::show_help(std::ostream& out) const
                 out << '>';
             else
                 out << ']';
+            if (opt->multiple_values())
+                out << " ...";
         }
     }
     out << '\n';
