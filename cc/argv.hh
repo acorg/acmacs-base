@@ -46,6 +46,7 @@ namespace acmacs
                     virtual std::string get_default() const noexcept = 0;
                     virtual bool has_arg() const noexcept { return true; }
                     virtual bool has_value() const noexcept = 0;
+                    virtual bool multiple_values() const noexcept = 0;
                     constexpr bool mandatory() const noexcept { return mandatory_; }
 
                     constexpr char short_name() const noexcept { return short_name_; }
@@ -95,11 +96,14 @@ namespace acmacs
 
                 constexpr operator const T&() const { if (value_.has_value()) return *value_; else return *default_; }
                 constexpr const T& get() const { return static_cast<const T&>(*this); }
+                constexpr const T* operator->() const { return &static_cast<const T&>(*this); }
+                constexpr const T& operator*() const { return static_cast<const T&>(*this); }
                 template <typename R> constexpr bool operator == (const R& rhs) const { return static_cast<const T&>(*this) == rhs; }
                 template <typename R> constexpr bool operator != (const R& rhs) const { return !operator==(rhs); }
                 std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
+                bool multiple_values() const noexcept override { return false; }
 
                 void add(detail::cmd_line_iter& arg, detail::cmd_line_iter last) override
                 {
@@ -135,6 +139,7 @@ namespace acmacs
             template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
 
             template <> void option<str_array>::add(std::string_view arg) { if (!value_) value_ = str_array{arg}; else value_->push_back(arg); }
+            template <> bool option<str_array>::multiple_values() const noexcept { return true; }
 
             template <typename T> using argument = option<T>;
 

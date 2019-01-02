@@ -43,8 +43,14 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
     auto specified_arg = args_.begin();
     for (auto opt = options_.begin(); opt != options_.end() && specified_arg != args_.end(); ++opt) {
         if (!(*opt)->has_name()) {
-            (*opt)->add(*specified_arg);
-            ++specified_arg;
+            if ((*opt)->multiple_values()) {
+                for (; specified_arg != args_.end(); ++specified_arg)
+                    (*opt)->add(*specified_arg);
+            }
+            else {
+                (*opt)->add(*specified_arg);
+                ++specified_arg;
+            }
         }
     }
     if (specified_arg != args_.end())
