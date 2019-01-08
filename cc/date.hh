@@ -64,6 +64,9 @@ class Date
             return {iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{date::Monday})};
         }
 
+      // returns date for the last day of the year-month stored in this
+    Date end_of_month() const { return date::year_month_day(date::year_month_day_last(date_.year(), date::month_day_last(date_.month()))); }
+
     Date& increment_month(int number_of_months = 1) { date_ += date::months(number_of_months); return *this; }
     Date& decrement_month(int number_of_months = 1) { date_ -= date::months(number_of_months); return *this; }
     Date& increment_year(int number_of_years = 1) { date_ += date::years(number_of_years); return *this; }
@@ -84,6 +87,8 @@ class Date
     std::string year4_month2_day2() const { return date::format("%Y-%m-%d", date_); }
 
       //? const auto& gregorian() const { return date_; }
+
+    constexpr const date::year_month_day& raw() const { return date_; }
 
  private:
     date::year_month_day date_;
@@ -111,28 +116,40 @@ class Date
             throw acmacs::date_parse_error("cannot parse date from \"" + source + '"');
         }
 
- public:
-    friend inline int days_between_dates(const Date& a, const Date& b)
-        {
-            return std::chrono::duration_cast<date::days>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
-        }
-
-    friend inline int weeks_between_dates(const Date& a, const Date& b)
-        {
-            return std::chrono::duration_cast<date::weeks>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
-        }
-
-    friend inline int months_between_dates(const Date& a, const Date& b)
-        {
-            return std::chrono::duration_cast<date::months>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
-        }
-
-    friend inline int years_between_dates(const Date& a, const Date& b)
-        {
-            return std::chrono::duration_cast<date::years>(static_cast<date::sys_days>(b.date_) - static_cast<date::sys_days>(a.date_)).count();
-        }
-
 }; // class Date
+
+// ----------------------------------------------------------------------
+
+inline int days_between_dates(const Date& a, const Date& b)
+{
+    return std::chrono::duration_cast<date::days>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
+}
+
+inline int weeks_between_dates(const Date& a, const Date& b)
+{
+    return std::chrono::duration_cast<date::weeks>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
+}
+
+inline int months_between_dates(const Date& a, const Date& b)
+{
+    return std::chrono::duration_cast<date::months>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
+}
+
+inline int calendar_months_between_dates(const Date& a, const Date& b)
+{
+    const auto first = a.beginning_of_month(), last = b.beginning_of_month();
+    return (last.year() - first.year()) * 12 + ((static_cast<int>(last.month()) - static_cast<int>(first.month())));
+}
+
+inline int calendar_months_between_dates_inclusive(const Date& a, const Date& b)
+{
+    return calendar_months_between_dates(a, b) + 1;
+}
+
+inline int years_between_dates(const Date& a, const Date& b)
+{
+    return std::chrono::duration_cast<date::years>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
+}
 
 // ----------------------------------------------------------------------
 
