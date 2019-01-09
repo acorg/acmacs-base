@@ -19,19 +19,22 @@ namespace acmacs
         using TransformationBase = std::array<double, 16>;
         constexpr size_t transformation_size = 4;
         constexpr std::array<size_t, transformation_size> transformation_row_base{0, transformation_size, transformation_size * 2, transformation_size * 3};
-    }
+    } // namespace detail
 
-      // handles transformation and translation in 2D and 3D
+    // handles transformation and translation in 2D and 3D
     class Transformation : public detail::TransformationBase
     {
-     public:
+      public:
         Transformation(size_t num_dim = 2) : detail::TransformationBase{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{num_dim} {}
         Transformation(const Transformation&) = default;
-        Transformation(double a11, double a12, double a21, double a22) : detail::TransformationBase{a11, a12, 0.0, 0.0, a21, a22, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{2} {}
+        Transformation(double a11, double a12, double a21, double a22)
+            : detail::TransformationBase{a11, a12, 0.0, 0.0, a21, a22, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{2}
+        {
+        }
         Transformation& operator=(const Transformation&) = default;
         Transformation& operator=(Transformation&&) = default;
         bool operator==(const Transformation& rhs) const { return std::equal(begin(), end(), rhs.begin()); }
-        bool operator!=(const Transformation& rhs) const { return ! operator==(rhs); }
+        bool operator!=(const Transformation& rhs) const { return !operator==(rhs); }
 
         void reset() { operator=(Transformation()); }
 
@@ -43,161 +46,166 @@ namespace acmacs
         template <typename S> constexpr double operator()(S row, S column) const { return _x(static_cast<size_t>(row), static_cast<size_t>(column)); }
 
         std::vector<double> as_vector() const
-            {
-                switch (number_of_dimensions) {
-                  case 2:
-                      return {_x(0, 0), _x(0, 1), _x(1, 0), _x(1, 1)};
-                  case 3:
-                      return {_x(0, 0), _x(0, 1), _x(0, 2), _x(1, 0), _x(1, 1), _x(1, 2), _x(2, 0), _x(2, 1), _x(2, 2)};
-                }
-                return {};
+        {
+            switch (number_of_dimensions) {
+                case 2:
+                    return {_x(0, 0), _x(0, 1), _x(1, 0), _x(1, 1)};
+                case 3:
+                    return {_x(0, 0), _x(0, 1), _x(0, 2), _x(1, 0), _x(1, 1), _x(1, 2), _x(2, 0), _x(2, 1), _x(2, 2)};
             }
+            return {};
+        }
 
         template <typename Iterator> Transformation& set(Iterator first, size_t size)
-            {
-                switch (size) {
-                  case 4:
-                      _x(0, 0) = *first++;
-                      _x(0, 1) = *first++;
-                      _x(1, 0) = *first++;
-                      _x(1, 1) = *first++;
-                      break;
-                  case 9:
-                      _x(0, 0) = *first++;
-                      _x(0, 1) = *first++;
-                      _x(0, 2) = *first++;
-                      _x(1, 0) = *first++;
-                      _x(1, 1) = *first++;
-                      _x(1, 2) = *first++;
-                      _x(2, 0) = *first++;
-                      _x(2, 1) = *first++;
-                      _x(2, 2) = *first++;
-                }
-                return *this;
+        {
+            switch (size) {
+                case 4:
+                    _x(0, 0) = *first++;
+                    _x(0, 1) = *first++;
+                    _x(1, 0) = *first++;
+                    _x(1, 1) = *first++;
+                    break;
+                case 9:
+                    _x(0, 0) = *first++;
+                    _x(0, 1) = *first++;
+                    _x(0, 2) = *first++;
+                    _x(1, 0) = *first++;
+                    _x(1, 1) = *first++;
+                    _x(1, 2) = *first++;
+                    _x(2, 0) = *first++;
+                    _x(2, 1) = *first++;
+                    _x(2, 2) = *first++;
             }
+            return *this;
+        }
 
-          // 2D --------------------------------------------------
+        // 2D --------------------------------------------------
 
-        constexpr double  a() const { return _x(0, 0); }
-        constexpr double& a() {       return _x(0, 0); }
-        constexpr double  b() const { return _x(0, 1); }
-        constexpr double& b() {       return _x(0, 1); }
-        constexpr double  c() const { return _x(1, 0); }
-        constexpr double& c() {       return _x(1, 0); }
-        constexpr double  d() const { return _x(1, 1); }
-        constexpr double& d() {       return _x(1, 1); }
+        constexpr double a() const { return _x(0, 0); }
+        constexpr double& a() { return _x(0, 0); }
+        constexpr double b() const { return _x(0, 1); }
+        constexpr double& b() { return _x(0, 1); }
+        constexpr double c() const { return _x(1, 0); }
+        constexpr double& c() { return _x(1, 0); }
+        constexpr double d() const { return _x(1, 1); }
+        constexpr double& d() { return _x(1, 1); }
 
-        Transformation& set(double a11, double a12, double a21, double a22) { a() = a11; b() = a12; c() = a21; d() = a22; return *this; }
+        Transformation& set(double a11, double a12, double a21, double a22)
+        {
+            a() = a11;
+            b() = a12;
+            c() = a21;
+            d() = a22;
+            return *this;
+        }
 
         void rotate(double aAngle)
-            {
-                const double cos = std::cos(aAngle);
-                const double sin = std::sin(aAngle);
-                const double r0 = cos * a() + -sin * c();
-                const double r1 = cos * b() + -sin * d();
-                c() = sin * a() +  cos * c();
-                d() = sin * b() +  cos * d();
-                a() = r0;
-                b() = r1;
-            }
+        {
+            const double cos = std::cos(aAngle);
+            const double sin = std::sin(aAngle);
+            const double r0 = cos * a() + -sin * c();
+            const double r1 = cos * b() + -sin * d();
+            c() = sin * a() + cos * c();
+            d() = sin * b() + cos * d();
+            a() = r0;
+            b() = r1;
+        }
 
         void flip_transformed(double x, double y)
-            {
-                const double x2y2 = x * x - y * y, xy = 2 * x * y;
-                const double r0 = x2y2 * a() + xy * c();
-                const double r1 = x2y2 * b() + xy * d();
-                c() = xy * a() + -x2y2 * c();
-                d() = xy * b() + -x2y2 * d();
-                a() = r0;
-                b() = r1;
-            }
+        {
+            const double x2y2 = x * x - y * y, xy = 2 * x * y;
+            const double r0 = x2y2 * a() + xy * c();
+            const double r1 = x2y2 * b() + xy * d();
+            c() = xy * a() + -x2y2 * c();
+            d() = xy * b() + -x2y2 * d();
+            a() = r0;
+            b() = r1;
+        }
 
-          // reflect about a line specified with vector [aX, aY]
+        // reflect about a line specified with vector [aX, aY]
         void flip(double aX, double aY)
-            {
-                  // vector [aX, aY] must be first transformed using inversion of this
-                const auto inv = inverse();
-                const double x = aX * inv.a() + aY * inv.c();
-                const double y = aX * inv.b() + aY * inv.d();
-                flip_transformed(x, y);
-            }
+        {
+            // vector [aX, aY] must be first transformed using inversion of this
+            const auto inv = inverse();
+            const double x = aX * inv.a() + aY * inv.c();
+            const double y = aX * inv.b() + aY * inv.d();
+            flip_transformed(x, y);
+        }
 
         void multiply_by(const Transformation& t)
-            {
-                const auto r0 = a() * t.a() + b() * t.c();
-                const auto r1 = a() * t.b() + b() * t.d();
-                const auto r2 = c() * t.a() + d() * t.c();
-                const auto r3 = c() * t.b() + d() * t.d();
-                a() = r0;
-                b() = r1;
-                c() = r2;
-                d() = r3;
-            }
+        {
+            const auto r0 = a() * t.a() + b() * t.c();
+            const auto r1 = a() * t.b() + b() * t.d();
+            const auto r2 = c() * t.a() + d() * t.c();
+            const auto r3 = c() * t.b() + d() * t.d();
+            a() = r0;
+            b() = r1;
+            c() = r2;
+            d() = r3;
+        }
 
-        Location2D transform(Location2D loc) const
-            {
-                return {loc.x() * a() + loc.y() * c(), loc.x() * b() + loc.y() * d()};
-            }
+        Location2D transform(Location2D loc) const { return {loc.x() * a() + loc.y() * c(), loc.x() * b() + loc.y() * d()}; }
 
         LineDefinedByEquation transform(LineDefinedByEquation source) const
-            {
-                const auto p1 = transform(Location2D{0, source.intercept()});
-                const auto p2 = transform(Location2D{1, source.slope() + source.intercept()});
-                const auto slope = (p2.y() - p1.y()) / (p2.x() - p1.x());
-                return {slope, p1.y() - slope * p1.x()};
-            }
+        {
+            const auto p1 = transform(Location2D{0, source.intercept()});
+            const auto p2 = transform(Location2D{1, source.slope() + source.intercept()});
+            const auto slope = (p2.y() - p1.y()) / (p2.x() - p1.x());
+            return {slope, p1.y() - slope * p1.x()};
+        }
 
-        double determinant() const
-            {
-                return a() * d() - b() * c();
-            }
+        double determinant() const { return a() * d() - b() * c(); }
 
-        class singular : public std::exception {};
+        class singular : public std::exception
+        {
+        };
 
         Transformation inverse() const
-            {
-                const auto deter = determinant();
-                if (float_zero(deter))
-                    throw singular{};
-                return {d() / deter, - b() / deter, -c() / deter, a() / deter};
-            }
+        {
+            const auto deter = determinant();
+            if (float_zero(deter))
+                throw singular{};
+            return {d() / deter, -b() / deter, -c() / deter, a() / deter};
+        }
 
-          // 3D --------------------------------------------------
+        // 3D --------------------------------------------------
 
         Location3D transform(Location3D loc) const
-            {
-                return {
-                    loc.x() * _x(0, 0) + loc.y() * _x(1, 0) + loc.z() * _x(2, 0),
-                    loc.x() * _x(0, 1) + loc.y() * _x(1, 1) + loc.z() * _x(2, 1),
-                    loc.x() * _x(0, 2) + loc.y() * _x(1, 2) + loc.z() * _x(2, 2)
-                };
-            }
+        {
+            return {loc.x() * _x(0, 0) + loc.y() * _x(1, 0) + loc.z() * _x(2, 0), loc.x() * _x(0, 1) + loc.y() * _x(1, 1) + loc.z() * _x(2, 1),
+                    loc.x() * _x(0, 2) + loc.y() * _x(1, 2) + loc.z() * _x(2, 2)};
+        }
 
-          // -----------------------------------------------------
+        // -----------------------------------------------------
 
         size_t number_of_dimensions = 2;
+
+        bool valid() const
+        {
+            return std::none_of(begin(), end(), [](auto val) { return std::isnan(val); });
+        }
 
     }; // class Transformation
 
     inline std::string to_string(const Transformation& t)
     {
         switch (t.number_of_dimensions) {
-          case 2:
-              return ::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
-          case 3:
-              return ::string::concat("[[", t._x(0, 0), t._x(0, 1), t._x(0, 2), "], [", t._x(1, 0), t._x(1, 1), t._x(1, 2), "], [", t._x(2, 0), t._x(2, 1), t._x(2, 2), "]]");
+            case 2:
+                return ::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
+            case 3:
+                return ::string::concat("[[", t._x(0, 0), t._x(0, 1), t._x(0, 2), "], [", t._x(1, 0), t._x(1, 1), t._x(1, 2), "], [", t._x(2, 0), t._x(2, 1), t._x(2, 2), "]]");
         }
         return "[[*invalid number_of_dimensions*]]";
     }
 
-    inline std::ostream& operator << (std::ostream& out, const Transformation& t) { return out << to_string(t); }
+    inline std::ostream& operator<<(std::ostream& out, const Transformation& t) { return out << to_string(t); }
 
-// ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
-      // (N+1)xN matrix handling transformation in N-dimensional space. The last row is for translation
+    // (N+1)xN matrix handling transformation in N-dimensional space. The last row is for translation
     class TransformationTranslation : public Transformation
     {
-     public:
+      public:
         TransformationTranslation(size_t number_of_dimensions) : Transformation(number_of_dimensions) {}
         TransformationTranslation(const TransformationTranslation&) = default;
 
@@ -219,7 +227,7 @@ namespace acmacs
         return result;
     }
 
-    inline std::ostream& operator << (std::ostream& out, const TransformationTranslation& t) { return out << to_string(t); }
+    inline std::ostream& operator<<(std::ostream& out, const TransformationTranslation& t) { return out << to_string(t); }
 
 } // namespace acmacs
 
