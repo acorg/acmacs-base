@@ -103,6 +103,7 @@ namespace acmacs
                 std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
+                constexpr bool operator!() const noexcept { return !has_value(); }
                 bool multiple_values() const noexcept override { return false; }
 
                 void add(detail::cmd_line_iter& arg, detail::cmd_line_iter last) override
