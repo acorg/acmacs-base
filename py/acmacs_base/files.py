@@ -93,6 +93,8 @@ def read_text(path :Path):
 # ----------------------------------------------------------------------
 
 def write_binary(path :Path, data :bytes):
+    if isinstance(path, str):
+        path = Path(path)
     if path.suffix == ".xz":
         import lzma
         opener = lzma.LZMAFile
