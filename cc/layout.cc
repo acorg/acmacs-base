@@ -108,15 +108,26 @@ acmacs::Layout::Layout(const LayoutInterface& aSource, const std::vector<size_t>
 std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
 {
     std::vector<std::pair<double, double>> result(number_of_dimensions_);
-    using diff_t = decltype(result)::difference_type;
-    for (auto dim : acmacs::range(number_of_dimensions_)) {
-        const auto offset = Vec::begin() + static_cast<diff_t>(dim);
-        result[dim] = std::pair(*offset, *offset);
-    }
-    for (auto it = Vec::begin() + static_cast<diff_t>(number_of_dimensions_); it != Vec::end(); ) {
+    // using diff_t = decltype(result)::difference_type;
+    // Layout may contain NaNs (disconnected points), avoid them when finding minmax
+    auto it = Vec::begin();
+    while (it != Vec::end()) {
+        size_t valid_dims = 0;
         for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
-            result[dim].first = std::min(result[dim].first, *it);
-            result[dim].second = std::max(result[dim].second, *it);
+            if (!std::isnan(*it)) {
+                result[dim] = std::pair(*it, *it);
+                ++valid_dims;
+            }
+        }
+        if (valid_dims == number_of_dimensions_)
+            break;
+    }
+    while (it != Vec::end()) {
+        for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
+            if (!std::isnan(*it)) {
+                result[dim].first = std::min(result[dim].first, *it);
+                result[dim].second = std::max(result[dim].second, *it);
+            }
         }
     }
     return result;
