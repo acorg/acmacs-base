@@ -42,13 +42,15 @@ namespace acmacs
             return *this;
         }
 
-        template <typename S, typename=sfinae::string_only_t<S>> CsvWriter& field(S field)
+        // template <typename S, typename=sfinae::string_only_t<S>> CsvWriter& field(S field)
+        template <typename S> CsvWriter& field(S field)
         {
             add_field(to_string(field));
             return *this;
         }
 
-        template <typename S, typename=sfinae::string_only_t<S>> CsvWriter& operator<<(S data) { return field(data); }
+        // template <typename S, typename=sfinae::string_only_t<S>> CsvWriter& operator<<(S data) { return field(data); }
+        template <typename S> CsvWriter& operator<<(S data) { return field(data); }
 
         enum empty_field_ { empty_field };
         CsvWriter& operator<<(empty_field_) { return field(); }
