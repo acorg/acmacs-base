@@ -63,14 +63,14 @@ namespace virus_name
 // ----------------------------------------------------------------------
 
       // Extracts virus name without passage, reassortant, extra, etc.
-    inline std::string_view name(const std::string& aFullName) // pass by reference! because we return string_view to it
+    inline std::string_view name(std::string_view aFullName)
     {
-        std::smatch m;
-        if (std::regex_search(aFullName, m, _internal::international_name)) {
-            return {aFullName.data(), static_cast<size_t>(m.length())};
+        std::cmatch m;
+        if (std::regex_search(aFullName.begin(), aFullName.end(), m, _internal::international_name)) {
+            return aFullName.substr(0, static_cast<size_t>(m.length()));
         }
-        else if (std::regex_search(aFullName, m, _internal::passage_after_name)) { // works for cdc name without extra and without reassortant (cdc names usually do not have reassortant)
-            return {aFullName.data(), static_cast<size_t>(m.position())};
+        else if (std::regex_search(aFullName.begin(), aFullName.end(), m, _internal::passage_after_name)) { // works for cdc name without extra and without reassortant (cdc names usually do not have reassortant)
+            return aFullName.substr(0, static_cast<size_t>(m.position()));
         }
         else {
             return aFullName;   // failed to split, perhaps cdc name without passage
