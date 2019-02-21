@@ -8,8 +8,8 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::LayoutInterface::min
     std::vector<size_t> min_points(num_dim, 0), max_points(num_dim, 0);
     size_t point_no = 0;
     for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
-    Coordinates min_coordinates(operator[](point_no));
-    Coordinates max_coordinates(min_coordinates);
+    PointCoordinates min_coordinates(operator[](point_no));
+    PointCoordinates max_coordinates(min_coordinates);
     ++point_no;
     for (; point_no < number_of_points(); ++point_no) {
         const auto point = operator[](point_no);
@@ -72,9 +72,9 @@ acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transf
 
 // ----------------------------------------------------------------------
 
-acmacs::Coordinates acmacs::LayoutInterface::centroid() const
+acmacs::PointCoordinates acmacs::LayoutInterface::centroid() const
 {
-    Coordinates result(number_of_dimensions(), 0.0);
+    PointCoordinates result(number_of_dimensions(), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
         const auto coord = get(p_no);

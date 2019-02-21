@@ -1,5 +1,7 @@
 #pragma once
 
+#error Obsolate, use point-coordinates.hh
+
 #include <array>
 #include <vector>
 #include <iostream>

@@ -15,75 +15,73 @@
 
 namespace acmacs
 {
-    class Coordinates : public Vector
-    {
-      public:
-        using Vector::Vector;
-
-        Coordinates(Location2D loc) : Vector{loc.x(), loc.y()} {}
-        Coordinates(Location3D loc) : Vector{loc.x(), loc.y(), loc.z()} {}
-
-        Coordinates transform(const Transformation& aTransformation) const
-        {
-            switch (size()) {
-                case 2:
-                    return aTransformation.transform(static_cast<Location2D>(*this));
-                case 3:
-                    return aTransformation.transform(static_cast<Location3D>(*this));
-            }
-            return {};
-        }
-
-        bool not_nan() const
-        {
-            return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
-        }
-
-        operator Location2D() const
-        {
-            assert(size() == 2);
-            return {operator[](0), operator[](1)};
-        }
-
-        operator Location3D() const
-        {
-            assert(size() == 3);
-            return {operator[](0), operator[](1), operator[](2)};
-        }
-
-        Coordinates& mean_with(const Coordinates& another)
-        {
-            for (size_t dim = 0; dim < size(); ++dim)
-                (*this)[dim] = ((*this)[dim] + another[dim]) / 2.0;
-            return *this;
-        }
-
-    }; // class Coordinates
-
-    inline std::ostream& operator<<(std::ostream& s, const Coordinates& c)
-    {
-        stream_internal::write_to_stream(s, c, "[", "]", ", ");
-        return s;
-    }
+//    class Coordinates : public Vector
+//    {
+//      public:
+//        using Vector::Vector;
+//
+//        Coordinates(Location2D loc) : Vector{loc.x(), loc.y()} {}
+//        Coordinates(Location3D loc) : Vector{loc.x(), loc.y(), loc.z()} {}
+//
+//        Coordinates transform(const Transformation& aTransformation) const
+//        {
+//            switch (size()) {
+//                case 2:
+//                    return aTransformation.transform(static_cast<Location2D>(*this));
+//                case 3:
+//                    return aTransformation.transform(static_cast<Location3D>(*this));
+//            }
+//            return {};
+//        }
+//
+//        bool not_nan() const
+//        {
+//            return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
+//        }
+//
+//        operator Location2D() const
+//        {
+//            assert(size() == 2);
+//            return {operator[](0), operator[](1)};
+//        }
+//
+//        operator Location3D() const
+//        {
+//            assert(size() == 3);
+//            return {operator[](0), operator[](1), operator[](2)};
+//        }
+//
+//        Coordinates& mean_with(const Coordinates& another)
+//        {
+//            for (size_t dim = 0; dim < size(); ++dim)
+//                (*this)[dim] = ((*this)[dim] + another[dim]) / 2.0;
+//            return *this;
+//        }
+//
+//    }; // class Coordinates
+//
+//    inline std::ostream& operator<<(std::ostream& s, const Coordinates& c)
+//    {
+//        stream_internal::write_to_stream(s, c, "[", "]", ", ");
+//        return s;
+//    }
 
     // ----------------------------------------------------------------------
 
     struct Area
     {
-        Coordinates min, max;
+        PointCoordinates min, max;
 
-        Area(const Coordinates& a_min, const Coordinates& a_max) : min(a_min), max(a_max) {}
-        Area(const Coordinates& a_min) : min(a_min), max(a_min) {}
+        Area(const PointCoordinates& a_min, const PointCoordinates& a_max) : min(a_min), max(a_max) {}
+        Area(const PointCoordinates& a_min) : min(a_min), max(a_min) {}
 
-        size_t num_dim() const { return min.size(); }
+        size_t num_dim() const { return min.number_of_dimensions(); }
 
-        void extend(const Coordinates& point)
+        void extend(const PointCoordinates& point)
         {
             for (size_t dim = 0; dim < num_dim(); ++dim) {
-                if (point[dim] < min[dim])
-                    min[dim] = point[dim];
-                if (point[dim] > max[dim])
-                    max[dim] = point[dim];
+                min[dim] = std::min(point[dim], min[dim]);
+                max[dim] = std::max(point[dim], max[dim]);
             }
         }
 
@@ -99,13 +97,13 @@ namespace acmacs
         {
          private:
             double step_;
-            Coordinates min_, max_, current_;
+            PointCoordinates min_, max_, current_;
 
             friend struct Area;
-            Iterator(double step, const Coordinates& a_min, const Coordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
+            Iterator(double step, const PointCoordinates& a_min, const PointCoordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
             Iterator() : step_(std::numeric_limits<double>::quiet_NaN()) {}
 
-            void set_max(const Coordinates& a_max)
+            void set_max(const PointCoordinates& a_max)
                 {
                     for (auto dim : acmacs::range(max_.size()))
                         max_[dim] = min_[dim] + std::ceil((a_max[dim] - min_[dim]) / step_) * step_;
@@ -123,8 +121,8 @@ namespace acmacs
                 }
 
             bool operator!=(const Iterator& rhs) const { return !operator==(rhs); }
-            const Coordinates& operator*() const { return current_; }
-            const Coordinates* operator->() const { return &current_; }
+            const PointCoordinates& operator*() const { return current_; }
+            const PointCoordinates* operator->() const { return &current_; }
 
             const Iterator& operator++()
                 {
@@ -132,7 +130,7 @@ namespace acmacs
                         for (auto dim : acmacs::range(current_.size())) {
                             current_[dim] += step_;
                             if (current_[dim] <= max_[dim]) {
-                                std::copy(min_.begin(), min_.begin() + static_cast<Coordinates::difference_type>(dim), current_.begin());
+                                std::copy(min_.begin(), min_.begin() + static_cast<PointCoordinates::difference_type>(dim), current_.begin());
                                 break;
                             }
                         }
@@ -152,66 +150,66 @@ namespace acmacs
 
       // ----------------------------------------------------------------------
 
-    class LayoutInterface;
+//     class LayoutInterface;
 
-    class LayoutConstIterator
-    {
-      public:
-        Coordinates operator*() const;
-        auto& operator++()
-        {
-            ++point_no_;
-            // do not skip disconnected points to avoid jumping over end iterator
-            return *this;
-        }
-        bool operator==(const LayoutConstIterator& rhs) const
-        {
-            if (&parent_ != &rhs.parent_)
-                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
-            return point_no_ == rhs.point_no_;
-        }
-        bool operator!=(const LayoutConstIterator& rhs) const { return !operator==(rhs); }
+//     class LayoutConstIterator
+//     {
+//       public:
+//         PointCoordinates operator*() const;
+//         auto& operator++()
+//         {
+//             ++point_no_;
+//             // do not skip disconnected points to avoid jumping over end iterator
+//             return *this;
+//         }
+//         bool operator==(const LayoutConstIterator& rhs) const
+//         {
+//             if (&parent_ != &rhs.parent_)
+//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+//             return point_no_ == rhs.point_no_;
+//         }
+//         bool operator!=(const LayoutConstIterator& rhs) const { return !operator==(rhs); }
+//
+//       private:
+//         const LayoutInterface& parent_;
+//         mutable size_t point_no_;
+//
+//         LayoutConstIterator(const LayoutInterface& parent, size_t point_no) : parent_{parent}, point_no_{point_no} {}
+//
+//         friend class LayoutInterface;
+//
+//     }; // class LayoutConstIterator
 
-      private:
-        const LayoutInterface& parent_;
-        mutable size_t point_no_;
-
-        LayoutConstIterator(const LayoutInterface& parent, size_t point_no) : parent_{parent}, point_no_{point_no} {}
-
-        friend class LayoutInterface;
-
-    }; // class LayoutConstIterator
-
-    class LayoutDimensionConstIterator
-    {
-      public:
-        double operator*() const;
-        auto& operator++()
-        {
-            ++point_no_;
-            // do not skip disconnected points to avoid jumping over end iterator
-            return *this;
-        }
-        bool operator==(const LayoutDimensionConstIterator& rhs) const
-        {
-            if (&parent_ != &rhs.parent_)
-                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
-            if (dimension_no_ != rhs.dimension_no_)
-                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
-            return point_no_ == rhs.point_no_;
-        }
-        bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
-
-      private:
-        const LayoutInterface& parent_;
-        mutable size_t point_no_;
-        const size_t dimension_no_;
-
-        LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
-
-        friend class LayoutInterface;
-
-    }; // class LayoutDimensionConstIterator
+//     class LayoutDimensionConstIterator
+//     {
+//       public:
+//         double operator*() const;
+//         auto& operator++()
+//         {
+//             ++point_no_;
+//             // do not skip disconnected points to avoid jumping over end iterator
+//             return *this;
+//         }
+//         bool operator==(const LayoutDimensionConstIterator& rhs) const
+//         {
+//             if (&parent_ != &rhs.parent_)
+//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+//             if (dimension_no_ != rhs.dimension_no_)
+//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
+//             return point_no_ == rhs.point_no_;
+//         }
+//         bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
+//
+//       private:
+//         const LayoutInterface& parent_;
+//         mutable size_t point_no_;
+//         const size_t dimension_no_;
+//
+//         LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
+//
+//         friend class LayoutInterface;
+//
+//     }; // class LayoutDimensionConstIterator
 
     // ----------------------------------------------------------------------
 
@@ -225,9 +223,9 @@ namespace acmacs
 
         virtual size_t number_of_points() const noexcept = 0;
         virtual size_t number_of_dimensions() const noexcept = 0;
-        virtual const Coordinates operator[](size_t aPointNo) const = 0;
-        const Coordinates get(size_t aPointNo) const { return operator[](aPointNo); }
-        Coordinates& operator[](size_t) = delete; // use set()!
+        virtual const PointCoordinates& operator[](size_t aPointNo) const = 0;
+        const PointCoordinates& get(size_t aPointNo) const { return operator[](aPointNo); }
+        PointCoordinates& operator[](size_t) = 0;
         virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
         double operator()(size_t aPointNo, size_t aDimensionNo) const { return coordinate(aPointNo, aDimensionNo); }
         virtual bool point_has_coordinates(size_t point_no) const = 0;
@@ -247,9 +245,9 @@ namespace acmacs
         virtual Area area() const;                                  // for all points
         virtual Area area(const std::vector<size_t>& points) const; // just for the specified point indexes
         virtual LayoutInterface* transform(const Transformation& aTransformation) const;
-        virtual Coordinates centroid() const;
+        virtual PointCoordinates centroid() const;
 
-        virtual void set(size_t aPointNo, const acmacs::Vector& aCoordinates) = 0;
+        virtual void set(size_t aPointNo, const acmacs::Vector& aPointCoordinates) = 0;
         virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
 
         LayoutConstIterator begin() const { return {*this, 0}; }
@@ -277,7 +275,7 @@ namespace acmacs
         return s;
     }
 
-    inline Coordinates LayoutConstIterator::operator*() const
+    inline PointCoordinates LayoutConstIterator::operator*() const
     {
         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
             ++point_no_; // skip disconnected points
@@ -319,7 +317,7 @@ namespace acmacs
             number_of_dimensions_ = num_dim;
         }
 
-        const Coordinates operator[](size_t aPointNo) const override
+        const PointCoordinates operator[](size_t aPointNo) const override
         {
             return {Vec::begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
         }

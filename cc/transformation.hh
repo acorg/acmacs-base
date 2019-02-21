@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "acmacs-base/string.hh"
-#include "acmacs-base/location.hh"
+#include "acmacs-base/point-coordinates.hh"
 #include "acmacs-base/line.hh"
 
 // ----------------------------------------------------------------------
@@ -144,12 +144,10 @@ namespace acmacs
             d() = r3;
         }
 
-        Location2D transform(Location2D loc) const { return {loc.x() * a() + loc.y() * c(), loc.x() * b() + loc.y() * d()}; }
-
         LineDefinedByEquation transform(LineDefinedByEquation source) const
         {
-            const auto p1 = transform(Location2D{0, source.intercept()});
-            const auto p2 = transform(Location2D{1, source.slope() + source.intercept()});
+            const auto p1 = transform(PointCoordinates{0, source.intercept()});
+            const auto p2 = transform(PointCoordinates{1, source.slope() + source.intercept()});
             const auto slope = (p2.y() - p1.y()) / (p2.x() - p1.x());
             return {slope, p1.y() - slope * p1.x()};
         }
@@ -168,15 +166,21 @@ namespace acmacs
             return {d() / deter, -b() / deter, -c() / deter, a() / deter};
         }
 
-        // 3D --------------------------------------------------
+        // 2D and 3D --------------------------------------------------
 
-        Location3D transform(Location3D loc) const
+        PointCoordinates transform(const PointCoordinates& source) const
         {
-            return {loc.x() * _x(0, 0) + loc.y() * _x(1, 0) + loc.z() * _x(2, 0), loc.x() * _x(0, 1) + loc.y() * _x(1, 1) + loc.z() * _x(2, 1),
-                    loc.x() * _x(0, 2) + loc.y() * _x(1, 2) + loc.z() * _x(2, 2)};
+            switch (source.number_of_dimensions()) {
+              case 2:
+                  return {source.x() * a() + source.y() * c(), source.x() * b() + source.y() * d()};
+              case 3:
+                  return {source.x() * _x(0, 0) + source.y() * _x(1, 0) + source.z() * _x(2, 0), source.x() * _x(0, 1) + source.y() * _x(1, 1) + source.z() * _x(2, 1),
+                          source.x() * _x(0, 2) + source.y() * _x(1, 2) + source.z() * _x(2, 2)};
+            }
+            assert(source.number_of_dimensions() == 2);
         }
 
-        // -----------------------------------------------------
+        // 3D --------------------------------------------------
 
         size_t number_of_dimensions = 2;
 
