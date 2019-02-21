@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cmath>
 
+#include "acmacs-base/point-coordinates.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs
@@ -21,20 +23,20 @@ namespace acmacs
         constexpr double intercept() const { return intercept_; }
 
           // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-        template <typename V> double distance_with_direction(const V& vect) const
+        double distance_with_direction(const PointCoordinates& point) const
             {
-                return (slope() * vect[0] - vect[1] + intercept()) / std::sqrt(a2b2());
+                return (slope() * point[0] - point[1] + intercept()) / std::sqrt(a2b2());
             }
 
-        template <typename V> double distance_to(const V& vect) const { return std::abs(distance_with_direction(vect)); }
+        double distance_to(const PointCoordinates& point) const { return std::abs(distance_with_direction(point)); }
 
-        template <typename V> V project_on(const V& source) const
+        PointCoordinates project_on(const PointCoordinates& source) const
             {
                 return {(source[0] + slope() * source[1] - slope() * intercept()) / a2b2(),
                         (slope() * (source[0] + slope() * source[1]) + intercept()) / a2b2()};
             }
 
-        template <typename V> V flip_over(const V& source, double scale = 1.0) const
+        PointCoordinates flip_over(const PointCoordinates& source, double scale = 1.0) const
             {
                 return source + (project_on(source) - source) * (1.0 + scale);
             }
@@ -62,7 +64,7 @@ namespace acmacs
 
           // if passed point is one the correct side, leaves it as is,
           // otherwise flips it to the correct side
-        template <typename V> V fix(const V& source) const
+        PointCoordinates fix(const PointCoordinates& source) const
             {
                 if (const auto dist = distance_with_direction(source); (dist * side_sign()) < 0)
                     return flip_over(source);

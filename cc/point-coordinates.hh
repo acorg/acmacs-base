@@ -8,6 +8,7 @@
 #include <limits>
 
 #include "acmacs-base/float.hh"
+#include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -90,7 +91,7 @@ namespace acmacs
 
     inline std::string to_string(const PointCoordinates& coord, size_t precision = 32)
     {
-        auto result = '{' + to_string(coord.x(), precision) + ", " + to_string(coord.y(), precision);
+        auto result = '{' + acmacs::to_string(coord.x(), precision) + ", " + acmacs::to_string(coord.y(), precision);
         if (coord.number_of_dimensions() == 3)
             result += ", " + to_string(coord.z(), precision);
         return result + '}';
