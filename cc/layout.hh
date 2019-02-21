@@ -252,6 +252,9 @@ namespace acmacs
         PointCoordinates get(size_t point_no) const { return operator[](point_no); }
 
         double operator()(size_t point_no, size_t aDimensionNo) const { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        double& operator()(size_t point_no, size_t aDimensionNo) { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        double coordinate(size_t point_no, size_t aDimensionNo) const { return operator()(point_no, aDimensionNo); }
+        double& coordinate(size_t point_no, size_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const { return operator[](point_no).not_nan(); }
         const std::vector<double>& as_flat_vector_double() const { return *this; }
 
@@ -289,7 +292,7 @@ namespace acmacs
         // returns boundary coordinates (min and max)
         Area area() const;                                  // for all points
         Area area(const std::vector<size_t>& points) const; // just for the specified point indexes
-        Layout transform(const Transformation& aTransformation) const;
+        std::shared_ptr<Layout> transform(const Transformation& aTransformation) const;
         PointCoordinates centroid() const;
 
         // LayoutConstIterator begin() const { return {*this, 0}; }
