@@ -177,7 +177,7 @@ namespace acmacs
                   return {source.x() * _x(0, 0) + source.y() * _x(1, 0) + source.z() * _x(2, 0), source.x() * _x(0, 1) + source.y() * _x(1, 1) + source.z() * _x(2, 1),
                           source.x() * _x(0, 2) + source.y() * _x(1, 2) + source.z() * _x(2, 2)};
             }
-            assert(source.number_of_dimensions() == 2);
+            throw std::runtime_error("invalid number_of_dimensions in PointCoordinates");
         }
 
         // 3D --------------------------------------------------

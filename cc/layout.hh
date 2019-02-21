@@ -105,7 +105,7 @@ namespace acmacs
 
             void set_max(const PointCoordinates& a_max)
                 {
-                    for (auto dim : acmacs::range(max_.size()))
+                    for (auto dim : acmacs::range(max_.number_of_dimensions()))
                         max_[dim] = min_[dim] + std::ceil((a_max[dim] - min_[dim]) / step_) * step_;
                 }
 
@@ -127,10 +127,10 @@ namespace acmacs
             const Iterator& operator++()
                 {
                     if (current_[0] <= max_[0]) {
-                        for (auto dim : acmacs::range(current_.size())) {
+                        for (auto dim : acmacs::range(current_.number_of_dimensions())) {
                             current_[dim] += step_;
                             if (current_[dim] <= max_[dim]) {
-                                std::copy(min_.begin(), min_.begin() + static_cast<PointCoordinates::difference_type>(dim), current_.begin());
+                                std::copy(min_.begin(), min_.begin() + (dim), current_.begin());
                                 break;
                             }
                         }
@@ -144,7 +144,7 @@ namespace acmacs
 
     }; // struct Area
 
-    inline std::string to_string(const Area& area, size_t precision = 32) { return to_string(area.min, precision) + ' ' + to_string(area.max, precision); }
+    inline std::string to_string(const Area& area, size_t precision = 32) { return acmacs::to_string(area.min, precision) + ' ' + acmacs::to_string(area.max, precision); }
 
     inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
 
@@ -213,132 +213,53 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    class LayoutInterface
-    {
-      public:
-        LayoutInterface() = default;
-        LayoutInterface(const LayoutInterface&) = default;
-        virtual ~LayoutInterface() = default;
-        LayoutInterface& operator=(const LayoutInterface&) = default;
-
-        virtual size_t number_of_points() const noexcept = 0;
-        virtual size_t number_of_dimensions() const noexcept = 0;
-        virtual const PointCoordinates& operator[](size_t aPointNo) const = 0;
-        const PointCoordinates& get(size_t aPointNo) const { return operator[](aPointNo); }
-        PointCoordinates& operator[](size_t) = 0;
-        virtual double coordinate(size_t aPointNo, size_t aDimensionNo) const = 0;
-        double operator()(size_t aPointNo, size_t aDimensionNo) const { return coordinate(aPointNo, aDimensionNo); }
-        virtual bool point_has_coordinates(size_t point_no) const = 0;
-        virtual std::vector<double> as_flat_vector_double() const = 0;
-        virtual std::vector<float> as_flat_vector_float() const = 0;
-
-        double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
-        {
-            const auto c1 = operator[](p1);
-            const auto c2 = operator[](p2);
-            return (c1.not_nan() && c2.not_nan()) ? c1.distance(c2) : no_distance;
-        }
-
-        // returns indexes for min points for each dimension and max points for each dimension
-        virtual std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
-        // returns boundary coordinates (min and max)
-        virtual Area area() const;                                  // for all points
-        virtual Area area(const std::vector<size_t>& points) const; // just for the specified point indexes
-        virtual LayoutInterface* transform(const Transformation& aTransformation) const;
-        virtual PointCoordinates centroid() const;
-
-        virtual void set(size_t aPointNo, const acmacs::Vector& aPointCoordinates) = 0;
-        virtual void set(size_t point_no, size_t dimension_no, double value) = 0;
-
-        LayoutConstIterator begin() const { return {*this, 0}; }
-        LayoutConstIterator end() const { return {*this, number_of_points()}; }
-        LayoutConstIterator begin_antigens(size_t /*number_of_antigens*/) const { return {*this, 0}; }
-        LayoutConstIterator end_antigens(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
-        LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
-        LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
-
-        LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
-        LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
-
-    }; // class LayoutInterface
-
-    inline std::ostream& operator<<(std::ostream& s, const LayoutInterface& aLayout)
-    {
-        s << "Layout [";
-        for (size_t no = 0; no < aLayout.number_of_points(); ++no)
-            s << aLayout[no] << ' ';
-        s << ']';
-        return s;
-    }
-
-    inline PointCoordinates LayoutConstIterator::operator*() const
-    {
-        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
-            ++point_no_; // skip disconnected points
-        return parent_.get(point_no_);
-    }
-
-    inline double LayoutDimensionConstIterator::operator*() const
-    {
-        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
-            ++point_no_; // skip disconnected points
-        return parent_.coordinate(point_no_, dimension_no_);
-    }
-
-      // ----------------------------------------------------------------------
-
-    class Layout : public virtual LayoutInterface, public std::vector<double>
+    class Layout : public std::vector<double>
     {
       public:
         using Vec = std::vector<double>;
 
         Layout() = default;
         Layout(const Layout&) = default;
-        Layout(size_t aNumberOfPoints, size_t aNumberOfDimensions) : Vec(aNumberOfPoints * aNumberOfDimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{aNumberOfDimensions} {}
-        Layout(size_t aNumberOfDimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{aNumberOfDimensions} {}
-        Layout(const LayoutInterface& aSource) : Vec(aSource.as_flat_vector_double()), number_of_dimensions_{aSource.number_of_dimensions()} {}
-        Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes); // make layout by subsetting source
+        Layout(Layout&&) = default;
+        Layout(size_t number_of_points, size_t number_of_dimensions) : Vec(number_of_points * number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{number_of_dimensions} {}
+        Layout(size_t number_of_dimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{number_of_dimensions} {}
+        Layout(const Layout& source, const std::vector<size_t>& indexes);
+        virtual ~Layout() = default;
         Layout& operator=(const Layout&) = default;
+        Layout& operator=(Layout&&) = default;
 
-        size_t number_of_points() const noexcept override { return size() / number_of_dimensions_; }
-        size_t number_of_dimensions() const noexcept override { return number_of_dimensions_; }
+        constexpr size_t number_of_points() const noexcept { return size() / number_of_dimensions_; }
+        constexpr size_t number_of_dimensions() const noexcept { return number_of_dimensions_; }
 
         void change_number_of_dimensions(size_t num_dim, bool allow_dimensions_increase = false)
         {
-            if (!allow_dimensions_increase && num_dim >= number_of_dimensions_) {
+            if (!allow_dimensions_increase && num_dim >= number_of_dimensions_)
                 throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + std::to_string(number_of_dimensions_) + " --> " + std::to_string(num_dim));
-                // std::cerr << "WARNING: Layout::change_number_of_dimensions: " << number_of_dimensions_ << " --> " << num_dim << '\n';
-            }
             resize(number_of_points() * num_dim);
             number_of_dimensions_ = num_dim;
         }
 
-        const PointCoordinates operator[](size_t aPointNo) const override
+        const PointCoordinates operator[](size_t point_no) const
         {
-            return {Vec::begin() + static_cast<difference_type>(aPointNo * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((aPointNo + 1) * number_of_dimensions_)};
+            return {Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_)};
         }
 
-        double coordinate(size_t aPointNo, size_t aDimensionNo) const override { return at(aPointNo * number_of_dimensions_ + aDimensionNo); }
-        bool point_has_coordinates(size_t point_no) const override { return !std::isnan(coordinate(point_no, 0)); }
-        std::vector<double> as_flat_vector_double() const override { return *this; }
-        std::vector<float> as_flat_vector_float() const override { return {Vec::begin(), Vec::end()}; }
-
-        void set(size_t aPointNo, const acmacs::Vector& aCoordinates) override
+        PointCoordinates operator[](size_t point_no)
         {
-            std::copy(aCoordinates.begin(), aCoordinates.end(), Vec::begin() + static_cast<decltype(Vec::begin())::difference_type>(aPointNo * number_of_dimensions()));
+            return {Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_)};
         }
 
-        void set_nan(size_t aPointNo)
+        PointCoordinates get(size_t point_no) const { return operator[](point_no); }
+
+        double operator()(size_t point_no, size_t aDimensionNo) const { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        bool point_has_coordinates(size_t point_no) const { return operator[](point_no).not_nan(); }
+        const std::vector<double>& as_flat_vector_double() const { return *this; }
+
+        void set_nan(size_t point_no)
         {
-            const auto first{Vec::begin() + static_cast<difference_type>(aPointNo * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
+            const auto first{Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
             std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
         }
-
-        virtual void set(size_t point_no, size_t dimension_no, double value) override { Vec::operator[](point_no* number_of_dimensions() + dimension_no) = value; }
 
         void remove_points(const ReverseSortedIndexes& indexes, size_t base)
         {
@@ -355,10 +276,64 @@ namespace acmacs
 
         std::vector<std::pair<double, double>> minmax() const;
 
+        double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
+        {
+            if (const auto c1 = operator[](p1), c2 = operator[](p2); c1.not_nan() && c2.not_nan())
+                return acmacs::distance(c1, c2);
+            else
+                return no_distance;
+        }
+
+        // returns indexes for min points for each dimension and max points for each dimension
+        std::pair<std::vector<size_t>, std::vector<size_t>> min_max_point_indexes() const;
+        // returns boundary coordinates (min and max)
+        Area area() const;                                  // for all points
+        Area area(const std::vector<size_t>& points) const; // just for the specified point indexes
+        Layout transform(const Transformation& aTransformation) const;
+        PointCoordinates centroid() const;
+
+        // LayoutConstIterator begin() const { return {*this, 0}; }
+        // LayoutConstIterator end() const { return {*this, number_of_points()}; }
+        // LayoutConstIterator begin_antigens(size_t /*number_of_antigens*/) const { return {*this, 0}; }
+        // LayoutConstIterator end_antigens(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        // LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        // LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
+
+        // LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        // LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        // LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        // LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        // LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        // LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+
       private:
         size_t number_of_dimensions_;
 
     }; // class Layout
+
+    inline std::ostream& operator<<(std::ostream& s, const Layout& aLayout)
+    {
+        s << "Layout [";
+        for (size_t no = 0; no < aLayout.number_of_points(); ++no)
+            s << aLayout[no] << ' ';
+        s << ']';
+        return s;
+    }
+
+//     inline PointCoordinates LayoutConstIterator::operator*() const
+//     {
+//         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+//             ++point_no_; // skip disconnected points
+//         return parent_.get(point_no_);
+//     }
+//
+//     inline double LayoutDimensionConstIterator::operator*() const
+//     {
+//         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+//             ++point_no_; // skip disconnected points
+//         return parent_.coordinate(point_no_, dimension_no_);
+//     }
+
 
 } // namespace acmacs
 

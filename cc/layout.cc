@@ -2,7 +2,7 @@
 
 // ----------------------------------------------------------------------
 
-std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::LayoutInterface::min_max_point_indexes() const
+std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_point_indexes() const
 {
     const auto num_dim = number_of_dimensions();
     std::vector<size_t> min_points(num_dim, 0), max_points(num_dim, 0);
@@ -28,11 +28,11 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::LayoutInterface::min
     }
     return {min_points, max_points};
 
-} // acmacs::LayoutInterface::min_max_point_indexes
+} // acmacs::Layout::min_max_point_indexes
 
 // ----------------------------------------------------------------------
 
-acmacs::Area acmacs::LayoutInterface::area() const
+acmacs::Area acmacs::Layout::area() const
 {
     size_t point_no = 0;
     for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
@@ -44,11 +44,11 @@ acmacs::Area acmacs::LayoutInterface::area() const
     }
     return result;
 
-} // acmacs::LayoutInterface::boundaries
+} // acmacs::Layout::boundaries
 
 // ----------------------------------------------------------------------
 
-acmacs::Area acmacs::LayoutInterface::area(const std::vector<size_t>& points) const // just for the specified point indexes
+acmacs::Area acmacs::Layout::area(const std::vector<size_t>& points) const // just for the specified point indexes
 {
     Area result(operator[](points.front()));
     for (auto point_no : points) {
@@ -57,28 +57,27 @@ acmacs::Area acmacs::LayoutInterface::area(const std::vector<size_t>& points) co
     }
     return result;
 
-} // acmacs::LayoutInterface::boundaries
+} // acmacs::Layout::boundaries
 
 // ----------------------------------------------------------------------
 
-acmacs::LayoutInterface* acmacs::LayoutInterface::transform(const acmacs::Transformation& aTransformation) const
+acmacs::Layout acmacs::Layout::transform(const acmacs::Transformation& aTransformation) const
 {
-    auto* result = new acmacs::Layout(number_of_points(), number_of_dimensions());
+    acmacs::Layout result(number_of_points(), number_of_dimensions());
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
-        result->set(p_no, get(p_no).transform(aTransformation));
+        result[p_no] = aTransformation.transform(get(p_no));
     return result;
 
-} // acmacs::LayoutInterface::transform
+} // acmacs::Layout::transform
 
 // ----------------------------------------------------------------------
 
-acmacs::PointCoordinates acmacs::LayoutInterface::centroid() const
+acmacs::PointCoordinates acmacs::Layout::centroid() const
 {
     PointCoordinates result(number_of_dimensions(), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
-        const auto coord = get(p_no);
-        if (coord.not_nan())
+        if (const auto coord = get(p_no); coord.not_nan())
             result += coord;
         else
             --num_non_nan;
@@ -86,17 +85,16 @@ acmacs::PointCoordinates acmacs::LayoutInterface::centroid() const
     result /= num_non_nan;
     return result;
 
-} // acmacs::LayoutInterface::centroid
+} // acmacs::Layout::centroid
 
 // ----------------------------------------------------------------------
 
-acmacs::Layout::Layout(const LayoutInterface& aSource, const std::vector<size_t>& aIndexes)
-    : std::vector<double>(aIndexes.size() * aSource.number_of_dimensions(), std::numeric_limits<double>::quiet_NaN()),
-    number_of_dimensions_{aSource.number_of_dimensions()}
+acmacs::Layout::Layout(const Layout& source, const std::vector<size_t>& indexes)
+    : Vec(indexes.size() * source.number_of_dimensions(), std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{source.number_of_dimensions()}
 {
     auto target = Vec::begin();
-    for (auto index : aIndexes) {
-        const auto coord{aSource[index]};
+    for (auto index : indexes) {
+        const auto coord{source[index]};
         std::copy(coord.begin(), coord.end(), target);
         target += static_cast<decltype(target)::difference_type>(number_of_dimensions_);
     }

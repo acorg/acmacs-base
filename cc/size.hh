@@ -10,10 +10,10 @@
 
 namespace acmacs
 {
-    class Offset : public Location2D
+    class Offset : public PointCoordinates
     {
       public:
-        using Location2D::Location2D;
+        using PointCoordinates::PointCoordinates;
 
     }; // class Offset
 
@@ -30,8 +30,8 @@ namespace acmacs
             assert(width >= 0);
             assert(height >= 0);
         }
-        Size(Location2D loc) : Size(loc.x(), loc.y()) {}
-        Size(Location2D a, Location2D b) : Size(std::abs(a.x() - b.x()), std::abs(a.y() - b.y())) {}
+        Size(const PointCoordinates& loc) : Size(loc.x(), loc.y()) {}
+        Size(const PointCoordinates& a, const PointCoordinates& b) : Size(std::abs(a.x() - b.x()), std::abs(a.y() - b.y())) {}
         void set(double aWidth, double aHeight)
         {
             width = aWidth;
@@ -60,21 +60,21 @@ namespace acmacs
             return *this;
         }
 
-        Location2D as_location() const { return {width, height}; }
+        PointCoordinates as_location() const { return PointCoordinates(width, height); }
 
     }; // class Size
 
     inline std::string to_string(const Size& size) { return '{' + to_string(size.width) + ", " + to_string(size.height) + '}'; }
     inline std::ostream& operator<<(std::ostream& out, const acmacs::Size& size) { return out << to_string(size); }
 
-    inline Size operator-(const Size& a, Location2D b) { return {a.width - b.x(), a.height - b.y()}; }
+    inline Size operator-(const Size& a, const PointCoordinates& b) { return {a.width - b.x(), a.height - b.y()}; }
     inline Size operator-(const Size& a, const Size& b) { return {a.width - b.width, a.height - b.height}; }
     inline Size operator+(const Size& a, const Size& b) { return {a.width + b.width, a.height + b.height}; }
     inline Size operator*(const Size& a, double v) { return {a.width * v, a.height * v}; }
     inline Size operator/(const Size& a, double v) { return {a.width / v, a.height / v}; }
 
-    inline Location2D operator+(Location2D a, const Size& b) { return {a.x() + b.width, a.y() + b.height}; }
-    inline Location2D operator-(Location2D a, const Size& b) { return {a.x() - b.width, a.y() - b.height}; }
+    inline PointCoordinates operator+(const PointCoordinates& a, const Size& b) { return PointCoordinates(a.x() + b.width, a.y() + b.height); }
+    inline PointCoordinates operator-(const PointCoordinates& a, const Size& b) { return PointCoordinates(a.x() - b.width, a.y() - b.height); }
 
 // ----------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ namespace acmacs
     {
       public:
         Rectangle(double x1, double y1, double x2, double y2) : top_left{std::min(x1, x2), std::min(y1, y2)}, bottom_right{std::max(x1, x2), std::max(y1, y2)} {}
-        Rectangle(Location2D a, Location2D b) : Rectangle(a.x(), a.y(), b.x(), b.y()) {}
+        Rectangle(const PointCoordinates& a, const PointCoordinates& b) : Rectangle(a.x(), a.y(), b.x(), b.y()) {}
 
         Rectangle transform(const Transformation& aTransformation) const
         {
@@ -91,10 +91,10 @@ namespace acmacs
 
         // returns if passed point is within the rectangle
         // constexpr bool within(double x, double y) const { return x >= top_left.x() && x <= bottom_right.x() && y >= top_left.y() && y <= bottom_right.y(); }
-        bool within(Location2D loc) const { return loc.x() >= top_left.x() && loc.x() <= bottom_right.x() && loc.y() >= top_left.y() && loc.y() <= bottom_right.y(); }
+        bool within(const PointCoordinates& loc) const { return loc.x() >= top_left.x() && loc.x() <= bottom_right.x() && loc.y() >= top_left.y() && loc.y() <= bottom_right.y(); }
 
-        Location2D top_left;
-        Location2D bottom_right;
+        PointCoordinates top_left;
+        PointCoordinates bottom_right;
 
     }; // class Rectangle
 
@@ -104,7 +104,7 @@ namespace acmacs
     {
       public:
           // Circle(double x, double y, double aRadius) : center{x, y}, radius{aRadius} {}
-        Circle(Location2D aCenter, double aRadius) : center{aCenter}, radius{aRadius} {}
+        Circle(const PointCoordinates& aCenter, double aRadius) : center{aCenter}, radius{aRadius} {}
 
         Circle transform(const Transformation& aTransformation) const
         {
@@ -113,9 +113,9 @@ namespace acmacs
 
         // returns if passed point is within the circle
         // bool within(double x, double y) const { return distance(center, {x, y}) <= radius; }
-        bool within(Location2D loc) const { return distance(center, loc) <= radius; }
+        bool within(const PointCoordinates& loc) const { return distance(center, loc) <= radius; }
 
-        Location2D center;
+        PointCoordinates center;
         double radius;
 
     }; // class Circle
