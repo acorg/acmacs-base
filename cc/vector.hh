@@ -62,7 +62,7 @@ namespace acmacs
         double max() const { return *std::max_element(begin(), end()); }
 
           // Returns distance between this and another vector
-        double distance(const Vector& aNother) const { return vector_math::distance<double>(begin(), end(), aNother.begin()); }
+        double distance(const Vector& aNother) const { return vector_math::distance(begin(), end(), aNother.begin()); }
 
     }; // class Vector
 

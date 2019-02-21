@@ -98,12 +98,14 @@ namespace acmacs
 
     inline std::ostream& operator<<(std::ostream& out, const PointCoordinates& coord) { return out << to_string(coord); }
 
-    inline double distance(const PointCoordinates& p1, const PointCoordinates& p2)
+    inline double distance2(const PointCoordinates& p1, const PointCoordinates& p2)
     {
         std::vector<double> diff(p1.number_of_dimensions());
         std::transform(p1.begin(), p1.end(), p2.begin(), diff.begin(), [](double v1, double v2) { return v1 - v2; });
-        return std::sqrt(std::accumulate(diff.begin(), diff.end(), 0.0, [](double acc, double val) { return acc + val * val; }));
+        return std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
     }
+
+    inline double distance(const PointCoordinates& p1, const PointCoordinates& p2) { return std::sqrt(distance2(p1, p2)); }
 
     inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::create_copy, p1); result += p2; return result; }
     inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::create_copy, p1); result += val; return result; }

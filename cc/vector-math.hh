@@ -7,13 +7,12 @@
 
 namespace acmacs::vector_math
 {
-    template <typename Float, typename Iterator> inline Float distance(Iterator first_1, Iterator last_1, Iterator first_2)
+    template <typename Iterator> inline double distance(Iterator first_1, Iterator last_1, Iterator first_2)
     {
-        auto square = [](Float v) { return v * v; };
-        return std::sqrt(std::accumulate(first_1, last_1, Float{0}, [first_2,square](Float dist, Float to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
+        auto square = [](double v) { return v * v; };
+        return std::sqrt(std::accumulate(first_1, last_1, 0.0, [first_2,square](double dist, double to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
 
-        // Float dist = 0;
-        // auto square = [](Float v) { return v * v; };
+        // double dist = 0;
         // // #pragma clang loop vectorize(enable) interleave(enable)
         // for (; first_1 != last_1; ++first_1, ++first_2)
         //     dist += square(*first_1 - *first_2);
@@ -80,20 +79,20 @@ namespace acmacs::vector_math
     //     return {m, std::sqrt(sum_of_squares / (last - first))};
     // }
 
-    template <typename Float, typename Iterator> inline Float inner_product(Iterator first_1, Iterator last_1, Iterator first_2, Float init = 0)
-    {
-        return std::inner_product(first_1, last_1, first_2, init);
-    }
+    // template <typename Float, typename Iterator> inline Float inner_product(Iterator first_1, Iterator last_1, Iterator first_2, Float init = 0)
+    // {
+    //     return std::inner_product(first_1, last_1, first_2, init);
+    // }
 
-    template <typename Float, typename Iterator> inline Float inner_product(Iterator first, Iterator last, Float init = 0)
-    {
-        return inner_product(first, last, first, init);
-    }
+    // template <typename Float, typename Iterator> inline Float inner_product(Iterator first, Iterator last, Float init = 0)
+    // {
+    //     return inner_product(first, last, first, init);
+    // }
 
-    template <typename Float, typename Iterator> inline Float eucledian_norm(Iterator first, Iterator last)
-    {
-        return std::sqrt(inner_product(first, last, first, Float{0}));
-    }
+    // template <typename Float, typename Iterator> inline Float eucledian_norm(Iterator first, Iterator last)
+    // {
+    //     return std::sqrt(inner_product(first, last, first, Float{0}));
+    // }
 
 } // namespace acmacs::vector_math
 
