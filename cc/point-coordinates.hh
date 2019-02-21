@@ -26,7 +26,7 @@ namespace acmacs
         PointCoordinates(PointCoordinates&&) = default;
         PointCoordinates(enum create_copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : begin_{&const_cast<double&>(*first)}, end_{&const_cast<double&>(*last)} {}
-        PointCoordinates(const std::vector<double>& source) : PointCoordinates(std::begin(source), std::end(source)) {}
+        explicit PointCoordinates(const std::vector<double>& source) : PointCoordinates(std::begin(source), std::end(source)) {}
 
         PointCoordinates& operator=(const PointCoordinates& rhs)
         {
