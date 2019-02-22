@@ -18,8 +18,10 @@ namespace acmacs
     {
       public:
         enum create_copy { create_copy };
+        enum with_nan_coordinates_2D { with_nan_coordinates_2D };
 
-        PointCoordinates(size_t number_of_dimensions = 2) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
+        PointCoordinates(enum with_nan_coordinates_2D) : data_(2, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
+        PointCoordinates(size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y) : data_{x, y}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(const PointCoordinates&) = default;
