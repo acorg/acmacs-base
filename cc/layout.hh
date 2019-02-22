@@ -101,7 +101,7 @@ namespace acmacs
 
             friend struct Area;
             Iterator(double step, const PointCoordinates& a_min, const PointCoordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
-            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_(PointCoordinates::with_nan_coordinates_2D), max_(PointCoordinates::with_nan_coordinates_2D), current_(PointCoordinates::with_nan_coordinates_2D) {}
+            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_(PointCoordinates::with_nan_coordinates, 2), max_(PointCoordinates::with_nan_coordinates, 2), current_(PointCoordinates::with_nan_coordinates, 2) {}
 
             void set_max(const PointCoordinates& a_max)
                 {

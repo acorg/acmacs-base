@@ -19,10 +19,9 @@ namespace acmacs
     {
       public:
         enum create_copy { create_copy };
-        enum with_nan_coordinates_2D { with_nan_coordinates_2D };
+        enum with_nan_coordinates { with_nan_coordinates };
 
-        PointCoordinates(enum with_nan_coordinates_2D) : data_(2, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
+        PointCoordinates(enum with_nan_coordinates, size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y) : data_{x, y}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(enum create_copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
@@ -35,16 +34,7 @@ namespace acmacs
         PointCoordinates& operator=(const PointCoordinates& rhs)
         {
             assert(number_of_dimensions() == rhs.number_of_dimensions());
-            if (rhs.data_.empty()) {
-                data_.clear();
-                begin_ = rhs.begin_;
-                end_ = rhs.end_;
-            }
-            else {
-                data_ = rhs.data_;
-                begin_ = &*data_.begin();
-                end_ = &*data_.end();
-            }
+            std::copy(rhs.begin_, rhs.end_, begin_);
             return *this;
         }
 
@@ -82,7 +72,7 @@ namespace acmacs
 
        PointCoordinates mean_with(const PointCoordinates& another) const
        {
-           PointCoordinates result(number_of_dimensions());
+           PointCoordinates result(with_nan_coordinates, number_of_dimensions());
            std::transform(begin_, end_, another.begin_, result.begin_, [](double v1, double v2) { return (v1 + v2) / 2.0; });
            return result;
        }
