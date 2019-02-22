@@ -150,66 +150,66 @@ namespace acmacs
 
       // ----------------------------------------------------------------------
 
-//     class LayoutInterface;
+    class Layout;
 
-//     class LayoutConstIterator
-//     {
-//       public:
-//         PointCoordinates operator*() const;
-//         auto& operator++()
-//         {
-//             ++point_no_;
-//             // do not skip disconnected points to avoid jumping over end iterator
-//             return *this;
-//         }
-//         bool operator==(const LayoutConstIterator& rhs) const
-//         {
-//             if (&parent_ != &rhs.parent_)
-//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
-//             return point_no_ == rhs.point_no_;
-//         }
-//         bool operator!=(const LayoutConstIterator& rhs) const { return !operator==(rhs); }
-//
-//       private:
-//         const LayoutInterface& parent_;
-//         mutable size_t point_no_;
-//
-//         LayoutConstIterator(const LayoutInterface& parent, size_t point_no) : parent_{parent}, point_no_{point_no} {}
-//
-//         friend class LayoutInterface;
-//
-//     }; // class LayoutConstIterator
+    class LayoutConstIterator
+    {
+      public:
+        PointCoordinates operator*() const;
+        auto& operator++()
+        {
+            ++point_no_;
+            // do not skip disconnected points to avoid jumping over end iterator
+            return *this;
+        }
+        bool operator==(const LayoutConstIterator& rhs) const
+        {
+            if (&parent_ != &rhs.parent_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+            return point_no_ == rhs.point_no_;
+        }
+        bool operator!=(const LayoutConstIterator& rhs) const { return !operator==(rhs); }
 
-//     class LayoutDimensionConstIterator
-//     {
-//       public:
-//         double operator*() const;
-//         auto& operator++()
-//         {
-//             ++point_no_;
-//             // do not skip disconnected points to avoid jumping over end iterator
-//             return *this;
-//         }
-//         bool operator==(const LayoutDimensionConstIterator& rhs) const
-//         {
-//             if (&parent_ != &rhs.parent_)
-//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
-//             if (dimension_no_ != rhs.dimension_no_)
-//                 throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
-//             return point_no_ == rhs.point_no_;
-//         }
-//         bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
-//
-//       private:
-//         const LayoutInterface& parent_;
-//         mutable size_t point_no_;
-//         const size_t dimension_no_;
-//
-//         LayoutDimensionConstIterator(const LayoutInterface& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
-//
-//         friend class LayoutInterface;
-//
-//     }; // class LayoutDimensionConstIterator
+      private:
+        const Layout& parent_;
+        mutable size_t point_no_;
+
+        LayoutConstIterator(const Layout& parent, size_t point_no) : parent_{parent}, point_no_{point_no} {}
+
+        friend class Layout;
+
+    }; // class LayoutConstIterator
+
+    class LayoutDimensionConstIterator
+    {
+      public:
+        double operator*() const;
+        auto& operator++()
+        {
+            ++point_no_;
+            // do not skip disconnected points to avoid jumping over end iterator
+            return *this;
+        }
+        bool operator==(const LayoutDimensionConstIterator& rhs) const
+        {
+            if (&parent_ != &rhs.parent_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for different layouts");
+            if (dimension_no_ != rhs.dimension_no_)
+                throw std::runtime_error("LayoutDimensionConstIterator: cannot compare iterators for dimensions");
+            return point_no_ == rhs.point_no_;
+        }
+        bool operator!=(const LayoutDimensionConstIterator& rhs) const { return !operator==(rhs); }
+
+      private:
+        const Layout& parent_;
+        mutable size_t point_no_;
+        const size_t dimension_no_;
+
+        LayoutDimensionConstIterator(const Layout& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
+
+        friend class Layout;
+
+    }; // class LayoutDimensionConstIterator
 
     // ----------------------------------------------------------------------
 
@@ -295,19 +295,19 @@ namespace acmacs
         std::shared_ptr<Layout> transform(const Transformation& aTransformation) const;
         PointCoordinates centroid() const;
 
-        // LayoutConstIterator begin() const { return {*this, 0}; }
-        // LayoutConstIterator end() const { return {*this, number_of_points()}; }
-        // LayoutConstIterator begin_antigens(size_t /*number_of_antigens*/) const { return {*this, 0}; }
-        // LayoutConstIterator end_antigens(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
-        // LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
-        // LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
+        LayoutConstIterator begin() const { return {*this, 0}; }
+        LayoutConstIterator end() const { return {*this, number_of_points()}; }
+        LayoutConstIterator begin_antigens(size_t /*number_of_antigens*/) const { return {*this, 0}; }
+        LayoutConstIterator end_antigens(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
+        LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
 
-        // LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        // LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
-        // LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        // LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        // LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        // LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
 
       private:
         size_t number_of_dimensions_;
@@ -323,19 +323,19 @@ namespace acmacs
         return s;
     }
 
-//     inline PointCoordinates LayoutConstIterator::operator*() const
-//     {
-//         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
-//             ++point_no_; // skip disconnected points
-//         return parent_.get(point_no_);
-//     }
-//
-//     inline double LayoutDimensionConstIterator::operator*() const
-//     {
-//         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
-//             ++point_no_; // skip disconnected points
-//         return parent_.coordinate(point_no_, dimension_no_);
-//     }
+    inline PointCoordinates LayoutConstIterator::operator*() const
+    {
+        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+            ++point_no_; // skip disconnected points
+        return parent_.get(point_no_);
+    }
+
+    inline double LayoutDimensionConstIterator::operator*() const
+    {
+        while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
+            ++point_no_; // skip disconnected points
+        return parent_.coordinate(point_no_, dimension_no_);
+    }
 
 
 } // namespace acmacs
