@@ -53,7 +53,8 @@ namespace acmacs
         void y(double val) { operator[](1) = val; }
         void z(double val) { operator[](2) = val; }
 
-        PointCoordinates operator-() const { PointCoordinates result(create_copy, *this); std::transform(begin_, end_, begin_, [](double val) { return -val; }); return result; }
+        PointCoordinates operator-() const { PointCoordinates result(create_copy, *this); std::transform(begin_, end_, result.begin_, [](double val) { return -val; }); return result; }
+        
         PointCoordinates operator+=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 + v2; }); return *this; }
         PointCoordinates operator+=(double val) { std::transform(begin_, end_, begin_, [val](double v1) { return v1 + val; }); return *this; }
         PointCoordinates operator-=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 - v2; }); return *this; }
