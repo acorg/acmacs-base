@@ -26,15 +26,21 @@ namespace acmacs
         PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(enum create_copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : begin_{&const_cast<double&>(*first)}, end_{&const_cast<double&>(*last)} {}
-        explicit PointCoordinates(const std::vector<double>& source) : PointCoordinates(std::begin(source), std::end(source)) {}
-
-        PointCoordinates(const PointCoordinates& rhs) : data_(rhs.data_), begin_{rhs.data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{rhs.data_.empty() ? rhs.end_ : &*data_.end()} {}
-        PointCoordinates(PointCoordinates&& rhs) : data_(std::move(rhs.data_)), begin_{rhs.data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{rhs.data_.empty() ? rhs.end_ : &*data_.end()} {}
+  
+        PointCoordinates(const PointCoordinates& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
+        PointCoordinates(PointCoordinates&& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
 
         PointCoordinates& operator=(const PointCoordinates& rhs)
         {
             assert(number_of_dimensions() == rhs.number_of_dimensions());
             std::copy(rhs.begin_, rhs.end_, begin_);
+            return *this;
+        }
+
+        PointCoordinates& operator=(PointCoordinates&& rhs)
+        {
+            assert(number_of_dimensions() == rhs.number_of_dimensions());
+            std::move(rhs.begin_, rhs.end_, begin_);
             return *this;
         }
 
