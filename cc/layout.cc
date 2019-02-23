@@ -7,13 +7,13 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_poin
     const auto num_dim = number_of_dimensions();
     std::vector<size_t> min_points(num_dim, 0), max_points(num_dim, 0);
     size_t point_no = 0;
-    for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
+    for (; !operator[](point_no).exists(); ++point_no); // skip NaN points at the beginning
     PointCoordinates min_coordinates(operator[](point_no));
     PointCoordinates max_coordinates(min_coordinates);
     ++point_no;
     for (; point_no < number_of_points(); ++point_no) {
         const auto point = operator[](point_no);
-        if (point.not_nan()) {
+        if (point.exists()) {
             for (size_t dim = 0; dim < num_dim; ++dim) {
                 if (point[dim] < min_coordinates[dim]) {
                     min_coordinates[dim] = point[dim];
@@ -35,11 +35,11 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_poin
 acmacs::Area acmacs::Layout::area() const
 {
     size_t point_no = 0;
-    for (; !operator[](point_no).not_nan(); ++point_no); // skip NaN points at the beginning
+    for (; !operator[](point_no).exists(); ++point_no); // skip NaN points at the beginning
     Area result(operator[](point_no));
     ++point_no;
     for (; point_no < number_of_points(); ++point_no) {
-        if (const auto point = operator[](point_no); point.not_nan())
+        if (const auto point = operator[](point_no); point.exists())
             result.extend(point);
     }
     return result;
@@ -52,7 +52,7 @@ acmacs::Area acmacs::Layout::area(const std::vector<size_t>& points) const // ju
 {
     Area result(operator[](points.front()));
     for (auto point_no : points) {
-        if (const auto point = operator[](point_no); point.not_nan())
+        if (const auto point = operator[](point_no); point.exists())
             result.extend(point);
     }
     return result;
@@ -77,7 +77,7 @@ acmacs::PointCoordinates acmacs::Layout::centroid() const
     PointCoordinates result(number_of_dimensions(), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
-        if (const auto coord = get(p_no); coord.not_nan())
+        if (const auto coord = get(p_no); coord.exists())
             result += coord;
         else
             --num_non_nan;

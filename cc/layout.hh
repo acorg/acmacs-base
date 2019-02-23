@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 
-#include "acmacs-base/vector.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/stream.hh"
@@ -15,58 +14,6 @@
 
 namespace acmacs
 {
-//    class Coordinates : public Vector
-//    {
-//      public:
-//        using Vector::Vector;
-//
-//        Coordinates(Location2D loc) : Vector{loc.x(), loc.y()} {}
-//        Coordinates(Location3D loc) : Vector{loc.x(), loc.y(), loc.z()} {}
-//
-//        Coordinates transform(const Transformation& aTransformation) const
-//        {
-//            switch (size()) {
-//                case 2:
-//                    return aTransformation.transform(static_cast<Location2D>(*this));
-//                case 3:
-//                    return aTransformation.transform(static_cast<Location3D>(*this));
-//            }
-//            return {};
-//        }
-//
-//        bool not_nan() const
-//        {
-//            return !empty() && std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
-//        }
-//
-//        operator Location2D() const
-//        {
-//            assert(size() == 2);
-//            return {operator[](0), operator[](1)};
-//        }
-//
-//        operator Location3D() const
-//        {
-//            assert(size() == 3);
-//            return {operator[](0), operator[](1), operator[](2)};
-//        }
-//
-//        Coordinates& mean_with(const Coordinates& another)
-//        {
-//            for (size_t dim = 0; dim < size(); ++dim)
-//                (*this)[dim] = ((*this)[dim] + another[dim]) / 2.0;
-//            return *this;
-//        }
-//
-//    }; // class Coordinates
-//
-//    inline std::ostream& operator<<(std::ostream& s, const Coordinates& c)
-//    {
-//        stream_internal::write_to_stream(s, c, "[", "]", ", ");
-//        return s;
-//    }
-
-    // ----------------------------------------------------------------------
 
     struct Area
     {
@@ -101,7 +48,7 @@ namespace acmacs
 
             friend struct Area;
             Iterator(double step, const PointCoordinates& a_min, const PointCoordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
-            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_(PointCoordinates::with_nan_coordinates, 2), max_(PointCoordinates::with_nan_coordinates, 2), current_(PointCoordinates::with_nan_coordinates, 2) {}
+            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_(2), max_(2), current_(2) {}
 
             void set_max(const PointCoordinates& a_max)
                 {
@@ -255,7 +202,7 @@ namespace acmacs
         double& operator()(size_t point_no, size_t aDimensionNo) { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
         double coordinate(size_t point_no, size_t aDimensionNo) const { return operator()(point_no, aDimensionNo); }
         double& coordinate(size_t point_no, size_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
-        bool point_has_coordinates(size_t point_no) const { return operator[](point_no).not_nan(); }
+        bool point_has_coordinates(size_t point_no) const { return operator[](point_no).exists(); }
         const std::vector<double>& as_flat_vector_double() const { return *this; }
 
         void set_nan(size_t point_no)
@@ -281,7 +228,7 @@ namespace acmacs
 
         double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
         {
-            if (const auto c1 = operator[](p1), c2 = operator[](p2); c1.not_nan() && c2.not_nan())
+            if (const auto c1 = operator[](p1), c2 = operator[](p2); c1.exists() && c2.exists())
                 return acmacs::distance(c1, c2);
             else
                 return no_distance;

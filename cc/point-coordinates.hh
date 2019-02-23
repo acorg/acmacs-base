@@ -20,9 +20,8 @@ namespace acmacs
       public:
         enum copy { copy };
         enum reference { reference };
-        enum with_nan_coordinates { with_nan_coordinates };
 
-        PointCoordinates(enum with_nan_coordinates, size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
+        explicit PointCoordinates(size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y) : data_{x, y}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(enum copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
@@ -47,7 +46,7 @@ namespace acmacs
         }
 
         bool operator==(const PointCoordinates& rhs) const { return std::equal(begin_, end_, rhs.begin_, rhs.end_); }
-        bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
+        constexpr bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
         constexpr size_t number_of_dimensions() const { return static_cast<size_t>(end_ - begin_); }
         double operator[](size_t dim) const { /* assert(dim < number_of_dimensions()); */ return *(begin_ + dim); }
@@ -57,9 +56,9 @@ namespace acmacs
         constexpr double y() const { return operator[](1); }
         constexpr double z() const { return operator[](2); }
 
-        void x(double val) { operator[](0) = val; }
-        void y(double val) { operator[](1) = val; }
-        void z(double val) { operator[](2) = val; }
+        constexpr void x(double val) { operator[](0) = val; }
+        constexpr void y(double val) { operator[](1) = val; }
+        constexpr void z(double val) { operator[](2) = val; }
         PointCoordinates operator-() const { PointCoordinates result(copy, *this); std::transform(begin_, end_, result.begin_, [](double val) { return -val; }); return result; }
 
         PointCoordinates operator+=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 + v2; }); return *this; }
@@ -73,17 +72,8 @@ namespace acmacs
         constexpr double* begin() { return begin_; }
         constexpr double* end() { return end_; }
 
-        bool not_nan() const
-        {
-            return std::all_of(begin(), end(), [](double value) -> bool { return !std::isnan(value); });
-        }
-
-       PointCoordinates mean_with(const PointCoordinates& another) const
-       {
-           PointCoordinates result(with_nan_coordinates, number_of_dimensions());
-           std::transform(begin_, end_, another.begin_, result.begin_, [](double v1, double v2) { return (v1 + v2) / 2.0; });
-           return result;
-       }
+        bool empty() const { return std::any_of(begin(), end(), [](auto val) { return std::isnan(val); }); }
+        constexpr bool exists() const { return !empty(); }
 
       private:
         std::vector<double> data_;
@@ -110,6 +100,12 @@ namespace acmacs
     }
 
     inline double distance(const PointCoordinates& p1, const PointCoordinates& p2) { return std::sqrt(distance2(p1, p2)); }
+    inline PointCoordinates middle(const PointCoordinates& p1, const PointCoordinates& p2)
+    {
+           PointCoordinates result(p1.number_of_dimensions());
+           std::transform(p1.begin(), p1.end(), p2.begin(), result.begin(), [](double v1, double v2) { return (v1 + v2) / 2.0; });
+           return result;
+    }
     inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result += p2; return result; }
     inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result += val; return result; }
     inline PointCoordinates operator-(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result -= p2; return result; }
