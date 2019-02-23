@@ -52,7 +52,7 @@ test: install-acmacs-base | $(TARGETS)
 install-acmacs-base: $(TARGETS)
 	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
-	ln -sf $(abspath py/acmacs_base) $(AD_PY)
+	$(call symbolic_link,$(abspath py)/acmacs_base,$(AD_PY)/acmacs_base)
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
 	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
