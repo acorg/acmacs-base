@@ -18,15 +18,17 @@ namespace acmacs
     class PointCoordinates
     {
       public:
-        enum create_copy { create_copy };
+        enum copy { copy };
+        enum reference { reference };
         enum with_nan_coordinates { with_nan_coordinates };
 
         PointCoordinates(enum with_nan_coordinates, size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y) : data_{x, y}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
         PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(enum create_copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : begin_{&const_cast<double&>(*first)}, end_{&const_cast<double&>(*last)} {}
-  
+        PointCoordinates(enum copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
+        PointCoordinates(enum reference, std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : begin_{&const_cast<double&>(*first)}, end_{&const_cast<double&>(*last)} {}
+        PointCoordinates(enum reference, const double* first, const double* last) : begin_{const_cast<double*>(first)}, end_{const_cast<double*>(last)} {}
+
         PointCoordinates(const PointCoordinates& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
         PointCoordinates(PointCoordinates&& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
 
@@ -58,8 +60,7 @@ namespace acmacs
         void x(double val) { operator[](0) = val; }
         void y(double val) { operator[](1) = val; }
         void z(double val) { operator[](2) = val; }
-
-        PointCoordinates operator-() const { PointCoordinates result(create_copy, *this); std::transform(begin_, end_, result.begin_, [](double val) { return -val; }); return result; }
+        PointCoordinates operator-() const { PointCoordinates result(copy, *this); std::transform(begin_, end_, result.begin_, [](double val) { return -val; }); return result; }
 
         PointCoordinates operator+=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 + v2; }); return *this; }
         PointCoordinates operator+=(double val) { std::transform(begin_, end_, begin_, [val](double v1) { return v1 + val; }); return *this; }
@@ -109,13 +110,12 @@ namespace acmacs
     }
 
     inline double distance(const PointCoordinates& p1, const PointCoordinates& p2) { return std::sqrt(distance2(p1, p2)); }
-
-    inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::create_copy, p1); result += p2; return result; }
-    inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::create_copy, p1); result += val; return result; }
-    inline PointCoordinates operator-(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::create_copy, p1); result -= p2; return result; }
-    inline PointCoordinates operator-(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::create_copy, p1); result += -val; return result; }
-    inline PointCoordinates operator*(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::create_copy, p1); result *= val; return result; }
-    inline PointCoordinates operator/(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::create_copy, p1); result /= val; return result; }
+    inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result += p2; return result; }
+    inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result += val; return result; }
+    inline PointCoordinates operator-(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result -= p2; return result; }
+    inline PointCoordinates operator-(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result += -val; return result; }
+    inline PointCoordinates operator*(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result *= val; return result; }
+    inline PointCoordinates operator/(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result /= val; return result; }
 
 } // namespace acmacs
 
