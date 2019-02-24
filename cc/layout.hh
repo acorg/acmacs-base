@@ -188,12 +188,12 @@ namespace acmacs
 
         const PointCoordinates operator[](size_t point_no) const
         {
-            return PointCoordinates(PointCoordinates::reference, Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
+            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
         }
 
         PointCoordinates operator[](size_t point_no)
         {
-            return PointCoordinates(PointCoordinates::reference, Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
+            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
         }
 
         PointCoordinates get(size_t point_no) const { return operator[](point_no); }

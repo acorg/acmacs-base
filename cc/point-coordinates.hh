@@ -1,12 +1,14 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
+// #include <vector>
 #include <cmath>
 #include <algorithm>
 #include <numeric>
 #include <cassert>
 #include <limits>
+#include <array>
+#include <variant>
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
@@ -18,39 +20,158 @@ namespace acmacs
     class PointCoordinates
     {
       public:
-        enum copy { copy };
-        enum reference { reference };
+        enum zero2D { zero2D };
+        enum zero3D { zero3D };
 
-        explicit PointCoordinates(size_t number_of_dimensions) : data_(number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(double x, double y) : data_{x, y}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(double x, double y, double z) : data_{x, y, z}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(enum copy, const PointCoordinates& source) : data_{source.begin_, source.end_}, begin_{&*data_.begin()}, end_{&*data_.end()} {}
-        PointCoordinates(enum reference, std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : begin_{&const_cast<double&>(*first)}, end_{&const_cast<double&>(*last)} {}
-        PointCoordinates(enum reference, const double* first, const double* last) : begin_{const_cast<double*>(first)}, end_{const_cast<double*>(last)} {}
+        explicit PointCoordinates(size_t number_of_dimensions)
+        {
+            const auto nan = std::numeric_limits<double>::quiet_NaN();
+            switch (number_of_dimensions) {
+              case 2:
+                  data_ = Store2D{nan, nan};
+                  break;
+              case 3:
+                  data_ = Store3D{nan, nan, nan};
+                  break;
+              default:
+                  assert(number_of_dimensions == 2);
+                  break;
+            }
+        }
+        PointCoordinates(double x, double y) : data_(Store2D{x, y}) {}
+        PointCoordinates(double x, double y, double z) : data_(Store3D{x, y, z}) {}
+        PointCoordinates(enum zero2D) : PointCoordinates(0.0, 0.0) {}
+        PointCoordinates(enum zero3D) : PointCoordinates(0.0, 0.0, 0.0) {}
+        PointCoordinates(const double* first, const double* last) : data_(ConstRef{first, static_cast<size_t>(last - first)}) {}
+        PointCoordinates(double* first, double* last) : data_(Ref{first, static_cast<size_t>(last - first)}) {}
+        PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : PointCoordinates(&*first, &*last) {}
+        PointCoordinates(std::vector<double>::iterator first, std::vector<double>::iterator last) : PointCoordinates(&*first, &*last) {}
 
-        PointCoordinates(const PointCoordinates& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
-        PointCoordinates(PointCoordinates&& rhs) : data_(rhs.data_), begin_{data_.empty() ? rhs.begin_ : &*data_.begin()}, end_{data_.empty() ? rhs.end_ : &*data_.end()} {}
+        PointCoordinates(const PointCoordinates& rhs)
+        {
+            switch (rhs.number_of_dimensions()) {
+              case 2:
+                  data_ = Store2D{rhs[0], rhs[1]};
+                  break;
+              case 3:
+                  data_ = Store3D{rhs[0], rhs[1], rhs[2]};
+                  break;
+              default:
+                  assert(number_of_dimensions() == 2);
+                  break;
+            }
+        }
+
+        PointCoordinates(PointCoordinates&& rhs) : PointCoordinates(rhs) {}
 
         PointCoordinates& operator=(const PointCoordinates& rhs)
         {
             assert(number_of_dimensions() == rhs.number_of_dimensions());
-            std::copy(rhs.begin_, rhs.end_, begin_);
+            std::copy(rhs.begin(), rhs.end(), begin());
             return *this;
         }
 
-        PointCoordinates& operator=(PointCoordinates&& rhs)
-        {
-            assert(number_of_dimensions() == rhs.number_of_dimensions());
-            std::move(rhs.begin_, rhs.end_, begin_);
-            return *this;
-        }
+        PointCoordinates& operator=(PointCoordinates&& rhs) { return operator=(rhs); }
 
-        bool operator==(const PointCoordinates& rhs) const { return std::equal(begin_, end_, rhs.begin_, rhs.end_); }
+        bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
         constexpr bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
-        constexpr size_t number_of_dimensions() const { return static_cast<size_t>(end_ - begin_); }
-        double operator[](size_t dim) const { /* assert(dim < number_of_dimensions()); */ return *(begin_ + dim); }
-        double& operator[](size_t dim) { /* assert(dim < number_of_dimensions()); */ return *(begin_ + dim); }
+        constexpr size_t number_of_dimensions() const
+        {
+            return std::visit(
+                [](auto&& data) -> size_t {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D>)
+                        return 2;
+                    else if constexpr (std::is_same_v<T, Store3D>)
+                        return 3;
+                    else
+                        return data.size;
+                },
+                data_);
+        }
+
+        constexpr double operator[](size_t dim) const
+        { /* assert(dim < number_of_dimensions()); */
+            return std::visit(
+                [dim](auto&& data) -> double {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data[dim];
+                    else
+                        return data.begin[dim];
+                },
+                data_);
+        }
+
+        constexpr double& operator[](size_t dim)
+        { /* assert(dim < number_of_dimensions()); */
+            return std::visit(
+                [dim](auto&& data) -> double& {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data[dim];
+                    else if constexpr (std::is_same_v<T, ConstRef>)
+                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else
+                        return data.begin[dim];
+                },
+                data_);
+        }
+
+        constexpr const double* begin() const
+        {
+            return std::visit(
+                [](auto&& data) -> const double* {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data.cbegin();
+                    else
+                        return data.begin;
+                },
+                data_);
+        }
+        constexpr const double* end() const
+        {
+            return std::visit(
+                [](auto&& data) -> const double* {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data.cend();
+                    else
+                        return data.begin + data.size;
+                },
+                data_);
+        }
+
+        constexpr double* begin()
+        {
+            return std::visit(
+                [](auto&& data) -> double* {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data.begin();
+                    else if constexpr (std::is_same_v<T, ConstRef>)
+                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else
+                        return data.begin;
+                },
+                data_);
+        }
+        constexpr double* end()
+        {
+            return std::visit(
+                [](auto&& data) -> double* {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                        return data.end();
+                    else if constexpr (std::is_same_v<T, ConstRef>)
+                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else
+                        return data.begin + data.size;
+                },
+                data_);
+        }
 
         constexpr double x() const { return operator[](0); }
         constexpr double y() const { return operator[](1); }
@@ -59,26 +180,23 @@ namespace acmacs
         constexpr void x(double val) { operator[](0) = val; }
         constexpr void y(double val) { operator[](1) = val; }
         constexpr void z(double val) { operator[](2) = val; }
-        PointCoordinates operator-() const { PointCoordinates result(copy, *this); std::transform(begin_, end_, result.begin_, [](double val) { return -val; }); return result; }
 
-        PointCoordinates operator+=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 + v2; }); return *this; }
-        PointCoordinates operator+=(double val) { std::transform(begin_, end_, begin_, [val](double v1) { return v1 + val; }); return *this; }
-        PointCoordinates operator-=(const PointCoordinates& rhs) { std::transform(begin_, end_, rhs.begin_, begin_, [](double v1, double v2) { return v1 - v2; }); return *this; }
-        PointCoordinates operator*=(double val) { std::transform(begin_, end_, begin_, [val](double v1) { return v1 * val; }); return *this; }
-        PointCoordinates operator/=(double val) { std::transform(begin_, end_, begin_, [val](double v1) { return v1 / val; }); return *this; }
-
-        constexpr const double* begin() const { return begin_; }
-        constexpr const double* end() const { return end_; }
-        constexpr double* begin() { return begin_; }
-        constexpr double* end() { return end_; }
+        PointCoordinates& operator+=(const PointCoordinates& rhs) { std::transform(begin(), end(), rhs.begin(), begin(), [](double v1, double v2) { return v1 + v2; }); return *this; }
+        PointCoordinates& operator+=(double val) { std::transform(begin(), end(), begin(), [val](double v1) { return v1 + val; }); return *this; }
+        PointCoordinates& operator-=(const PointCoordinates& rhs) { std::transform(begin(), end(), rhs.begin(), begin(), [](double v1, double v2) { return v1 - v2; }); return *this; }
+        PointCoordinates& operator*=(double val) { std::transform(begin(), end(), begin(), [val](double v1) { return v1 * val; }); return *this; }
+        PointCoordinates& operator/=(double val) { std::transform(begin(), end(), begin(), [val](double v1) { return v1 / val; }); return *this; }
 
         bool empty() const { return std::any_of(begin(), end(), [](auto val) { return std::isnan(val); }); }
         constexpr bool exists() const { return !empty(); }
 
       private:
-        std::vector<double> data_;
-        double* begin_;
-        double* end_;
+        using Store2D = std::array<double, 2>;
+        using Store3D = std::array<double, 3>;
+        struct Ref { double* begin; size_t size; };
+        struct ConstRef { const double* const begin; size_t size; };
+
+        std::variant<Store2D, Store3D, Ref, ConstRef> data_;
 
     }; // class PointCoordinates
 
@@ -106,12 +224,14 @@ namespace acmacs
            std::transform(p1.begin(), p1.end(), p2.begin(), result.begin(), [](double v1, double v2) { return (v1 + v2) / 2.0; });
            return result;
     }
-    inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result += p2; return result; }
-    inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result += val; return result; }
-    inline PointCoordinates operator-(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(PointCoordinates::copy, p1); result -= p2; return result; }
-    inline PointCoordinates operator-(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result += -val; return result; }
-    inline PointCoordinates operator*(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result *= val; return result; }
-    inline PointCoordinates operator/(const PointCoordinates& p1, double val) { PointCoordinates result(PointCoordinates::copy, p1); result /= val; return result; }
+
+    inline PointCoordinates operator-(const PointCoordinates& p1) { PointCoordinates result(p1); std::transform(result.begin(), result.end(), result.begin(), [](double val) { return -val; }); return result; }
+    inline PointCoordinates operator+(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(p1); result += p2; return result; }
+    inline PointCoordinates operator+(const PointCoordinates& p1, double val) { PointCoordinates result(p1); result += val; return result; }
+    inline PointCoordinates operator-(const PointCoordinates& p1, const PointCoordinates& p2) { PointCoordinates result(p1); result -= p2; return result; }
+    inline PointCoordinates operator-(const PointCoordinates& p1, double val) { PointCoordinates result(p1); result += -val; return result; }
+    inline PointCoordinates operator*(const PointCoordinates& p1, double val) { PointCoordinates result(p1); result *= val; return result; }
+    inline PointCoordinates operator/(const PointCoordinates& p1, double val) { PointCoordinates result(p1); result /= val; return result; }
 
 } // namespace acmacs
 
