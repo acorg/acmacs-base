@@ -3,6 +3,7 @@
 #include <limits>
 #include <cassert>
 #include <cmath>
+#include <memory>
 
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"
@@ -175,7 +176,7 @@ namespace acmacs
         Layout& operator=(const Layout&) = default;
         Layout& operator=(Layout&&) = default;
 
-        constexpr size_t number_of_points() const noexcept { return size() / number_of_dimensions_; }
+        size_t number_of_points() const noexcept { return size() / number_of_dimensions_; }
         constexpr size_t number_of_dimensions() const noexcept { return number_of_dimensions_; }
 
         void change_number_of_dimensions(size_t num_dim, bool allow_dimensions_increase = false)

@@ -74,7 +74,7 @@ namespace acmacs
         PointCoordinates& operator=(PointCoordinates&& rhs) { return operator=(rhs); }
 
         bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
-        constexpr bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
+        bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
         constexpr size_t number_of_dimensions() const
         {
@@ -188,7 +188,7 @@ namespace acmacs
         PointCoordinates& operator/=(double val) { std::transform(begin(), end(), begin(), [val](double v1) { return v1 / val; }); return *this; }
 
         bool empty() const { return std::any_of(begin(), end(), [](auto val) { return std::isnan(val); }); }
-        constexpr bool exists() const { return !empty(); }
+        bool exists() const { return !empty(); }
 
       private:
         using Store2D = std::array<double, 2>;
