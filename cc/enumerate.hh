@@ -17,10 +17,10 @@ namespace acmacs
               //using index_type = typename std::iterator_traits<iterator>::difference_type;
             using reference = typename std::iterator_traits<iterator>::reference;
 
-            inline enumerate_iterator(index_type aIndex, iterator aIterator) : index(aIndex), iter(aIterator) {}
-            inline enumerate_iterator& operator++() { ++index; ++iter; return *this; }
-            inline bool operator!=(const enumerate_iterator &other) const { return iter != other.iter; }
-            inline std::pair<index_type, reference> operator*() { return {index, *iter}; }
+            enumerate_iterator(index_type aIndex, iterator aIterator) : index(aIndex), iter(aIterator) {}
+            enumerate_iterator& operator++() { ++index; ++iter; return *this; }
+            bool operator!=(const enumerate_iterator &other) const { return iter != other.iter; }
+            std::pair<index_type, reference> operator*() { return {index, *iter}; }
 
          private:
             index_type index;
@@ -34,9 +34,9 @@ namespace acmacs
               // using index_type = typename std::iterator_traits<Iterator>::difference_type;
             using iterator = enumerate_iterator<Iterator, index_type>;
 
-            inline enumerate_range(Iterator aFirst, Iterator aLast, index_type aInitial) : first(aFirst), last(aLast), initial(aInitial) {}
-            inline iterator begin() const { return iterator(initial, first); }
-            inline iterator end() const { return iterator(0, last); }
+            enumerate_range(Iterator aFirst, Iterator aLast, index_type aInitial) : first(aFirst), last(aLast), initial(aInitial) {}
+            iterator begin() const { return iterator(initial, first); }
+            iterator end() const { return iterator(0, last); }
 
          private:
             Iterator first;
