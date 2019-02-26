@@ -73,6 +73,8 @@ namespace acmacs
 
         PointCoordinates& operator=(PointCoordinates&& rhs) { return operator=(rhs); }
 
+        PointCoordinates copy() const noexcept { return *this; }
+
         bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
         bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
@@ -111,8 +113,10 @@ namespace acmacs
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
                         return data[dim];
-                    else if constexpr (std::is_same_v<T, ConstRef>)
-                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else if constexpr (std::is_same_v<T, ConstRef>) {
+                        std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::operator[] (abort)\n";
+                        abort();
+                    }
                     else
                         return data.begin[dim];
                 },
@@ -151,8 +155,10 @@ namespace acmacs
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
                         return data.begin();
-                    else if constexpr (std::is_same_v<T, ConstRef>)
-                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else if constexpr (std::is_same_v<T, ConstRef>) {
+                        std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::begin() (abort)\n";
+                        abort();
+                    }
                     else
                         return data.begin;
                 },
@@ -165,8 +171,10 @@ namespace acmacs
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
                         return data.end();
-                    else if constexpr (std::is_same_v<T, ConstRef>)
-                        throw std::runtime_error("Cannot update const PointCoordinates");
+                    else if constexpr (std::is_same_v<T, ConstRef>) {
+                        std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::end() (abort)\n";
+                        abort();
+                    }
                     else
                         return data.begin + data.size;
                 },
