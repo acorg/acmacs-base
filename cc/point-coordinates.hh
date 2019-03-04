@@ -11,7 +11,7 @@
 #include <variant>
 
 #include "acmacs-base/float.hh"
-#include "acmacs-base/to-string.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -34,7 +34,8 @@ namespace acmacs
                   data_ = Store3D{nan, nan, nan};
                   break;
               default:
-                  assert(number_of_dimensions == 2);
+                  data_ = StoreXD(number_of_dimensions);
+                  std::fill(begin(), end(), nan);
                   break;
             }
         }
@@ -57,7 +58,7 @@ namespace acmacs
                   data_ = Store3D{rhs[0], rhs[1], rhs[2]};
                   break;
               default:
-                  assert(number_of_dimensions() == 2);
+                  data_ = StoreXD(std::begin(rhs), std::end(rhs));
                   break;
             }
         }
@@ -87,6 +88,8 @@ namespace acmacs
                         return 2;
                     else if constexpr (std::is_same_v<T, Store3D>)
                         return 3;
+                    else if constexpr (std::is_same_v<T, StoreXD>)
+                        return data.size();
                     else
                         return data.size;
                 },
@@ -98,7 +101,7 @@ namespace acmacs
             return std::visit(
                 [dim](auto&& data) -> double {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
                         return data[dim];
                     else
                         return data.begin[dim];
@@ -111,7 +114,7 @@ namespace acmacs
             return std::visit(
                 [dim](auto&& data) -> double& {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
                         return data[dim];
                     else if constexpr (std::is_same_v<T, ConstRef>) {
                         std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::operator[] (abort)\n";
@@ -128,8 +131,8 @@ namespace acmacs
             return std::visit(
                 [](auto&& data) -> const double* {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
-                        return data.cbegin();
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
+                        return &*data.cbegin();
                     else
                         return data.begin;
                 },
@@ -140,8 +143,8 @@ namespace acmacs
             return std::visit(
                 [](auto&& data) -> const double* {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
-                        return data.cend();
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
+                        return &*data.cend();
                     else
                         return data.begin + data.size;
                 },
@@ -153,8 +156,8 @@ namespace acmacs
             return std::visit(
                 [](auto&& data) -> double* {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
-                        return data.begin();
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
+                        return &*data.begin();
                     else if constexpr (std::is_same_v<T, ConstRef>) {
                         std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::begin() (abort)\n";
                         abort();
@@ -169,8 +172,8 @@ namespace acmacs
             return std::visit(
                 [](auto&& data) -> double* {
                     using T = std::decay_t<decltype(data)>;
-                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D>)
-                        return data.end();
+                    if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
+                        return &*data.end();
                     else if constexpr (std::is_same_v<T, ConstRef>) {
                         std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::end() (abort)\n";
                         abort();
@@ -201,19 +204,17 @@ namespace acmacs
       private:
         using Store2D = std::array<double, 2>;
         using Store3D = std::array<double, 3>;
+        using StoreXD = std::vector<double>;
         struct Ref { double* begin; size_t size; };
         struct ConstRef { const double* const begin; size_t size; };
 
-        std::variant<Store2D, Store3D, Ref, ConstRef> data_;
+        std::variant<Store2D, Store3D, StoreXD, Ref, ConstRef> data_;
 
     }; // class PointCoordinates
 
     inline std::string to_string(const PointCoordinates& coord, size_t precision = 32)
     {
-        auto result = '{' + acmacs::to_string(coord.x(), precision) + ", " + acmacs::to_string(coord.y(), precision);
-        if (coord.number_of_dimensions() == 3)
-            result += ", " + to_string(coord.z(), precision);
-        return result + '}';
+        return '{' + ::string::join(", ", std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
     }
 
     inline std::ostream& operator<<(std::ostream& out, const PointCoordinates& coord) { return out << to_string(coord); }
