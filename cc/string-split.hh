@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "acmacs-base/string.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs::string
@@ -141,7 +143,7 @@ namespace acmacs::string
             catch (split_error&) {
             }
         }
-        throw split_error{"cannot read double's from \""s + s + "\""};
+        throw split_error{::string::concat("cannot read double's from \"", s, '"')};
     }
 
     // inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)

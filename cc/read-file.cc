@@ -17,22 +17,22 @@
 
 // ----------------------------------------------------------------------
 
-acmacs::file::read_access::read_access(std::string aFilename)
+acmacs::file::read_access::read_access(std::string_view aFilename)
 {
     if (fs::exists(aFilename)) {
         len = fs::file_size(aFilename);
-        fd = ::open(aFilename.c_str(), O_RDONLY);
+        fd = ::open(aFilename.data(), O_RDONLY);
         if (fd >= 0) {
             mapped = reinterpret_cast<char*>(mmap(nullptr, len, PROT_READ, MAP_FILE|MAP_PRIVATE, fd, 0));
             if (mapped == MAP_FAILED)
-                throw cannot_read(aFilename + ": " + strerror(errno));
+                throw cannot_read(::string::concat(aFilename, ": ", strerror(errno)));
         }
         else {
-            throw not_opened(aFilename + ": " + strerror(errno));
+            throw not_opened(::string::concat(aFilename, ": ", strerror(errno)));
         }
     }
     else {
-        throw not_found{aFilename};
+        throw not_found{std::string{aFilename}};
     }
 
 } // acmacs::file::read_access

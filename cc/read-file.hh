@@ -33,7 +33,7 @@ namespace acmacs::file
     {
      public:
         read_access() = default;
-        read_access(std::string aFilename);
+        read_access(std::string_view aFilename);
         ~read_access();
         read_access(const read_access&) = delete;
         read_access(read_access&&);
@@ -52,6 +52,7 @@ namespace acmacs::file
     }; // class read_access
 
     inline read_access read(std::string aFilename) { return {aFilename}; }
+    inline read_access read(std::string_view aFilename) { return {aFilename}; }
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes);

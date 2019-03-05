@@ -622,7 +622,7 @@ rjson::v2::value rjson::v2::parse_string(const char* data, remove_comments rc)
 
 // ----------------------------------------------------------------------
 
-rjson::v2::value rjson::v2::parse_file(std::string filename, remove_comments rc)
+rjson::v2::value rjson::v2::parse_file(std::string_view filename, remove_comments rc)
 {
     return parse_string(acmacs::file::read(filename), rc);
 

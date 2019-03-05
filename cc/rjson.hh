@@ -563,7 +563,7 @@ namespace rjson
         value parse_string(std::string data, remove_comments rc = remove_comments::yes);
         value parse_string(std::string_view data, remove_comments rc = remove_comments::yes);
         value parse_string(const char* data, remove_comments rc = remove_comments::yes);
-        value parse_file(std::string filename, remove_comments rc = remove_comments::yes);
+        value parse_file(std::string_view filename, remove_comments rc = remove_comments::yes);
 
     } // namespace v2
 } // namespace rjson
