@@ -180,6 +180,12 @@ namespace acmacs
             throw std::runtime_error("invalid number_of_dimensions in PointCoordinates");
         }
 
+        template <typename Iter> void transform(Iter first, Iter last) const
+        {
+            for (; first != last; ++first)
+                *first = transform(*first);
+        }
+
         // 3D --------------------------------------------------
 
         size_t number_of_dimensions = 2;
