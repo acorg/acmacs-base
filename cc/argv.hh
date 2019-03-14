@@ -94,13 +94,13 @@ namespace acmacs
               public:
                 template <typename... Args> option(argv& parent, Args&&... args) : option_base(parent) { use_args(std::forward<Args>(args)...); }
 
-                constexpr operator const T&() const { if (value_.has_value()) return *value_; else return *default_; }
+                constexpr operator const T&() const { if (value_.has_value()) return *value_; else return default_; }
                 constexpr const T& get() const { return static_cast<const T&>(*this); }
                 constexpr const T* operator->() const { return &static_cast<const T&>(*this); }
                 constexpr const T& operator*() const { return static_cast<const T&>(*this); }
                 template <typename R> constexpr bool operator == (const R& rhs) const { return static_cast<const T&>(*this) == rhs; }
                 template <typename R> constexpr bool operator != (const R& rhs) const { return !operator==(rhs); }
-                std::string get_default() const noexcept override { if (!default_) return {}; return detail::to_string(*default_); }
+                std::string get_default() const noexcept override { return detail::to_string(default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
                 constexpr bool operator!() const noexcept { return !has_value(); }
@@ -122,7 +122,7 @@ namespace acmacs
 
               private:
                 std::optional<T> value_;
-                std::optional<T> default_;
+                T default_;
 
                 template <typename Arg, typename... Args> void use_args(Arg&& arg, Args&&... args)
                 {
