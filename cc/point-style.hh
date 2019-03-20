@@ -9,7 +9,7 @@ namespace acmacs
     class PointShape
     {
      public:
-        enum Shape {Circle, Box, Triangle, Egg};
+        enum Shape {Circle, Box, Triangle, Egg, UglyEgg};
 
         PointShape() : mShape{Circle} {}
         PointShape(const PointShape&) = default;
@@ -35,6 +35,8 @@ namespace acmacs
                       return "TRIANGLE";
                   case Egg:
                       return "EGG";
+                  case UglyEgg:
+                      return "UGLYEGG";
                 }
                 return "CIRCLE"; // gcc 7.2 wants this
             }
@@ -53,6 +55,10 @@ namespace acmacs
                       case 'E':
                       case 'e':
                           mShape = Egg;
+                          break;
+                      case 'U':
+                      case 'u':
+                          mShape = UglyEgg;
                           break;
                       case 'B':
                       case 'b':
