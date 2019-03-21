@@ -36,7 +36,7 @@ namespace acmacs
         bool operator==(const Transformation& rhs) const { return std::equal(begin(), end(), rhs.begin()); }
         bool operator!=(const Transformation& rhs) const { return !operator==(rhs); }
 
-        void reset() { operator=(Transformation()); }
+        void reset(size_t num_dim) { operator=(Transformation(num_dim)); }
 
         constexpr double _x(size_t offset) const { return operator[](offset); }
         constexpr double& _x(size_t offset) { return operator[](offset); }
