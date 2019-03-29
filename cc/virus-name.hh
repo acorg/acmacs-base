@@ -25,7 +25,7 @@ namespace virus_name
           // const std::regex international{"^([AB][^/]*)/(?:([^/]+)/)?([^/]+)/0*([^/]+)/(19|20)?(\\d\\d)(?:(?:\\s+|__)(.+))?$"};
         const std::regex international{std::string(re_international_name) + re_reassortant_passage + "$"};
         const std::regex international_name{re_international_name};
-        const std::regex international_name_with_extra{std::string(re_international_name) + "(?:\\s*(.+))?"};
+        const std::regex international_name_with_extra{std::string(re_international_name) + "(?:[\\s_\\-]*(.+))?"};
 
         const std::regex passage_after_name{" (MDCK|SIAT|MK|E|X)[X\\?\\d]"}; // to extract cdc name only! NOT to extract passage!
 

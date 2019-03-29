@@ -26,7 +26,7 @@ namespace virus_name
     void split_and_strip(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& extra)
     {
         std::smatch m;
-        if (std::regex_match(name, m, _internal::international)) {
+        if (std::regex_match(name, m, _internal::international_name_with_extra)) {
             virus_type = string::strip(m[1].str());
             host = string::strip(m[2].str());
             location = string::strip(m[3].str());
