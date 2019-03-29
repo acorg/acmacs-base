@@ -58,7 +58,24 @@ namespace virus_name
 
 // ----------------------------------------------------------------------
 
-    std::string normalize(std::string name);
+    struct Name
+    {
+        Name(std::string source);
+        std::string join() const;
+
+        std::string virus_type, host, location, isolation, year, extra;
+    };
+
+    inline std::string normalize(std::string name)
+    {
+        try {
+            return Name(name).join();
+        }
+        catch (Unrecognized&) {
+            std::cerr << "WARNING: Virus name unrecognized: \"" << name << '"' << std::endl;
+            return name;
+        }
+    }
 
 // ----------------------------------------------------------------------
 
@@ -152,42 +169,11 @@ namespace virus_name
 
     // ----------------------------------------------------------------------
 
-    inline void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
-    {
-        std::smatch m;
-        if (std::regex_match(name, m, _internal::international)) {
-            virus_type = m[1].str();
-            host = m[2].str();
-            location = m[3].str();
-            isolation = m[4].str();
-            year = _internal::make_year(m);
-            passage = m[7].str();
-        }
-        else
-            throw Unrecognized("Cannot split " + name);
-    }
+    void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage);
+    void split_and_strip(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& extra);
 
     // split for names looking like international but with unrecognized "garbage" (extra) at the end
-    inline void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage,
-                                 std::string& extra)
-    {
-        try {
-            split(name, virus_type, host, location, isolation, year, passage);
-        }
-        catch (Unrecognized&) {
-            std::smatch m;
-            if (std::regex_search(name, m, _internal::international_name_with_extra)) {
-                virus_type = m[1].str();
-                host = m[2].str();
-                location = m[3].str();
-                isolation = m[4].str();
-                year = _internal::make_year(m);
-                extra = m[7].str();
-            }
-            else
-                throw Unrecognized("Cannot split " + name);
-        }
-    }
+    void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage, std::string& extra);
 
     // ----------------------------------------------------------------------
 
