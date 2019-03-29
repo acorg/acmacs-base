@@ -66,7 +66,7 @@ namespace virus_name
         }
         catch (Unrecognized&) {
             bool re_throw = true;
-            if (std::count(std::begin(source), std::end(source), '/') == 2) {
+            if (const auto slashes = std::count(std::begin(source), std::end(source), '/'); slashes == 2) {
                 if (const auto num_start = std::find_if(std::begin(source), std::end(source), [](char cc) { return std::isdigit(cc); });
                     num_start != std::begin(source) && num_start != std::end(source) && *(num_start - 1) != '/') {
                     // A/PTO MONTT75856/2015
