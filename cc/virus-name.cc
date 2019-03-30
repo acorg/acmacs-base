@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cctype>
+#include <regex>
 
 #include "acmacs-base/virus-name.hh"
 #include "acmacs-base/string.hh"
@@ -80,8 +81,14 @@ namespace virus_name
         }
         if (const auto first_not_zero = isolation.find_first_not_of('0'); first_not_zero != std::string::npos)
             isolation.erase(0, first_not_zero);
+    }
+
+    void Name::fix_extra()
+    {
+        if (std::string_view(extra.data(), std::min(extra.size(), 8UL)) == "NYMC BX-")
+            extra = "NYMC-" + extra.substr(8);
         if (!extra.empty())
-            std::cerr << "WARNING: name contains extra: \"" << source << "\"\n";
+            std::cerr << "WARNING: name contains extra: \"" << join() << "\"\n";
     }
 
     std::string Name::join() const
