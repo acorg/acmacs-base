@@ -14,6 +14,8 @@ using re_entry_t = std::tuple<std::regex, const char*>;
 static const std::array sReReassortant = {
     re_entry_t{"NYMC[\\- ]*([0-9]+[A-Z]*)",     "NYMC-$1"},
     re_entry_t{"NYMC *BX[\\- ]*([0-9]+[A-Z]*)", "NYMC-$1"},
+    re_entry_t{"BVR[\\- ]*0*([0-9]+[A-Z]*)",    "CBER-$1"}, // B/PHUKET/3073/2013 BVR-1B -> CBER-1B 
+    re_entry_t{"CBER[\\- ]*0*([0-9]+[A-Z]*)",   "CBER-$1"}, // A(H3N2)/KANSAS/14/2017 CBER-22B
 };
 #include "acmacs-base/diagnostics-pop.hh"
 
@@ -101,13 +103,13 @@ namespace virus_name
             std::smatch mat;
             if (std::regex_search(extra, mat, std::get<std::regex>(re_entry))) {
                 reassortant = mat.format(std::get<const char*>(re_entry));
-                extra = mat.format("$`$'");
+                extra = string::join(" ", {string::strip(mat.format("$`")), string::strip(mat.format("$'"))});
             }
         }
         // if (std::string_view(extra.data(), std::min(extra.size(), 8UL)) == "NYMC BX-")
         //     extra = "NYMC-" + extra.substr(8);
         if (!extra.empty())
-            std::cerr << "WARNING: name contains extra: \"" << join() << "\"\n";
+            std::cerr << "WARNING: name contains extra \"" << extra << "\": \"" << join() << "\"\n";
     }
 
     std::string Name::join() const
