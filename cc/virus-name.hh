@@ -63,8 +63,7 @@ namespace virus_name
         Name(std::string source);
         std::string join() const;
         void fix_extra();
-
-        std::string virus_type, host, location, isolation, year, extra;
+        std::string virus_type, host, location, isolation, year, reassortant, extra;
     };
 
     inline std::string normalize(std::string name)

@@ -1,9 +1,21 @@
 #include <iostream>
 #include <cctype>
+#include <array>
+#include <tuple>
 #include <regex>
 
 #include "acmacs-base/virus-name.hh"
 #include "acmacs-base/string.hh"
+
+// ----------------------------------------------------------------------
+
+#include "acmacs-base/global-constructors-push.hh"
+using re_entry_t = std::tuple<std::regex, const char*>;
+static const std::array sReReassortant = {
+    re_entry_t{"NYMC[\\- ]*([0-9]+[A-Z]*)",     "NYMC-$1"},
+    re_entry_t{"NYMC *BX[\\- ]*([0-9]+[A-Z]*)", "NYMC-$1"},
+};
+#include "acmacs-base/diagnostics-pop.hh"
 
 // ----------------------------------------------------------------------
 
@@ -85,8 +97,15 @@ namespace virus_name
 
     void Name::fix_extra()
     {
-        if (std::string_view(extra.data(), std::min(extra.size(), 8UL)) == "NYMC BX-")
-            extra = "NYMC-" + extra.substr(8);
+        for (const auto& re_entry : sReReassortant) {
+            std::smatch mat;
+            if (std::regex_search(extra, mat, std::get<std::regex>(re_entry))) {
+                reassortant = mat.format(std::get<const char*>(re_entry));
+                extra = mat.format("$`$'");
+            }
+        }
+        // if (std::string_view(extra.data(), std::min(extra.size(), 8UL)) == "NYMC BX-")
+        //     extra = "NYMC-" + extra.substr(8);
         if (!extra.empty())
             std::cerr << "WARNING: name contains extra: \"" << join() << "\"\n";
     }
@@ -94,14 +113,15 @@ namespace virus_name
     std::string Name::join() const
     {
         std::string result;
-        if (host.empty())
-            result = string::join("/", {virus_type, location, isolation, year});
-        else
+        // if (host.empty())
+        //     result = string::join("/", {virus_type, location, isolation, year});
+        // else
             result = string::join("/", {virus_type, host, location, isolation, year});
-        if (!extra.empty()) {
-            result.append(1, ' ');
-            result.append(extra);
-        }
+            result = string::join(" ", {result, reassortant, extra});
+        // if (!extra.empty()) {
+        //     result.append(1, ' ');
+        //     result.append(extra);
+        // }
         return result;
     }
 
