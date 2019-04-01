@@ -61,7 +61,9 @@ namespace virus_name
     struct Name
     {
         Name(std::string source);
-        std::string join() const;
+        std::string name() const;
+        std::string name_extra() const;
+        std::string full() const;
         void fix_extra();
         std::string virus_type, host, location, isolation, year, reassortant, extra;
     };
@@ -69,7 +71,7 @@ namespace virus_name
     inline std::string normalize(std::string name)
     {
         try {
-            return Name(name).join();
+            return Name(name).full();
         }
         catch (Unrecognized&) {
             std::cerr << "WARNING: Virus name unrecognized: \"" << name << '"' << std::endl;

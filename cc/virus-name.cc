@@ -14,7 +14,7 @@ using re_entry_t = std::tuple<std::regex, const char*>;
 static const std::array sReReassortant = {
     re_entry_t{"NYMC[\\- ]*([0-9]+[A-Z]*)",     "NYMC-$1"},
     re_entry_t{"NYMC *BX[\\- ]*([0-9]+[A-Z]*)", "NYMC-$1"},
-    re_entry_t{"BVR[\\- ]*0*([0-9]+[A-Z]*)",    "CBER-$1"}, // B/PHUKET/3073/2013 BVR-1B -> CBER-1B 
+    re_entry_t{"BVR[\\- ]*0*([0-9]+[A-Z]*)",    "CBER-$1"}, // B/PHUKET/3073/2013 BVR-1B -> CBER-1B
     re_entry_t{"CBER[\\- ]*0*([0-9]+[A-Z]*)",   "CBER-$1"}, // A(H3N2)/KANSAS/14/2017 CBER-22B
 };
 #include "acmacs-base/diagnostics-pop.hh"
@@ -23,7 +23,7 @@ static const std::array sReReassortant = {
 
 namespace virus_name
 {
-    inline void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
+    void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage)
     {
         std::smatch m;
         if (std::regex_match(name, m, _internal::international)) {
@@ -106,25 +106,23 @@ namespace virus_name
                 extra = string::join(" ", {string::strip(mat.format("$`")), string::strip(mat.format("$'"))});
             }
         }
-        // if (std::string_view(extra.data(), std::min(extra.size(), 8UL)) == "NYMC BX-")
-        //     extra = "NYMC-" + extra.substr(8);
         if (!extra.empty())
-            std::cerr << "WARNING: name contains extra \"" << extra << "\": \"" << join() << "\"\n";
+            std::cerr << "WARNING: name contains extra \"" << extra << "\": \"" << full() << "\"\n";
     }
 
-    std::string Name::join() const
+    std::string Name::full() const
     {
-        std::string result;
-        // if (host.empty())
-        //     result = string::join("/", {virus_type, location, isolation, year});
-        // else
-            result = string::join("/", {virus_type, host, location, isolation, year});
-            result = string::join(" ", {result, reassortant, extra});
-        // if (!extra.empty()) {
-        //     result.append(1, ' ');
-        //     result.append(extra);
-        // }
-        return result;
+        return string::join(" ", {name(), reassortant, extra});
+    }
+
+    std::string Name::name() const
+    {
+        return string::join("/", {virus_type, host, location, isolation, year});
+    }
+
+    std::string Name::name_extra() const
+    {
+        return string::join(" ", {name(), extra});
     }
 
     // std::string normalize(std::string name)
