@@ -460,13 +460,20 @@ namespace acmacs::settings
         template <typename T> template <typename F> inline void array<T>::for_each(F func) const
         {
             if (const auto& rjval = get(); !rjval.is_null())
-                rjson::for_each(rjval, [&func](const rjson::value& val) -> void { const_array_element<T> elt(val, ""); func(*elt); });
+                rjson::for_each(rjval, [&func](const rjson::value& val, size_t no) -> void {
+                    const_array_element<T> elt(val, "");
+                    func(*elt, no);
+                });
         }
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func)
         {
-            if (!get().is_null())
-                rjson::for_each(set(), [&func](rjson::value& val) -> void { array_element<T> elt(val, ""); func(*elt); });
+            if (!get().is_null()) {
+                rjson::for_each(set(), [&func](rjson::value& val, size_t no) -> void {
+                    array_element<T> elt(val, "");
+                    func(*elt, no);
+                });
+            }
         }
 
           // ----------------------------------------------------------------------
