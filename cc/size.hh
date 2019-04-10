@@ -92,6 +92,10 @@ namespace acmacs
         // returns if passed point is within the rectangle
         // constexpr bool within(double x, double y) const { return x >= top_left.x() && x <= bottom_right.x() && y >= top_left.y() && y <= bottom_right.y(); }
         bool within(const PointCoordinates& loc) const { return loc.x() >= top_left.x() && loc.x() <= bottom_right.x() && loc.y() >= top_left.y() && loc.y() <= bottom_right.y(); }
+        PointCoordinates top_middle() const { return {(top_left.x() + bottom_right.x()) / 2.0, top_left.y()}; }
+        PointCoordinates bottom_middle() const { return {(top_left.x() + bottom_right.x()) / 2.0, bottom_right.y()}; }
+        PointCoordinates middle_left() const { return {top_left.x(), (top_left.y() + bottom_right.y()) / 2.0}; }
+        PointCoordinates middle_right() const { return {bottom_right.x(), (top_left.y() + bottom_right.y()) / 2.0}; }
 
         PointCoordinates top_left;
         PointCoordinates bottom_right;
