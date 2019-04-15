@@ -31,6 +31,7 @@ namespace rjson
 
         enum class emacs_indent { no, yes };
         enum class space_after_comma { no, yes };
+        enum class show_empty_values { no, yes };
 
         class value_type_mismatch : public std::runtime_error
         {
@@ -106,7 +107,7 @@ namespace rjson
           private:
             content_t content_;
 
-            friend std::string to_string(const object& val, space_after_comma, const PrettyHandler&);
+            friend std::string to_string(const object& val, space_after_comma, const PrettyHandler&, show_empty_values);
             friend std::string pretty(const object& val, emacs_indent, const PrettyHandler&, size_t prefix);
             friend class PrettyHandler;
 
@@ -150,7 +151,7 @@ namespace rjson
           private:
             std::vector<value> content_;
 
-            friend std::string to_string(const array& val, space_after_comma, const PrettyHandler&);
+            friend std::string to_string(const array& val, space_after_comma, const PrettyHandler&, show_empty_values);
             friend std::string pretty(const array& val, emacs_indent, const PrettyHandler&, size_t prefix);
             friend class PrettyHandler;
 
@@ -1208,16 +1209,16 @@ namespace rjson
 
           // ----------------------------------------------------------------------
 
-        std::string to_string(const object& val);
-        std::string to_string(const array& val);
-        inline std::string to_string(bool val) { return val ? "true" : "false"; }
-        inline std::string to_string(null) { return "null"; }
-        inline std::string to_string(const_null) { return "*ConstNull"; }
-        inline std::string to_string(std::string val) { return "\"" + val + '"'; }
+        std::string to_string(const object& val, show_empty_values a_show_empty_values);
+        std::string to_string(const array& val, show_empty_values a_show_empty_values);
+        inline std::string to_string(bool val, show_empty_values) { return val ? "true" : "false"; }
+        inline std::string to_string(null, show_empty_values) { return "null"; }
+        inline std::string to_string(const_null, show_empty_values) { return "*ConstNull"; }
+        inline std::string to_string(std::string val, show_empty_values) { return "\"" + val + '"'; }
 
-        inline std::string to_string(const value& val)
+        inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
         {
-            return std::visit([](auto&& arg) -> std::string { return to_string(arg); }, val);
+            return std::visit([a_show_empty_values](auto&& arg) -> std::string { return to_string(arg, a_show_empty_values); }, val);
         }
 
         inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }

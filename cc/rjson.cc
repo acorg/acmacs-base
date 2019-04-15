@@ -634,8 +634,8 @@ namespace rjson
 {
     inline namespace v2
     {
-        std::string to_string(const object& val, space_after_comma sac, const PrettyHandler& pretty_handler);
-        std::string to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler);
+        std::string to_string(const object& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values);
+        std::string to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values);
 
         inline std::string to_string(const value& val, space_after_comma sac, const PrettyHandler& pretty_handler)
         {
@@ -643,9 +643,9 @@ namespace rjson
                 [sac, &pretty_handler](auto&& arg) -> std::string {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                        return to_string(arg, sac, pretty_handler);
+                        return to_string(arg, sac, pretty_handler, show_empty_values::no);
                     else
-                        return to_string(arg);
+                        return to_string(arg, show_empty_values::no);
                 },
                 val);
         }
@@ -659,7 +659,15 @@ namespace rjson
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::to_string(const object& val)
+std::string rjson::v2::to_string(const object& val, show_empty_values a_show_empty_values)
+{
+    return to_string(val, space_after_comma::no, {}, a_show_empty_values);
+
+} // rjson::v2::to_string
+
+// ----------------------------------------------------------------------
+
+std::string rjson::v2::to_string(const array& val, show_empty_values)
 {
     return to_string(val, space_after_comma::no, {});
 
@@ -667,30 +675,24 @@ std::string rjson::v2::to_string(const object& val)
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::to_string(const array& val)
-{
-    return to_string(val, space_after_comma::no, {});
-
-} // rjson::v2::to_string
-
-// ----------------------------------------------------------------------
-
-std::string rjson::v2::to_string(const object& val, space_after_comma sac, const PrettyHandler& pretty_handler)
+std::string rjson::v2::to_string(const object& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values)
 {
     std::string result(1, '{');
     size_t size_at_comma = 0;
     for (auto val_iter : pretty_handler.sorted(val)) {
         const auto& [key, val2] = *val_iter;
-        result.append(1, '"');
-        result.append(key);
-        result.append("\":");
-        if (sac == space_after_comma::yes)
-            result.append(1, ' ');
-        result.append(to_string(val2, sac, pretty_handler));
-        size_at_comma = result.size() + 1;
-        result.append(1, ',');
-        if (sac == space_after_comma::yes)
-            result.append(1, ' ');
+        if (a_show_empty_values == show_empty_values::yes || !val2.empty()) {
+            result.append(1, '"');
+            result.append(key);
+            result.append("\":");
+            if (sac == space_after_comma::yes)
+                result.append(1, ' ');
+            result.append(to_string(val2, sac, pretty_handler));
+            size_at_comma = result.size() + 1;
+            result.append(1, ',');
+            if (sac == space_after_comma::yes)
+                result.append(1, ' ');
+        }
     }
     if (result.back() == ',' || result.back() == ' ') {
         result.resize(size_at_comma);
@@ -703,7 +705,7 @@ std::string rjson::v2::to_string(const object& val, space_after_comma sac, const
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler)
+std::string rjson::v2::to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values)
 {
     std::string result(1, '[');
     for (const auto& val2: val.content_) {
