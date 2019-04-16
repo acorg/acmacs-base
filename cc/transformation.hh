@@ -216,7 +216,7 @@ namespace acmacs
     class TransformationTranslation : public Transformation
     {
       public:
-        TransformationTranslation(size_t number_of_dimensions) : Transformation(number_of_dimensions) {}
+        TransformationTranslation(size_t a_number_of_dimensions) : Transformation(a_number_of_dimensions) {}
         TransformationTranslation(const TransformationTranslation&) = default;
 
         template <typename S> constexpr double& translation(S dimension) { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
