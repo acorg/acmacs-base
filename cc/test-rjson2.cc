@@ -100,10 +100,13 @@ int main()
         try {
             // std::cerr << "DEBUG: " << to_parse << '\n';
             auto val = rjson::v2::parse_string(to_parse[0]);
+            // std::cerr << "DEBUG: parsed 0\n";
             for (auto& to_parse_e: to_parse) {
                 if (&to_parse_e != &to_parse.front())
                     val.update(rjson::v2::parse_string(to_parse_e));
             }
+            // std::cerr << "DEBUG: parsed all\n";
+            // std::cerr << "DEBUG: is number: " << val.is_number() << '\n';
 
             const auto result = rjson::v2::to_string(val);
             // std::cerr << "DEBUG: " << to_parse << " --> " << result << '\n';
@@ -111,12 +114,12 @@ int main()
                 using T = std::decay_t<decltype(aExpected)>;
                 if constexpr (std::is_same_v<T, const char*>) {
                     if (result != aExpected) {
-                        std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> %" << result << "%\n  expected: %" << aExpected << "%\n\n";
+                        std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  -->       %" << result << "%\n  expected: %" << aExpected << "%\n\n";
                         exit_code = 1;
                     }
                 }
                 else {
-                    std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  --> %" << result << "%\n  expected: %" << aExpected.what() << "%\n\n";
+                    std::cerr << "ERROR: parsing %" << to_parse_ref << "%\n  -->       %" << result << "%\n  expected: %" << aExpected.what() << "%\n\n";
                     exit_code = 1;
                 }
             }, expected);

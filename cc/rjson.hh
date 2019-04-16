@@ -161,7 +161,7 @@ namespace rjson
 
         using number = std::variant<long, double, std::string>;
 
-        inline std::string to_string(const number& val)
+        inline std::string to_string(const number& val, show_empty_values = show_empty_values::yes)
         {
             auto visitor = [](auto&& arg) -> std::string {
                 if constexpr (acmacs::sfinae::decay_equiv_v<decltype(arg), std::string>)

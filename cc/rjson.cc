@@ -637,15 +637,15 @@ namespace rjson
         std::string to_string(const object& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values);
         std::string to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values);
 
-        inline std::string to_string(const value& val, space_after_comma sac, const PrettyHandler& pretty_handler)
+        inline std::string to_string(const value& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values)
         {
             return std::visit(
-                [sac, &pretty_handler](auto&& arg) -> std::string {
+                [sac, &pretty_handler, a_show_empty_values](auto&& arg) -> std::string {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                        return to_string(arg, sac, pretty_handler, show_empty_values::no);
+                        return to_string(arg, sac, pretty_handler, a_show_empty_values);
                     else
-                        return to_string(arg, show_empty_values::no);
+                        return to_string(arg, a_show_empty_values);
                 },
                 val);
         }
@@ -667,9 +667,9 @@ std::string rjson::v2::to_string(const object& val, show_empty_values a_show_emp
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::to_string(const array& val, show_empty_values)
+std::string rjson::v2::to_string(const array& val, show_empty_values a_show_empty_values)
 {
-    return to_string(val, space_after_comma::no, {});
+    return to_string(val, space_after_comma::no, {}, a_show_empty_values);
 
 } // rjson::v2::to_string
 
@@ -687,7 +687,7 @@ std::string rjson::v2::to_string(const object& val, space_after_comma sac, const
             result.append("\":");
             if (sac == space_after_comma::yes)
                 result.append(1, ' ');
-            result.append(to_string(val2, sac, pretty_handler));
+            result.append(to_string(val2, sac, pretty_handler, a_show_empty_values));
             size_at_comma = result.size() + 1;
             result.append(1, ',');
             if (sac == space_after_comma::yes)
@@ -705,11 +705,11 @@ std::string rjson::v2::to_string(const object& val, space_after_comma sac, const
 
 // ----------------------------------------------------------------------
 
-std::string rjson::v2::to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values)
+std::string rjson::v2::to_string(const array& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values)
 {
     std::string result(1, '[');
     for (const auto& val2: val.content_) {
-        result.append(to_string(val2, sac, pretty_handler));
+        result.append(to_string(val2, sac, pretty_handler, a_show_empty_values));
         result.append(1, ',');
         if (sac == space_after_comma::yes)
             result.append(1, ' ');
@@ -795,7 +795,7 @@ std::string rjson::v2::pretty(const value& val, emacs_indent emacs_indent, const
 std::string rjson::v2::pretty(const object& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix)
 {
     if (pretty_handler.is_simple(val, PrettyHandler::dive::yes))
-        return to_string(val, space_after_comma::yes, pretty_handler);
+        return to_string(val, space_after_comma::yes, pretty_handler, show_empty_values::yes);
 
     std::string result(1, '{');
     if (emacs_indent == emacs_indent::yes && pretty_handler.indent()) {
@@ -832,7 +832,7 @@ std::string rjson::v2::pretty(const object& val, emacs_indent emacs_indent, cons
 std::string rjson::v2::pretty(const array& val, emacs_indent /*emacs_indent*/, const PrettyHandler& pretty_handler, size_t prefix)
 {
     if (pretty_handler.is_simple(val, PrettyHandler::dive::yes))
-        return to_string(val, space_after_comma::yes, pretty_handler);
+        return to_string(val, space_after_comma::yes, pretty_handler, show_empty_values::yes);
 
     std::string result("[\n");
     size_t size_before_comma = 1;
