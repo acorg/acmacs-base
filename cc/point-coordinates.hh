@@ -12,6 +12,7 @@
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/string.hh"
+#include "acmacs-base/number-of-dimensions.hh"
 
 // ----------------------------------------------------------------------
 
@@ -23,10 +24,10 @@ namespace acmacs
         enum zero2D { zero2D };
         enum zero3D { zero3D };
 
-        explicit PointCoordinates(size_t number_of_dimensions)
+        explicit PointCoordinates(number_of_dimensions_t number_of_dimensions)
         {
             const auto nan = std::numeric_limits<double>::quiet_NaN();
-            switch (number_of_dimensions) {
+            switch (*number_of_dimensions) {
               case 2:
                   data_ = Store2D{nan, nan};
                   break;
@@ -34,7 +35,7 @@ namespace acmacs
                   data_ = Store3D{nan, nan, nan};
                   break;
               default:
-                  data_ = StoreXD(number_of_dimensions);
+                  data_ = StoreXD(*number_of_dimensions);
                   std::fill(begin(), end(), nan);
                   break;
             }
@@ -50,12 +51,12 @@ namespace acmacs
 
         PointCoordinates(const PointCoordinates& rhs)
         {
-            switch (rhs.number_of_dimensions()) {
+            switch (*rhs.number_of_dimensions()) {
               case 2:
-                  data_ = Store2D{rhs[0], rhs[1]};
+                  data_ = Store2D{rhs.x(), rhs.y()};
                   break;
               case 3:
-                  data_ = Store3D{rhs[0], rhs[1], rhs[2]};
+                  data_ = Store3D{rhs.x(), rhs.y(), rhs.z()};
                   break;
               default:
                   data_ = StoreXD(std::begin(rhs), std::end(rhs));
@@ -79,49 +80,49 @@ namespace acmacs
         bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
         bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
-        constexpr size_t number_of_dimensions() const
+        constexpr number_of_dimensions_t number_of_dimensions() const
         {
             return std::visit(
-                [](auto&& data) -> size_t {
+                [](auto&& data) -> number_of_dimensions_t {
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D>)
-                        return 2;
+                        return number_of_dimensions_t{2};
                     else if constexpr (std::is_same_v<T, Store3D>)
-                        return 3;
+                        return number_of_dimensions_t{3};
                     else if constexpr (std::is_same_v<T, StoreXD>)
-                        return data.size();
+                        return number_of_dimensions_t{data.size()};
                     else
-                        return data.size;
+                        return number_of_dimensions_t{data.size};
                 },
                 data_);
         }
 
-        constexpr double operator[](size_t dim) const
+        constexpr double operator[](number_of_dimensions_t dim) const
         { /* assert(dim < number_of_dimensions()); */
             return std::visit(
                 [dim](auto&& data) -> double {
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
-                        return data[dim];
+                        return data[*dim];
                     else
-                        return data.begin[dim];
+                        return data.begin[*dim];
                 },
                 data_);
         }
 
-        constexpr double& operator[](size_t dim)
+        constexpr double& operator[](number_of_dimensions_t dim)
         { /* assert(dim < number_of_dimensions()); */
             return std::visit(
                 [dim](auto&& data) -> double& {
                     using T = std::decay_t<decltype(data)>;
                     if constexpr (std::is_same_v<T, Store2D> || std::is_same_v<T, Store3D> || std::is_same_v<T, StoreXD>)
-                        return data[dim];
+                        return data[*dim];
                     else if constexpr (std::is_same_v<T, ConstRef>) {
                         std::cerr << "ERROR: cannot update const PointCoordinates in PointCoordinates::operator[] (abort)\n";
                         abort();
                     }
                     else
-                        return data.begin[dim];
+                        return data.begin[*dim];
                 },
                 data_);
         }
@@ -184,13 +185,13 @@ namespace acmacs
                 data_);
         }
 
-        constexpr double x() const { return operator[](0); }
-        constexpr double y() const { return operator[](1); }
-        constexpr double z() const { return operator[](2); }
+        constexpr double x() const { return operator[](number_of_dimensions_t{0}); }
+        constexpr double y() const { return operator[](number_of_dimensions_t{1}); }
+        constexpr double z() const { return operator[](number_of_dimensions_t{2}); }
 
-        constexpr void x(double val) { operator[](0) = val; }
-        constexpr void y(double val) { operator[](1) = val; }
-        constexpr void z(double val) { operator[](2) = val; }
+        constexpr void x(double val) { operator[](number_of_dimensions_t{0}) = val; }
+        constexpr void y(double val) { operator[](number_of_dimensions_t{1}) = val; }
+        constexpr void z(double val) { operator[](number_of_dimensions_t{2}) = val; }
 
         PointCoordinates& operator+=(const PointCoordinates& rhs) { std::transform(begin(), end(), rhs.begin(), begin(), [](double v1, double v2) { return v1 + v2; }); return *this; }
         PointCoordinates& operator+=(double val) { std::transform(begin(), end(), begin(), [val](double v1) { return v1 + val; }); return *this; }
@@ -221,7 +222,7 @@ namespace acmacs
 
     inline double distance2(const PointCoordinates& p1, const PointCoordinates& p2)
     {
-        std::vector<double> diff(p1.number_of_dimensions());
+        std::vector<double> diff(*p1.number_of_dimensions());
         std::transform(p1.begin(), p1.end(), p2.begin(), diff.begin(), [](double v1, double v2) { return v1 - v2; });
         return std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
     }

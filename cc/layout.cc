@@ -5,7 +5,7 @@
 std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_point_indexes() const
 {
     const auto num_dim = number_of_dimensions();
-    std::vector<size_t> min_points(num_dim, 0), max_points(num_dim, 0);
+    std::vector<size_t> min_points(*num_dim, 0), max_points(*num_dim, 0);
     size_t point_no = 0;
     for (; !operator[](point_no).exists(); ++point_no); // skip NaN points at the beginning
     PointCoordinates min_coordinates(operator[](point_no));
@@ -14,14 +14,14 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_poin
     for (; point_no < number_of_points(); ++point_no) {
         const auto point = operator[](point_no);
         if (point.exists()) {
-            for (size_t dim = 0; dim < num_dim; ++dim) {
+            for (number_of_dimensions_t dim{0}; dim < num_dim; ++dim) {
                 if (point[dim] < min_coordinates[dim]) {
                     min_coordinates[dim] = point[dim];
-                    min_points[dim] = point_no;
+                    min_points[*dim] = point_no;
                 }
                 if (point[dim] > max_coordinates[dim]) {
                     max_coordinates[dim] = point[dim];
-                    max_points[dim] = point_no;
+                    max_points[*dim] = point_no;
                 }
             }
         }
@@ -74,7 +74,7 @@ std::shared_ptr<acmacs::Layout> acmacs::Layout::transform(const acmacs::Transfor
 
 acmacs::PointCoordinates acmacs::Layout::centroid() const
 {
-    PointCoordinates result(number_of_dimensions(), 0.0);
+    PointCoordinates result(*number_of_dimensions(), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
         if (const auto coord = get(p_no); coord.exists())
@@ -90,13 +90,13 @@ acmacs::PointCoordinates acmacs::Layout::centroid() const
 // ----------------------------------------------------------------------
 
 acmacs::Layout::Layout(const Layout& source, const std::vector<size_t>& indexes)
-    : Vec(indexes.size() * source.number_of_dimensions(), std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{source.number_of_dimensions()}
+    : Vec(indexes.size() * source.number_of_dimensions().get(), std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{source.number_of_dimensions()}
 {
     auto target = Vec::begin();
     for (auto index : indexes) {
         const auto coord{source[index]};
         std::copy(coord.begin(), coord.end(), target);
-        target += static_cast<decltype(target)::difference_type>(number_of_dimensions_);
+        target += static_cast<decltype(target)::difference_type>(*number_of_dimensions_);
     }
 
 } // acmacs::Layout::Layout
@@ -105,15 +105,15 @@ acmacs::Layout::Layout(const Layout& source, const std::vector<size_t>& indexes)
 
 std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
 {
-    std::vector<std::pair<double, double>> result(number_of_dimensions_);
+    std::vector<std::pair<double, double>> result(*number_of_dimensions_);
     // using diff_t = decltype(result)::difference_type;
     // Layout may contain NaNs (disconnected points), avoid them when finding minmax
     auto it = Vec::begin();
     while (it != Vec::end()) {
-        size_t valid_dims = 0;
-        for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
+        number_of_dimensions_t valid_dims{0};
+        for (number_of_dimensions_t dim{0}; dim < number_of_dimensions_; ++dim, ++it) {
             if (!std::isnan(*it)) {
-                result[dim] = std::pair(*it, *it);
+                result[*dim] = std::pair(*it, *it);
                 ++valid_dims;
             }
         }
@@ -121,10 +121,10 @@ std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
             break;
     }
     while (it != Vec::end()) {
-        for (size_t dim = 0; dim < number_of_dimensions_; ++dim, ++it) {
+        for (number_of_dimensions_t dim{0}; dim < number_of_dimensions_; ++dim, ++it) {
             if (!std::isnan(*it)) {
-                result[dim].first = std::min(result[dim].first, *it);
-                result[dim].second = std::max(result[dim].second, *it);
+                result[*dim].first = std::min(result[*dim].first, *it);
+                result[*dim].second = std::max(result[*dim].second, *it);
             }
         }
     }

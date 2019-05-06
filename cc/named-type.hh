@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "acmacs-base/string.hh"
+
 // Simplified version of https://github.com/joboccara/NamedType
 // Also see https://github.com/Enhex/phantom_type
 
@@ -22,6 +24,8 @@ namespace acmacs
 
         constexpr T& get() noexcept { return value_; }
         constexpr T const& get() const noexcept { return value_; }
+        constexpr T& operator*() noexcept { return value_; }
+        constexpr T const& operator*() const noexcept { return value_; }
         explicit constexpr operator T&() noexcept { return value_; }
         explicit constexpr operator const T&() const noexcept { return value_; }
 
@@ -34,6 +38,7 @@ namespace acmacs
     };
 
     template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
+    template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
     
 } // namespace acmacs
 

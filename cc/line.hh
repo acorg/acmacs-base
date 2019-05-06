@@ -25,15 +25,15 @@ namespace acmacs
           // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
         double distance_with_direction(const PointCoordinates& point) const
             {
-                return (slope() * point[0] - point[1] + intercept()) / std::sqrt(a2b2());
+                return (slope() * point.x() - point.y() + intercept()) / std::sqrt(a2b2());
             }
 
         double distance_to(const PointCoordinates& point) const { return std::abs(distance_with_direction(point)); }
 
         PointCoordinates project_on(const PointCoordinates& source) const
             {
-                return {(source[0] + slope() * source[1] - slope() * intercept()) / a2b2(),
-                        (slope() * (source[0] + slope() * source[1]) + intercept()) / a2b2()};
+                return {(source.x() + slope() * source.y() - slope() * intercept()) / a2b2(),
+                        (slope() * (source.x() + slope() * source.y()) + intercept()) / a2b2()};
             }
 
         PointCoordinates flip_over(const PointCoordinates& source, double scale = 1.0) const

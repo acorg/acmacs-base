@@ -9,6 +9,7 @@
 #include "acmacs-base/string.hh"
 #include "acmacs-base/point-coordinates.hh"
 #include "acmacs-base/line.hh"
+#include "acmacs-base/number-of-dimensions.hh"
 
 // ----------------------------------------------------------------------
 
@@ -25,7 +26,7 @@ namespace acmacs
     class Transformation : public detail::TransformationBase
     {
       public:
-        Transformation(size_t num_dim = 2) : detail::TransformationBase{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{num_dim} {}
+        Transformation(number_of_dimensions_t num_dim = number_of_dimensions_t{2}) : detail::TransformationBase{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{num_dim} {}
         Transformation(const Transformation&) = default;
         Transformation(double a11, double a12, double a21, double a22)
             : detail::TransformationBase{a11, a12, 0.0, 0.0, a21, a22, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}, number_of_dimensions{2}
@@ -36,7 +37,7 @@ namespace acmacs
         bool operator==(const Transformation& rhs) const { return std::equal(begin(), end(), rhs.begin()); }
         bool operator!=(const Transformation& rhs) const { return !operator==(rhs); }
 
-        void reset(size_t num_dim) { operator=(Transformation(num_dim)); }
+        void reset(number_of_dimensions_t num_dim) { operator=(Transformation(num_dim)); }
 
         constexpr double _x(size_t offset) const { return operator[](offset); }
         constexpr double& _x(size_t offset) { return operator[](offset); }
@@ -47,7 +48,7 @@ namespace acmacs
 
         std::vector<double> as_vector() const
         {
-            switch (number_of_dimensions) {
+            switch (*number_of_dimensions) {
                 case 2:
                     return {_x(0, 0), _x(0, 1), _x(1, 0), _x(1, 1)};
                 case 3:
@@ -170,7 +171,7 @@ namespace acmacs
 
         PointCoordinates transform(const PointCoordinates& source) const
         {
-            switch (source.number_of_dimensions()) {
+            switch (*source.number_of_dimensions()) {
               case 2:
                   return PointCoordinates(source.x() * a() + source.y() * c(), source.x() * b() + source.y() * d());
               case 3:
@@ -188,7 +189,7 @@ namespace acmacs
 
         // 3D --------------------------------------------------
 
-        size_t number_of_dimensions = 2;
+        number_of_dimensions_t number_of_dimensions{2};
 
         bool valid() const
         {
@@ -199,7 +200,7 @@ namespace acmacs
 
     inline std::string to_string(const Transformation& t)
     {
-        switch (t.number_of_dimensions) {
+        switch (*t.number_of_dimensions) {
             case 2:
                 return ::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
             case 3:
@@ -216,7 +217,7 @@ namespace acmacs
     class TransformationTranslation : public Transformation
     {
       public:
-        TransformationTranslation(size_t a_number_of_dimensions) : Transformation(a_number_of_dimensions) {}
+        TransformationTranslation(number_of_dimensions_t a_number_of_dimensions) : Transformation(a_number_of_dimensions) {}
         TransformationTranslation(const TransformationTranslation&) = default;
 
         template <typename S> constexpr double& translation(S dimension) { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
@@ -228,9 +229,9 @@ namespace acmacs
     inline std::string to_string(const TransformationTranslation& tt)
     {
         std::string result = to_string(tt.transformation()) + " + [";
-        for (size_t dim = 0; dim < tt.number_of_dimensions; ++dim) {
+        for (size_t dim = 0; dim < *tt.number_of_dimensions; ++dim) {
             result += to_string(tt.translation(dim));
-            if (dim < (tt.number_of_dimensions - 1))
+            if (dim < (*tt.number_of_dimensions - 1))
                 result += ',';
         }
         result += ']';

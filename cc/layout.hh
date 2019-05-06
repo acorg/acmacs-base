@@ -5,6 +5,7 @@
 #include <cmath>
 #include <memory>
 
+#include "acmacs-base/number-of-dimensions.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/stream.hh"
@@ -15,7 +16,6 @@
 
 namespace acmacs
 {
-
     struct Area
     {
         PointCoordinates min, max;
@@ -23,11 +23,11 @@ namespace acmacs
         Area(const PointCoordinates& a_min, const PointCoordinates& a_max) : min(a_min), max(a_max) {}
         Area(const PointCoordinates& a_min) : min(a_min), max(a_min) {}
 
-        size_t num_dim() const { return min.number_of_dimensions(); }
+        number_of_dimensions_t num_dim() const { return min.number_of_dimensions(); }
 
         void extend(const PointCoordinates& point)
         {
-            for (size_t dim = 0; dim < num_dim(); ++dim) {
+            for (number_of_dimensions_t dim{0}; dim < num_dim(); ++dim) {
                 min[dim] = std::min(point[dim], min[dim]);
                 max[dim] = std::max(point[dim], max[dim]);
             }
@@ -35,8 +35,8 @@ namespace acmacs
 
         double area() const
         {
-            double result = max[0] - min[0];
-            for (size_t dim = 1; dim < num_dim(); ++dim)
+            double result = max.x() - min.x();
+            for (number_of_dimensions_t dim{1}; dim < num_dim(); ++dim)
                 result *= max[dim] - min[dim];
             return result;
         }
@@ -49,11 +49,11 @@ namespace acmacs
 
             friend struct Area;
             Iterator(double step, const PointCoordinates& a_min, const PointCoordinates& a_max) : step_(step), min_(a_min), max_(a_min), current_(a_min) { set_max(a_max); }
-            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_(2), max_(2), current_(2) {}
+            Iterator() : step_(std::numeric_limits<double>::quiet_NaN()), min_{number_of_dimensions_t{2}}, max_{number_of_dimensions_t{2}}, current_{number_of_dimensions_t{2}} {}
 
             void set_max(const PointCoordinates& a_max)
                 {
-                    for (auto dim : acmacs::range(max_.number_of_dimensions()))
+                    for (number_of_dimensions_t dim{0}; dim < a_max.number_of_dimensions(); ++dim)
                         max_[dim] = min_[dim] + std::ceil((a_max[dim] - min_[dim]) / step_) * step_;
                 }
 
@@ -61,9 +61,9 @@ namespace acmacs
             bool operator==(const Iterator& rhs) const
                 {
                     if (std::isnan(rhs.step_))
-                        return current_[0] > max_[0];
+                        return current_.x() > max_.x();
                     else if (std::isnan(step_))
-                        return rhs.current_[0] > rhs.max_[0];
+                        return rhs.current_.x() > rhs.max_.x();
                     else
                         throw std::runtime_error("cannot compare Area::Iterators");
                 }
@@ -74,8 +74,8 @@ namespace acmacs
 
             const Iterator& operator++()
                 {
-                    if (current_[0] <= max_[0]) {
-                        for (auto dim : acmacs::range(current_.number_of_dimensions())) {
+                    if (current_.x() <= max_.x()) {
+                        for (number_of_dimensions_t dim{0}; dim < current_.number_of_dimensions(); ++dim) {
                             current_[dim] += step_;
                             if (current_[dim] <= max_[dim]) {
                                 std::copy(min_.begin(), min_.begin() + (dim), current_.begin());
@@ -151,9 +151,9 @@ namespace acmacs
       private:
         const Layout& parent_;
         mutable size_t point_no_;
-        const size_t dimension_no_;
+        const number_of_dimensions_t dimension_no_;
 
-        LayoutDimensionConstIterator(const Layout& parent, size_t point_no, size_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
+        LayoutDimensionConstIterator(const Layout& parent, size_t point_no, number_of_dimensions_t dimension_no) : parent_{parent}, point_no_{point_no}, dimension_no_{dimension_no} {}
 
         friend class Layout;
 
@@ -169,20 +169,20 @@ namespace acmacs
         Layout() = default;
         Layout(const Layout&) = default;
         Layout(Layout&&) = default;
-        Layout(size_t number_of_points, size_t number_of_dimensions) : Vec(number_of_points * number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{number_of_dimensions} {}
-        Layout(size_t number_of_dimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{number_of_dimensions} {}
+        Layout(size_t number_of_points, number_of_dimensions_t number_of_dimensions) : Vec(number_of_points * number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{number_of_dimensions} {}
+        Layout(number_of_dimensions_t number_of_dimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{number_of_dimensions} {}
         Layout(const Layout& source, const std::vector<size_t>& indexes);
         virtual ~Layout() = default;
         Layout& operator=(const Layout&) = default;
         Layout& operator=(Layout&&) = default;
 
         size_t number_of_points() const noexcept { return size() / number_of_dimensions_; }
-        constexpr size_t number_of_dimensions() const noexcept { return number_of_dimensions_; }
+        constexpr number_of_dimensions_t number_of_dimensions() const noexcept { return number_of_dimensions_; }
 
-        void change_number_of_dimensions(size_t num_dim, bool allow_dimensions_increase = false)
+        void change_number_of_dimensions(number_of_dimensions_t num_dim, bool allow_dimensions_increase = false)
         {
             if (!allow_dimensions_increase && num_dim >= number_of_dimensions_)
-                throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + std::to_string(number_of_dimensions_) + " --> " + std::to_string(num_dim));
+                throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + acmacs::to_string(number_of_dimensions_) + " --> " + acmacs::to_string(num_dim));
             resize(number_of_points() * num_dim);
             number_of_dimensions_ = num_dim;
         }
@@ -199,16 +199,16 @@ namespace acmacs
 
         PointCoordinates get(size_t point_no) const { return operator[](point_no); }
 
-        double operator()(size_t point_no, size_t aDimensionNo) const { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
-        double& operator()(size_t point_no, size_t aDimensionNo) { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
-        double coordinate(size_t point_no, size_t aDimensionNo) const { return operator()(point_no, aDimensionNo); }
-        double& coordinate(size_t point_no, size_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
+        double operator()(size_t point_no, number_of_dimensions_t aDimensionNo) const { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        double& operator()(size_t point_no, number_of_dimensions_t aDimensionNo) { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        double coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) const { return operator()(point_no, aDimensionNo); }
+        double& coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const { return operator[](point_no).exists(); }
         const std::vector<double>& as_flat_vector_double() const { return *this; }
 
         void set_nan(size_t point_no)
         {
-            const auto first{Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions())}, last{first + static_cast<difference_type>(number_of_dimensions())};
+            const auto first{Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions())}, last{first + static_cast<difference_type>(*number_of_dimensions())};
             std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
         }
 
@@ -216,13 +216,13 @@ namespace acmacs
         {
             for (const auto index : indexes) {
                 const auto first = Vec::begin() + static_cast<difference_type>((index + base) * number_of_dimensions_);
-                erase(first, first + static_cast<difference_type>(number_of_dimensions_));
+                erase(first, first + static_cast<difference_type>(*number_of_dimensions_));
             }
         }
 
         void insert_point(size_t before, size_t base)
         {
-            insert(Vec::begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
+            insert(Vec::begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), *number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
         }
 
         std::vector<std::pair<double, double>> minmax() const;
@@ -250,15 +250,15 @@ namespace acmacs
         LayoutConstIterator begin_sera(size_t number_of_antigens) const { return {*this, number_of_antigens}; }
         LayoutConstIterator end_sera(size_t /*number_of_antigens*/) const { return {*this, number_of_points()}; }
 
-        LayoutDimensionConstIterator begin_dimension(size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        LayoutDimensionConstIterator end_dimension(size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
-        LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, 0, dimension_no}; }
-        LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, size_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
-        LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, size_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_dimension(number_of_dimensions_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_dimension(number_of_dimensions_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
+        LayoutDimensionConstIterator begin_antigens_dimension(size_t /*number_of_antigens*/, number_of_dimensions_t dimension_no) const { return {*this, 0, dimension_no}; }
+        LayoutDimensionConstIterator end_antigens_dimension(size_t number_of_antigens, number_of_dimensions_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        LayoutDimensionConstIterator begin_sera_dimension(size_t number_of_antigens, number_of_dimensions_t dimension_no) const { return {*this, number_of_antigens, dimension_no}; }
+        LayoutDimensionConstIterator end_sera_dimension(size_t /*number_of_antigens*/, number_of_dimensions_t dimension_no) const { return {*this, number_of_points(), dimension_no}; }
 
       private:
-        size_t number_of_dimensions_;
+        number_of_dimensions_t number_of_dimensions_{2};
 
     }; // class Layout
 
