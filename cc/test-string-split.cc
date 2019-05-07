@@ -52,7 +52,7 @@ int main()
         }
 
         {
-            auto r = acmacs::string::split_into_uint(S2, ",");
+            auto r = acmacs::string::split_into_size_t(S2, ",");
             assert(r.size() == 5);
             assert((r == std::vector<size_t>{1,2,3,5,8}));
         }

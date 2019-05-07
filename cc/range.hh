@@ -159,6 +159,7 @@ namespace acmacs
         using iterator_category = std::random_access_iterator_tag;
 
         index_iterator(value_type aValue) : value(aValue) {}
+        template <typename A1> index_iterator(A1 aValue) : value(value_type{aValue}) {}
         index_iterator& operator++() { ++value; return *this;}
           //index_iterator operator++(int) { iterator retval = *this; ++(*this); return retval;}
         bool operator==(const index_iterator<Index>& other) const { return value == other.value; }

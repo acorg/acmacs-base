@@ -122,7 +122,12 @@ namespace acmacs::string
         return {internal::split_iterator<S>(s, delim, keep_empty), internal::split_iterator<S>()};
     }
 
-    template <typename S> inline std::vector<size_t> split_into_uint(const S& s, std::string delim)
+    template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s, std::string delim)
+    {
+        return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{std::stoul(std::string(chunk), pos)}; }, "unsigned");
+    }
+
+    template <typename S> inline std::vector<size_t> split_into_size_t(const S& s, std::string delim)
     {
         return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return std::stoul(std::string(chunk), pos); }, "unsigned");
     }
