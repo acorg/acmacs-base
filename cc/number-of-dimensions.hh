@@ -27,6 +27,8 @@ namespace acmacs
         // constexpr bool operator> (number_of_dimensions_t rhs) const noexcept { return get() >  rhs.get(); }
         constexpr bool operator>=(number_of_dimensions_t rhs) const noexcept { return get() >= rhs.get(); }
 
+        constexpr bool valid() const noexcept { return value_ > 0; }
+
       private:
         size_t value_;
 
