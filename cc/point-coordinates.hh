@@ -24,19 +24,18 @@ namespace acmacs
         enum zero2D { zero2D };
         enum zero3D { zero3D };
 
-        explicit PointCoordinates(number_of_dimensions_t number_of_dimensions)
+        explicit PointCoordinates(number_of_dimensions_t number_of_dimensions, double init = std::numeric_limits<double>::quiet_NaN())
         {
-            const auto nan = std::numeric_limits<double>::quiet_NaN();
             switch (*number_of_dimensions) {
               case 2:
-                  data_ = Store2D{nan, nan};
+                  data_ = Store2D{init, init};
                   break;
               case 3:
-                  data_ = Store3D{nan, nan, nan};
+                  data_ = Store3D{init, init, init};
                   break;
               default:
                   data_ = StoreXD(*number_of_dimensions);
-                  std::fill(begin(), end(), nan);
+                  std::fill(begin(), end(), init);
                   break;
             }
         }
