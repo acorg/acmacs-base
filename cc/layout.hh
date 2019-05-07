@@ -27,7 +27,7 @@ namespace acmacs
 
         void extend(const PointCoordinates& point)
         {
-            for (number_of_dimensions_t dim{0}; dim < num_dim(); ++dim) {
+            for (auto dim : range(num_dim())) {
                 min[dim] = std::min(point[dim], min[dim]);
                 max[dim] = std::max(point[dim], max[dim]);
             }
@@ -36,7 +36,7 @@ namespace acmacs
         double area() const
         {
             double result = max.x() - min.x();
-            for (number_of_dimensions_t dim{1}; dim < num_dim(); ++dim)
+            for (auto dim : range(1UL, num_dim()))
                 result *= max[dim] - min[dim];
             return result;
         }
@@ -53,7 +53,7 @@ namespace acmacs
 
             void set_max(const PointCoordinates& a_max)
                 {
-                    for (number_of_dimensions_t dim{0}; dim < a_max.number_of_dimensions(); ++dim)
+                    for (auto dim : range(a_max.number_of_dimensions()))
                         max_[dim] = min_[dim] + std::ceil((a_max[dim] - min_[dim]) / step_) * step_;
                 }
 
@@ -75,10 +75,10 @@ namespace acmacs
             const Iterator& operator++()
                 {
                     if (current_.x() <= max_.x()) {
-                        for (number_of_dimensions_t dim{0}; dim < current_.number_of_dimensions(); ++dim) {
+                        for (auto dim : range(current_.number_of_dimensions())) {
                             current_[dim] += step_;
                             if (current_[dim] <= max_[dim]) {
-                                std::copy(min_.begin(), min_.begin() + (dim), current_.begin());
+                                std::copy(min_.begin(), min_.begin() + static_cast<size_t>(dim), current_.begin());
                                 break;
                             }
                         }
@@ -169,38 +169,38 @@ namespace acmacs
         Layout() = default;
         Layout(const Layout&) = default;
         Layout(Layout&&) = default;
-        Layout(size_t number_of_points, number_of_dimensions_t number_of_dimensions) : Vec(number_of_points * number_of_dimensions, std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{number_of_dimensions} {}
+        Layout(size_t number_of_points, number_of_dimensions_t number_of_dimensions) : Vec(number_of_points * static_cast<size_t>(number_of_dimensions), std::numeric_limits<double>::quiet_NaN()), number_of_dimensions_{number_of_dimensions} {}
         Layout(number_of_dimensions_t number_of_dimensions, const double* first, const double* last) : Vec(first, last), number_of_dimensions_{number_of_dimensions} {}
         Layout(const Layout& source, const std::vector<size_t>& indexes);
         virtual ~Layout() = default;
         Layout& operator=(const Layout&) = default;
         Layout& operator=(Layout&&) = default;
 
-        size_t number_of_points() const noexcept { return size() / number_of_dimensions_; }
+        size_t number_of_points() const noexcept { return size() / static_cast<size_t>(number_of_dimensions_); }
         constexpr number_of_dimensions_t number_of_dimensions() const noexcept { return number_of_dimensions_; }
 
         void change_number_of_dimensions(number_of_dimensions_t num_dim, bool allow_dimensions_increase = false)
         {
             if (!allow_dimensions_increase && num_dim >= number_of_dimensions_)
                 throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + acmacs::to_string(number_of_dimensions_) + " --> " + acmacs::to_string(num_dim));
-            resize(number_of_points() * num_dim);
+            resize(number_of_points() * static_cast<size_t>(num_dim));
             number_of_dimensions_ = num_dim;
         }
 
         const PointCoordinates operator[](size_t point_no) const
         {
-            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
+            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_)), Vec::begin() + static_cast<difference_type>((point_no + 1) * static_cast<size_t>(number_of_dimensions_)));
         }
 
         PointCoordinates operator[](size_t point_no)
         {
-            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions_), Vec::begin() + static_cast<difference_type>((point_no + 1) * number_of_dimensions_));
+            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_)), Vec::begin() + static_cast<difference_type>((point_no + 1) * static_cast<size_t>(number_of_dimensions_)));
         }
 
         PointCoordinates get(size_t point_no) const { return operator[](point_no); }
 
-        double operator()(size_t point_no, number_of_dimensions_t aDimensionNo) const { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
-        double& operator()(size_t point_no, number_of_dimensions_t aDimensionNo) { return Vec::operator[](point_no * number_of_dimensions_ + aDimensionNo); }
+        double operator()(size_t point_no, number_of_dimensions_t aDimensionNo) const { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
+        double& operator()(size_t point_no, number_of_dimensions_t aDimensionNo) { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
         double coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) const { return operator()(point_no, aDimensionNo); }
         double& coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const { return operator[](point_no).exists(); }
@@ -208,21 +208,21 @@ namespace acmacs
 
         void set_nan(size_t point_no)
         {
-            const auto first{Vec::begin() + static_cast<difference_type>(point_no * number_of_dimensions())}, last{first + static_cast<difference_type>(*number_of_dimensions())};
+            const auto first{Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_))}, last{first + static_cast<difference_type>(*number_of_dimensions_)};
             std::for_each(first, last, [](auto& target) { target = std::numeric_limits<std::decay_t<decltype(target)>>::quiet_NaN(); });
         }
 
         void remove_points(const ReverseSortedIndexes& indexes, size_t base)
         {
             for (const auto index : indexes) {
-                const auto first = Vec::begin() + static_cast<difference_type>((index + base) * number_of_dimensions_);
+                const auto first = Vec::begin() + static_cast<difference_type>((index + base) * static_cast<size_t>(number_of_dimensions_));
                 erase(first, first + static_cast<difference_type>(*number_of_dimensions_));
             }
         }
 
         void insert_point(size_t before, size_t base)
         {
-            insert(Vec::begin() + static_cast<difference_type>((before + base) * number_of_dimensions_), *number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
+            insert(Vec::begin() + static_cast<difference_type>((before + base) * static_cast<size_t>(number_of_dimensions_)), *number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
         }
 
         std::vector<std::pair<double, double>> minmax() const;

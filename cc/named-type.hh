@@ -39,7 +39,7 @@ namespace acmacs
 
     template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
     template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
-    
+
 } // namespace acmacs
 
 

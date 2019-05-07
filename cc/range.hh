@@ -178,7 +178,7 @@ namespace acmacs
     template <typename Index> class range
     {
      public:
-        range(Index aBegin, Index aEnd) : mBegin{aBegin}, mEnd{aEnd}
+        template <typename A1, typename A2> range(A1 aBegin, A2 aEnd) : mBegin{static_cast<Index>(aBegin)}, mEnd{static_cast<Index>(aEnd)}
             {
                 if (mEnd < mBegin)
                     throw std::runtime_error("acmacs::range: end < begin");
@@ -194,6 +194,7 @@ namespace acmacs
     }; // class range<>
 
     range(size_t, size_t) -> range<size_t>;
+    range(int, size_t) -> range<size_t>;
     range(int, int) -> range<int>;
     range(size_t) -> range<size_t>;
     range(int) -> range<int>;
