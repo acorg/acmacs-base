@@ -110,7 +110,7 @@ namespace acmacs::statistics
     }
 
     template <typename Container> inline StandardDeviation standard_deviation(const Container& cont) { return standard_deviation(std::begin(cont), std::end(cont)); }
-    
+
     // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
     // {
     //     StandardDeviation result(mean);
@@ -138,6 +138,26 @@ namespace acmacs::statistics
         const auto y_mean = mean(y_first, x_size);
         const auto slope = covarianceN(x_first, x_last, x_mean, y_first, y_mean) / varianceN(x_first, x_last, x_mean);
         return {slope, y_mean - slope * x_mean};
+    }
+
+// ----------------------------------------------------------------------
+
+    // http://en.wikipedia.org/wiki/Correlation
+    // https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+    template <typename XForwardIterator, typename YForwardIterator> inline double correlation(XForwardIterator x_first, XForwardIterator x_last, YForwardIterator y_first)
+    {
+        if (x_first == x_last)
+            return 0.0;
+        const auto size = x_last - x_first;
+        const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, static_cast<size_t>(size));
+        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / standard_deviation(x_first, x_last, x_mean).sd() / standard_deviation(y_first, y_first + size, y_mean).sd();
+    }
+
+    template <typename Container> inline double correlation(const Container& first, const Container& second)
+    {
+        if (first.size() != second.size())
+            throw std::invalid_argument("correlation: containers of different sizes");
+        return correlation(std::begin(first), std::end(first), std::begin(second));
     }
 
 } // namespace acmacs::statistics
