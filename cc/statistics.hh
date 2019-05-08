@@ -24,6 +24,21 @@ namespace acmacs::statistics
         return sum / num;
     }
 
+    template <typename Container> inline double mean(const Container& cont) { return mean(std::begin(cont), std::end(cont)); }
+
+    template <typename ForwardIterator> inline double mean_abs(ForwardIterator first, ForwardIterator last)
+    {
+        size_t num = 0;
+        double sum = 0;
+        for (; first != last; ++first, ++num)
+            sum += std::abs(*first);
+        if (num == 0)
+            throw Error("mean_abs(): empty range");
+        return sum / num;
+    }
+
+    template <typename Container> inline double mean_abs(const Container& cont) { return mean_abs(std::begin(cont), std::end(cont)); }
+
     template <typename ForwardIterator> inline double mean(ForwardIterator first, size_t size)
     {
         if (size == 0)
@@ -94,6 +109,8 @@ namespace acmacs::statistics
         return {mean, std::sqrt(varianceN(first, last, mean) / size)};
     }
 
+    template <typename Container> inline StandardDeviation standard_deviation(const Container& cont) { return standard_deviation(std::begin(cont), std::end(cont)); }
+    
     // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
     // {
     //     StandardDeviation result(mean);
