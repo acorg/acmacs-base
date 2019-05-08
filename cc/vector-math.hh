@@ -9,7 +9,7 @@ namespace acmacs::vector_math
 {
     template <typename Iterator> inline double distance(Iterator first_1, Iterator last_1, Iterator first_2)
     {
-        auto square = [](double v) { return v * v; };
+        constexpr auto square = [](double v) { return v * v; };
         return std::sqrt(std::accumulate(first_1, last_1, 0.0, [first_2,square](double dist, double to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
 
         // double dist = 0;

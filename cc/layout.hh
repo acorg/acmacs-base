@@ -131,13 +131,22 @@ namespace acmacs
     class LayoutDimensionConstIterator
     {
       public:
+        using difference_type = ssize_t;
+
         double operator*() const;
+
         auto& operator++()
         {
             ++point_no_;
             // do not skip disconnected points to avoid jumping over end iterator
             return *this;
         }
+
+        LayoutDimensionConstIterator operator+(difference_type offset) const
+        {
+            return {parent_, point_no_ + static_cast<size_t>(offset), dimension_no_};
+        }
+
         bool operator==(const LayoutDimensionConstIterator& rhs) const
         {
             if (&parent_ != &rhs.parent_)
