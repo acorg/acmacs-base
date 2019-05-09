@@ -83,17 +83,20 @@ namespace acmacs::statistics
 
 // ----------------------------------------------------------------------
 
+    // https://en.wikipedia.org/wiki/Standard_deviation
     class StandardDeviation
     {
      public:
         constexpr double mean() const { return mean_; }
-        constexpr double sd() const { return sd_; }
+        constexpr double sample_sd() const { return sample_sd_; } // R sd() function returns sample sd
+        constexpr double population_sd() const { return population_sd_; }
 
      private:
-        StandardDeviation(double mean, double sd) : mean_{mean}, sd_{sd} {}
+        StandardDeviation(double mean, double population_sd, double sample_sd) : mean_{mean}, population_sd_{population_sd}, sample_sd_{sample_sd} {}
 
         double mean_;
-        double sd_ = 0;
+        double population_sd_ = 0;
+        double sample_sd_;
 
         template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator, double);
         template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator);
@@ -101,13 +104,14 @@ namespace acmacs::statistics
 
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
     {
-        return {mean, std::sqrt(varianceN(first, last, mean) / (last - first))};
+        const auto vari = varianceN(first, last, mean);
+        const auto size = last - first;
+        return {mean, std::sqrt(vari / size), std::sqrt(vari / (size - 1))};
     }
 
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last)
     {
-        const auto [mean, size] = mean_size(first, last);
-        return {mean, std::sqrt(varianceN(first, last, mean) / size)};
+        return standard_deviation(first, last, mean(first, last));
     }
 
     template <typename Container> inline StandardDeviation standard_deviation(const Container& cont) { return standard_deviation(std::begin(cont), std::end(cont)); }
@@ -176,7 +180,7 @@ namespace acmacs::statistics
             return 0.0;
         const auto size = x_last - x_first;
         const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, static_cast<size_t>(size));
-        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / standard_deviation(x_first, x_last, x_mean).sd() / standard_deviation(y_first, y_first + size, y_mean).sd();
+        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / standard_deviation(x_first, x_last, x_mean).sample_sd() / standard_deviation(y_first, y_first + size, y_mean).sample_sd();
     }
 
     template <typename Container> inline double correlation(const Container& first, const Container& second)
