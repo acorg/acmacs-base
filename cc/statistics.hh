@@ -180,7 +180,7 @@ namespace acmacs::statistics
             return 0.0;
         const auto size = x_last - x_first;
         const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, static_cast<size_t>(size));
-        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / standard_deviation(x_first, x_last, x_mean).sample_sd() / standard_deviation(y_first, y_first + size, y_mean).sample_sd();
+        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / (size - 1) / standard_deviation(x_first, x_last, x_mean).sample_sd() / standard_deviation(y_first, y_first + size, y_mean).sample_sd();
     }
 
     template <typename Container> inline double correlation(const Container& first, const Container& second)
