@@ -22,6 +22,7 @@ namespace acmacs
         FontSlant(const FontSlant&) = default;
         FontSlant(std::string aFontSlant) { from(aFontSlant); }
         FontSlant(std::string_view aFontSlant) { from(aFontSlant); }
+        FontSlant(const char* aFontSlant) { from(aFontSlant); }
         FontSlant& operator=(const FontSlant&) = default;
         FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
         FontSlant& operator=(std::string_view aFontSlant) { from(aFontSlant); return *this; }
@@ -67,6 +68,7 @@ namespace acmacs
         FontWeight(const FontWeight&) = default;
         FontWeight(std::string aFontWeight) { from(aFontWeight); }
         FontWeight(std::string_view aFontWeight) { from(aFontWeight); }
+        FontWeight(const char* aFontWeight) { from(aFontWeight); }
         FontWeight& operator=(const FontWeight&) = default;
         FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
         FontWeight& operator=(std::string_view aFontWeight) { from(aFontWeight); return *this; }
