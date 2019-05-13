@@ -53,16 +53,16 @@ namespace acmacs
         return _enumerate_internal::enumerate_range<Iterator, index_type>(first, last, initial);
     }
 
-    template <typename Container> inline auto enumerate(Container& content, size_t initial = 0)
+    template <typename Container, typename index_type = size_t> inline auto enumerate(Container& content, size_t initial = 0)
     {
         using iter_type = decltype(std::begin(content));
-        return _enumerate_internal::enumerate_range<iter_type, size_t>(std::begin(content), std::end(content), initial);
+        return _enumerate_internal::enumerate_range<iter_type, index_type>(std::begin(content), std::end(content), initial);
     }
 
-    template <typename Container> inline auto enumerate(const Container& content, size_t initial = 0)
+    template <typename Container, typename index_type = size_t> inline auto enumerate(const Container& content, size_t initial = 0)
     {
         using iter_type = decltype(std::begin(content));
-        return _enumerate_internal::enumerate_range<iter_type, size_t>(std::begin(content), std::end(content), initial);
+        return _enumerate_internal::enumerate_range<iter_type, index_type>(std::begin(content), std::end(content), initial);
     }
 
 } // namespace acmacs
