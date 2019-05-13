@@ -16,6 +16,7 @@ namespace acmacs
         PointShape(Shape aShape) : mShape{aShape} {}
         PointShape(std::string aShape) { from(aShape); }
         PointShape(std::string_view aShape) { from(aShape); }
+        PointShape(const char* aShape) { from(aShape); }
         PointShape& operator=(const PointShape&) = default;
         PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
         PointShape& operator=(std::string aShape) { from(aShape); return *this; }
