@@ -29,7 +29,7 @@ namespace acmacs::string
             using reference = std::string_view&;
 
             inline split_iterator() : mInputEnd(nullptr), mKeepEmpty(Split::RemoveEmpty), mBegin(nullptr), mEnd(nullptr) {}
-            inline split_iterator(const S& s, std::string delim, Split keep_empty)
+            inline split_iterator(const S& s, std::string_view delim, Split keep_empty)
                 : mInputEnd(&*s.cend()), mDelim(delim), mKeepEmpty(keep_empty), mBegin(s.data()), mEnd(nullptr)
                 {
                     if (mDelim.empty()) {
@@ -66,7 +66,7 @@ namespace acmacs::string
 
          private:
             const char* mInputEnd;
-            const std::string mDelim;
+            const std::string_view mDelim;
             const Split mKeepEmpty;
             const char* mBegin;
             const char* mEnd;
@@ -117,22 +117,22 @@ namespace acmacs::string
 
     } // namespace internal
 
-    template <typename S> inline std::vector<std::string_view> split(const S& s, std::string delim, Split keep_empty = Split::KeepEmpty)
+    template <typename S> inline std::vector<std::string_view> split(const S& s, std::string_view delim, Split keep_empty = Split::KeepEmpty)
     {
         return {internal::split_iterator<S>(s, delim, keep_empty), internal::split_iterator<S>()};
     }
 
-    template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s, std::string delim)
+    template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s, std::string_view delim)
     {
         return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{std::stoul(std::string(chunk), pos)}; }, "unsigned");
     }
 
-    template <typename S> inline std::vector<size_t> split_into_size_t(const S& s, std::string delim)
+    template <typename S> inline std::vector<size_t> split_into_size_t(const S& s, std::string_view delim)
     {
         return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return std::stoul(std::string(chunk), pos); }, "unsigned");
     }
 
-    template <typename S> inline std::vector<double> split_into_double(const S& s, std::string delim)
+    template <typename S> inline std::vector<double> split_into_double(const S& s, std::string_view delim)
     {
         return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); }, "double");
     }

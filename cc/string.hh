@@ -79,6 +79,12 @@ namespace string
         return std::string(be.first, be.second);
     }
 
+    inline std::string_view strip(std::string_view source)
+    {
+        auto be = _internal::strip_begin_end<std::string_view::const_iterator>(source);
+        return std::string_view(be.first, static_cast<size_t>(be.second - be.first));
+    }
+
       // ----------------------------------------------------------------------
 
     template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> inline std::string replace(S source, std::string look_for, std::string replace_with)
