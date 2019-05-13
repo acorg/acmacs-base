@@ -6,12 +6,16 @@
 
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
+#include "acmacs-base/string.hh"
+#include "acmacs-base/sfinae.hh"
 
 // ----------------------------------------------------------------------
 
 namespace acmacs
 {
     class date_parse_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+
+    enum class throw_on_error { no, yes };
 }
 
 class Date
@@ -90,31 +94,37 @@ class Date
 
     constexpr const date::year_month_day& raw() const { return date_; }
 
+    template <typename S> bool from_string(S&& source, const char* format)
+    {
+        std::istringstream in(std::string{source});
+        in >> date::parse(format, date_);
+        if (in) {
+            if (date_.year() < date::year{30})
+                date_ += date::years(2000);
+            else if (date_.year() < date::year{100})
+                date_ += date::years(1900);
+            return true;
+        }
+        else {
+            using namespace date::literals;
+            date_ = 1999_y / 99 / 99;
+            return false;
+        }
+    }
+
+    template <typename S> bool from_string(S&& source, acmacs::throw_on_error toe = acmacs::throw_on_error::yes)
+        {
+            for (const char* format : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
+                if (from_string(std::forward<S>(source), format))
+                    return true;
+            }
+            if (toe == acmacs::throw_on_error::yes)
+                throw acmacs::date_parse_error(string::concat("cannot parse date from \"", source, + '"'));
+            return false;
+        }
+
  private:
     date::year_month_day date_;
-
-    void from_string(std::string_view source)
-        {
-            from_string(std::string(source));
-        }
-
-    void from_string(std::string source)
-        {
-            using namespace date::literals;
-            date_ = 1999_y/99/99;
-            for (const char* format : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
-                std::istringstream in(source);
-                in >> date::parse(format, date_);
-                if (in) {
-                    if (date_.year() < date::year{30})
-                        date_ += date::years(2000);
-                    else if (date_.year() < date::year{100})
-                        date_ += date::years(1900);
-                    return;
-                }
-            }
-            throw acmacs::date_parse_error("cannot parse date from \"" + source + '"');
-        }
 
 }; // class Date
 
