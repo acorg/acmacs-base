@@ -2,16 +2,17 @@
 # ======================================================================
 
 TARGETS = \
-    $(ACMACS_BASE_LIB) \
-    $(DIST)/json-pp \
-    $(DIST)/time-series-gen \
-    $(DIST)/test-rjson2 \
-    $(DIST)/test-argc-argv \
-    $(DIST)/test-argv \
-    $(DIST)/test-string-split \
-    $(DIST)/test-date2 \
-    $(DIST)/test-double-to-string \
-    $(DIST)/test-settings
+  $(ACMACS_BASE_LIB) \
+  $(DIST)/json-pp \
+  $(DIST)/time-series-gen \
+  $(DIST)/test-rjson2 \
+  $(DIST)/test-argc-argv \
+  $(DIST)/test-argv \
+  $(DIST)/test-string-split \
+  $(DIST)/test-date2 \
+  $(DIST)/test-double-to-string \
+  $(DIST)/test-settings \
+  $(DIST)/test-virus-name
 
 all: install-acmacs-base
 
@@ -23,11 +24,11 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-    virus-name.cc color.cc text-style.cc time-series.cc read-file.cc layout.cc \
-    argv.cc argc-argv.cc \
-    normalize.cc \
-    quicklook.cc timeit.cc gzip.cc \
-    rjson.cc json-importer.cc
+  virus-name.cc color.cc text-style.cc time-series.cc read-file.cc layout.cc \
+  argv.cc argc-argv.cc \
+  normalize.cc \
+  quicklook.cc timeit.cc gzip.cc \
+  rjson.cc json-importer.cc
 
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc

@@ -15,6 +15,7 @@ static const std::array sReReassortant = {
     re_entry_t{"NYMC *BX[\\- ]*([0-9]+[A-Z]*)", "NYMC-$1"},
     re_entry_t{"BVR[\\- ]*0*([0-9]+[A-Z]*)",    "CBER-$1"}, // B/PHUKET/3073/2013 BVR-1B -> CBER-1B
     re_entry_t{"CBER[\\- ]*0*([0-9]+[A-Z]*)",   "CBER-$1"}, // A(H3N2)/KANSAS/14/2017 CBER-22B
+    // re_entry_t{"X[\\- ]*([0-9]+[A-Z]*)",        "NYMC-$1"},
 };
 #include "acmacs-base/diagnostics-pop.hh"
 
@@ -40,13 +41,13 @@ namespace virus_name
     void split_and_strip(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& extra)
     {
         std::smatch m;
-        if (std::regex_match(name, m, _internal::international_name_with_extra)) {
+        if (std::regex_search(name, m, _internal::international_name_with_extra)) {
             virus_type = string::strip(m[1].str());
             host = string::strip(m[2].str());
             location = string::strip(m[3].str());
             isolation = string::strip(m[4].str());
             year = _internal::make_year(m);
-            extra = string::strip(m[7].str());
+            extra = string::join(" ", {string::strip(m.prefix().str()), string::strip(m[7].str())});
         }
         else
             throw Unrecognized("Cannot split " + name);
@@ -66,7 +67,7 @@ namespace virus_name
                 location = m[3].str();
                 isolation = m[4].str();
                 year = _internal::make_year(m);
-                extra = m[7].str();
+                extra = string::join(" ", {m.prefix().str(), m[7].str()});
             }
             else
                 throw Unrecognized("Cannot split " + name);
@@ -108,21 +109,6 @@ namespace virus_name
         if (!extra.empty() && rep == report_extra::yes)
             std::cerr << "WARNING: name contains extra \"" << extra << "\": \"" << full() << "\"\n";
     }
-
-    // std::string Name::full() const
-    // {
-    //     return string::join(" ", {name(), reassortant, extra});
-    // }
-
-    // std::string Name::name() const
-    // {
-    //     return string::join("/", {virus_type, host, location, isolation, year});
-    // }
-
-    // std::string Name::name_extra() const
-    // {
-    //     return string::join(" ", {name(), extra});
-    // }
 
     // std::string normalize(std::string name)
     // {
