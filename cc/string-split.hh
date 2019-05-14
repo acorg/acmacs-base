@@ -91,7 +91,7 @@ namespace acmacs::string
 
           // ======================================================================
 
-        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, std::string delim, Extractor extractor, const char* extractor_name)
+        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, std::string_view delim, Extractor extractor, const char* extractor_name)
         {
             using namespace std::string_literals;
             auto extract = [&](auto chunk) -> T {
