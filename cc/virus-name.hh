@@ -40,21 +40,21 @@ namespace virus_name
 // ----------------------------------------------------------------------
 
       // Extracts virus name without passage, reassortant, extra, etc.
-    std::string_view name(std::string_view aFullName); // noexcept
+    std::string_view name(std::string_view aFullName); // noexcept, used by: AceAntigens::find_by_full_name, Acd1Antigens::find_by_full_name
 
     using location_func_t = std::string (*)(std::string);
     enum class prioritize_cdc_name { no, yes };
 
-    std::string location_for_cdc_name(std::string name); // throws Unrecognized
+    std::string location_for_cdc_name(std::string name); // throws Unrecognized, used by: LocDb::find_for_virus_name
 
     // returned cdc abbreviation starts with #
     std::string location(std::string name, prioritize_cdc_name check_cdc_first = prioritize_cdc_name::no); // throws Unrecognized
 
-    std::string_view virus_type(const std::string& name); // pass by reference! because we return string_view to it, throws Unrecognized
+    std::string_view virus_type(const std::string& name); // pass by reference! because we return string_view to it, throws Unrecognized, used by: geographic-map.cc location_of_antigen
 
-    std::string year(std::string name); // throws Unrecognized
+    // std::string year(std::string name); // throws Unrecognized, unused
 
-    void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage);
+    void split(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage); // used by: hidb Antigen::Antigen, Serum::Serum
 
     // split for names looking like international but with unrecognized "garbage" (extra) at the end
     void split_with_extra(std::string name, std::string& virus_type, std::string& host, std::string& location, std::string& isolation, std::string& year, std::string& passage, std::string& extra);

@@ -158,14 +158,14 @@ namespace virus_name
 
     // ----------------------------------------------------------------------
 
-    std::string year(std::string name)
-    {
-        std::smatch m;
-        if (std::regex_search(name, m, _internal::international_name))
-            return _internal::make_year(m);
-        throw Unrecognized("No year in " + name);
+    // std::string year(std::string name)
+    // {
+    //     std::smatch m;
+    //     if (std::regex_search(name, m, _internal::international_name))
+    //         return _internal::make_year(m);
+    //     throw Unrecognized("No year in " + name);
 
-    } // year
+    // } // year
 
     // ----------------------------------------------------------------------
 
