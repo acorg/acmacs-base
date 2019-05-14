@@ -4,6 +4,8 @@
 #include <regex>
 #include <iostream>
 
+#include "acmacs-base/string.hh"
+
 // ----------------------------------------------------------------------
 
 namespace virus_name
@@ -61,10 +63,13 @@ namespace virus_name
     struct Name
     {
         Name(std::string source);
-        std::string name() const;
-        std::string name_extra() const;
-        std::string full() const;
-        void fix_extra();
+        std::string name() const { return string::join("/", {virus_type, host, location, isolation, year}); }
+        std::string name_extra() const { return string::join(" ", {name(), extra}); }
+        std::string full() const { return string::join(" ", {name(), reassortant, extra}); }
+
+        enum class report_extra { no, yes };
+        void fix_extra(report_extra rep = report_extra::yes);
+
         std::string virus_type, host, location, isolation, year, reassortant, extra;
     };
 

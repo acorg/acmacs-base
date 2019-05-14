@@ -5,7 +5,6 @@
 #include <regex>
 
 #include "acmacs-base/virus-name.hh"
-#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -97,7 +96,7 @@ namespace virus_name
             isolation.erase(0, first_not_zero);
     }
 
-    void Name::fix_extra()
+    void Name::fix_extra(report_extra rep)
     {
         for (const auto& re_entry : sReReassortant) {
             std::smatch mat;
@@ -106,24 +105,24 @@ namespace virus_name
                 extra = string::join(" ", {string::strip(mat.format("$`")), string::strip(mat.format("$'"))});
             }
         }
-        if (!extra.empty())
+        if (!extra.empty() && rep == report_extra::yes)
             std::cerr << "WARNING: name contains extra \"" << extra << "\": \"" << full() << "\"\n";
     }
 
-    std::string Name::full() const
-    {
-        return string::join(" ", {name(), reassortant, extra});
-    }
+    // std::string Name::full() const
+    // {
+    //     return string::join(" ", {name(), reassortant, extra});
+    // }
 
-    std::string Name::name() const
-    {
-        return string::join("/", {virus_type, host, location, isolation, year});
-    }
+    // std::string Name::name() const
+    // {
+    //     return string::join("/", {virus_type, host, location, isolation, year});
+    // }
 
-    std::string Name::name_extra() const
-    {
-        return string::join(" ", {name(), extra});
-    }
+    // std::string Name::name_extra() const
+    // {
+    //     return string::join(" ", {name(), extra});
+    // }
 
     // std::string normalize(std::string name)
     // {
