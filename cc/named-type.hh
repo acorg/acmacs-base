@@ -19,8 +19,11 @@ namespace acmacs
         using value_type = T;
         template <typename TT> using is_not_reference_t = typename std::enable_if<!std::is_reference<TT>::value, void>::type;
 
-        explicit constexpr named_t(const T& value) : value_(value) {}
-        template <typename T_ = T, typename = is_not_reference_t<T_>> explicit constexpr named_t(T&& value) : value_(std::move(value)) {}
+        template <typename T2> explicit constexpr named_t(T2&& value) : value_(std::forward<T2>(value)) {}
+
+        // explicit constexpr named_t(const T& value) : value_(value) {}
+        // explicit constexpr named_t(T&& value) : value_(std::move(value)) {}
+        // template <typename T2 = T, typename = is_not_reference_t<T2>> explicit constexpr named_t(T2&& value) : value_(std::move(value)) {}
 
         constexpr T& get() noexcept { return value_; }
         constexpr T const& get() const noexcept { return value_; }
@@ -31,7 +34,7 @@ namespace acmacs
 
         template <typename T1, typename Tag1> constexpr bool operator==(const named_t<T1, Tag1>& rhs) const noexcept { return get() == rhs.get(); }
         template <typename T1, typename Tag1> constexpr bool operator!=(const named_t<T1, Tag1>& rhs) const noexcept { return !operator==(rhs); }
-        template <typename T1, typename Tag1> constexpr bool operator< (const named_t<T1, Tag1>& rhs) const noexcept { return get() < rhs.get(); }
+        template <typename T1, typename Tag1> constexpr bool operator<(const named_t<T1, Tag1>& rhs) const noexcept { return get() < rhs.get(); }
 
       private:
         T value_;
