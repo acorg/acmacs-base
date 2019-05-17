@@ -19,6 +19,7 @@ namespace acmacs
         using value_type = T;
         template <typename TT> using is_not_reference_t = typename std::enable_if<!std::is_reference<TT>::value, void>::type;
 
+        explicit constexpr named_t() = default;
         template <typename T2> explicit constexpr named_t(T2&& value) : value_(std::forward<T2>(value)) {}
 
         // explicit constexpr named_t(const T& value) : value_(value) {}
