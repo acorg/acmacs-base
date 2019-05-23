@@ -9,38 +9,38 @@
 class EmptySink
 {
   public:
-    void json_object_start()
+    void injson_object_start()
     {
         ++objects;
     }
 
-    void json_object_end()
+    void injson_object_end()
     {
         ++object_balance;
     }
 
-    void json_array_start()
+    void injson_array_start()
     {
         ++arrays;
     }
 
-    void json_array_end()
+    void injson_array_end()
     {
         ++array_balance;
     }
 
-    template <typename Iter> void json_string(Iter /*first*/, Iter /*last*/)
+    template <typename Iter> void injson_string(Iter /*first*/, Iter /*last*/)
     {
         ++strings;
     }
 
-    template <typename Iter> void json_integer(Iter first, Iter /*last*/)
+    template <typename Iter> void injson_integer(Iter first, Iter /*last*/)
     {
         std::strtol(&*first, nullptr, 0);
         ++integers;
     }
 
-    template <typename Iter> void json_real(Iter first, Iter /*last*/)
+    template <typename Iter> void injson_real(Iter first, Iter /*last*/)
     {
         std::strtod(&*first, nullptr);
         ++reals;
@@ -75,45 +75,140 @@ class SeqdbStackEntry
     SeqdbStackEntry() = default;
     SeqdbStackEntry(const SeqdbStackEntry&) = default;
     virtual ~SeqdbStackEntry() = default;
-    virtual SeqdbStackEntry& subobject() = 0;
-    virtual void put_string(std::string_view data) { key_ = data; }
-    virtual void put_integer(long /*data*/) { throw seqdb_paring_error("SeqdbStackEntry::put_integer"); }
-    // virtual void put_real(double /*data*/) { throw seqdb_paring_error("SeqdbStackEntry::put_real"); }
-    virtual void put_array() { throw seqdb_paring_error("SeqdbStackEntry::put_array"); }
-    virtual void pop_array() { throw seqdb_paring_error("SeqdbStackEntry::pop_array"); }
+    virtual SeqdbStackEntry& injson_put_object() = 0;
+    virtual void injson_put_string(std::string_view data) { key_ = data; }
+    virtual void injson_put_integer(long /*data*/) { throw seqdb_paring_error("SeqdbStackEntry::injson_put_integer"); }
+    // virtual void injson_put_real(double /*data*/) { throw seqdb_paring_error("SeqdbStackEntry::injson_put_real"); }
+    virtual void injson_put_array() { throw seqdb_paring_error("SeqdbStackEntry::injson_put_array"); }
+    virtual void injson_pop_array() { throw seqdb_paring_error("SeqdbStackEntry::injson_pop_array"); }
 
   protected:
     std::string_view key_{};
 };
 
+class SeqdbSeqLabs : public SeqdbStackEntry
+{
+  public:
+    SeqdbStackEntry& injson_put_object() override { return *this; }
+
+};
+
 class SeqdbSeq : public SeqdbStackEntry
 {
   public:
-    SeqdbStackEntry& subobject() override { return *this; }
+    SeqdbStackEntry& injson_put_object() override { return *this; }
+
+    void injson_put_array() override
+    {
+        if (key_.size() != 1 || (key_[0] != 'p' && key_[0] != 'c' && key_[0] != 'h' && key_[0] != 'r'))
+            throw seqdb_paring_error("SeqdbSeq: unexpected array, key: " + std::string(key_));
+    }
+
+    void injson_pop_array() override
+    {
+        if (key_.size() != 1 || (key_[0] != 'p' && key_[0] != 'c' && key_[0] != 'h' && key_[0] != 'r'))
+            throw seqdb_paring_error("SeqdbSeq: unexpected array, key: " + std::string(key_));
+        key_ = std::string_view{};
+    }
+
+    void injson_put_string(std::string_view data) override
+    {
+        if (key_.empty())
+            SeqdbStackEntry::injson_put_string(data);
+        else if (key_.size() == 1) {
+            switch (key_[0]) {
+                case 'p':
+                    passages_.emplace_back(data);
+                    break;
+                case 'r':
+                    reassortants_.emplace_back(data);
+                    break;
+                case 'c':
+                    clades_.emplace_back(data);
+                    break;
+                case 'h':
+                    hi_names_.emplace_back(data);
+                    break;
+                case 'g':
+                    gene_ = data;
+                    key_ = std::string_view{};
+                    break;
+                case 'a':
+                    amino_acids_ = data;
+                    key_ = std::string_view{};
+                    break;
+                case 'n':
+                    nucs_ = data;
+                    key_ = std::string_view{};
+                    break;
+                default:
+                    throw seqdb_paring_error("SeqdbEntry: unexpected key: " + std::string(data));
+            }
+        }
+        else
+            throw seqdb_paring_error("SeqdbEntry: unexpected key: " + std::string(data));
+    }
+
+    void injson_put_integer(long data) override
+    {
+        if (key_.size() == 1) {
+            switch (key_[0]) {
+                case 's':
+                    a_shift_ = data;
+                    key_ = std::string_view{};
+                    break;
+                case 't':
+                    n_shift_ = data;
+                    key_ = std::string_view{};
+                    break;
+              default:
+                  throw seqdb_paring_error("SeqdbSeq: unexpected integer, key: " + std::string(key_));
+            }
+        }
+        else
+            throw seqdb_paring_error("SeqdbSeq: unexpected integer, key: " + std::string(key_));
+    }
+  private:
+    std::string amino_acids_;
+    long a_shift_{0};
+    std::string nucs_;
+    long n_shift_{0};
+    std::vector<std::string> passages_;
+    std::vector<std::string> reassortants_;
+    std::vector<std::string> clades_;
+    std::string gene_;
+    std::vector<std::string> hi_names_;
+    std::vector<std::pair<std::string, std::vector<std::string>>> lab_ids_;
 };
 
 class SeqdbEntry : public SeqdbStackEntry
 {
   public:
-    SeqdbStackEntry& subobject() override { return *this; }
-
-    void put_array() override
+    SeqdbStackEntry& injson_put_object() override
     {
-        if (key_.size() != 1 && key_[0] != 'd')
+        if (key_[0] == 's')
+            return seqs_.emplace_back();
+        else
+            throw seqdb_paring_error("SeqdbEntry: unexpected sub-object, key: " + std::string(key_));
+    }
+
+    void injson_put_array() override
+    {
+        if (key_.size() != 1 || (key_[0] != 'd' && key_[0] != 's'))
             throw seqdb_paring_error("SeqdbEntry: unexpected array, key: " + std::string(key_));
     }
 
-    void pop_array() override
+    void injson_pop_array() override
     {
-        if (key_.size() != 1 && key_[0] != 'd')
+        if (key_.size() != 1 || (key_[0] != 'd' && key_[0] != 's'))
             throw seqdb_paring_error("SeqdbEntry: unexpected array, key: " + std::string(key_));
         key_ = std::string_view{};
     }
 
-    void put_string(std::string_view data) override
+    void injson_put_string(std::string_view data) override
     {
         if (key_.empty())
-            SeqdbStackEntry::put_string(data);
+            SeqdbStackEntry::injson_put_string(data);
         else if (key_.size() == 1) {
             switch (key_[0]) {
                 case 'N':
@@ -160,12 +255,12 @@ class SeqdbEntry : public SeqdbStackEntry
 class Seqdb : public SeqdbStackEntry
 {
   public:
-    SeqdbStackEntry& subobject() override
+    SeqdbStackEntry& injson_put_object() override
     {
         return entries_.emplace_back();
     }
 
-    void put_string(std::string_view data) override
+    void injson_put_string(std::string_view data) override
     {
         if (key_ == "  version") {
             if (data != "sequence-database-v2")
@@ -173,20 +268,20 @@ class Seqdb : public SeqdbStackEntry
             key_ = std::string_view{};
         }
         else if (key_.empty())
-            SeqdbStackEntry::put_string(data);
+            SeqdbStackEntry::injson_put_string(data);
         else if (key_ == "  date" || key_ == "_")
             key_ = std::string_view{};
         else
             throw seqdb_paring_error("unsupported field: " + std::string(data));
     }
 
-    void put_array() override
+    void injson_put_array() override
     {
         if (key_ != "data")
             throw seqdb_paring_error("Seqdb: unexpected array, key: " + std::string(key_));
     }
 
-    void pop_array() override
+    void injson_pop_array() override
     {
         key_ = std::string_view{};
     }
@@ -200,41 +295,41 @@ class Seqdb : public SeqdbStackEntry
 class SeqdbSink
 {
   public:
-    void json_object_start()
+    void injson_object_start()
     {
         if (target_.empty())
             target_.push(seqdb_);
         else
-            target_.push(target_.top().get().subobject());
+            target_.push(target_.top().get().injson_put_object());
     }
 
-    void json_object_end()
+    void injson_object_end()
     {
         target_.pop();
     }
 
-    void json_array_start()
+    void injson_array_start()
     {
-        target_.top().get().put_array();
+        target_.top().get().injson_put_array();
     }
 
-    void json_array_end()
+    void injson_array_end()
     {
-        target_.top().get().pop_array();
+        target_.top().get().injson_pop_array();
 
     }
 
-    template <typename Iter> void json_string(Iter first, Iter last)
+    template <typename Iter> void injson_string(Iter first, Iter last)
     {
-        target_.top().get().put_string({&*first, static_cast<size_t>(last - first)});
+        target_.top().get().injson_put_string({&*first, static_cast<size_t>(last - first)});
     }
 
-    template <typename Iter> void json_integer(Iter first, Iter /*last*/)
+    template <typename Iter> void injson_integer(Iter first, Iter /*last*/)
     {
-        target_.top().get().put_integer(std::strtol(&*first, nullptr, 0));
+        target_.top().get().injson_put_integer(std::strtol(&*first, nullptr, 0));
     }
 
-    template <typename Iter> void json_real(Iter /*first*/, Iter /*last*/)
+    template <typename Iter> void injson_real(Iter /*first*/, Iter /*last*/)
     {
     }
 

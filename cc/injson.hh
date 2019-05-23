@@ -91,20 +91,20 @@ namespace injson
                         ++line_no;
                         break;
                     case '{':
-                        sink.json_object_start();
+                        sink.injson_object_start();
                         break;
                     case '}':
-                        sink.json_object_end();
+                        sink.injson_object_end();
                         break;
                     case '[':
-                        sink.json_array_start();
+                        sink.injson_array_start();
                         break;
                     case ']':
-                        sink.json_array_end();
+                        sink.injson_array_end();
                         break;
                     case '"': {
                         const auto end = detail::read_string(first + 1, last, line_start, line_no); // may throw error on EOF
-                        sink.json_string(first + 1, end);
+                        sink.injson_string(first + 1, end);
                         first = end; // end points to terminating double-quotes
                     } break;
                     case '+':
@@ -122,10 +122,10 @@ namespace injson
                         const auto [end, nis] = detail::read_number(first + 1, last);
                         switch (nis) {
                             case detail::number_is::integer:
-                                sink.json_integer(first, end);
+                                sink.injson_integer(first, end);
                                 break;
                             case detail::number_is::real:
-                                sink.json_real(first, end);
+                                sink.injson_real(first, end);
                                 break;
                         }
                         first = end - 1; // incremented after switch
