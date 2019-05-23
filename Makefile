@@ -11,7 +11,8 @@ TARGETS = \
   $(DIST)/test-string-split \
   $(DIST)/test-date2 \
   $(DIST)/test-double-to-string \
-  $(DIST)/test-settings
+  $(DIST)/test-settings \
+  $(DIST)/test-injson
 
 all: install-acmacs-base
 
