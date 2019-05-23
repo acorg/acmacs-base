@@ -77,7 +77,6 @@ namespace injson
         {
             using namespace fmt::literals;
 
-            // const auto start = fist;
             auto line_start = first;
             size_t line_no = 1;
             while (first != last) {
