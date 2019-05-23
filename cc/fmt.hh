@@ -4,6 +4,7 @@
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
+#pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
 #endif
 
 #include <fmt/format.h>
