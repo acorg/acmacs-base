@@ -15,7 +15,7 @@
 
 template <> struct fmt::formatter<std::exception>
 {
-  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const std::exception& err, FormatContext& ctx) { return format_to(ctx.out(), "{}", err.what()); }
 };
 
