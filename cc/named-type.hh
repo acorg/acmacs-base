@@ -30,6 +30,7 @@ namespace acmacs
         constexpr T const& get() const noexcept { return value_; }
         constexpr T& operator*() noexcept { return value_; }
         constexpr T const& operator*() const noexcept { return value_; }
+        constexpr const T* operator->() const noexcept { return &value_; }
         explicit constexpr operator T&() noexcept { return value_; }
         explicit constexpr operator const T&() const noexcept { return value_; }
 
