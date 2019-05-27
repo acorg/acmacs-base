@@ -8,6 +8,7 @@
 #endif
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #pragma GCC diagnostic pop
 
