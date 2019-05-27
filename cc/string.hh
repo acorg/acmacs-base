@@ -283,19 +283,6 @@ namespace string
 
 // ----------------------------------------------------------------------
 
-    template <typename S1, typename S2> inline size_t hamming_distance(S1&& first, S2&& second)
-    {
-        const auto size = std::min(first.size(), second.size());
-        size_t dist = 0;
-        for (size_t index = 0; index < size; ++index) {
-            if (first[index] != second[index])
-                ++dist;
-        }
-        return dist;
-    }
-
-// ----------------------------------------------------------------------
-
     namespace detail
     {
         template <typename S> inline std::string concat_to_string(S src, [[maybe_unused]] size_t precision = 6)
