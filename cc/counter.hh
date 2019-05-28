@@ -24,17 +24,30 @@ namespace acmacs
             }
         template <typename Container, typename F> Counter(const Container& container, F func) : Counter(std::begin(container), std::end(container), func) {}
 
-        void count(const Obj& aObj) { ++counter_[aObj]; }
+        template <typename S> void count(const S& aObj) { ++counter_[Obj{aObj}]; }
+        template <typename S> void count_if(bool cond, const S& aObj) { if (cond) ++counter_[Obj{aObj}]; }
+
         const auto& max() const { return *std::max_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.second < e2.second; }); }
 
         auto sorted_max_first() const
             {
-                std::vector<std::reference_wrapper<value_type>> result(counter_.begin(), counter_.end());
-                std::sort(result.begin(), result.end(), [](const auto& e1, const auto& e2) { return e1.second > e2.second; });
+                std::vector<const value_type*> result(counter_.size());
+                std::transform(std::begin(counter_), std::end(counter_), std::begin(result), [](const auto& ee) { return &ee; });
+                std::sort(result.begin(), result.end(), [](const auto& e1, const auto& e2) { return e1->second > e2->second; });
                 return result;
             }
 
         constexpr const auto& counter() const { return counter_; }
+        constexpr size_t size() const { return counter_.size(); }
+        constexpr bool empty() const { return counter_.empty(); }
+
+        template <typename S> size_t operator[](const S& look_for) const
+        {
+            if (const auto found = counter_.find(look_for); found != counter_.end())
+                return found->second;
+            else
+                return 0;
+        }
 
         friend std::ostream& operator << (std::ostream& out, const Counter& counter)
             {
@@ -89,6 +102,15 @@ namespace acmacs
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::Counter<std::string>>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const acmacs::Counter<std::string>& counter, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "counter{{{}}}", counter.counter());
+    }
+};
 
 template <> struct fmt::formatter<acmacs::CounterChar>
 {
