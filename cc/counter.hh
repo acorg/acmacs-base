@@ -54,6 +54,14 @@ namespace acmacs
                 return out << counter.counter_;
             }
 
+        template <typename S1, typename S2> void report_sorted_max_first(S1 prefix=S1{}, S2 suffix=S2{}) const
+        {
+            fmt::print(stderr, "{}", prefix);
+            for (const auto& entry : sorted_max_first())
+                fmt::print(stderr, "{:6d} {}\n", entry->second, entry->first);
+            fmt::print(stderr, "{}", suffix);
+        }
+
      private:
         container_type counter_;
 
