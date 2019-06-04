@@ -44,14 +44,21 @@ namespace acmacs
         Value mFontSlant;
 
         template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontSlant)
-            {
-                if (aFontSlant == "normal")
-                    mFontSlant = Normal;
-                else if (aFontSlant == "italic")
-                    mFontSlant = Italic;
+        {
+            const auto eq = [](auto&& lh, auto&& rh) {
+                if constexpr (std::is_same_v<std::decay_t<decltype(lh)>, const char*>)
+                    return std::string_view(lh) == rh;
                 else
-                    std::runtime_error(::string::concat("Unrecognized slant: ", aFontSlant));
-            }
+                    return lh == rh;
+            };
+
+            if (eq(aFontSlant, "normal"))
+                mFontSlant = Normal;
+            else if (eq(aFontSlant, "italic"))
+                mFontSlant = Italic;
+            else
+                std::runtime_error(::string::concat("Unrecognized slant: ", aFontSlant));
+        }
 
     }; // class FontSlant
 
@@ -90,14 +97,21 @@ namespace acmacs
         Value mFontWeight;
 
         template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontWeight)
-            {
-                if (aFontWeight == "normal")
-                    mFontWeight = Normal;
-                else if (aFontWeight == "bold")
-                    mFontWeight = Bold;
+        {
+            const auto eq = [](auto&& lh, auto&& rh) {
+                if constexpr (std::is_same_v<std::decay_t<decltype(lh)>, const char*>)
+                    return std::string_view(lh) == rh;
                 else
-                    std::runtime_error(::string::concat("Unrecognized weight: ", aFontWeight));
-            }
+                    return lh == rh;
+            };
+
+            if (eq(aFontWeight, "normal"))
+                mFontWeight = Normal;
+            else if (eq(aFontWeight, "bold"))
+                mFontWeight = Bold;
+            else
+                std::runtime_error(::string::concat("Unrecognized weight: ", aFontWeight));
+        }
 
     }; // class FontWeight
 
