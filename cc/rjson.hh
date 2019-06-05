@@ -282,7 +282,10 @@ namespace rjson
                     return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src));
                 }
 
+            bool operator==(const value& to_compare) const;
+            bool operator!=(const value& to_compare) const { return !operator==(to_compare); }
             template <typename T> bool operator==(T to_compare) const { return static_cast<T>(*this) == to_compare; }
+            template <typename T> bool operator!=(T&& to_compare) const { return ! operator==(std::forward<T>(to_compare)); }
 
             bool is_null() const noexcept;
             bool is_object() const noexcept;
@@ -1226,6 +1229,8 @@ namespace rjson
           // ----------------------------------------------------------------------
 
         std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
+
+        inline bool value::operator==(const value& to_compare) const { return to_string(*this) == to_string(to_compare); }
 
     } // namespace v2
 } // namespace rjson
