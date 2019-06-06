@@ -51,7 +51,7 @@ namespace acmacs::file
 
     }; // class read_access
 
-    template <typename S> inline read_access read(S&& aFilename) { return {aFilename}; }
+    template <typename S> inline read_access read(S&& aFilename) { return {std::forward<S>(aFilename)}; }
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes);
