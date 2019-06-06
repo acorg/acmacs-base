@@ -54,13 +54,15 @@ namespace acmacs
                 return out << counter.counter_;
             }
 
-        template <typename S1, typename S2> void report_sorted_max_first(S1 prefix=S1{}, S2 suffix=S2{}) const
+        template <typename S> std::string report_sorted_max_first(S line_prefix) const
         {
-            fmt::print(stderr, "{}", prefix);
+            fmt::memory_buffer out;
             for (const auto& entry : sorted_max_first())
-                fmt::print(stderr, "{:6d} {}\n", entry->second, entry->first);
-            fmt::print(stderr, "{}", suffix);
+                fmt::format_to(out, "{}{:6d} {}\n", line_prefix, entry->second, entry->first);
+            return fmt::to_string(out);
         }
+
+        std::string report_sorted_max_first() const { return report_sorted_max_first(""); }
 
      private:
         container_type counter_;
@@ -111,10 +113,10 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::Counter<std::string>>
+template <typename Key> struct fmt::formatter<acmacs::Counter<Key>>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
-    template <typename FormatContext> auto format(const acmacs::Counter<std::string>& counter, FormatContext& ctx)
+    template <typename FormatContext> auto format(const acmacs::Counter<Key>& counter, FormatContext& ctx)
     {
         return format_to(ctx.out(), "counter{{{}}}", counter.counter());
     }
