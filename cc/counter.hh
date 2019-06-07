@@ -64,6 +64,11 @@ namespace acmacs
 
         std::string report_sorted_max_first() const { return report_sorted_max_first(""); }
 
+        size_t total() const
+        {
+            return std::accumulate(std::begin(counter_), std::end(counter_), 0UL, [](size_t sum, const auto& en) { return sum + en.second; });
+        }
+
      private:
         container_type counter_;
 
