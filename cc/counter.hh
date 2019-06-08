@@ -2,6 +2,7 @@
 
 #include <map>
 #include <array>
+#include <numeric>
 
 #include "acmacs-base/stream.hh"
 #include "acmacs-base/fmt.hh"
