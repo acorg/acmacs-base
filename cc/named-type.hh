@@ -55,6 +55,18 @@ namespace acmacs
     template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
     template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
 
+    // ----------------------------------------------------------------------
+
+    template <typename Tag> class named_string_t : public named_t<std::string, Tag>
+    {
+      public:
+        using named_t<std::string, Tag>::named_t;
+
+        bool empty() const noexcept { return this->get().empty(); }
+        size_t size() const noexcept { return this->get().size(); }
+
+    };
+
 } // namespace acmacs
 
 
