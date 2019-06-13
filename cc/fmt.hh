@@ -5,6 +5,7 @@
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
 #pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
+#pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
 #endif
 
 #include <fmt/format.h>
