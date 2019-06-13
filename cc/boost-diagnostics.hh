@@ -3,6 +3,7 @@
 // for clang and gcc
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+// ----------------------------------------------------------------------
 // just for clang
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wcomma"
@@ -28,8 +29,16 @@
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+
+// #pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"  // boost@1.60
+// #pragma GCC diagnostic ignored "-Wextra-semi-stmt"  // boost@1.60
+
+// ----------------------------------------------------------------------
+
 #else // g++-7
+
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough" // boost/asio
+
 #endif
 
 // ----------------------------------------------------------------------
