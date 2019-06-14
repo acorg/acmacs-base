@@ -1,9 +1,10 @@
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include <stdexcept>
+// #include <iostream>
+// #include <iomanip>
+// #include <stdexcept>
 
+#include "acmacs-base/fmt.hh"
 #include "acmacs-base/date2.hh"
 #include "acmacs-base/week2.hh"
 #include "acmacs-base/string.hh"
@@ -43,12 +44,12 @@ class Date
     Date years_ago(int number_of_years) const { return date_ - date::years(number_of_years); }
     Date weeks_ago(int number_of_weeks) const { return static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); }
 
-    bool operator < (const Date& d) const { return date_ < d.date_; }
-    bool operator > (const Date& d) const { return date_ > d.date_; }
-    bool operator == (const Date& d) const { return date_ == d.date_; }
-    bool operator != (const Date& d) const { return date_ != d.date_; }
-    bool operator <= (const Date& d) const { return date_ <= d.date_; }
-    bool operator >= (const Date& d) const { return date_ >= d.date_; }
+    bool operator < (const Date& d) const  noexcept { return std::tuple(date_.year(), date_.month(), date_.day()) < std::tuple(d.date_.year(), d.date_.month(), d.date_.day()); }
+    bool operator > (const Date& d) const  noexcept { return date_ > d.date_; }
+    bool operator == (const Date& d) const noexcept { return date_ == d.date_; }
+    bool operator != (const Date& d) const noexcept { return !operator==(d); }
+    bool operator <= (const Date& d) const noexcept { return !operator>(d); }
+    bool operator >= (const Date& d) const noexcept { return !operator<(d); }
 
     bool empty() const { return !date_.ok(); }
     operator bool() const { return date_.ok(); }
@@ -163,21 +164,26 @@ inline int years_between_dates(const Date& a, const Date& b)
 
 // ----------------------------------------------------------------------
 
-inline std::ostream& operator << (std::ostream& out, const Date& aDate)
-{
-    return out << aDate.display();
-}
+// inline std::ostream& operator << (std::ostream& out, const Date& aDate)
+// {
+//     return out << aDate.display();
+// }
 
 // ----------------------------------------------------------------------
 
-// https://stackoverflow.com/questions/17223096/outputting-date-and-time-in-c-using-stdchrono
+template <> struct fmt::formatter<Date>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const Date& date, FormatContext& ctx) { return format_to(ctx.out(), "{}", date.display()); }
+};
+
+// ----------------------------------------------------------------------
+
 inline std::string current_date_time()
 {
     const auto now = std::chrono::system_clock::now();
     const auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S %Z");
-    return ss.str();
+    return fmt::format("%Y-%m-%d %H:%M:%S %Z", *std::localtime(&in_time_t));
 }
 
 // ----------------------------------------------------------------------

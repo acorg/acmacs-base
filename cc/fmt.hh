@@ -6,10 +6,13 @@
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
 #pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
 #pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
+#pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
+#pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
 #endif
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <fmt/chrono.h>
 
 #pragma GCC diagnostic pop
 

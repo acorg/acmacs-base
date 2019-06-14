@@ -64,6 +64,7 @@ namespace acmacs
 
         bool empty() const noexcept { return this->get().empty(); }
         size_t size() const noexcept { return this->get().size(); }
+        explicit operator std::string_view() noexcept { return this->get(); }
 
     };
 
