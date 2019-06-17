@@ -9,9 +9,15 @@ namespace to_json
 {
     inline namespace v2
     {
-        struct key_val;
+        class json;
 
         class error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+
+        struct key_val
+        {
+            std::string_view key;
+            const json& val;
+        };
 
         class json
         {
@@ -35,11 +41,28 @@ namespace to_json
             void append(char c) { buffer_.append(1, c); }
             void append(const std::string& source) { buffer_.append(source); }
 
+           void append(const json& source)
+            {
+                const auto bk = pop_back();
+                switch (back()) {
+                    case '{':
+                    case '[':
+                        break;
+                    default:
+                        append(',');
+                        break;
+                }
+                append(source.str());
+                append(bk);
+            }
+
+            void append(key_val&& source);
+
             template <typename T> friend json value(T&& val);
             friend json object();
             friend json array();
-            friend json& append(json& target, const json& source);
-            friend json& append(json& target, key_val&& source);
+
+            template <typename T> friend inline json& operator<<(json& target, T&& source) { target.append(std::forward<T>(source)); return target; }
         };
 
         // ----------------------------------------------------------------------
@@ -58,74 +81,84 @@ namespace to_json
                 static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?");
         }
 
-        inline json& append(json& target, const json& source)
-        {
-            const auto back = target.pop_back();
-            switch (target.back()) {
-              case '{':
-              case '[':
-                  break;
-              default:
-                  target.append(',');
-                  break;
+        inline void json::append(key_val&& source)
+            {
+                const auto bk = pop_back();
+                switch (back()) {
+                    case '[':
+                        throw error("cannot append key_val to array");
+                    case '{':
+                        break;
+                    default:
+                        append(',');
+                        break;
+                }
+                append(value(source.key).str());
+                append(':');
+                append(source.val.str());
+                append(bk);
             }
-            target.append(source.str());
-            target.append(back);
-            return target;
-        }
-
-        struct key_val
-        {
-            std::string_view key;
-            const json& val;
-        };
-
-        inline json& append(json& target, key_val&& source)
-        {
-            const auto back = target.pop_back();
-            switch (target.back()) {
-              case '[':
-                  throw error("cannot append key_val to array");
-              case '{':
-                  break;
-              default:
-                  target.append(',');
-                  break;
-            }
-            target.append(value(source.key).str());
-            target.append(':');
-            target.append(source.val.str());
-            target.append(back);
-            return target;
-        }
-
-        template <typename T> inline json& operator<<(json& target, T&& source) { return append(target, std::forward<T>(source)); }
 
         // ----------------------------------------------------------------------
 
         inline json array() { return json("[]"); }
-        // template <typename... Args> inline json array(Args&&... args) { return internal::array_append(std::string{}, std::forward<Args>(args)...); }
 
-        template <typename Iterator, typename Transformer> inline json array(Iterator first, Iterator last, Transformer transformer)
+        template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>> inline json array(Iterator first, Iterator last, Transformer transformer)
         {
             auto js = array();
             for (; first != last; ++first)
-                append(js, value(transformer(*first)));
+                js << value(transformer(*first));
             return js;
         }
 
-        template <typename Iterator> inline json array(Iterator first, Iterator last)
+        template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> inline json array(Iterator first, Iterator last)
         {
             auto js = array();
             for (; first != last; ++first)
-                append(js, value(*first));
+                js << value(*first);
+            return js;
+        }
+
+        namespace detail
+        {
+            template <typename Arg1, typename... Args> inline void array_append(json& js, Arg1&& arg1, Args&&... args)
+            {
+                js << value(std::forward<Arg1>(arg1));
+                if constexpr (sizeof...(args) > 0)
+                    array_append(js, std::forward<Args>(args)...);
+            }
+        } // namespace detail
+
+        template <typename... Args> inline json array(Args&&... args)
+        {
+            auto js = array();
+            if constexpr (sizeof...(args) > 0)
+                detail::array_append(js, std::forward<Args>(args)...);
             return js;
         }
 
         // ----------------------------------------------------------------------
 
+        namespace detail
+        {
+            template <typename Arg1, typename... Args> inline void object_append(json& js, Arg1&& arg1, Args&&... args)
+            {
+                js << std::forward<Arg1>(arg1);
+                if constexpr (sizeof...(args) > 0)
+                    object_append(js, std::forward<Args>(args)...);
+            }
+        } // namespace detail
+
         inline json object() { return json("{}"); }
-        inline json object(std::string key, const json& val) { auto js = object(); append(js, key_val{key, val}); return js; }
+        inline json object(std::string key, const json& val) { auto js = object(); js << key_val{key, val}; return js; }
+
+        template <typename... Args> inline json object(Args&&... args)
+        {
+            auto js = object();
+            if constexpr (sizeof...(args) > 0)
+                detail::object_append(js, std::forward<Args>(args)...);
+            return js;
+        }
 
     } // namespace v1
 } // namespace to_json
