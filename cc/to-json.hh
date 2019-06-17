@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/sfinae.hh"
 
@@ -22,38 +24,46 @@ namespace to_json
         class json
         {
           public:
-            const std::string& str() const { return buffer_; }
-            // json& append(std::string data) { const auto end = buffer_.back(); buffer_.pop_back(); buffer_.append(data); return *this; }
-            // char back() const { return buffer_.back(); }
-            // char last() const { return buffer_[buffer_.size() - 2]; }
-
+            std::string str() const
+            {
+                fmt::memory_buffer out;
+                for (const auto& chunk : data_)
+                    fmt::format_to(out, "{}\n", chunk);
+                return fmt::to_string(out);
+            }
 
           private:
-            std::string buffer_;
+            std::vector<std::string> data_;
 
             json() = default;
-            json(const char* data) : buffer_{data} {}
-            json(const std::string& data) : buffer_{data} {}
-            json(std::string&& data) : buffer_{std::move(data)} {}
+            json(char beg, char end) { data_.emplace_back(1, beg); data_.emplace_back(1, end); }
+            json(const char* data) { data_.emplace_back(data); }
+            json(const std::string& data) { data_.emplace_back(data); }
+            json(std::string&& data) { data_.emplace_back(std::move(data)); }
 
-            char back() const { return buffer_.back(); }
-            char pop_back() { const auto back = buffer_.back(); buffer_.pop_back(); return back; }
-            void append(char c) { buffer_.append(1, c); }
-            void append(const std::string& source) { buffer_.append(source); }
+            char back() const { return data_.back().back(); }
+            char pop_back() { const auto bk = back(); data_.pop_back(); return bk; }
+            void push_back(char c) { data_.push_back(std::string(1, c)); }
+            void push_back(const std::string& source) { data_.push_back(source); }
 
-           void append(const json& source)
+            void push_back(json&& source)
             {
-                const auto bk = pop_back();
-                switch (back()) {
-                    case '{':
-                    case '[':
-                        break;
-                    default:
-                        append(',');
-                        break;
-                }
-                append(source.str());
-                append(bk);
+                std::move(source.data_.begin(), source.data_.end(), std::back_inserter(data_));
+            }
+
+            void push_back(const json& source)
+            {
+                std::copy(source.data_.begin(), source.data_.end(), std::back_inserter(data_));
+            }
+
+            void append(json&& source)
+            {
+                std::move(source.data_.begin(), source.data_.end(), std::inserter(data_, std::prev(data_.end())));
+            }
+
+            void append(const json& source)
+            {
+                std::copy(source.data_.begin(), source.data_.end(), std::inserter(data_, std::prev(data_.end())));
             }
 
             void append(key_val&& source);
@@ -67,14 +77,25 @@ namespace to_json
 
         // ----------------------------------------------------------------------
 
+        namespace detail
+        {
+            template <typename T> inline std::string formatted_value(T&& val)
+            {
+                if constexpr (acmacs::sfinae::is_string_v<T>)
+                    return fmt::format("\"{}\"", std::forward<T>(val));
+                else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>>)
+                    return fmt::format("{}", std::forward<T>(val));
+                else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
+                    return std::string(val ? "true" : "false");
+                else
+                    static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?");
+            }
+        }
+
         template <typename T> inline json value(T&& val)
         {
-            if constexpr (acmacs::sfinae::is_string_v<T>)
-                return json(fmt::format("\"{}\"", std::forward<T>(val)));
-            else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>>)
-                return json(fmt::format("{}", std::forward<T>(val)));
-            else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
-                return json(val ? "true" : "false");
+            if constexpr (acmacs::sfinae::is_string_v<T> || std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>> || acmacs::sfinae::decay_equiv_v<T, bool>)
+                return json(detail::formatted_value(std::forward<T>(val)));
             else if constexpr (acmacs::sfinae::decay_equiv_v<T, json>)
                 return std::move(val);
             else
@@ -84,24 +105,15 @@ namespace to_json
         inline void json::append(key_val&& source)
             {
                 const auto bk = pop_back();
-                switch (back()) {
-                    case '[':
-                        throw error("cannot append key_val to array");
-                    case '{':
-                        break;
-                    default:
-                        append(',');
-                        break;
-                }
-                append(value(source.key).str());
-                append(':');
-                append(source.val.str());
-                append(bk);
+                data_.push_back(detail::formatted_value(source.key));
+                push_back(':');
+                push_back(source.val);
+                push_back(bk);
             }
 
         // ----------------------------------------------------------------------
 
-        inline json array() { return json("[]"); }
+        inline json array() { return json('[', ']'); }
 
         template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>> inline json array(Iterator first, Iterator last, Transformer transformer)
         {
@@ -149,8 +161,8 @@ namespace to_json
             }
         } // namespace detail
 
-        inline json object() { return json("{}"); }
-        inline json object(std::string key, const json& val) { auto js = object(); js << key_val{key, val}; return js; }
+        inline json object() { return json('{', '}'); }
+        inline json object(std::string key, json&& val) { auto js = object(); js << key_val{key, val}; return js; }
 
         template <typename... Args> inline json object(Args&&... args)
         {
