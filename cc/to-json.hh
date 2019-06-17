@@ -48,12 +48,12 @@ namespace to_json
         {
             if constexpr (acmacs::sfinae::is_string_v<T>)
                 return json(fmt::format("\"{}\"", std::forward<T>(val)));
-            else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<T>)
+            else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>>)
                 return json(fmt::format("{}", std::forward<T>(val)));
             else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
                 return json(val ? "true" : "false");
             else if constexpr (acmacs::sfinae::decay_equiv_v<T, json>)
-                return val;
+                return std::move(val);
             else
                 static_assert(std::is_same<int, std::decay_t<T>>::value, "use std::move?");
         }
