@@ -13,6 +13,7 @@ TARGETS = \
   $(DIST)/test-double-to-string \
   $(DIST)/test-settings \
   $(DIST)/test-injson \
+  $(DIST)/test-to-json \
   $(DIST)/test-read-file
 
 all: install-acmacs-base
