@@ -155,7 +155,8 @@ namespace to_json
             array() : json('[', ']') {}
             template <typename... Args> array(Args&&... args) : array() { append(std::forward<Args>(args)...); }
 
-            template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, Transformer transformer) : array()
+            template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no)
+                : array()
             {
                 for (; first != last; ++first) {
                     auto value = transformer(*first);
@@ -164,6 +165,8 @@ namespace to_json
                     else
                         move_before_end(val(std::move(value)));
                 }
+                if (co == compact_output::yes)
+                    make_compact();
             }
 
             template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, compact_output co = compact_output::no)
@@ -171,10 +174,8 @@ namespace to_json
             {
                 for (; first != last; ++first)
                     move_before_end(val(*first));
-                if (co == compact_output::yes) {
-                    data_[0] = compact(embed_space::yes);
-                    data_.erase(std::next(data_.begin()), data_.end());
-                }
+                if (co == compact_output::yes)
+                    make_compact();
             }
 
           private:
@@ -186,6 +187,12 @@ namespace to_json
                     move_before_end(val(std::forward<Arg1>(arg1)));
                 if constexpr (sizeof...(args) > 0)
                     append(std::forward<Args>(args)...);
+            }
+
+            void make_compact()
+            {
+                data_[0] = compact(embed_space::yes);
+                data_.erase(std::next(data_.begin()), data_.end());
             }
 
             friend array& operator<<(array& target, json&& value);
