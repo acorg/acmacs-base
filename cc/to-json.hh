@@ -66,6 +66,8 @@ namespace to_json
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk))
                         fmt::format_to(out, "{}{}", comma, *chunk);
+                    else if (space == embed_space::yes && chunk != data_.begin() && std::prev(chunk)->back() == ':')
+                        fmt::format_to(out, " {}", *chunk);
                     else
                         fmt::format_to(out, "{}", *chunk);
                 }
@@ -116,6 +118,12 @@ namespace to_json
             void push_back(char c) { data_.push_back(std::string(1, c)); }
             void move(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::back_inserter(data_)); }
             void move_before_end(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::inserter(data_, std::prev(data_.end()))); }
+
+            void make_compact()
+            {
+                data_[0] = compact(embed_space::yes);
+                data_.erase(std::next(data_.begin()), data_.end());
+            }
 
         }; // class json
 
@@ -195,12 +203,6 @@ namespace to_json
                     append(std::forward<Args>(args)...);
             }
 
-            void make_compact()
-            {
-                data_[0] = compact(embed_space::yes);
-                data_.erase(std::next(data_.begin()), data_.end());
-            }
-
             friend array& operator<<(array& target, json&& value);
         };
 
@@ -215,10 +217,16 @@ namespace to_json
           private:
             template <typename Arg1, typename... Args> void append(Arg1&& arg1, Args&&... args)
             {
-                static_assert(std::is_convertible_v<std::decay_t<Arg1>, key_val>, "invalid arg type for to_json::object, must be to_json::key_val");
-                move_before_end(std::move(arg1));
-                if constexpr (sizeof...(args) > 0)
-                    append(std::forward<Args>(args)...);
+                if constexpr (std::is_same_v<std::decay_t<Arg1>, compact_output>) {
+                    if (arg1 == compact_output::yes)
+                        make_compact();
+                }
+                else {
+                    static_assert(std::is_convertible_v<std::decay_t<Arg1>, key_val>, "invalid arg type for to_json::object, must be to_json::key_val");
+                    move_before_end(std::move(arg1));
+                    if constexpr (sizeof...(args) > 0)
+                        append(std::forward<Args>(args)...);
+                }
             }
 
             friend object& operator<<(object& target, key_val&& kv);
