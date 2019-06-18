@@ -38,6 +38,28 @@ namespace to_json
                 }
             };
 
+            static constexpr auto indent_after = [](auto iter, auto first) -> bool {
+                if (iter == first)
+                    return false;
+                switch (std::prev(iter)->back()) {
+                    case '[':
+                    case '{':
+                        return true;
+                    default:
+                        return false;
+                }
+            };
+
+            static constexpr auto unindent_before = [](auto iter) -> bool {
+                switch (iter->back()) {
+                    case ']':
+                    case '}':
+                        return true;
+                    default:
+                        return false;
+                }
+            };
+
           public:
             std::string compact() const
             {
@@ -51,11 +73,29 @@ namespace to_json
                 return fmt::to_string(out);
             }
 
-            std::string pretty() const
+            std::string pretty(size_t indent) const
             {
                 fmt::memory_buffer out;
-                for (const auto& chunk : data_)
-                    fmt::format_to(out, "{}\n", chunk);
+                size_t current_indent = 0;
+                for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
+                    if (comma_after(chunk, data_.begin()) && comma_before(chunk)) {
+                        fmt::format_to(out, ",\n{: >{}s}{}", "", current_indent, *chunk);
+                    }
+                    else {
+                        if (const auto ia = indent_after(chunk, data_.begin()), ub = unindent_before(chunk); ia && !ub) {
+                            current_indent += indent;
+                            fmt::format_to(out, "\n{: >{}s}{}", "", current_indent, *chunk);
+                        }
+                        else if (!ia && ub) {
+                            current_indent -= indent;
+                            fmt::format_to(out, "\n{: >{}s}{}", "", current_indent, *chunk);
+                        }
+                        else if ((ia && ub) || chunk == data_.begin())
+                            fmt::format_to(out, "{}", *chunk);
+                        else
+                            fmt::format_to(out, " {}", *chunk);
+                    }
+                }
                 return fmt::to_string(out);
             }
 
@@ -169,7 +209,7 @@ namespace to_json
 template <> struct fmt::formatter<to_json::v2::object>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-    template <typename FormatContext> auto format(const to_json::v2::object& js, FormatContext& ctx) { return format_to(ctx.out(), "{}", js.compact()); }
+    template <typename FormatContext> auto format(const to_json::v2::object& js, FormatContext& ctx) { return format_to(ctx.out(), "{}", js.pretty(2)); }
 };
 
 template <> struct fmt::formatter<to_json::v2::array>
