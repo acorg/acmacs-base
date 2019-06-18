@@ -52,22 +52,20 @@ namespace to_json
             };
 
             static constexpr auto unindent_before = [](auto iter) -> bool {
-                switch (iter->back()) {
-                    case ']':
-                    case '}':
-                        return true;
-                    default:
-                        return false;
-                }
+                return iter->size() == 1 && (iter->front() == ']' || iter->front() == '}');
             };
 
           public:
-            std::string compact() const
+            enum class compact_output { no, yes };
+            enum class embed_space { no, yes };
+
+            std::string compact(embed_space space = embed_space::no) const
             {
+                const std::string comma(space == embed_space::yes ? ", " : ",");
                 fmt::memory_buffer out;
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk))
-                        fmt::format_to(out, ",{}", *chunk);
+                        fmt::format_to(out, "{}{}", comma, *chunk);
                     else
                         fmt::format_to(out, "{}", *chunk);
                 }
@@ -168,11 +166,15 @@ namespace to_json
                 }
             }
 
-            template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last)
+            template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, compact_output co = compact_output::no)
                 : array()
             {
                 for (; first != last; ++first)
                     move_before_end(val(*first));
+                if (co == compact_output::yes) {
+                    data_[0] = compact(embed_space::yes);
+                    data_.erase(std::next(data_.begin()), data_.end());
+                }
             }
 
           private:
