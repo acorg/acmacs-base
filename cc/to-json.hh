@@ -186,7 +186,7 @@ namespace to_json
                     append(std::forward<Args>(args)...);
             }
 
-            friend array& operator<<(array& target, val&& value);
+            friend array& operator<<(array& target, json&& value);
         };
 
         class object : public json
@@ -194,6 +194,8 @@ namespace to_json
           public:
             object() : json('{', '}') {}
             template <typename... Args> object(Args&&... args) : object() { append(std::forward<Args>(args)...); }
+
+            bool empty() const { return data_.size() == 2; }
 
           private:
             template <typename Arg1, typename... Args> void append(Arg1&& arg1, Args&&... args)
@@ -207,7 +209,7 @@ namespace to_json
             friend object& operator<<(object& target, key_val&& kv);
         };
 
-        inline array& operator<<(array& target, val&& value)
+        inline array& operator<<(array& target, json&& value)
         {
             target.move_before_end(std::move(value));
             return target;
