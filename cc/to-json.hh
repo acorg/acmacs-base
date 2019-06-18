@@ -153,9 +153,11 @@ namespace to_json
         {
           public:
             array() : json('[', ']') {}
+
             template <typename... Args> array(Args&&... args) : array() { append(std::forward<Args>(args)...); }
 
-            template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no)
+            template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>>
+            array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no)
                 : array()
             {
                 for (; first != last; ++first) {
@@ -181,7 +183,11 @@ namespace to_json
           private:
             template <typename Arg1, typename... Args> void append(Arg1&& arg1, Args&&... args)
             {
-                if constexpr (std::is_convertible_v<std::decay_t<Arg1>, json>)
+                if constexpr (std::is_same_v<std::decay_t<Arg1>, compact_output>) {
+                    if (arg1 == compact_output::yes)
+                        make_compact();
+                }
+                else if constexpr (std::is_convertible_v<std::decay_t<Arg1>, json>)
                     move_before_end(std::move(arg1));
                 else
                     move_before_end(val(std::forward<Arg1>(arg1)));
