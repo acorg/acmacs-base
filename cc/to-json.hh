@@ -11,58 +11,42 @@ namespace to_json
 {
     namespace v2
     {
-        namespace detail
-        {
-            class base;
-            class key_value;
-        } // namespace detail
-
-        namespace x
-        {
-            inline detail::key_value key_val(std::string key, detail::base&& value);
-        }
-
-        // ----------------------------------------------------------------------
-
-        // class array;
-        // class object;
-        // class key_val;
-
         class json
         {
+          private:
+            static constexpr auto comma_after = [](auto iter, auto first) -> bool {
+                if (iter == first)
+                    return false;
+                switch (std::prev(iter)->back()) {
+                    case '[':
+                    case '{':
+                    case ':':
+                        return false;
+                    default:
+                        return true;
+                }
+            };
+
+            static constexpr auto comma_before = [](auto iter) -> bool {
+                switch (iter->back()) {
+                    case ']':
+                    case '}':
+                    case ':':
+                        return false;
+                    default:
+                        return true;
+                }
+            };
+
           public:
             std::string compact() const
             {
-                const auto comma_after = [](auto iter, auto first) -> bool {
-                    if (iter == first)
-                        return false;
-                    switch (std::prev(iter)->back()) {
-                      case '[':
-                      case '{':
-                      case ':':
-                          return false;
-                      default:
-                          return true;
-                    }
-                };
-
-                const auto comma_before = [](auto iter) -> bool {
-                    switch (iter->back()) {
-                      case ']':
-                      case '}':
-                      case ':':
-                          return false;
-                      default:
-                          return true;
-                    }
-                };
-
                 fmt::memory_buffer out;
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk))
-                          fmt::format_to(out, ",{}", *chunk);
+                        fmt::format_to(out, ",{}", *chunk);
                     else
-                          fmt::format_to(out, "{}", *chunk);
+                        fmt::format_to(out, "{}", *chunk);
                 }
                 return fmt::to_string(out);
             }
@@ -93,7 +77,8 @@ namespace to_json
             void push_back(char c) { data_.push_back(std::string(1, c)); }
             void move(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::back_inserter(data_)); }
             void move_before_end(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::inserter(data_, std::prev(data_.end()))); }
-        };
+
+        }; // class json
 
         class val : public json
         {
@@ -107,7 +92,7 @@ namespace to_json
                 else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
                     push_back(a_val ? "true" : "false");
                 else
-                    static_assert(std::is_same<int, std::decay_t<T>>::value, "invalid arg type for formatted_value");
+                    static_assert(std::is_same_v<int, std::decay_t<T>>, "invalid arg type for to_json::val");
             }
         };
 
@@ -149,6 +134,16 @@ namespace to_json
         {
           public:
             object() : json('{', '}') {}
+            template <typename... Args> object(Args&&... args) : object() { append(std::forward<Args>(args)...); }
+
+          private:
+            template <typename Arg1, typename... Args> void append(Arg1&& arg1, Args&&... args)
+            {
+                static_assert(std::is_convertible_v<std::decay_t<Arg1>, key_val>, "invalid arg type for to_json::object, must be to_json::key_val");
+                move_before_end(std::move(arg1));
+                if constexpr (sizeof...(args) > 0)
+                    append(std::forward<Args>(args)...);
+            }
 
             friend object& operator<<(object& target, key_val&& kv);
         };

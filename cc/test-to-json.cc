@@ -20,7 +20,13 @@ int main()
     {
         auto js = to_json::v2::object();
         fmt::print("{}\n\n", js);
-        js << to_json::v2::key_val{"A1", to_json::v2::array(1, 2)} << to_json::v2::key_val{"A2", to_json::v2::array()};
+        js << to_json::v2::key_val{"A1", to_json::v2::array(1, 2)}
+           << to_json::v2::key_val{"A2", to_json::v2::array()}
+           << to_json::v2::key_val{"O1", to_json::v2::object(
+                to_json::v2::key_val{"A3", to_json::v2::array(17.21, 21.17)},
+                to_json::v2::key_val{"S3", "CTAG"}
+                               )}
+           ;
         fmt::print("{}\n\n", js);
     }
 
