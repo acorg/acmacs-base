@@ -113,6 +113,13 @@ namespace string
         return source;
     }
 
+    inline std::string replace(std::string_view source, char look_for, char replace_with)
+    {
+        std::string result(source.size(), ' ');
+        std::transform(std::begin(source), std::end(source), std::begin(result), [=](char c) { if (c == look_for) return replace_with; else return c; });
+        return result;
+    }
+
     template <typename ... Args> inline std::string replace(std::string source, std::string l1, std::string r1, std::string l2, std::string r2, Args ... args)
     {
         return replace(replace(source, l1, r1), l2, r2, args ...);
