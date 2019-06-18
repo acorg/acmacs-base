@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdlib>
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/sfinae.hh"
@@ -224,16 +225,41 @@ namespace to_json
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<to_json::v2::object>
-{
-    template <typename ParseContext> constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-    template <typename FormatContext> auto format(const to_json::v2::object& js, FormatContext& ctx) { return format_to(ctx.out(), "{}", js.pretty(2)); }
-};
+// "{}" -> pretty(2)
+// "{:4}" -> pretty(4)
+// "{:0}" -> compact()
+// "{:4c}" -> compact()
 
-template <> struct fmt::formatter<to_json::v2::array>
+template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<to_json::json, T>::value, char>> : fmt::formatter<std::string>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-    template <typename FormatContext> auto format(const to_json::v2::array& js, FormatContext& ctx) { return format_to(ctx.out(), "{}", js.compact()); }
+    template <typename ParseContext> auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+    {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == ':')
+            ++it;
+        if (it != ctx.end() && *it != '}') {
+            char* end;
+            indent_ = std::strtoul(&*it, &end, 10);
+            it = std::next(it, end - &*it);
+        }
+        if (*it == 'c') {
+            indent_ = 0;        // compact anyway
+            ++it;
+        }
+        while (it != ctx.end() && *it != '}')
+            ++it;
+        return it;
+    }
+
+    template <typename FormatCtx> auto format(const to_json::json& js, FormatCtx& ctx)
+    {
+        if (indent_ > 0)
+            return fmt::formatter<std::string>::format(js.pretty(indent_), ctx);
+        else
+            return fmt::formatter<std::string>::format(js.compact(), ctx);
+    }
+
+    size_t indent_ = 2;
 };
 
 // ----------------------------------------------------------------------

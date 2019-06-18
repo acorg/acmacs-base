@@ -171,10 +171,9 @@ inline int years_between_dates(const Date& a, const Date& b)
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<Date>
+template <> struct fmt::formatter<Date> : fmt::formatter<std::string>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
-    template <typename FormatContext> auto format(const Date& date, FormatContext& ctx) { return format_to(ctx.out(), "{}", date.display()); }
+    template <typename FormatContext> auto format(const Date& date, FormatContext& ctx) { return fmt::formatter<std::string>::format(date.display(), ctx); }
 };
 
 // ----------------------------------------------------------------------
