@@ -182,7 +182,7 @@ inline std::string current_date_time()
 {
     const auto now = std::chrono::system_clock::now();
     const auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    return fmt::format("%Y-%m-%d %H:%M:%S %Z", *std::localtime(&in_time_t));
+    return fmt::format("{:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&in_time_t));
 }
 
 // ----------------------------------------------------------------------
