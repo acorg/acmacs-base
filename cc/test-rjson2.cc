@@ -212,7 +212,7 @@ int main()
     for (auto [source, look_for, expected]: s_find_if_data) {
         try {
             auto parsed = rjson::v2::parse_string(source);
-            const auto& found = rjson::v2::find_if(parsed, [look_for=look_for](const rjson::v2::value& val) { return static_cast<std::string_view>(val["name"]) == look_for; });
+            const auto& found = rjson::v2::find_if(parsed, [look_for=look_for](const rjson::v2::value& val) -> bool { return static_cast<std::string_view>(val["name"]) == look_for; });
             assert(rjson::v2::to_string(found) == expected);
               // std::cerr << "DEBUG: found: " << found << '\n';
         }

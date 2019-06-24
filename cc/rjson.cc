@@ -567,7 +567,6 @@ namespace rjson
 
             inline void Parser::remove_emacs_indent()
             {
-                auto& val = dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref();
                 std::visit(
                     [](auto&& arg) {
                         using T = std::decay_t<decltype(arg)>;
@@ -575,7 +574,7 @@ namespace rjson
                             arg.remove("_");
                         }
                     },
-                    val);
+                    dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref().val_());
             }
 
             inline void Parser::remove_comments() { dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref().remove_comments(); }
@@ -639,15 +638,13 @@ namespace rjson
 
         inline std::string to_string(const value& val, space_after_comma sac, const PrettyHandler& pretty_handler, show_empty_values a_show_empty_values)
         {
-            return std::visit(
-                [sac, &pretty_handler, a_show_empty_values](auto&& arg) -> std::string {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
-                        return to_string(arg, sac, pretty_handler, a_show_empty_values);
-                    else
-                        return to_string(arg, a_show_empty_values);
-                },
-                val);
+            return std::visit([sac, &pretty_handler, a_show_empty_values](auto&& arg) -> std::string {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
+                    return to_string(arg, sac, pretty_handler, a_show_empty_values);
+                else
+                    return to_string(arg, a_show_empty_values);
+            }, val.val_());
         }
 
         static std::string pretty(const value& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix);
@@ -745,14 +742,13 @@ bool rjson::v2::PrettyHandler::is_simple(const array& val, dive a_dive) const
 
 bool rjson::v2::PrettyHandler::is_simple(const value& val, dive a_dive) const
 {
-    auto visitor = [a_dive, this](auto&& arg) -> bool {
+    return std::visit([a_dive, this](auto&& arg) -> bool {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
             return is_simple(arg, a_dive);
         else
             return true;
-    };
-    return std::visit(visitor, val);
+    }, val.val_());
 
 } // rjson::v2::PrettyHandler::is_simple
 
@@ -771,14 +767,13 @@ std::vector<rjson::object::content_t::const_iterator> rjson::v2::PrettyHandler::
 
 std::string rjson::v2::pretty(const value& val, emacs_indent emacs_indent, const PrettyHandler& pretty_handler, size_t prefix)
 {
-    auto visitor = [&val, &pretty_handler, emacs_indent, prefix](auto&& arg) -> std::string {
+    return std::visit([&val, &pretty_handler, emacs_indent, prefix](auto&& arg) -> std::string {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
             return pretty(arg, emacs_indent, pretty_handler, prefix);
         else
             return to_string(val);
-    };
-    return std::visit(visitor, val);
+    }, val.val_());
 
 } // rjson::v2::pretty
 
