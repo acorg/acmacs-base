@@ -93,6 +93,8 @@ namespace to_json
                         }
                         else if ((ia && ub) || chunk == data_.begin())
                             fmt::format_to(out, "{}", *chunk);
+                        else if (chunk->front() == ':')
+                            fmt::format_to(out, "{}", *chunk);
                         else
                             fmt::format_to(out, " {}", *chunk);
                     }
