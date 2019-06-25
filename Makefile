@@ -77,7 +77,6 @@ $(ACMACS_BASE_LIB): $(patsubst %.cc,$(BUILD)/%.o,$(ACMACS_BASE_SOURCES)) | $(DIS
 
 $(DIST)/%: $(BUILD)/%.o | $(DIST) $(ACMACS_BASE_LIB)
 	$(call echo_link_exe,$@)
-	echo $(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS) $(AD_RPATH)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS) $(AD_RPATH)
 
 # ======================================================================
