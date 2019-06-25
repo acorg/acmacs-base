@@ -1244,6 +1244,12 @@ namespace rjson
 } // namespace rjson
 
 // ----------------------------------------------------------------------
+
+template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<rjson::value, T>::value, char>> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const rjson::value& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
+};
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
