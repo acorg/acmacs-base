@@ -1,7 +1,7 @@
 #include <stack>
 #include <vector>
 
-#include "acmacs-base/injson.hh"
+#include "acmacs-base/in-json.hh"
 #include "acmacs-base/read-file.hh"
 
 // ----------------------------------------------------------------------
@@ -398,7 +398,7 @@ int main(int argc, const char* const * argv)
         const std::string data = acmacs::file::read(argv[1]);
         // EmptySink sink;
         SeqdbSink sink;
-        injson::parse(sink, std::begin(data), std::end(data));
+        in_json::parse(sink, std::begin(data), std::end(data));
         sink.report();
         return 0;
     }

@@ -4,14 +4,14 @@
 
 // ----------------------------------------------------------------------
 
-namespace injson
+namespace in_json
 {
     inline namespace v1
     {
         class error : public std::runtime_error
         {
           public:
-            template <typename S> error(size_t line_no, ssize_t column_no, S&& message) : std::runtime_error(fmt::format("injson error at {}:{}: {}", line_no, column_no, message)) {}
+            template <typename S> error(size_t line_no, ssize_t column_no, S&& message) : std::runtime_error(fmt::format("in_json error at {}:{}: {}", line_no, column_no, message)) {}
         };
 
         namespace detail
@@ -21,22 +21,22 @@ namespace injson
                 bool esc = false;
                 for (; first != last; ++first) {
                     switch (*first) {
-                      case '"':
-                          if (!esc)
-                              return first;
-                          esc = false;
-                          break;
-                      case '\\':
-                          esc = !esc;
-                          break;
-                      case '\n':
-                          esc = false;
-                          ++line_no;
-                          line_start = first + 1;
-                          break;
-                      default:
-                          esc = false;
-                          break;
+                        case '"':
+                            if (!esc)
+                                return first;
+                            esc = false;
+                            break;
+                        case '\\':
+                            esc = !esc;
+                            break;
+                        case '\n':
+                            esc = false;
+                            ++line_no;
+                            line_start = first + 1;
+                            break;
+                        default:
+                            esc = false;
+                            break;
                     }
                 }
                 throw error(line_no, first - line_start, "unexpected EOF");
@@ -136,7 +136,7 @@ namespace injson
             }
         }
     } // namespace v1
-}
+} // namespace in_json
 
 // ----------------------------------------------------------------------
 /// Local Variables:
