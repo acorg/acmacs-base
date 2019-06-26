@@ -15,6 +15,8 @@
 
 #pragma GCC diagnostic pop
 
+// https://github.com/JeffGarland/range_by_example
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
