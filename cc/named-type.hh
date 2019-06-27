@@ -1,8 +1,9 @@
 #pragma once
 
-#include <iostream>
-
 #include "acmacs-base/string.hh"
+#include "acmacs-base/fmt.hh"
+#include "acmacs-base/to-string.hh"
+#include "acmacs-base/range.hh"
 
 // Simplified version of https://github.com/joboccara/NamedType
 // Also see https://github.com/Enhex/phantom_type
@@ -37,23 +38,35 @@ namespace acmacs
         explicit constexpr operator T&() noexcept { return value_; }
         explicit constexpr operator const T&() const noexcept { return value_; }
 
-        template <typename T1, typename Tag1> constexpr bool operator==(const named_t<T1, Tag1>& rhs) const noexcept { return get() == rhs.get(); }
-        template <typename T1, typename Tag1> constexpr bool operator!=(const named_t<T1, Tag1>& rhs) const noexcept { return !operator==(rhs); }
-        template <typename T1, typename Tag1> constexpr bool operator<(const named_t<T1, Tag1>& rhs) const noexcept { return get() < rhs.get(); }
-
       private:
         T value_;
     };
 
+    template <typename T, typename Tag> constexpr bool operator==(const named_t<T, Tag>& lhs, const named_t<T, Tag>& rhs) noexcept { return lhs.get() == rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator!=(const named_t<T, Tag>& lhs, const named_t<T, Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
+
+    template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& nt) { return acmacs::to_string(nt.get()); }
+
+    // ----------------------------------------------------------------------
+
     template <typename Tag> class named_size_t : public named_t<size_t, Tag>
     {
       public:
-        explicit constexpr named_size_t(size_t value) : named_t<size_t, Tag>(value) {}
-        explicit constexpr named_size_t(int value) : named_size_t(static_cast<size_t>(value)) {}
+        template <typename T> explicit constexpr named_size_t(T&& value) : named_t<size_t, Tag>(static_cast<size_t>(std::forward<T>(value))) {}
+
+        constexpr auto& operator++() { ++this->get(); return *this; }
+        constexpr auto& operator--() { --this->get(); return *this; }
     };
 
-    template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
-    template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
+    template <typename T> constexpr bool operator<(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename T> constexpr bool operator<=(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() <= rhs.get(); }
+    template <typename T> constexpr bool operator>(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() > rhs.get(); }
+    template <typename T> constexpr bool operator>=(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() >= rhs.get(); }
+
+    template <typename Tag> range(int, named_size_t<Tag>) -> range<named_size_t<Tag>>;
+    template <typename Tag> range(size_t, named_size_t<Tag>) -> range<named_size_t<Tag>>;
+    template <typename Tag> range(named_size_t<Tag>) -> range<named_size_t<Tag>>;
+    template <typename Tag> range(named_size_t<Tag>, named_size_t<Tag>) -> range<named_size_t<Tag>>;
 
     // ----------------------------------------------------------------------
 
@@ -68,8 +81,28 @@ namespace acmacs
 
     };
 
+    template <typename T> constexpr bool operator<(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
+
+    // ----------------------------------------------------------------------
+
+    // template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
+    // template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
+
 } // namespace acmacs
 
+// ----------------------------------------------------------------------
+
+// template <typename T, typename Tag> struct fmt::formatter<acmacs::named_t<T, Tag>> : fmt::formatter<T> {
+//     template <typename FormatCtx> auto format(const acmacs::named_t<T, Tag>& nt, FormatCtx& ctx) { return fmt::formatter<T>::format(nt.get(), ctx); }
+// };
+
+template <typename Tag> struct fmt::formatter<acmacs::named_size_t<Tag>> : fmt::formatter<size_t> {
+    template <typename FormatCtx> auto format(const acmacs::named_size_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<size_t>::format(nt.get(), ctx); }
+};
+
+template <typename Tag> struct fmt::formatter<acmacs::named_string_t<Tag>> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const acmacs::named_string_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(nt.get(), ctx); }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
