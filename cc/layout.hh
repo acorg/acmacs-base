@@ -191,7 +191,7 @@ namespace acmacs
         void change_number_of_dimensions(number_of_dimensions_t num_dim, bool allow_dimensions_increase = false)
         {
             if (!allow_dimensions_increase && num_dim >= number_of_dimensions_)
-                throw std::runtime_error("Layout::change_number_of_dimensions: dimensions increase: " + acmacs::to_string(number_of_dimensions_) + " --> " + acmacs::to_string(num_dim));
+                throw std::runtime_error(fmt::format("Layout::change_number_of_dimensions: dimensions increase: {} --> {}", number_of_dimensions_, num_dim));
             resize(number_of_points() * static_cast<size_t>(num_dim));
             number_of_dimensions_ = num_dim;
         }
