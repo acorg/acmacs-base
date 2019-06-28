@@ -1,5 +1,8 @@
 #pragma once
 
+// #include <type_traits>
+#include <vector>
+
 #include "acmacs-base/string.hh"
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/to-string.hh"
@@ -10,7 +13,6 @@
 
 // ----------------------------------------------------------------------
 
-#include <type_traits>
 
 namespace acmacs
 {
@@ -85,8 +87,20 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    // template <typename T, typename Tag> inline std::ostream& operator<<(std::ostream& out, const named_t<T, Tag>& named) { return out << named.get(); }
-    // template <typename T, typename Tag> inline std::string to_string(const named_t<T, Tag>& named) { return acmacs::to_string(named.get()); }
+    template <typename Named> class named_vector_t
+    {
+      public:
+        named_vector_t() = default;
+
+        auto begin() const { return data_.begin(); }
+        auto end() const { return data_.end(); }
+        auto empty() const { return data_.empty(); }
+        void sort() { std::sort(std::begin(data_), std::end(data_)); }
+        void add_to_set(const Named& elt) { if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) data_.push_back(elt); }
+
+      private:
+        std::vector<Named> data_;
+    };
 
 } // namespace acmacs
 
