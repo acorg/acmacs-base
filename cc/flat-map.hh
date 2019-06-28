@@ -24,10 +24,11 @@ namespace acmacs
         void sort_by_value() { std::sort(std::begin(data_), std::end(data_), [](const auto& e1, const auto& e2) { return e1.second < e2.second; }); }
         void sort_by_value_reverse() { std::sort(std::begin(data_), std::end(data_), [](const auto& e1, const auto& e2) { return e1.second > e2.second; }); }
 
-        auto find(const Key& key) const { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
-        auto find(const Key& key) { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
+        template <typename K> auto find(const K& key) const { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
+        template <typename K> auto find(const K& key) { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
 
         auto& emplace(const Key& key, const Value& value) { return data_.emplace_back(key, value); }
+        auto& emplace(Key&& key, Value&& value) { return data_.emplace_back(std::move(key), std::move(value)); }
 
       private:
         std::vector<std::pair<Key, Value>> data_;

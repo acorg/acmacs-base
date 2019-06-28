@@ -10,6 +10,7 @@ namespace acmacs
     {
       public:
         flat_set_t() = default;
+        flat_set_t(std::initializer_list<T> source) : data_(source) {}
 
         auto begin() const { return data_.begin(); }
         auto end() const { return data_.end(); }
