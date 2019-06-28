@@ -1,8 +1,5 @@
 #pragma once
 
-// #include <type_traits>
-#include <vector>
-
 #include "acmacs-base/string.hh"
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/to-string.hh"
@@ -84,23 +81,6 @@ namespace acmacs
     };
 
     template <typename T> constexpr bool operator<(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
-
-    // ----------------------------------------------------------------------
-
-    template <typename Named> class named_vector_t
-    {
-      public:
-        named_vector_t() = default;
-
-        auto begin() const { return data_.begin(); }
-        auto end() const { return data_.end(); }
-        auto empty() const { return data_.empty(); }
-        void sort() { std::sort(std::begin(data_), std::end(data_)); }
-        void add_to_set(const Named& elt) { if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) data_.push_back(elt); }
-
-      private:
-        std::vector<Named> data_;
-    };
 
 } // namespace acmacs
 
