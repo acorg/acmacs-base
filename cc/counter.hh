@@ -50,11 +50,6 @@ namespace acmacs
                 return 0;
         }
 
-        friend std::ostream& operator << (std::ostream& out, const Counter& counter)
-            {
-                return out << counter.counter_;
-            }
-
         template <typename S> std::string report_sorted_max_first(S line_prefix) const
         {
             fmt::memory_buffer out;
