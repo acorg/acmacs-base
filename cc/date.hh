@@ -1,12 +1,18 @@
 #pragma once
 
-// #include <iostream>
-// #include <iomanip>
-// #include <stdexcept>
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
+#pragma GCC diagnostic ignored "-Wshift-sign-overflow"
+#endif
+
+#include <date/date.h>
+#include <date/iso_week.h>
+
+#pragma GCC diagnostic pop
 
 #include "acmacs-base/fmt.hh"
-#include "acmacs-base/date2.hh"
-#include "acmacs-base/week2.hh"
 #include "acmacs-base/string.hh"
 #include "acmacs-base/sfinae.hh"
 
