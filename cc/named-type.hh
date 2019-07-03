@@ -76,8 +76,7 @@ namespace acmacs
 
         bool empty() const noexcept { return this->get().empty(); }
         size_t size() const noexcept { return this->get().size(); }
-        explicit operator std::string_view() noexcept { return this->get(); }
-
+        explicit operator std::string_view() const noexcept { return this->get(); }
     };
 
     template <typename T> constexpr bool operator<(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }

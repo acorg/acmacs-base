@@ -18,7 +18,7 @@
 
 // ----------------------------------------------------------------------
 
-template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<std::exception, T>::value, char>> : fmt::formatter<const char*> {
+template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_v<std::exception, T>, char>> : fmt::formatter<const char*> {
     template <typename FormatCtx> auto format(const std::exception& err, FormatCtx& ctx) { return fmt::formatter<const char*>::format(err.what(), ctx); }
 };
 
