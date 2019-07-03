@@ -17,6 +17,7 @@ namespace acmacs
         auto end() const { return data_.end(); }
         auto empty() const { return data_.empty(); }
         auto size() const { return data_.size(); }
+        auto clear() { data_.clear(); }
 
         const auto& front() const { return data_.front(); }
         void sort() { std::sort(std::begin(data_), std::end(data_)); }
