@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 
 // ----------------------------------------------------------------------
 
@@ -15,8 +16,15 @@ namespace acmacs
         auto begin() const { return data_.begin(); }
         auto end() const { return data_.end(); }
         auto empty() const { return data_.empty(); }
+        auto size() const { return data_.size(); }
+
         const auto& front() const { return data_.front(); }
         void sort() { std::sort(std::begin(data_), std::end(data_)); }
+
+        template <typename Predicate> void erase_if(Predicate&& pred)
+        {
+            data_.erase(std::find_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
+        }
 
         void add(const T& elt)
         {
