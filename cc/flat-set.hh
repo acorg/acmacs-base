@@ -23,7 +23,7 @@ namespace acmacs
 
         template <typename Predicate> void erase_if(Predicate&& pred)
         {
-            data_.erase(std::find_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
+            data_.erase(std::remove_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
         }
 
         void add(const T& elt)
