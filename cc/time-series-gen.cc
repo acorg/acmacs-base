@@ -6,11 +6,9 @@
 #include "acmacs-base/rjson.hh"
 #include "acmacs-base/read-file.hh"
 
-using namespace std::string_literals;
-
 // ----------------------------------------------------------------------
 
-template <typename TS> std::string gen(const Date& aStart, const Date& aEnd)
+template <typename TS> std::string gen(const date::year_month_day& aStart, const date::year_month_day& aEnd)
 {
     rjson::v2::array data;
     TS ts(aStart, aEnd);
@@ -34,8 +32,8 @@ struct Options : public argv
     Options(int a_argc, const char* const a_argv[], on_error on_err = on_error::exit) : argv() { parse(a_argc, a_argv, on_err); }
 
     argument<str> period{*this, arg_name{"monthly|yearly|weekly"}, mandatory};
-    argument<Date> start{*this, arg_name{"start-date"}, mandatory};
-    argument<Date> end{*this, arg_name{"end-date"}, mandatory};
+    argument<str> start{*this, arg_name{"start-date"}, mandatory};
+    argument<str> end{*this, arg_name{"end-date"}, mandatory};
     argument<str> output{*this, arg_name{"output.json"}, dflt{""}};
 };
 
@@ -46,13 +44,13 @@ int main(int argc, char* const argv[])
         Options opt(argc, argv);
         std::string json;
         if (opt.period == "monthly") {
-            json = gen<MonthlyTimeSeries>(opt.start, opt.end);
+            json = gen<MonthlyTimeSeries>(date::from_string(*opt.start), date::from_string(*opt.end));
         }
         else if (opt.period == "yearly") {
-            json = gen<YearlyTimeSeries>(opt.start, opt.end);
+            json = gen<YearlyTimeSeries>(date::from_string(*opt.start), date::from_string(*opt.end));
         }
         else if (opt.period == "weekly") {
-            json = gen<WeeklyTimeSeries>(opt.start, opt.end);
+            json = gen<WeeklyTimeSeries>(date::from_string(*opt.start), date::from_string(*opt.end));
         }
         else {
             throw std::runtime_error(string::concat("Unrecognized period: \"", static_cast<str>(opt.period), "\", expected: monthly yearly weekly"));

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <charconv>
+
 #pragma GCC diagnostic push
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -18,178 +20,144 @@
 
 // ----------------------------------------------------------------------
 
-namespace acmacs
+namespace date
 {
-    class date_parse_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
+    class date_parse_error : public std::runtime_error
+    {
+      public:
+        using std::runtime_error::runtime_error;
+    };
 
     enum class throw_on_error { no, yes };
-}
 
-class Date
-{
- public:
-    enum Today { Today };
-
-    Date() : date_(date::year(9999), date::month(99), date::day(99)) {}         // invalid date by default
-    Date(const Date&) = default;
-    Date(enum Today) : date_{date::floor<date::days>(std::chrono::system_clock::now())} {}
-    Date(const char* aText) { from_string(std::string(aText)); }
-    Date(std::string aText) { from_string(aText); }
-    Date(std::string_view aText) { from_string(aText); }
-    Date(const date::year_month_day& src) : date_(src) {}
-    Date(const date::sys_days& src) : date_(src) {}
-    Date(int year, unsigned month, unsigned day) : date_(date::year(year), date::month(month), date::day(day)) {}
-    static inline Date today() { return Today; }
-
-    Date& operator=(const Date&) = default;
-    Date& operator=(std::string aText) { if (!aText.empty()) from_string(aText); return *this; }
-    Date& operator=(std::string_view aText) { if (!aText.empty()) from_string(aText); return *this; }
-    Date& operator=(const char* aText) { if (aText && *aText) from_string(std::string_view(aText)); return *this; }
-
-    Date months_ago(int number_of_months) const { return date_ - date::months(number_of_months); }
-    Date years_ago(int number_of_years) const { return date_ - date::years(number_of_years); }
-    Date weeks_ago(int number_of_weeks) const { return static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); }
-
-    bool operator < (const Date& d) const  noexcept { return std::tuple(date_.year(), date_.month(), date_.day()) < std::tuple(d.date_.year(), d.date_.month(), d.date_.day()); }
-    bool operator > (const Date& d) const  noexcept { return date_ > d.date_; }
-    bool operator == (const Date& d) const noexcept { return date_ == d.date_; }
-    bool operator != (const Date& d) const noexcept { return !operator==(d); }
-    bool operator <= (const Date& d) const noexcept { return !operator>(d); }
-    bool operator >= (const Date& d) const noexcept { return !operator<(d); }
-
-    bool empty() const { return !date_.ok(); }
-    operator bool() const { return date_.ok(); }
-    auto year() const { return static_cast<int>(date_.year()); }
-    auto month() const { return static_cast<unsigned>(date_.month()); }
-    auto day() const { return static_cast<unsigned>(date_.day()); }
-
-    std::string display(const char* format = "%Y-%m-%d") const { return date_.ok() ? date::format(format, date_) : std::string{"*invalid-date*"}; }
-    operator std::string() const { return display(); }
-
-      // returns date for the 1st day of the year-month stored in this
-    Date beginning_of_month() const { return date::year_month_day(date_.year(), date_.month(), date::day{1}); }
-    Date beginning_of_year() const { return date::year_month_day(date_.year(), date::month{1}, date::day{1}); }
-    Date beginning_of_week() const
-        {
-            iso_week::year_weeknum_weekday yw(date_);
-            return {iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{date::Monday})};
-        }
-
-      // returns date for the last day of the year-month stored in this
-    Date end_of_month() const { return date::year_month_day(date::year_month_day_last(date_.year(), date::month_day_last(date_.month()))); }
-
-    Date& increment_month(int number_of_months = 1) { date_ += date::months(number_of_months); return *this; }
-    Date& decrement_month(int number_of_months = 1) { date_ -= date::months(number_of_months); return *this; }
-    Date& increment_year(int number_of_years = 1) { date_ += date::years(number_of_years); return *this; }
-    Date& decrement_year(int number_of_years = 1) { date_ -= date::years(number_of_years); return *this; }
-    Date& increment_week(int number_of_weeks = 1) { date_ = static_cast<date::sys_days>(date_) + date::weeks(number_of_weeks); return *this; }
-    Date& decrement_week(int number_of_weeks = 1) { date_ = static_cast<date::sys_days>(date_) - date::weeks(number_of_weeks); return *this; }
-
-    Date next_month() const { return date_ + date::months(1); }
-    Date next_year() const { return date_ + date::years(1); }
-    Date next_week() const { return {static_cast<date::sys_days>(date_) + date::weeks(1)}; }
-
-    std::string month_3() const { return date::format("%b", date_); }
-    std::string year_2() const { return date::format("%y", date_); }
-    std::string year_4() const { return date::format("%Y", date_); }
-    std::string month3_year2() const { return date::format("%b %y", date_); }
-    std::string monthtext_year() const { return date::format("%B %Y", date_); }
-    std::string year4_month2() const { return date::format("%Y-%m", date_); }
-    std::string year4_month2_day2() const { return date::format("%Y-%m-%d", date_); }
-
-      //? const auto& gregorian() const { return date_; }
-
-    constexpr const date::year_month_day& raw() const { return date_; }
-
-    template <typename S> bool from_string(S&& source, const char* format)
+    constexpr year_month_day invalid_date()
     {
-        std::istringstream in(std::string{source});
-        in >> date::parse(format, date_);
-        if (in) {
-            if (date_.year() < date::year{30})
-                date_ += date::years(2000);
-            else if (date_.year() < date::year{100})
-                date_ += date::years(1900);
-            return true;
-        }
-        else {
-            using namespace date::literals;
-            date_ = 1999_y / 99 / 99;
-            return false;
-        }
+        using namespace literals;
+        return 1999_y / 99 / 99;
     }
 
-    template <typename S> bool from_string(S&& source, acmacs::throw_on_error toe = acmacs::throw_on_error::yes)
-        {
-            for (const char* format : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
-                if (from_string(std::forward<S>(source), format))
-                    return true;
-            }
-            if (toe == acmacs::throw_on_error::yes)
-                throw acmacs::date_parse_error(string::concat("cannot parse date from \"", source, + '"'));
-            return false;
+    inline year_month_day today() { return floor<days>(std::chrono::system_clock::now()); }
+    inline size_t current_year() { return static_cast<size_t>(static_cast<int>(today().year())); }
+    inline std::string display(const year_month_day& dt, const char* fmt = "%Y-%m-%d") { return dt.ok() ? format(fmt, dt) : std::string{"*invalid-date*"}; }
+
+    inline auto month_3(const year_month_day& dt) { return format("%b", dt); }
+    inline auto year_2(const year_month_day& dt) { return format("%y", dt); }
+    inline auto year_4(const year_month_day& dt) { return format("%Y", dt); }
+    inline auto month3_year2(const year_month_day& dt) { return format("%b %y", dt); }
+    inline auto monthtext_year(const year_month_day& dt) { return format("%B %Y", dt); }
+    inline auto year4_month2(const year_month_day& dt) { return format("%Y-%m", dt); }
+    inline auto year4_month2_day2(const year_month_day& dt) { return format("%Y-%m-%d", dt); }
+
+    inline auto beginning_of_month(const year_month_day& dt) { return year_month_day(dt.year(), dt.month(), day{1}); }
+    inline auto beginning_of_year(const year_month_day& dt) { return year_month_day(dt.year(), month{1}, day{1}); }
+    inline auto beginning_of_week(const year_month_day& dt)
+    {
+        iso_week::year_weeknum_weekday yw(dt);
+        return year_month_day{iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{Monday})};
+    }
+
+    // returns date for the last day of the year-month stored in this
+    inline auto end_of_month(const year_month_day& dt) { return year_month_day(year_month_day_last(dt.year(), month_day_last(dt.month()))); }
+
+    inline auto months_ago(const year_month_day& dt, int number_of_months) { return dt - date::months(number_of_months); }
+    inline auto years_ago(const year_month_day& dt, int number_of_years) { return dt - date::years(number_of_years); }
+    inline auto weeks_ago(const year_month_day& dt, int number_of_weeks) { return static_cast<date::sys_days>(dt) - date::weeks(number_of_weeks); }
+
+    inline auto next_month(const year_month_day& dt) { return dt + date::months(1); }
+    inline auto next_year(const year_month_day& dt) { return dt + date::years(1); }
+    inline auto next_week(const year_month_day& dt) { return year_month_day{static_cast<sys_days>(dt) + date::weeks(1)}; }
+
+    inline auto& increment_month(year_month_day& dt, int number_of_months = 1) { dt += date::months(number_of_months); return dt; }
+    inline auto& decrement_month(year_month_day& dt, int number_of_months = 1) { dt -= date::months(number_of_months); return dt; }
+    inline auto& increment_year(year_month_day& dt, int number_of_years = 1) { dt += date::years(number_of_years); return dt; }
+    inline auto& decrement_year(year_month_day& dt, int number_of_years = 1) { dt -= date::years(number_of_years); return dt; }
+    inline auto& increment_week(year_month_day& dt, int number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) + date::weeks{number_of_weeks}; return dt; }
+    inline auto& decrement_week(year_month_day& dt, int number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) - date::weeks{number_of_weeks}; return dt; }
+
+    template <typename S> inline year_month_day from_string(S&& source, const char* fmt)
+    {
+        year_month_day result;
+        std::istringstream in(std::string{source});
+        if (from_stream(in, fmt, result)) {
+            if (result.year() < year{30})
+                result += years(2000);
+            else if (result.year() < year{100})
+                result += years(1900);
         }
+        else {
+            result = invalid_date();
+        }
+        return result;
+    }
 
- private:
-    date::year_month_day date_;
+    template <typename S> inline year_month_day from_string(S&& source, throw_on_error toe = throw_on_error::yes)
+    {
+        for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
+            if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
+                return result;
+        }
+        if (toe == throw_on_error::yes)
+            throw date_parse_error(fmt::format("cannot parse date from \"{}\"", source));
+        return invalid_date();
+    }
 
-}; // class Date
+    template <typename S> inline year year_from_string(S&& source)
+    {
+        int yr;
+        if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), yr); ec == std::errc{} && p == &*source.end())
+            return year{yr};
+        else
+            return year{9999};
+    }
+
+    template <typename S> inline month month_from_string(S&& source)
+    {
+        unsigned mo;
+        if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), mo); ec == std::errc{} && p == &*source.end())
+            return month{mo};
+        else
+            return month{99};
+    }
+
+    template <typename S> inline day day_from_string(S&& source)
+    {
+        unsigned dy;
+        if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), dy); ec == std::errc{} && p == &*source.end())
+            return day{dy};
+        else
+            return day{99};
+    }
+
+    inline std::string current_date_time()
+    {
+        const auto now = std::chrono::system_clock::now();
+        const auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        return fmt::format("{:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&in_time_t));
+    }
+
+    inline int days_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<days>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+
+    inline int weeks_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<weeks>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+
+    inline int months_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<months>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+
+    inline int calendar_months_between_dates(const year_month_day& a, const year_month_day& b)
+    {
+        return std::chrono::duration_cast<months>(static_cast<sys_days>(beginning_of_month(b)) - static_cast<sys_days>(beginning_of_month(a))).count();
+    }
+
+    inline int calendar_months_between_dates_inclusive(const year_month_day& a, const year_month_day& b) { return calendar_months_between_dates(a, b) + 1; }
+
+    inline int years_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<years>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+
+} // namespace date
 
 // ----------------------------------------------------------------------
 
-inline int days_between_dates(const Date& a, const Date& b)
-{
-    return std::chrono::duration_cast<date::days>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
-}
-
-inline int weeks_between_dates(const Date& a, const Date& b)
-{
-    return std::chrono::duration_cast<date::weeks>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
-}
-
-inline int months_between_dates(const Date& a, const Date& b)
-{
-    return std::chrono::duration_cast<date::months>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
-}
-
-inline int calendar_months_between_dates(const Date& a, const Date& b)
-{
-    const auto first = a.beginning_of_month(), last = b.beginning_of_month();
-    return (last.year() - first.year()) * 12 + ((static_cast<int>(last.month()) - static_cast<int>(first.month())));
-}
-
-inline int calendar_months_between_dates_inclusive(const Date& a, const Date& b)
-{
-    return calendar_months_between_dates(a, b) + 1;
-}
-
-inline int years_between_dates(const Date& a, const Date& b)
-{
-    return std::chrono::duration_cast<date::years>(static_cast<date::sys_days>(b.raw()) - static_cast<date::sys_days>(a.raw())).count();
-}
-
-// ----------------------------------------------------------------------
-
-// inline std::ostream& operator << (std::ostream& out, const Date& aDate)
-// {
-//     return out << aDate.display();
-// }
-
-// ----------------------------------------------------------------------
-
-template <> struct fmt::formatter<Date> : fmt::formatter<std::string>
-{
-    template <typename FormatContext> auto format(const Date& date, FormatContext& ctx) { return fmt::formatter<std::string>::format(date.display(), ctx); }
+template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<date::year_month_day, T>::value, char>> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt), ctx); }
 };
 
-// ----------------------------------------------------------------------
-
-inline std::string current_date_time()
-{
-    const auto now = std::chrono::system_clock::now();
-    const auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    return fmt::format("{:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&in_time_t));
-}
 
 // ----------------------------------------------------------------------
 /// Local Variables:

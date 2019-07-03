@@ -7,11 +7,11 @@
 
 // ----------------------------------------------------------------------
 
-class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, Date, const Date*, Date>
+class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, date::year_month_day, date::year_month_day, const date::year_month_day*, date::year_month_day>
 {
  public:
-    inline TimeSeriesIterator(const TimeSeriesIterator&) = default;
-    virtual ~TimeSeriesIterator();
+    TimeSeriesIterator(const TimeSeriesIterator&) = default;
+    virtual ~TimeSeriesIterator() = default;
 
     bool operator==(const TimeSeriesIterator& other) const { return mDate == other.mDate; }
     bool operator!=(const TimeSeriesIterator& other) const {return !(*this == other);}
@@ -19,16 +19,16 @@ class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, D
     reference operator*() const { return mDate; }
     pointer operator->() const { return &mDate; }
 
-    virtual Date next() const = 0;
+    virtual date::year_month_day next() const = 0;
     virtual std::string numeric_name() const = 0;
     virtual std::string text_name() const { return numeric_name(); }
 
-    std::string first_date() const { return mDate.year4_month2_day2(); }
-    std::string after_last_date() const { return next().year4_month2_day2(); }
+    std::string first_date() const { return date::year4_month2_day2(mDate); }
+    std::string after_last_date() const { return date::year4_month2_day2(next()); }
 
  protected:
-    inline TimeSeriesIterator(const Date& d) : mDate(d) {}
-    Date mDate;
+    inline TimeSeriesIterator(const date::year_month_day& d) : mDate(d) {}
+    date::year_month_day mDate;
 
 }; // class TimeSeriesIterator
 
@@ -37,106 +37,110 @@ class TimeSeriesIterator : public std::iterator<std::input_iterator_tag, Date, D
 class MonthlyTimeSeries
 {
  public:
-    // inline MonthlyTimeSeries() {}
-    inline MonthlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_month()), mEnd(aEnd.beginning_of_month()) {}
-    inline MonthlyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(Date(aStart).beginning_of_month()), mEnd(Date(aEnd).beginning_of_month()) {}
+    MonthlyTimeSeries(const date::year_month_day& aStart, const date::year_month_day& aEnd) : mStart(date::beginning_of_month(aStart)), mEnd(date::beginning_of_month(aEnd)) {}
+    MonthlyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(date::beginning_of_month(date::from_string(aStart))), mEnd(date::beginning_of_month(date::from_string(aEnd))) {}
 
-    inline int number_of_months() const { return months_between_dates(mStart, mEnd); }
+    int number_of_months() const { return date::months_between_dates(mStart, mEnd); }
 
     class Iterator : public TimeSeriesIterator
     {
      public:
-        virtual inline Date next() const { return mDate.next_month(); }
-        virtual std::string numeric_name() const { return mDate.year4_month2(); }
-        virtual std::string text_name() const { return mDate.monthtext_year(); }
+        virtual date::year_month_day next() const { return date::next_month(mDate); }
+        virtual std::string numeric_name() const { return date::year4_month2(mDate); }
+        virtual std::string text_name() const { return date::monthtext_year(mDate); }
 
      private:
         friend class MonthlyTimeSeries;
-        inline Iterator(const Date& d) : TimeSeriesIterator(d) {}
+        Iterator(const date::year_month_day& d) : TimeSeriesIterator(d) {}
     };
 
-    inline Iterator begin() const { return mStart; }
-    inline Iterator end() const { return mEnd; }
+    Iterator begin() const { return mStart; }
+    Iterator end() const { return mEnd; }
+
+    const auto& m_start() const { return mStart; }
+    const auto& m_end() const { return mEnd; }
 
  private:
-    Date mStart, mEnd;
-
-    friend inline std::ostream& operator << (std::ostream& out, const MonthlyTimeSeries& aTS)
-        {
-            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_months() << " months)";
-        }
+    date::year_month_day mStart, mEnd;
 
 }; // class MonthlyTimeSeries
+
+template <> struct fmt::formatter<MonthlyTimeSeries> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const MonthlyTimeSeries& ts, FormatCtx& ctx) { return fmt::formatter<std::string>::format(fmt::format("{}..{} ({})", ts.m_start(), ts.m_end(), ts.number_of_months()), ctx); }
+};
 
 // ----------------------------------------------------------------------
 
 class YearlyTimeSeries
 {
  public:
-    // inline YearlyTimeSeries() {}
-    inline YearlyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_year()), mEnd(aEnd.beginning_of_year()) {}
-    inline YearlyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(Date(aStart).beginning_of_year()), mEnd(Date(aEnd).beginning_of_year()) {}
+    YearlyTimeSeries(const date::year_month_day& aStart, const date::year_month_day& aEnd) : mStart(date::beginning_of_year(aStart)), mEnd(date::beginning_of_year(aEnd)) {}
+    YearlyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(date::beginning_of_year(date::from_string(aStart))), mEnd(date::beginning_of_year(date::from_string(aEnd))) {}
 
-    inline int number_of_years() const { return years_between_dates(mStart, mEnd); }
+    int number_of_years() const { return years_between_dates(mStart, mEnd); }
 
     class Iterator : public TimeSeriesIterator
     {
      public:
-        virtual inline Date next() const { return mDate.next_year(); }
-        virtual std::string numeric_name() const { return mDate.year_4(); }
+        virtual date::year_month_day next() const { return date::next_year(mDate); }
+        virtual std::string numeric_name() const { return date::year_4(mDate); }
 
      private:
         friend class YearlyTimeSeries;
-        inline Iterator(const Date& d) : TimeSeriesIterator(d) {}
+        Iterator(const date::year_month_day& d) : TimeSeriesIterator(d) {}
     };
 
-    inline Iterator begin() const { return mStart; }
-    inline Iterator end() const { return mEnd; }
+    Iterator begin() const { return mStart; }
+    Iterator end() const { return mEnd; }
+
+    const auto& m_start() const { return mStart; }
+    const auto& m_end() const { return mEnd; }
 
  private:
-    Date mStart, mEnd;
-
-    friend inline std::ostream& operator << (std::ostream& out, const YearlyTimeSeries& aTS)
-        {
-            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_years() << " years)";
-        }
+    date::year_month_day mStart, mEnd;
 
 }; // class YearlyTimeSeries
+
+template <> struct fmt::formatter<YearlyTimeSeries> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const YearlyTimeSeries& ts, FormatCtx& ctx) { return fmt::formatter<std::string>::format(fmt::format("{}..{} ({})", ts.m_start(), ts.m_end(), ts.number_of_years()), ctx); }
+};
 
 // ----------------------------------------------------------------------
 
 class WeeklyTimeSeries
 {
  public:
-    // inline WeeklyTimeSeries() {}
-    inline WeeklyTimeSeries(const Date& aStart, const Date& aEnd) : mStart(aStart.beginning_of_week()), mEnd(aEnd.beginning_of_week()) {}
-    inline WeeklyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(Date(aStart).beginning_of_week()), mEnd(Date(aEnd).beginning_of_week()) {}
+    // WeeklyTimeSeries() {}
+    WeeklyTimeSeries(const date::year_month_day& aStart, const date::year_month_day& aEnd) : mStart(date::beginning_of_week(aStart)), mEnd(date::beginning_of_week(aEnd)) {}
+    WeeklyTimeSeries(std::string_view aStart, std::string_view aEnd) : mStart(date::beginning_of_week(date::from_string(aStart))), mEnd(date::beginning_of_week(date::from_string(aEnd))) {}
 
-    inline int number_of_weeks() const { return weeks_between_dates(mStart, mEnd); }
+    int number_of_weeks() const { return weeks_between_dates(mStart, mEnd); }
 
     class Iterator : public TimeSeriesIterator
     {
      public:
-        virtual inline Date next() const { return mDate.next_week(); }
-        virtual std::string numeric_name() const { return mDate.display(); }
+        virtual date::year_month_day next() const { return date::next_week(mDate); }
+        virtual std::string numeric_name() const { return date::display(mDate); }
 
      private:
         friend class WeeklyTimeSeries;
-        inline Iterator(const Date& d) : TimeSeriesIterator(d) {}
+        Iterator(const date::year_month_day& d) : TimeSeriesIterator(d) {}
     };
 
-    inline Iterator begin() const { return mStart; }
-    inline Iterator end() const { return mEnd; }
+    Iterator begin() const { return mStart; }
+    Iterator end() const { return mEnd; }
+
+    const auto& m_start() const { return mStart; }
+    const auto& m_end() const { return mEnd; }
 
  private:
-    Date mStart, mEnd;
-
-    friend inline std::ostream& operator << (std::ostream& out, const WeeklyTimeSeries& aTS)
-        {
-            return out << aTS.mStart << ".." << aTS.mEnd << " (" << aTS.number_of_weeks() << " weeks)";
-        }
+    date::year_month_day mStart, mEnd;
 
 }; // class WeeklyTimeSeries
+
+template <> struct fmt::formatter<WeeklyTimeSeries> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const WeeklyTimeSeries& ts, FormatCtx& ctx) { return fmt::formatter<std::string>::format(fmt::format("{}..{} ({})", ts.m_start(), ts.m_end(), ts.number_of_weeks()), ctx); }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

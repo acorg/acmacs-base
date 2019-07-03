@@ -26,7 +26,7 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-  color.cc text-style.cc time-series.cc read-file.cc layout.cc \
+  color.cc text-style.cc read-file.cc layout.cc \
   argv.cc argc-argv.cc \
   normalize.cc \
   quicklook.cc timeit.cc gzip.cc \

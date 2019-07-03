@@ -133,7 +133,7 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir,
             extension += to_backup.extension();
             stem = stem.stem();
         }
-        const auto today = Date::today().display("%Y%m%d");
+        const auto today = date::display(date::today(), "%Y%m%d");
         for (int version = 1; version < 1000; ++version) {
             char infix[4];
             std::sprintf(infix, "%03d", version);
