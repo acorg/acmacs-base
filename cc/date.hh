@@ -29,16 +29,24 @@ namespace date
     };
 
     enum class throw_on_error { no, yes };
+    enum class allow_incomplete { no, yes };
 
-    constexpr year_month_day invalid_date()
-    {
-        using namespace literals;
-        return 1999_y / 99 / 99;
-    }
+    constexpr year_month_day invalid_date() { return year{0} / 0 / 0; }
 
     inline year_month_day today() { return floor<days>(std::chrono::system_clock::now()); }
     inline size_t current_year() { return static_cast<size_t>(static_cast<int>(today().year())); }
+
     inline std::string display(const year_month_day& dt, const char* fmt = "%Y-%m-%d") { return dt.ok() ? format(fmt, dt) : std::string{"*invalid-date*"}; }
+
+    inline std::string display(const year_month_day& dt, allow_incomplete allow)
+    {
+        if (dt.ok())
+            return format("%Y-%m-%d", dt);
+        else if (allow == allow_incomplete::yes)
+            return fmt::format("{}-{:02d}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+        else
+            return fmt::format("*invalid-date: {}-{}-{}*", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+    }
 
     inline auto month_3(const year_month_day& dt) { return format("%b", dt); }
     inline auto year_2(const year_month_day& dt) { return format("%y", dt); }
@@ -76,25 +84,37 @@ namespace date
 
     template <typename S> inline year_month_day from_string(S&& source, const char* fmt)
     {
-        year_month_day result;
-        std::istringstream in(std::string{source});
-        if (from_stream(in, fmt, result)) {
-            if (result.year() < year{30})
-                result += years(2000);
-            else if (result.year() < year{100})
-                result += years(1900);
-        }
-        else {
-            result = invalid_date();
-        }
-        return result;
+            year_month_day result = invalid_date();
+            std::istringstream in(std::string{source});
+            if (from_stream(in, fmt, result)) {
+                if (result.year() < year{30})
+                    result += years(2000);
+                else if (result.year() < year{100})
+                    result += years(1900);
+            }
+            return result;
     }
 
-    template <typename S> inline year_month_day from_string(S&& source, throw_on_error toe = throw_on_error::yes)
+    template <typename S> inline year_month_day from_string(S&& source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
     {
         for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
             if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
                 return result;
+        }
+        if (allow == allow_incomplete::yes) {
+            for (const char* fmt : {"%Y-%m", "%Y%m", "%Y"}) {
+                // date lib cannot parse incomplete date
+                const std::string_view src{source};
+                constexpr int invalid = 99999;
+                struct tm tm;
+                tm.tm_mon = tm.tm_mday = invalid;
+                if (strptime(src.data(), fmt, &tm) == &*src.end()) {
+                    if (tm.tm_mon == invalid)
+                        return year{tm.tm_year + 1900} / 0 / 0;
+                    else
+                        return year{tm.tm_year + 1900} / month{static_cast<unsigned>(tm.tm_mon) + 1} / 0;
+                }
+            }
         }
         if (toe == throw_on_error::yes)
             throw date_parse_error(fmt::format("cannot parse date from \"{}\"", source));
