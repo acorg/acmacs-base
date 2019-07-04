@@ -12,6 +12,8 @@
 #include <numeric>
 #include <functional>
 #include <cassert>
+#include <limits>
+#include <charconv>
 
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/to-string.hh"
@@ -321,6 +323,17 @@ namespace string
             return concat_precise(result, args...);
         else
             return result;
+    }
+
+// ----------------------------------------------------------------------
+
+    template <typename T, typename S> T from_chars(S&& source)
+    {
+        const std::string_view src{source};
+        T result;
+        if (const auto [p, ec] = std::from_chars(&*src.begin(), &*src.end(), result); ec == std::errc{} && p == &*src.end())
+            return result;
+        return std::numeric_limits<T>::max();
     }
 
 // ----------------------------------------------------------------------
