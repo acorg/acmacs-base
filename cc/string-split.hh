@@ -124,23 +124,23 @@ namespace acmacs::string
 
     template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{std::stoul(std::string(chunk), pos)}; }, "unsigned");
+        return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned");
     }
 
     template <typename S> inline std::vector<size_t> split_into_size_t(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return std::stoul(std::string(chunk), pos); }, "unsigned");
+        return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned");
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); }, "double");
+        return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double");
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& s)
     {
         using namespace std::string_literals;
-        auto extractor = [](const auto& chunk, size_t* pos) -> double { return std::stod(std::string(chunk), pos); };
+        auto extractor = [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); };
         for (const char* delim : {",", " ", ", "}) {
             try {
                 return internal::split_into<S, double>(s, delim, extractor, "double");
