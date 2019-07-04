@@ -7,6 +7,8 @@
 
 namespace acmacs
 {
+    enum class flat_set_sort_afterwards { no, yes };
+
     template <typename T> class flat_set_t
     {
       public:
@@ -27,30 +29,30 @@ namespace acmacs
             data_.erase(std::remove_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
         }
 
-        void add(const T& elt)
-        {
-            if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_))
-                data_.push_back(elt);
-        }
-
-        void add(T&& elt)
-        {
-            if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_))
-                data_.push_back(std::move(elt));
-        }
-
-        void add_and_sort(const T& elt)
+        void add(const T& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
         {
             if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) {
                 data_.push_back(elt);
-                sort();
+                if (a_sort == flat_set_sort_afterwards::yes)
+                    sort();
             }
         }
 
-        void merge_from(const flat_set_t& source)
+        void add(T&& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
+        {
+            if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) {
+                data_.push_back(std::move(elt));
+                if (a_sort == flat_set_sort_afterwards::yes)
+                    sort();
+            }
+        }
+
+        void merge_from(const flat_set_t& source, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
         {
             for (const auto& src : source)
-                add(src);
+                add(src, flat_set_sort_afterwards::no);
+            if (a_sort == flat_set_sort_afterwards::yes)
+                sort();
         }
 
       private:
