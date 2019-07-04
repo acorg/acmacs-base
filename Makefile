@@ -6,7 +6,6 @@ TARGETS = \
   $(DIST)/json-pp \
   $(DIST)/time-series-gen \
   $(DIST)/test-rjson2 \
-  $(DIST)/test-argc-argv \
   $(DIST)/test-argv \
   $(DIST)/test-string-split \
   $(DIST)/test-date2 \

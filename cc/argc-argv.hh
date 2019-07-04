@@ -1,4 +1,5 @@
 #pragma once
+// Obsolete, DO NOT USE!
 
 #include <stdexcept>
 #include <string>
@@ -43,6 +44,7 @@ class argc_argv
 
     }; // struct option_setting
 
+// Obsolete, DO NOT USE!
     class option : public option_setting
     {
      private:
@@ -73,6 +75,7 @@ class argc_argv
             }
 
      public:
+// Obsolete, DO NOT USE!
         option(std::string aOption, option_default&& aDefault) : option_setting(aOption, std::move(aDefault)), present_{true} {}
         option(const option_setting& src) : option_setting(src) {}
 
@@ -95,7 +98,7 @@ class argc_argv
 
     }; // class option
 
-    argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
+    [[deprecated("use acmacs-base/argv.hh")]] argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
 
     const option& operator[](std::string aName) const;
 

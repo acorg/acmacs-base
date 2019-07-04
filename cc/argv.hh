@@ -47,6 +47,7 @@ namespace acmacs
                     virtual bool has_arg() const noexcept { return true; }
                     virtual bool has_value() const noexcept = 0;
                     virtual bool multiple_values() const noexcept = 0;
+                    virtual bool is_bool() const noexcept = 0;
                     constexpr bool mandatory() const noexcept { return mandatory_; }
 
                     constexpr char short_name() const noexcept { return short_name_; }
@@ -105,6 +106,8 @@ namespace acmacs
                 bool has_value() const noexcept override { return value_.has_value(); }
                 constexpr bool operator!() const noexcept { return !has_value(); }
                 bool multiple_values() const noexcept override { return false; }
+
+                bool is_bool() const noexcept override { if constexpr (std::is_same_v<T, bool>) return true; else return false; }
 
                 void add(detail::cmd_line_iter& arg, detail::cmd_line_iter last) override
                 {

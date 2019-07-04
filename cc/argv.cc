@@ -114,7 +114,7 @@ void acmacs::argv::v2::argv::show_help(std::ostream& out) const
             out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names();
             if (opt->mandatory())
                 out << " (MANDATORY)";
-            if (const auto dflt = opt->get_default(); !dflt.empty())
+            if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
                 out << " (def: " << dflt << ')';
             out << ' ' << opt->description() << '\n';
         }
