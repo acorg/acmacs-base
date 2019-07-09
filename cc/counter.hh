@@ -71,6 +71,7 @@ namespace acmacs
     }; // class Counter<Obj>
 
     template <typename Iter, typename F> Counter(Iter first, Iter last, F func) -> Counter<decltype(func(*first))>;
+    template <typename Container, typename F> Counter(const Container& cont, F func) -> Counter<decltype(func(*std::begin(cont)))>;
 
     class CounterChar
     {
