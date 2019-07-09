@@ -15,6 +15,8 @@ namespace acmacs
         uppercased() = default;
         template <typename S> explicit uppercased(S&& source) : named_string_t<Tag>(std::forward<S>(source)) { std::transform(this->get().begin(), this->get().end(), this->get().begin(), ::toupper); }
         template <typename S> uppercased& operator=(S&& source) { const std::string_view src{source}; this->get().resize(src.size(), ' '); std::transform(src.begin(), src.end(), this->get().begin(), ::toupper); return *this; }
+        template <typename S> bool operator==(const S& rhs) const { return this->get() == std::string_view{rhs}; }
+        template <typename S> bool operator!=(const S& rhs) const { return !operator==(rhs); }
     };
 
     template <typename Tag> class lowercased : public named_string_t<Tag>
@@ -23,6 +25,8 @@ namespace acmacs
         lowercased() = default;
         template <typename S> explicit lowercased(S&& source) : named_string_t<Tag>(std::forward<S>(source)) { std::transform(this->get().begin(), this->get().end(), this->get().begin(), ::tolower); }
         template <typename S> lowercased& operator=(S&& source) { const std::string_view src{source}; this->get().resize(src.size(), ' '); std::transform(src.begin(), src.end(), this->get().begin(), ::tolower); return *this; }
+        template <typename S> bool operator==(const S& rhs) const { return this->get() == std::string_view{rhs}; }
+        template <typename S> bool operator!=(const S& rhs) const { return !operator==(rhs); }
     };
 
     // ----------------------------------------------------------------------
