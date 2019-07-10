@@ -104,9 +104,9 @@ namespace acmacs::settings
             std::string to_string() const { return rjson::to_string(value_); }
             std::string pretty() const { return rjson::pretty(value_); }
 
-            void read_from_file(std::string filename) { value_ = rjson::parse_file(filename, rjson::remove_comments::no); }
-            void update_from_file(std::string filename) { value_.update(rjson::parse_file(filename, rjson::remove_comments::no)); }
-            void write_to_file(std::string filename, rjson::emacs_indent emacs_indent = rjson::emacs_indent::yes, const rjson::PrettyHandler& pretty_handler = rjson::PrettyHandler{}) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_, emacs_indent, pretty_handler))); }
+            void read_from_file(std::string_view filename) { value_ = rjson::parse_file(filename, rjson::remove_comments::no); }
+            void update_from_file(std::string_view filename) { value_.update(rjson::parse_file(filename, rjson::remove_comments::no)); }
+            void write_to_file(std::string_view filename, rjson::emacs_indent emacs_indent = rjson::emacs_indent::yes, const rjson::PrettyHandler& pretty_handler = rjson::PrettyHandler{}) const { file::write(filename, static_cast<std::string_view>(rjson::pretty(value_, emacs_indent, pretty_handler))); }
 
             rjson::value& set() override { if (value_.is_null()) value_ = rjson::object{}; return value_; }
             const rjson::value& get() const override { return value_; }

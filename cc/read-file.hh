@@ -71,6 +71,7 @@ namespace acmacs::file
 
         inline temp& operator = (temp&& aFrom) noexcept { name = std::move(aFrom.name); fd = aFrom.fd; aFrom.name.clear(); return *this; }
         inline operator std::string() const { return name; }
+        inline operator std::string_view() const { return name; }
         inline operator int() const { return fd; }
 
      private:
@@ -107,14 +108,13 @@ namespace acmacs::file
     class ofstream
     {
      public:
-        ofstream(std::string filename) : backend_(std::cout)
+        ofstream(std::string_view filename) : backend_(std::cout)
             {
                 if (filename == "=")
                     backend_ = std::cerr;
                 else if (filename != "-")
-                    backend_ = std::ofstream(filename);
+                    backend_ = std::ofstream(std::string{filename});
             }
-        ofstream(std::string_view filename) : ofstream(std::string(filename)) {}
 
         std::ostream& stream() { return std::visit([](auto&& stream) -> std::ostream& { return stream; }, backend_); }
         const std::ostream& stream() const { return std::visit([](auto&& stream) -> const std::ostream& { return stream; }, backend_); }

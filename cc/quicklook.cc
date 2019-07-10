@@ -10,9 +10,9 @@
 
 #ifdef __APPLE__
 
-void acmacs::quicklook(std::string aFilename, size_t aDelayInSeconds)
+void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 {
-    const char * const argv[] = {"/usr/bin/qlmanage", "-p", aFilename.c_str(), nullptr};
+    const char * const argv[] = {"/usr/bin/qlmanage", "-p", aFilename.data(), nullptr};
     run_and_detach(argv, 0);
     if (aDelayInSeconds) {
         using namespace std::chrono_literals;
@@ -21,9 +21,9 @@ void acmacs::quicklook(std::string aFilename, size_t aDelayInSeconds)
 
 } // acmacs::quicklook
 
-void acmacs::open(std::string aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
+void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
-    const char * const argv[] = {"/usr/bin/open", aFilename.c_str(), nullptr};
+    const char * const argv[] = {"/usr/bin/open", aFilename.data(), nullptr};
     run_and_detach(argv, aDelayBeforeInSeconds);
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
@@ -34,11 +34,11 @@ void acmacs::open(std::string aFilename, size_t aDelayBeforeInSeconds, size_t aD
 
 #else
 
-void acmacs::quicklook(std::string /*aFilename*/, size_t /*aDelayInSeconds*/)
+void acmacs::quicklook(std::string_view /*aFilename*/, size_t /*aDelayInSeconds*/)
 {
 }
 
-void acmacs::open(std::string /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
+void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
 {
 }
 
