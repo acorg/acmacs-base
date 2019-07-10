@@ -278,8 +278,6 @@ namespace string
 
     inline std::string join(std::initializer_list<std::string>&& parts)
     {
-        // std::vector<std::string> p{parts};
-        // return join(" ", std::begin(p), std::remove(std::begin(p), std::end(p), std::string()));
         return join(" ", std::begin(parts), std::end(parts));
     }
 
