@@ -30,6 +30,8 @@ namespace acmacs
         auto& emplace(const Key& key, const Value& value) { return data_.emplace_back(key, value); }
         auto& emplace(Key&& key, Value&& value) { return data_.emplace_back(std::move(key), std::move(value)); }
 
+        void reserve(size_t sz) { data_.reserve(sz); }
+
       private:
         std::vector<std::pair<Key, Value>> data_;
     };
