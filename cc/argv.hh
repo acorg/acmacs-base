@@ -119,6 +119,17 @@ namespace acmacs
 
                 void add(std::string_view arg) override { value_ = detail::to_value<T>(arg); }
 
+                bool get_bool() const
+                {
+                    if constexpr (std::is_same_v<T, bool>)
+                        return value_.has_value() ? *value_ : default_;
+                    else if constexpr (std::is_same_v<T, str>)
+                        return has_value() && !get().empty();
+                    else
+                        static_assert(std::is_same_v<T, void>, "operator bool not defined for this option type");
+                }
+                // explicit operator bool() const { return get_bool(); }
+
               protected:
                 using detail::option_base::use_arg;
                 constexpr void use_arg(dflt<T>&& def) { default_ = static_cast<T>(def); }
@@ -140,7 +151,7 @@ namespace acmacs
             template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/, detail::cmd_line_iter /*last*/) { value_ = true; }
             template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
-            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
+            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << opt.get_bool(); }
 
             template <> void option<str_array>::add(std::string_view arg) { if (!value_) value_ = str_array{arg}; else value_->push_back(arg); }
             template <> bool option<str_array>::multiple_values() const noexcept { return true; }
