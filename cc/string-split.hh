@@ -96,7 +96,7 @@ namespace acmacs::string
             using namespace std::string_literals;
             auto extract = [&](auto chunk) -> T {
                                try {
-                                   size_t pos;
+                                   size_t pos = 0; // g++-9 warn about uninitialized otherwise
                                    const T result = extractor(chunk, &pos);
                                    if (pos != chunk.size())
                                        throw split_error{"cannot read "s + extractor_name + " from \""s + std::string(chunk) + '"'};
