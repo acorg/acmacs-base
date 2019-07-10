@@ -299,7 +299,7 @@ namespace json_writer
 
     using acmacs::file::force_compression;
 
-    template <typename V> inline void export_to_json(const V& value, std::string filename, size_t indent, force_compression a_force_compression = force_compression::no)
+    template <typename V> inline void export_to_json(const V& value, std::string_view filename, size_t indent, force_compression a_force_compression = force_compression::no)
     {
         acmacs::file::write(filename, json(value, indent), a_force_compression);
     }
