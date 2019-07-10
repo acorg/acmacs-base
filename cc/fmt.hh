@@ -6,6 +6,7 @@
 #pragma GCC diagnostic ignored "-Wundefined-func-template"
 #pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
 #pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
+#pragma GCC diagnostic ignored "-Wsigned-enum-bitfield" // fmt/format.h
 #pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
 #pragma GCC diagnostic ignored "-Wshadow-field" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
