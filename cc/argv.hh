@@ -105,7 +105,6 @@ namespace acmacs
                 std::string get_default() const noexcept override { return detail::to_string(default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
-                // constexpr bool operator!() const noexcept { return !has_value(); }
                 bool multiple_values() const noexcept override { return false; }
 
                 bool is_bool() const noexcept override { if constexpr (std::is_same_v<T, bool>) return true; else return false; }
