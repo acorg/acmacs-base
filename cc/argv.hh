@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "acmacs-base/string.hh"
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
@@ -104,7 +105,7 @@ namespace acmacs
                 std::string get_default() const noexcept override { return detail::to_string(default_); }
                 bool has_arg() const noexcept override { return true; }
                 bool has_value() const noexcept override { return value_.has_value(); }
-                constexpr bool operator!() const noexcept { return !has_value(); }
+                // constexpr bool operator!() const noexcept { return !has_value(); }
                 bool multiple_values() const noexcept override { return false; }
 
                 bool is_bool() const noexcept override { if constexpr (std::is_same_v<T, bool>) return true; else return false; }
@@ -119,16 +120,13 @@ namespace acmacs
 
                 void add(std::string_view arg) override { value_ = detail::to_value<T>(arg); }
 
-                bool get_bool() const
+                template <typename Z = T, typename = std::enable_if_t<!std::is_same_v<Z, bool>>> explicit operator bool() const
                 {
-                    if constexpr (std::is_same_v<T, bool>)
-                        return value_.has_value() ? *value_ : default_;
-                    else if constexpr (std::is_same_v<T, str>)
+                    if constexpr (std::is_same_v<T, str>)
                         return has_value() && !get().empty();
                     else
                         static_assert(std::is_same_v<T, void>, "operator bool not defined for this option type");
                 }
-                // explicit operator bool() const { return get_bool(); }
 
               protected:
                 using detail::option_base::use_arg;
@@ -151,7 +149,7 @@ namespace acmacs
             template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/, detail::cmd_line_iter /*last*/) { value_ = true; }
             template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
-            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << opt.get_bool(); }
+            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
 
             template <> void option<str_array>::add(std::string_view arg) { if (!value_) value_ = str_array{arg}; else value_->push_back(arg); }
             template <> bool option<str_array>::multiple_values() const noexcept { return true; }
@@ -208,6 +206,13 @@ namespace acmacs
         } // namespace v2
     }     // namespace argv
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <typename T> struct fmt::formatter<acmacs::argv::option<T>> : fmt::formatter<T> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<T>& opt, FormatCtx& ctx) { return fmt::formatter<T>::format(*opt, ctx); }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:
