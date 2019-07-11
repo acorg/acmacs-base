@@ -38,6 +38,10 @@ int main()
         const auto m1{2018_y/7/30}, m2{2017_y/8/10};
         my_assert(date::months_between_dates(m1, m2) == -11, "months_between_dates(2018, 2017)");
         my_assert(date::months_between_dates(m2, m1) == 11, "months_between_dates(2017, 2018)");
+
+        const auto dat0 = date::from_string("2019-00-00", date::allow_incomplete::yes, date::throw_on_error::yes);
+        fmt::print(date::display(dat0, date::allow_incomplete::yes));
+
     }
     catch (std::exception& err) {
         fmt::print(stderr, "{}\n", err);

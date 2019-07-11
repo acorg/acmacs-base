@@ -56,12 +56,20 @@ namespace date
     inline auto year4_month2(const year_month_day& dt) { return format("%Y-%m", dt); }
     inline auto year4_month2_day2(const year_month_day& dt) { return format("%Y-%m-%d", dt); }
 
-    inline auto beginning_of_month(const year_month_day& dt) { return year_month_day(dt.year(), dt.month(), day{1}); }
+    inline auto beginning_of_month(const year_month_day& dt) { unsigned mont = static_cast<unsigned>(dt.month()); if (mont == 0) mont = 7; return year_month_day(dt.year(), month{mont}, day{1}); }
     inline auto beginning_of_year(const year_month_day& dt) { return year_month_day(dt.year(), month{1}, day{1}); }
     inline auto beginning_of_week(const year_month_day& dt)
     {
-        iso_week::year_weeknum_weekday yw(dt);
-        return year_month_day{iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{Monday})};
+        const auto make = [](const iso_week::year_weeknum_weekday& yw) { return year_month_day{iso_week::year_weeknum_weekday(yw.year(), yw.weeknum(), iso_week::weekday{Monday})}; };
+        if (static_cast<unsigned>(dt.day()) == 0) {
+            if (static_cast<unsigned>(dt.month()) == 0)
+                return make(iso_week::year_weeknum_weekday(dt.year() / month{7} / day{1}));
+            else
+                return make(iso_week::year_weeknum_weekday(dt.year() / dt.month() / day{1}));
+        }
+        else {
+            return make(iso_week::year_weeknum_weekday(dt));
+        }
     }
 
     // returns date for the last day of the year-month stored in this
@@ -102,7 +110,7 @@ namespace date
                 return result;
         }
         if (allow == allow_incomplete::yes) {
-            for (const char* fmt : {"%Y-%m", "%Y%m", "%Y"}) {
+            for (const char* fmt : {"%Y-00-00", "%Y-%m", "%Y%m", "%Y"}) {
                 // date lib cannot parse incomplete date
                 const std::string_view src{source};
                 constexpr int invalid = 99999;
@@ -117,7 +125,7 @@ namespace date
             }
         }
         if (toe == throw_on_error::yes)
-            throw date_parse_error(fmt::format("cannot parse date from \"{}\"", source));
+            throw date_parse_error(fmt::format("cannot parse date from \"{}\" (allow_incomplete: {})", source, allow = allow_incomplete::yes));
         return invalid_date();
     }
 
