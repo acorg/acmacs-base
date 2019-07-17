@@ -102,6 +102,8 @@ namespace to_json
                 return fmt::to_string(out);
             }
 
+            void move_before_end(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::inserter(data_, std::prev(data_.end()))); }
+
           protected:
             using data_t = std::vector<std::string>;
 
@@ -119,7 +121,6 @@ namespace to_json
             void push_back(std::string&& str) { data_.push_back(std::move(str)); }
             void push_back(char c) { data_.push_back(std::string(1, c)); }
             void move(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::back_inserter(data_)); }
-            void move_before_end(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::inserter(data_, std::prev(data_.end()))); }
 
             void make_compact()
             {
@@ -205,7 +206,6 @@ namespace to_json
                     append(std::forward<Args>(args)...);
             }
 
-            friend array& operator<<(array& target, json&& value);
         };
 
         class object : public json
@@ -234,9 +234,12 @@ namespace to_json
             friend object& operator<<(object& target, key_val&& kv);
         };
 
-        inline array& operator<<(array& target, json&& value)
+        template <typename T> inline array& operator<<(array& target, T&& value)
         {
-            target.move_before_end(std::move(value));
+            if constexpr (std::is_convertible_v<std::decay_t<T>, json>)
+                target.move_before_end(std::forward<T>(value));
+            else
+                target.move_before_end(val(std::forward<T>(value)));
             return target;
         }
 
