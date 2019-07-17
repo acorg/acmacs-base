@@ -166,22 +166,27 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, force_co
     else if (aFilename == "=") {
         f = 2;
     }
+    else if (aFilename == "/") {
+        f = open("/dev/null", O_WRONLY | O_TRUNC | O_CREAT, 0644);
+        if (f < 0)
+            throw std::runtime_error(fmt::format("Cannot open /dev/null: {}", strerror(errno)));
+    }
     else {
         if (aBackupFile == backup_file::yes && aFilename.substr(0, 4) != "/dev") // allow writing to /dev/ without making backup attempt
             backup(aFilename);
         f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
         if (f < 0)
-            throw std::runtime_error(std::string("Cannot open ") + aFilename + ": " + strerror(errno));
+            throw std::runtime_error(fmt::format("Cannot open {}: {}", aFilename, strerror(errno)));
     }
     try {
         if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (string::ends_with(aFilename, ".xz") || string::ends_with(aFilename, ".gz")))) {
             const auto compressed = string::ends_with(aFilename, ".gz") ? gzip_compress(aData) : xz_compress(aData);
             if (::write(f, compressed.data(), compressed.size()) < 0)
-                throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
+                throw std::runtime_error(fmt::format("Cannot write {}: {}", aFilename, strerror(errno)));
         }
         else {
             if (::write(f, aData.data(), aData.size()) < 0)
-                throw std::runtime_error(std::string("Cannot write ") + aFilename + ": " + strerror(errno));
+                throw std::runtime_error(fmt::format("Cannot write {}: {}", aFilename, strerror(errno)));
         }
         if (f > 2)
             close(f);
