@@ -123,6 +123,8 @@ namespace acmacs
                 {
                     if constexpr (std::is_same_v<T, str>)
                         return has_value() && !get().empty();
+                    else if constexpr (std::is_same_v<T, double>)
+                        return has_value();
                     else
                         static_assert(std::is_same_v<T, void>, "operator bool not defined for this option type");
                 }
