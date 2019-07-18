@@ -110,7 +110,7 @@ namespace date
                 return result;
         }
         if (allow == allow_incomplete::yes) {
-            for (const char* fmt : {"%Y-00-00", "%Y-%m", "%Y%m", "%Y"}) {
+            for (const char* fmt : {"%Y-00-00", "%Y-%m-00", "%Y-%m", "%Y%m", "%Y"}) {
                 // date lib cannot parse incomplete date
                 const std::string_view src{source};
                 constexpr int invalid = 99999;

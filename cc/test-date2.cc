@@ -19,7 +19,7 @@ int main()
     int exit_code = 0;
     try {
         auto today = date::today();
-        fmt::print("{}\n", today);
+        fmt::print("today: [{}]\n", today);
         using pairs_t = std::vector<std::pair<const char*, date::year_month_day>>;
         for (auto& [source, expected] : pairs_t{{"05/04/17", 2017_y/5/4}, {"10/10/11", 2011_y/10/10}, {"9/11/2001", 2001_y/9/11}, {"9/11/88", 1988_y/9/11}, {"September 11, 2001", 2001_y/9/11}, {"September 11 2001", 2001_y/9/11}, {"Sep 11 2001", 2001_y/9/11}, {"2001-09-11", 2001_y/9/11}, {"13/10/11", 2011_y/10/13}}) {
             const auto dat = date::from_string(source);
@@ -39,9 +39,11 @@ int main()
         my_assert(date::months_between_dates(m1, m2) == -11, "months_between_dates(2018, 2017)");
         my_assert(date::months_between_dates(m2, m1) == 11, "months_between_dates(2017, 2018)");
 
-        const auto dat0 = date::from_string("2019-00-00", date::allow_incomplete::yes, date::throw_on_error::yes);
-        fmt::print(date::display(dat0, date::allow_incomplete::yes));
-
+        for (const char* incomplete_date : {"2019-00-00", "2019-03-00"}) {
+            const auto dat0 = date::from_string(incomplete_date, date::allow_incomplete::yes, date::throw_on_error::yes);
+            // fmt::print("[{}]\n", date::display(dat0, date::allow_incomplete::yes));
+            my_assert(date::display(dat0, date::allow_incomplete::yes) == std::string_view(incomplete_date), fmt::format("parsing incomplete date {}", incomplete_date));
+        }
     }
     catch (std::exception& err) {
         fmt::print(stderr, "{}\n", err);
