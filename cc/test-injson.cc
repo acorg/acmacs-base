@@ -1,7 +1,7 @@
 #include <stack>
 #include <vector>
 
-#include "acmacs-base/in-json.hh"
+#include "acmacs-base/in-json-parser.hh"
 #include "acmacs-base/read-file.hh"
 
 // ----------------------------------------------------------------------
