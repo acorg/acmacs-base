@@ -1,10 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <cstdlib>
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/sfinae.hh"
+#include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -215,6 +217,14 @@ namespace to_json
             template <typename... Args> object(Args&&... args) : object() { append(std::forward<Args>(args)...); }
 
             bool empty() const { return data_.size() == 2; }
+
+            template <typename K, typename V> static object from(const std::map<K, V>& src)
+            {
+                object result;
+                for (const auto& [key, val] : src)
+                    result.move_before_end(key_val{acmacs::to_string(key), val});
+                return result;
+            }
 
           private:
             template <typename Arg1, typename... Args> void append(Arg1&& arg1, Args&&... args)
