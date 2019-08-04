@@ -37,6 +37,7 @@ namespace acmacs
         uppercase() = default;
         template <typename S> uppercase(S&& source) : uppercased<struct uppercase_tag>(std::forward<S>(source)) {}
         operator std::string_view() const noexcept { return this->get(); }
+        char operator[](size_t pos) const { return this->get()[pos]; }
     };
 
     class lowercase : public lowercased<struct lowercase_tag>
@@ -45,6 +46,7 @@ namespace acmacs
         lowercase() = default;
         template <typename S> lowercase(S&& source) : lowercased<struct lowercase_tag>(std::forward<S>(source)) {}
         operator std::string_view() const noexcept { return this->get(); }
+        char operator[](size_t pos) const { return this->get()[pos]; }
     };
 
 } // namespace acmacs
