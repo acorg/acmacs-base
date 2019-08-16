@@ -19,12 +19,25 @@
 
 acmacs::file::read_access::read_access(std::string_view aFilename)
 {
-    if (fs::exists(aFilename)) {
-        len = fs::file_size(aFilename);
+    if (aFilename == "-") {
+        constexpr size_t chunk_size = 1024 * 100;
+        data_.resize(chunk_size);
+        ssize_t start = 0;
+        for (;;) {
+            if (const auto bytes_read = ::read(0, data_.data() + start, chunk_size); bytes_read > 0) {
+                start += bytes_read;
+                data_.resize(static_cast<size_t>(start));
+            }
+            else
+                break;
+        }
+    }
+    else if (fs::exists(aFilename)) {
+        len_ = fs::file_size(aFilename);
         fd = ::open(aFilename.data(), O_RDONLY);
         if (fd >= 0) {
-            mapped = reinterpret_cast<char*>(mmap(nullptr, len, PROT_READ, MAP_FILE|MAP_PRIVATE, fd, 0));
-            if (mapped == MAP_FAILED)
+            mapped_ = reinterpret_cast<char*>(mmap(nullptr, len_, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0));
+            if (mapped_ == MAP_FAILED)
                 throw cannot_read(::string::concat(aFilename, ": ", strerror(errno)));
         }
         else {
@@ -40,11 +53,12 @@ acmacs::file::read_access::read_access(std::string_view aFilename)
 // ----------------------------------------------------------------------
 
 acmacs::file::read_access::read_access(read_access&& other)
-    : fd{other.fd}, len{other.len}, mapped{other.mapped}
+    : fd{other.fd}, len_{other.len_}, mapped_{other.mapped_}, data_{other.data_}
 {
     other.fd = -1;
-    other.len = 0;
-    other.mapped = nullptr;
+    other.len_ = 0;
+    other.mapped_ = nullptr;
+    other.data_.clear();
 
 } // acmacs::file::read_access::read_access
 
@@ -52,9 +66,9 @@ acmacs::file::read_access::read_access(read_access&& other)
 
 acmacs::file::read_access::~read_access()
 {
-    if (fd >= 0) {
-        if (mapped)
-            munmap(mapped, len);
+    if (fd > 2) {
+        if (mapped_)
+            munmap(mapped_, len_);
         close(fd);
     }
 
@@ -65,12 +79,14 @@ acmacs::file::read_access::~read_access()
 acmacs::file::read_access& acmacs::file::read_access::operator=(read_access&& other)
 {
     fd = other.fd;
-    len = other.len;
-    mapped = other.mapped;
+    len_ = other.len_;
+    mapped_ = other.mapped_;
+    data_ = other.data_;
 
     other.fd = -1;
-    other.len = 0;
-    other.mapped = nullptr;
+    other.len_ = 0;
+    other.mapped_ = nullptr;
+    other.data_.clear();
 
     return *this;
 

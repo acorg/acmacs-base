@@ -39,15 +39,16 @@ namespace acmacs::file
         read_access(read_access&&);
         read_access& operator=(const read_access&) = delete;
         read_access& operator=(read_access&&);
-        operator std::string() const { return decompress_if_necessary({mapped, len}); }
-        size_t size() const { return len; }
-        const char* data() const { return mapped; }
-        bool valid() const { return mapped != nullptr; }
+        operator std::string() const { return mapped_ ? decompress_if_necessary({mapped_, len_}) : decompress_if_necessary(data_); }
+        size_t size() const { return mapped_ ? len_ : data_.size(); }
+        const char* data() const { return mapped_ ? mapped_ : data_.data(); }
+        bool valid() const { return mapped_ != nullptr || !data_.empty(); }
 
      private:
         int fd = -1;
-        size_t len = 0;
-        char* mapped = nullptr;
+        size_t len_ = 0;
+        char* mapped_ = nullptr;
+        std::string data_;
 
     }; // class read_access
 
