@@ -47,6 +47,7 @@ namespace acmacs
     // }; // class debug
 
 } // namespace acmacs
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
