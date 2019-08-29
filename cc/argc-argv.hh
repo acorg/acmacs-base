@@ -98,7 +98,8 @@ class argc_argv
 
     }; // class option
 
-    [[deprecated("use acmacs-base/argv.hh")]] argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
+    // [[deprecated("use acmacs-base/argv.hh")]]
+    argc_argv(int argc, const char* const argv[], std::initializer_list<option_setting> options, bool split_single_dash = true);
 
     const option& operator[](std::string aName) const;
 

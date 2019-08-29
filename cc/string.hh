@@ -187,6 +187,19 @@ namespace string
     inline std::string remove_spaces(const char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
     inline std::string remove_spaces(char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
 
+    // changes subequent spaces into one space
+    template <typename S> inline std::string collapse_spaces(const S& source)
+    {
+        return _internal::copy_if(source.begin(), source.end(), [prev_was_space=false](auto c) mutable -> bool {
+            const auto space = std::isspace(c);
+            const auto result = !(prev_was_space && space);
+            prev_was_space = space;
+            return result;
+        });
+    }
+    inline std::string collapse_spaces(const char* source) { return collapse_spaces(std::string_view(source, std::strlen(source))); }
+    inline std::string collapse_spaces(char* source) { return collapse_spaces(std::string_view(source, std::strlen(source))); }
+
       // ----------------------------------------------------------------------
       // ends_with
       // ----------------------------------------------------------------------
