@@ -60,6 +60,7 @@ namespace to_json
           public:
             enum class compact_output { no, yes };
             enum class embed_space { no, yes };
+            enum class escape_double_quotes { no, yes };
 
             std::string compact(embed_space space = embed_space::no) const
             {
@@ -135,10 +136,14 @@ namespace to_json
         class val : public json
         {
           public:
-            template <typename T> inline val(T&& a_val)
+            template <typename T> inline val(T&& a_val, escape_double_quotes esc = escape_double_quotes::no)
             {
-                if constexpr (acmacs::sfinae::is_string_v<T>)
-                    push_back(fmt::format("\"{}\"", std::forward<T>(a_val)));
+                if constexpr (acmacs::sfinae::is_string_v<T>) {
+                    if (esc == escape_double_quotes::yes)
+                        push_back(fmt::format("\"{}\"", escape(a_val)));
+                    else
+                        push_back(fmt::format("\"{}\"", std::forward<T>(a_val)));
+                }
                 else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>>)
                     push_back(fmt::format("{}", std::forward<T>(a_val)));
                 else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
@@ -146,14 +151,36 @@ namespace to_json
                 else
                     static_assert(std::is_same_v<int, std::decay_t<T>>, "invalid arg type for to_json::val");
             }
+
+            static inline std::string escape(std::string_view str)
+            {
+                std::string result(static_cast<size_t>(str.size() * 1.2), ' ');
+                auto output = std::begin(result);
+                for (auto input = std::begin(str); input != std::end(str); ++input, ++output) {
+                    switch (*input) {
+                      case '"':
+                          *output++ = '\\';
+                          *output = *input;
+                          break;
+                      case '\n':
+                          *output++ = '\\';
+                          *output = 'n';
+                          break;
+                      default:
+                          *output = *input;
+                          break;
+                    }
+                }
+                return result;
+            }
         };
 
         class key_val : public json
         {
           public:
-            template <typename T> key_val(std::string_view key, T&& value)
+            template <typename T> key_val(std::string_view key, T&& value, escape_double_quotes esc = escape_double_quotes::no)
             {
-                move(val(key));
+                move(val(key, esc));
                 push_back(':');
                 if constexpr (std::is_convertible_v<std::decay_t<T>, json>)
                     move(std::move(value));
@@ -170,7 +197,7 @@ namespace to_json
             template <typename... Args> array(Args&&... args) : array() { append(std::forward<Args>(args)...); }
 
             template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>>
-            array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no)
+            array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no, escape_double_quotes esc = escape_double_quotes::no)
                 : array()
             {
                 for (; first != last; ++first) {
@@ -178,17 +205,17 @@ namespace to_json
                     if constexpr (std::is_convertible_v<std::decay_t<decltype(value)>, json>)
                         move_before_end(std::move(value));
                     else
-                        move_before_end(val(std::move(value)));
+                        move_before_end(val(std::move(value), esc));
                 }
                 if (co == compact_output::yes)
                     make_compact();
             }
 
-            template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, compact_output co = compact_output::no)
+            template <typename Iterator, typename = acmacs::sfinae::iterator_t<Iterator>> array(Iterator first, Iterator last, compact_output co = compact_output::no, escape_double_quotes esc = escape_double_quotes::no)
                 : array()
             {
                 for (; first != last; ++first)
-                    move_before_end(val(*first));
+                    move_before_end(val(*first, esc));
                 if (co == compact_output::yes)
                     make_compact();
             }
