@@ -14,7 +14,11 @@ namespace in_json
         class error : public std::runtime_error
         {
           public:
-            template <typename S> error(size_t line_no, ssize_t column_no, S&& message) : std::runtime_error(fmt::format("in_json error at {}:{}: {}", line_no, column_no, message)) {}
+            template <typename S> error(size_t a_line_no, ssize_t a_column_no, S&& a_message) : std::runtime_error(fmt::format("in_json error at {}:{}: {}", a_line_no, a_column_no, a_message)), line_no{a_line_no}, column_no{a_column_no}, message{a_message} {}
+
+            size_t line_no;
+            ssize_t column_no;
+            std::string message;
         };
 
         class parse_error : public std::runtime_error
