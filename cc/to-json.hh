@@ -166,6 +166,9 @@ namespace to_json
                           *output++ = '\\';
                           *output = 'n';
                           break;
+                      case '\t':
+                          *output = ' '; // old seqdb reader cannot read tabs
+                          break;
                       default:
                           *output = *input;
                           break;
