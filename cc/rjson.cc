@@ -109,6 +109,8 @@ namespace rjson
                         case '\n':
                             newline(aParser);
                             break;
+                        case '#': // JSON extension: comment until end of line
+                            return make_comment_handler();
                         default:
                             unexpected(aSymbol, aParser);
                     }
@@ -118,9 +120,36 @@ namespace rjson
                 virtual value value_move() = 0; //{ return null{}; }
                 virtual void subvalue(value&& /*aSubvalue*/, Parser& /*aParser*/) {}
 
+              private:
+                HandlingResult make_comment_handler();
+
             }; // class SymbolHandler
 
             // --------------------------------------------------
+
+            class CommentHandler : public SymbolHandler
+            {
+              public:
+                HandlingResult handle(std::string_view::value_type aSymbol, Parser& aParser) override
+                {
+                    if (aSymbol == '\n') {
+                        newline(aParser);
+                        return StateTransitionPop{};
+                    }
+                    else
+                        return StateTransitionNone{};
+                }
+
+                value value_move() override { return {}; }
+
+            }; // class StringEscapeHandler
+
+            inline HandlingResult SymbolHandler::make_comment_handler()
+            {
+                return std::make_unique<CommentHandler>();
+            }
+
+            // ----------------------------------------------------------------------
 
             class StringEscapeHandler : public SymbolHandler
             {
@@ -317,7 +346,9 @@ namespace rjson
                                     result = StateTransitionPop{};
                                     break;
                                 case Expected::KeyAfterComma:
-                                    error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                                    // error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                                    result = StateTransitionPop{}; // JSON extension: allow comma at the end of object
+                                    break;
                                 case Expected::Value:
                                 case Expected::Colon:
                                     unexpected(aSymbol, aParser);
@@ -414,7 +445,9 @@ namespace rjson
                                     result = StateTransitionPop{};
                                     break;
                                 case Expected::ValueAfterComma:
-                                    error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                                    // error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget to remove last comma?");
+                                    result = StateTransitionPop{}; // JSON extension: allow comma at the end of array
+                                    break;
                             }
                             break;
                         case ',':
@@ -433,6 +466,9 @@ namespace rjson
                             break;
                         case ' ':
                         case '\t':
+                            break;
+                        case '#': // JSON extension: comment until end of line
+                            result = SymbolHandler::handle(aSymbol, aParser);
                             break;
                         default:
                             switch (expected_) {
