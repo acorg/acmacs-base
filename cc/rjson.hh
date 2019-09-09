@@ -917,7 +917,7 @@ namespace rjson
 
         inline value& value::update(const value& to_merge)
         {
-            auto visitor = [this](auto& arg1, auto&& arg2) {
+            auto visitor = [this,&to_merge](auto& arg1, auto&& arg2) {
                 using T1 = std::decay_t<decltype(arg1)>;
                 using T2 = std::decay_t<decltype(arg2)>;
                 if constexpr (std::is_same_v<T1, T2>) {
@@ -935,7 +935,7 @@ namespace rjson
                 else if constexpr (std::is_same_v<T1, const_null>)
                     throw merge_error(std::string{"cannot update ConstNull"});
                 else
-                    throw merge_error(std::string{"cannot merge two rjson values of different types"}); // : %" + to_string(*this) + "% and %" + to_string(arg2));
+                    throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", *this, to_merge));
             };
 
             std::visit(visitor, value_, to_merge.value_);
