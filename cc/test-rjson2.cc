@@ -38,7 +38,7 @@ static const std::pair<std::vector<const char*>, std::variant<const char*, rjson
     {{R"( { "a" : true}  )"}, R"({"a":true})"},
     {{R"( { "a" : false}  )"}, R"({"a":false})"},
     {{R"( { "a" : null}  )"}, R"({"a":null})"},
-    {{R"( { "a" : null,}  )"}, rjson::v2::parse_error(1, 15, "unexpected } -- did you forget to remove last comma?")},
+    {{R"( { "a" : null,}  )"}, R"({"a":null})"}, // JSON extension: allow comma at the end of object // rjson::v2::parse_error(1, 15, "unexpected } -- did you forget to remove last comma?")},
     {{R"( { "a" : null "b": false}  )"}, rjson::v2::parse_error(1, 15, "unexpected \" -- did you forget comma?")},
     {{R"( { "a" : null  ,  ,  "b": false}  )"}, rjson::v2::parse_error(1, 19, "unexpected comma -- two successive commas?")},
     {{R"( { "a" : {"b" : 1  , "c"  : "c"  , "sub":{"xsub": false},"d": null  }}  )"}, R"({"a":{"b":1,"c":"c","d":null,"sub":{"xsub":false}}})"},
