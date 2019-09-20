@@ -76,6 +76,7 @@ class Color
     static std::vector<std::string> distinct_s(distinct_t dtype = distinct_t::Ana);
     static std::vector<Color> distinct(distinct_t dtype = distinct_t::Ana);
     static Color distinct(size_t offset, distinct_t dtype = distinct_t::Ana);
+    static Color perceptually_uniform_heatmap(size_t total_colors, size_t color_index);
 
  private:
       // 4 bytes: most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
