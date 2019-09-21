@@ -389,9 +389,12 @@ Color Color::distinct(size_t offset, distinct_t dtype)
 
 Color Color::perceptually_uniform_heatmap(size_t total_colors, size_t color_index)
 {
-    const auto step = static_cast<double>(_internal::sScaleColorPerceptualViridis.size()) / static_cast<double>(total_colors);
+    const auto step = static_cast<double>(_internal::sScaleColorPerceptualViridis.size()) / static_cast<double>(total_colors - 1);
     const auto offset = static_cast<size_t>(std::lround(color_index * step));
-    return _internal::sScaleColorPerceptualViridis[offset];
+    if (offset >= _internal::sScaleColorPerceptualViridis.size())
+        return _internal::sScaleColorPerceptualViridis.back();
+    else
+        return _internal::sScaleColorPerceptualViridis[offset];
 }
 
 // ----------------------------------------------------------------------
