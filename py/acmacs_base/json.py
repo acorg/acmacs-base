@@ -109,7 +109,10 @@ loads = json.loads
 
 def read(path :Path):
     from .files import read_text
-    return loads(read_text(path))
+    try:
+        return loads(read_text(path))
+    except json.decoder.JSONDecodeError as err:
+        raise RuntimeError(f"cannot parse json in \"{path}\": {err}")
 
 read_json = read
 
