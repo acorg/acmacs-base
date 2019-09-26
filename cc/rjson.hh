@@ -1072,7 +1072,7 @@ namespace rjson
 
         // ----------------------------------------------------------------------
 
-        inline void set_field_if_not_empty(value& target, const char* field_name, std::string source)
+        inline void set_field_if_not_empty(value& target, const char* field_name, std::string_view source)
         {
             if (!source.empty())
                 target[field_name] = source;

@@ -76,9 +76,19 @@ namespace acmacs
 
         bool empty() const noexcept { return this->get().empty(); }
         size_t size() const noexcept { return this->get().size(); }
-        explicit operator std::string_view() const noexcept { return this->get(); }
+        char operator[](size_t pos) const { return this->get()[pos]; }
+        size_t find(const char* s, size_t pos = 0) const noexcept { return this->get().find(s, pos); }
+        size_t find(char ch, size_t pos = 0) const noexcept { return this->get().find(ch, pos); }
+        constexpr operator std::string_view() const noexcept { return this->get(); }
+        int compare(const named_string_t<Tag>& rhs) const { return ::string::compare(this->get(), rhs.get()); }
+        void assign(std::string_view source) { this->get().assign(source); }
     };
 
+    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() == rhs.get(); }
+    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const std::string& rhs) noexcept { return lhs.get() == rhs; }
+    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const char* rhs) noexcept { return lhs.get() == rhs; }
+    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, std::string_view rhs) noexcept { return lhs.get() == rhs; }
+    template <typename T, typename R> constexpr bool operator!=(const named_string_t<T>& lhs, R&& rhs) noexcept { return !operator==(lhs, std::forward<R>(rhs)); }
     template <typename T> constexpr bool operator<(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
 
 } // namespace acmacs

@@ -9,7 +9,7 @@
 
 // ----------------------------------------------------------------------
 
-inline std::string name_encode(std::string aName)
+inline std::string name_encode(std::string_view aName)
 {
       // static constexpr const char to_encode[] = ":;@=?[]\\";
     static constexpr const char to_encode[] = "% :()!*';@&=+$,?#[]"; // the same as in ../py/acmacs_base/encode_name.py
@@ -38,7 +38,7 @@ namespace acmacs::detail
     }
 }
 
-inline std::string name_decode(std::string aName)
+inline std::string name_decode(std::string_view aName)
 {
     std::string result(aName.size(), ' ');
     std::string::size_type output_pos = 0;

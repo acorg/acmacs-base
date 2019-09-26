@@ -23,6 +23,8 @@
 namespace std
 {
     inline unsigned long stoul(std::string_view src) { return stoul(std::string(src)); }
+    inline unsigned long stoul(const std::string& src, int base) { return stoul(src, nullptr, base); }
+    inline unsigned long stoul(std::string_view src, int base) { return stoul(std::string(src), nullptr, base); }
 }
 
 // ----------------------------------------------------------------------
@@ -59,22 +61,6 @@ namespace string
         }
     } // namespace _internal
 
-    // inline std::string& strip(std::string& source)
-    // {
-    //     auto be = _internal::strip_begin_end<std::string::iterator>(source);
-    //     source.erase(be.second, source.end()); // erase at the end first
-    //     source.erase(source.begin(), be.first); // invalidates be.second!
-    //     return source;
-    // }
-
-    // inline std::string strip(std::string&& source)
-    // {
-    //     auto be = _internal::strip_begin_end<std::string::iterator>(source);
-    //     source.erase(be.second, source.end()); // erase at the end first
-    //     source.erase(source.begin(), be.first); // invalidates be.second!
-    //     return source;
-    // }
-
     inline std::string strip(std::string source)
     {
         auto be = _internal::strip_begin_end<std::string::const_iterator>(source);
@@ -89,7 +75,7 @@ namespace string
 
       // ----------------------------------------------------------------------
 
-    template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> inline std::string replace(S source, std::string look_for, std::string replace_with)
+    inline std::string replace(std::string_view source, std::string_view look_for, std::string_view replace_with)
     {
         std::string result;
         std::string::size_type start = 0;
@@ -108,13 +94,6 @@ namespace string
         return result;
     }
 
-    inline std::string replace(std::string source, char look_for, char replace_with)
-    {
-        for (std::string::size_type pos = source.find(look_for); pos != std::string::npos; pos = source.find(look_for, pos + 1))
-            source[pos] = replace_with;
-        return source;
-    }
-
     inline std::string replace(std::string_view source, char look_for, char replace_with)
     {
         std::string result(source.size(), ' ');
@@ -122,19 +101,20 @@ namespace string
         return result;
     }
 
-    template <typename ... Args> inline std::string replace(std::string source, std::string l1, std::string r1, std::string l2, std::string r2, Args ... args)
+    template <typename ... Args> inline std::string replace(std::string_view source, std::string_view l1, std::string_view r1, std::string_view l2, std::string_view r2, Args ... args)
     {
         return replace(replace(source, l1, r1), l2, r2, args ...);
     }
 
-    inline std::string replace_spaces(std::string source, char replacement)
+    inline std::string replace_spaces(std::string_view source, char replacement)
     {
-        std::transform(source.begin(), source.end(), source.begin(), [replacement](char c) {
+        std::string result(source.size(), replacement);
+        std::transform(source.begin(), source.end(), result.begin(), [replacement](char c) {
             if (std::isspace(c))
                 c = replacement;
             return c;
         });
-        return source;
+        return result;
     }
 
     // ----------------------------------------------------------------------
@@ -163,15 +143,6 @@ namespace string
     template <typename S> inline std::string upper(const S& source) { return _internal::transform(source.begin(), source.end(), ::toupper); }
     inline std::string upper(const char* source) { return _internal::transform(source, source + std::strlen(source), ::toupper); }
     inline std::string upper(char* source) { return upper(const_cast<const char*>(source)); }
-
-    // inline std::string& capitalize(std::string& source)
-    // {
-    //     if (!source.empty()) {
-    //         std::transform(source.begin(), source.begin() + 1, source.begin(), ::toupper);
-    //         std::transform(source.begin() + 1, source.end(), source.begin() + 1, ::tolower);
-    //     }
-    //     return source;
-    // }
 
     template <typename S> inline std::string capitalize(const S& source)
     {
@@ -241,7 +212,7 @@ namespace string
       // join
       // ----------------------------------------------------------------------
 
-    template <typename Iterator> inline std::string join(std::string separator, Iterator first, Iterator last)
+    template <typename Iterator> inline std::string join(std::string_view separator, Iterator first, Iterator last)
     {
         std::string result;
         if (first != last) {
@@ -260,7 +231,7 @@ namespace string
         return result;
     }
 
-    template <typename Iterator, typename Converter> inline std::string join(std::string separator, Iterator first, Iterator last, Converter convert)
+    template <typename Iterator, typename Converter> inline std::string join(std::string_view separator, Iterator first, Iterator last, Converter convert)
     {
         std::string result;
         for ( ; first != last; ++first) {
@@ -274,22 +245,17 @@ namespace string
         return result;
     }
 
-    template <typename Collection> inline std::string join(std::string separator, const Collection& values)
+    template <typename Collection> inline std::string join(std::string_view separator, const Collection& values)
     {
         return join(separator, std::begin(values), std::end(values));
     }
 
-    inline std::string join(std::string separator, std::initializer_list<std::string>&& values)
+    inline std::string join(std::string_view separator, std::initializer_list<std::string_view>&& values)
     {
         return join(separator, std::begin(values), std::end(values));
     }
 
-    inline std::string join(std::string separator, std::initializer_list<std::string_view>&& values)
-    {
-        return join(separator, std::begin(values), std::end(values));
-    }
-
-    inline std::string join(std::initializer_list<std::string>&& parts)
+    inline std::string join(std::initializer_list<std::string_view>&& parts)
     {
         return join(" ", std::begin(parts), std::end(parts));
     }
