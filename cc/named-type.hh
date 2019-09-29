@@ -105,6 +105,8 @@ namespace acmacs
         constexpr auto end() { return this->get().end(); }
         constexpr auto rbegin() { return this->get().rbegin(); }
         constexpr auto rend() { return this->get().rend(); }
+        constexpr auto size() const { return this->get().size(); }
+        constexpr auto operator[](size_t index) const { return this->get()[index]; }
 
         // for std::back_inserter
         constexpr void push_back(const T& val) { this->get().push_back(val); }
@@ -122,6 +124,18 @@ namespace acmacs
                 insert_if_not_present(val);
         }
     };
+
+    template <typename Tag> constexpr bool operator<(const named_vector_t<std::string, Tag>& lhs, const named_vector_t<std::string, Tag>& rhs) noexcept
+    {
+        const auto sz = std::min(lhs.size(), rhs.size());
+        for (size_t i = 0; i < sz; ++i) {
+            if (!(lhs[i] == rhs[i]))
+                return lhs[i] < rhs[i];
+        }
+        if (lhs.size() < rhs.size())
+            return true;
+        return false;
+    }
 
 } // namespace acmacs
 
