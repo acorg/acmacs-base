@@ -69,6 +69,22 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
+    template <typename Tag> class named_double_t : public named_t<double, Tag>
+    {
+      public:
+        template <typename T> explicit constexpr named_double_t(T&& value) : named_t<double_t, Tag>(static_cast<double>(std::forward<T>(value))) {}
+
+        constexpr auto& operator++() { ++this->get(); return *this; }
+        constexpr auto& operator--() { --this->get(); return *this; }
+    };
+
+    template <typename T> constexpr bool operator<(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename T> constexpr bool operator<=(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() <= rhs.get(); }
+    template <typename T> constexpr bool operator>(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() > rhs.get(); }
+    template <typename T> constexpr bool operator>=(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() >= rhs.get(); }
+
+    // ----------------------------------------------------------------------
+
     template <typename Tag> class named_string_t : public named_t<std::string, Tag>
     {
       public:
@@ -105,8 +121,10 @@ namespace acmacs
         constexpr auto end() { return this->get().end(); }
         constexpr auto rbegin() { return this->get().rbegin(); }
         constexpr auto rend() { return this->get().rend(); }
+        constexpr auto empty() const { return this->get().empty(); }
         constexpr auto size() const { return this->get().size(); }
         constexpr auto operator[](size_t index) const { return this->get()[index]; }
+        constexpr auto& operator[](size_t index) { return this->get()[index]; }
 
         // for std::back_inserter
         constexpr void push_back(const T& val) { this->get().push_back(val); }
