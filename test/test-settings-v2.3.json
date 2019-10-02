@@ -1,0 +1,11 @@
+{ "_":"-*- js-indent-level: 2 -*-",
+  "  version": "test-settings-v2",
+  "main": [
+    "my_set",
+    "report",
+  ],
+  "report": [
+      {"N": ":print-environment-key-value", "key": "red", "value": "{red}"},
+      {"N": ":print-environment-key-value", "key": "a-number", "value": "{a-number}"},
+  ]
+}

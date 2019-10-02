@@ -11,6 +11,10 @@ int main()
             acmacs::settings::Settings s1({"test-settings-v2.1.json"});
             s1.apply();
         }
+        {
+            acmacs::settings::Settings s2({"test-settings-v2.2.json", "test-settings-v2.3.json"});
+            s2.apply();
+        }
     }
     catch (std::exception& err) {
         fmt::print(stderr, "ERROR: {}\n", err);

@@ -14,3 +14,5 @@
 "lab": "vidrl"
 "a-number": 42.42
 "lab+a-number+russia": "vidrl+42.42+red"
+"red": "red"
+"a-number": 42.42
