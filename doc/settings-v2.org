@@ -1,0 +1,20 @@
+# Time-stamp: <2019-10-02 17:39:29 eu>
+
+* Built in commands in settings-v2
+
+-- prints environment at all levels
+{"N": ":print-all-environment"} 
+
+-- prints string at "key" followed by colon followed by substituted "value"
+{"N": ":print-environment-key-value", "key": "continent:russia", "value": "{continent:russia}"}
+
+* COMMENT local vars ======================================================================
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+#+STARTUP: showall indent
+Local Variables:
+eval: (auto-fill-mode 0)
+eval: (add-hook 'before-save-hook 'time-stamp)
+eval: (set (make-local-variable 'org-confirm-elisp-link-function) nil)
+End:
