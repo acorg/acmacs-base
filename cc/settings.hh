@@ -41,8 +41,12 @@ namespace acmacs::settings
                 void print() const;
                 void print_key_value() const;
 
+                rjson::value substitute(std::string_view source) const;
+
               private:
                 std::vector<acmacs::flat_map_t<std::string, rjson::value>> data_;
+
+                rjson::value substitute(const rjson::value& source) const;
             };
 
             std::vector<rjson::value> data_;

@@ -1,3 +1,5 @@
+#include <regex>
+
 #include "acmacs-base/settings.hh"
 #include "acmacs-base/enumerate.hh"
 
@@ -27,6 +29,61 @@ namespace acmacs::settings::inline v2
 
 // ----------------------------------------------------------------------
 
+inline rjson::value acmacs::settings::v2::Settings::Environment::substitute(const rjson::value& source) const
+{
+    return std::visit([this,&source](auto&& arg) -> rjson::value {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>)
+            return substitute(std::string_view{arg});
+        else
+            return source;
+    }, source.val_());
+
+} // acmacs::settings::v2::Settings::Environment::substitute
+
+// ----------------------------------------------------------------------
+
+rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string_view source) const
+{
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#endif
+
+    static std::regex re{"\\{([^\\}]+)\\}"};
+
+#pragma GCC diagnostic pop
+
+    if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
+        if (const auto& found1 = get(m1.str(1)); found1.is_const_null()) {
+            throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
+        }
+        else if (m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) { // entire source matched
+            return found1;
+        }
+        else {
+            std::string result = fmt::format("{}{}{}", source.substr(0, static_cast<size_t>(m1.position(0))), found1, source.substr(static_cast<size_t>(m1.position(0) + m1.length(0))));
+            std::smatch m2;
+            while (std::regex_search(result, m2, re)) {
+                if (const auto& found2 = get(m2.str(1)); found2.is_const_null())
+                    throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
+                else
+                    result = fmt::format("{}{}{}",
+                                         result.substr(0, static_cast<size_t>(m2.position(0))),
+                                         found2.is_string() ? static_cast<std::string>(found2) : rjson::to_string(found2),
+                                         result.substr(static_cast<size_t>(m2.position(0) + m2.length(0))));
+            }
+            return result;
+        }
+    }
+    else
+        return std::string{source};
+
+} // acmacs::settings::v2::Settings::Environment::substitute
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& filenames)
 {
     for (const auto& filename : filenames)
@@ -42,13 +99,14 @@ void acmacs::settings::v2::Settings::apply(std::string_view name) const
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
-        if (const auto& val1 = environment_.get(name); !val1.is_const_null()) {
+        const auto substituted_name = static_cast<std::string>(environment_.substitute(name));
+        if (const auto& val1 = environment_.get(substituted_name); !val1.is_const_null()) {
             apply(val1);
         }
-        else if (const auto& val2 = get(name); !val2.is_const_null())
+        else if (const auto& val2 = get(substituted_name); !val2.is_const_null())
             apply(val2);
-        else if (!apply_built_in(name))
-            throw error(fmt::format("settings entry not found: \"{}\"", name));
+        else if (!apply_built_in(substituted_name))
+            throw error(fmt::format("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name));
     }
 
 } // acmacs::settings::v2::Settings::apply
@@ -141,7 +199,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
     fmt::print("INFO: Settings::Environment {}\n", data_.size());
     for (auto [level, entries] : acmacs::enumerate(data_)) {
         for (const auto& entry : entries)
-            fmt::print("    {} \"{}\": {}\n", level, entry.first, entry.second);
+            fmt::print("    {} \"{}\": {}\n", level, entry.first, substitute(entry.second));
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
@@ -150,11 +208,12 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("INFO: Settings::Environment::print_key_value {}: {}\n", get("key"), get("value"));
+    fmt::print("INFO: Settings::Environment::print_key_value {}: {}\n", get("key"), substitute(get("value")));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
 
 // ----------------------------------------------------------------------
+
 
 
 // ----------------------------------------------------------------------

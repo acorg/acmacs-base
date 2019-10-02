@@ -14,5 +14,6 @@
       {"?N": ":print-environment-key-value"},
       {"N": ":print-environment-key-value", "key": "continent:russia", "value": "{continent:russia}"},
       {"N": ":print-environment-key-value", "key": "a-number", "value": "{a-number}"},
+      {"N": ":print-environment-key-value", "key": "a-number russia", "value": "{a-number}+{continent:russia}"},
   ]
 }
