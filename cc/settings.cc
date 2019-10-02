@@ -63,16 +63,17 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
             return found1;
         }
         else {
-            std::string result = fmt::format("{}{}{}", source.substr(0, static_cast<size_t>(m1.position(0))), found1, source.substr(static_cast<size_t>(m1.position(0) + m1.length(0))));
+            const auto replace = [](const auto& src, size_t prefix, const rjson::value& infix, size_t suffix) {
+                return fmt::format("{}{}{}", src.substr(0, prefix), infix.is_string() ? static_cast<std::string>(infix) : rjson::to_string(infix), src.substr(suffix));
+            };
+
+            std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
             std::smatch m2;
             while (std::regex_search(result, m2, re)) {
                 if (const auto& found2 = get(m2.str(1)); found2.is_const_null())
                     throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
                 else
-                    result = fmt::format("{}{}{}",
-                                         result.substr(0, static_cast<size_t>(m2.position(0))),
-                                         found2.is_string() ? static_cast<std::string>(found2) : rjson::to_string(found2),
-                                         result.substr(static_cast<size_t>(m2.position(0) + m2.length(0))));
+                    result = replace(result, static_cast<size_t>(m2.position(0)), found2, static_cast<size_t>(m2.position(0) + m2.length(0)));
             }
             return result;
         }
@@ -208,7 +209,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("INFO: Settings::Environment::print_key_value {}: {}\n", get("key"), substitute(get("value")));
+    fmt::print("{}: {}\n", get("key"), substitute(get("value")));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
 
