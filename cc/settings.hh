@@ -17,10 +17,11 @@ namespace acmacs::settings
         class Settings
         {
           public:
-            Settings() { environment_.emplace(); }
-            Settings(const std::vector<std::string_view>& filenames) : Settings() { load(filenames); }
+            Settings() = default;
+            Settings(const std::vector<std::string_view>& filenames) { load(filenames); }
             virtual ~Settings() = default;
             void load(const std::vector<std::string_view>& filenames);
+
             virtual void apply(std::string_view name = "main") const;
 
           protected:
@@ -28,10 +29,26 @@ namespace acmacs::settings
             void apply(const rjson::value& entry) const;
 
           private:
+            class Environment
+            {
+              public:
+                Environment() { data_.emplace(); }
+
+                const rjson::value& get(std::string_view key) const;
+                void push() { data_.emplace(); }
+                void pop() { data_.pop(); }
+                void add(const std::string& key, const rjson::value& val) { data_.top().emplace_or_replace(key, val); }
+
+              private:
+                std::stack<acmacs::flat_map_t<std::string, rjson::value>> data_;
+            };
+
             std::vector<rjson::value> data_;
-            mutable std::stack<acmacs::flat_map_t<std::string, rjson::value>> environment_;
+            mutable Environment environment_;
 
             void push_and_apply(const rjson::object& entry) const;
+
+            friend class Subenvironment;
         };
     }
 }

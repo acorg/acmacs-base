@@ -2,6 +2,30 @@
 
 // ----------------------------------------------------------------------
 
+namespace acmacs::settings::inline v2
+{
+    class Subenvironment
+    {
+      public:
+        Subenvironment(Settings::Environment& env, bool push) : env_{env}, push_{push}
+        {
+            if (push_)
+                env_.push();
+        }
+        ~Subenvironment()
+        {
+            if (push_)
+                env_.pop();
+        }
+
+      private:
+        Settings::Environment env_;
+        const bool push_;
+    };
+} // namespace acmacs::settings::inlinev2
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& filenames)
 {
     for (const auto& filename : filenames)
@@ -53,16 +77,13 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
             const std::string_view command = command_v;
-            if ( command != "set")
-                this->environment_.emplace();
+            Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N")
-                    this->environment_.top().emplace_or_replace(key, val);
+                    environment_.add(key, val);
             });
-            if (command != "set") {
+            if (command != "set")
                 apply(command);
-                this->environment_.pop();
-            }
         }
         else if (const auto& commented_command_v = entry.get("?N"); !commented_command_v.is_const_null()) {
             // command is commented out
