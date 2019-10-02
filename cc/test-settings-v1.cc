@@ -1,37 +1,37 @@
 #include <iostream>
 
-#include "acmacs-base/settings.hh"
+#include "acmacs-base/settings-v1.hh"
 
 // ----------------------------------------------------------------------
 
-struct AAAtPos : public acmacs::settings::object
+struct AAAtPos : public acmacs::settings::v1::object
 {
-    acmacs::settings::field<size_t>      diverse_index_threshold{this, "diverse_index_threshold", 3};
-    acmacs::settings::field<double>      line_length{this, "line_length", 0.5};
-    acmacs::settings::field<bool>        report_most_diverse_positions{this, "report_most_diverse_positions", false};
-    acmacs::settings::field<std::string> comment{this, "comment"};
+    acmacs::settings::v1::field<size_t>      diverse_index_threshold{this, "diverse_index_threshold", 3};
+    acmacs::settings::v1::field<double>      line_length{this, "line_length", 0.5};
+    acmacs::settings::v1::field<bool>        report_most_diverse_positions{this, "report_most_diverse_positions", false};
+    acmacs::settings::v1::field<std::string> comment{this, "comment"};
 
-    using acmacs::settings::object::object;
+    using acmacs::settings::v1::object::object;
 };
 
-struct Mod : public acmacs::settings::object
+struct Mod : public acmacs::settings::v1::object
 {
-    acmacs::settings::field<std::string> name{this, "N"};
-    acmacs::settings::field<double>      d1{this, "d1", 1.0/8.0};
+    acmacs::settings::v1::field<std::string> name{this, "N"};
+    acmacs::settings::v1::field<double>      d1{this, "d1", 1.0/8.0};
 
-    using acmacs::settings::object::object;
+    using acmacs::settings::v1::object::object;
 };
 
-struct Settings : public acmacs::settings::toplevel
+struct Settings : public acmacs::settings::v1::toplevel
 {
-    acmacs::settings::field<std::string>       version{this, "  version", "signature-page-settings-v4"};
-    acmacs::settings::field_object<AAAtPos>    aa_at_pos{this, "aa_at_pos"};
-    acmacs::settings::field_array<double>      viewport{this, "viewport", {0.125, 0.25, 122}};
-    acmacs::settings::field_array_of<Mod>      mods{this, "mods"};
-    acmacs::settings::field<acmacs::Size>      size{this, "size", {7, 8}};
-    acmacs::settings::field<acmacs::Offset>    offset{this, "offset", {-1, 111}};
-    acmacs::settings::field<Color>             fill{this, "fill", "cornflowerblue"};
-    acmacs::settings::field<acmacs::TextStyle> text_style{this, "text_style", {"monospace"}};
+    acmacs::settings::v1::field<std::string>       version{this, "  version", "signature-page-settings-v4"};
+    acmacs::settings::v1::field_object<AAAtPos>    aa_at_pos{this, "aa_at_pos"};
+    acmacs::settings::v1::field_array<double>      viewport{this, "viewport", {0.125, 0.25, 122}};
+    acmacs::settings::v1::field_array_of<Mod>      mods{this, "mods"};
+    acmacs::settings::v1::field<acmacs::Size>      size{this, "size", {7, 8}};
+    acmacs::settings::v1::field<acmacs::Offset>    offset{this, "offset", {-1, 111}};
+    acmacs::settings::v1::field<Color>             fill{this, "fill", "cornflowerblue"};
+    acmacs::settings::v1::field<acmacs::TextStyle> text_style{this, "text_style", {"monospace"}};
 };
 
 // ----------------------------------------------------------------------

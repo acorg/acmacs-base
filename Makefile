@@ -10,7 +10,7 @@ TARGETS = \
   $(DIST)/test-string-split \
   $(DIST)/test-date2 \
   $(DIST)/test-double-to-string \
-  $(DIST)/test-settings \
+  $(DIST)/test-settings-v1 \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
   $(DIST)/test-read-file

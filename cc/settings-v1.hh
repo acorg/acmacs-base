@@ -18,7 +18,7 @@
 
 namespace acmacs::settings
 {
-    inline namespace v1
+    namespace v1
     {
         class field_base;
         class object;
