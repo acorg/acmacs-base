@@ -41,7 +41,7 @@ TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = $(L_BOOST) -lboost_date_time $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(CXX_LIBS)
+ACMACS_BASE_LDLIBS = $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(CXX_LIBS)
 
 # ----------------------------------------------------------------------
 
