@@ -39,6 +39,7 @@ namespace acmacs::settings
                 size_t size() const { return data_.size(); }
                 void add(const std::string& key, const rjson::value& val) { data_.rbegin()->emplace_or_replace(key, val); }
                 void print() const;
+                void print_key_value() const;
 
               private:
                 std::vector<acmacs::flat_map_t<std::string, rjson::value>> data_;

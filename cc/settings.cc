@@ -57,8 +57,12 @@ void acmacs::settings::v2::Settings::apply(std::string_view name) const
 
 bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 {
-    if (name == "print-environment") {
+    if (name == ":print-all-environment") {
         environment_.print();
+        return true;
+    }
+    else if (name == ":print-environment-key-value") {
+        environment_.print_key_value();
         return true;
     }
     return false;
@@ -141,6 +145,14 @@ void acmacs::settings::v2::Settings::Environment::print() const
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::Environment::print_key_value() const
+{
+    fmt::print("INFO: Settings::Environment::print_key_value {}: {}\n", get("key"), get("value"));
+
+} // acmacs::settings::v2::Settings::Environment::print_value
 
 // ----------------------------------------------------------------------
 
