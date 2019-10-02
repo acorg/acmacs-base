@@ -52,12 +52,16 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 {
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
+            const std::string_view command = command_v;
+            if ( command != "set")
+                this->environment_.emplace();
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N")
                     this->environment_.top().emplace_or_replace(key, val);
             });
-            if (const std::string_view command = command_v; command != "set") {
-                fmt::print("INFO: push_and_apply \"{}\"\n", command);
+            if (command != "set") {
+                apply(command);
+                this->environment_.pop();
             }
         }
         else if (const auto& commented_command_v = entry.get("?N"); !commented_command_v.is_const_null()) {

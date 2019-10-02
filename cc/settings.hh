@@ -19,8 +19,9 @@ namespace acmacs::settings
           public:
             Settings() { environment_.emplace(); }
             Settings(const std::vector<std::string_view>& filenames) : Settings() { load(filenames); }
+            virtual ~Settings() = default;
             void load(const std::vector<std::string_view>& filenames);
-            void apply(std::string_view name = "main") const;
+            virtual void apply(std::string_view name = "main") const;
 
           protected:
             template <typename ... Key> const rjson::value& get(Key&& ... keys) const;
