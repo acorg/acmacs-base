@@ -11,6 +11,7 @@ TARGETS = \
   $(DIST)/test-date2 \
   $(DIST)/test-double-to-string \
   $(DIST)/test-settings-v1 \
+  $(DIST)/test-settings \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
   $(DIST)/test-read-file
@@ -29,7 +30,7 @@ ACMACS_BASE_SOURCES = \
   argv.cc argc-argv.cc \
   normalize.cc \
   quicklook.cc timeit.cc gzip.cc \
-  rjson.cc json-importer.cc
+  rjson.cc json-importer.cc settings.cc
 
 JSON_PP_SOURCES = rjson.cc json-pp.cc
 TEST_RJSON_SOURCES = rjson.cc test-rjson.cc

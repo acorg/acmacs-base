@@ -1245,9 +1245,18 @@ namespace rjson
 
 // ----------------------------------------------------------------------
 
-template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<rjson::value, T>::value, char>> : fmt::formatter<std::string> {
+template <typename T> struct fmt::formatter<T, std::enable_if_t<
+                                                      std::is_base_of_v<rjson::value, T>
+                                                   || std::is_base_of_v<rjson::object, T>
+                                                   || std::is_base_of_v<rjson::array, T>
+                                                   || std::is_base_of_v<rjson::null, T>
+                                                   || std::is_base_of_v<rjson::const_null, T>
+                                                   || std::is_base_of_v<rjson::number, T>
+                                                   || std::is_base_of_v<bool, T>
+                                                   , char>> : fmt::formatter<std::string> {
     template <typename FormatCtx> auto format(const rjson::value& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
 };
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:

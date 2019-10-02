@@ -24,7 +24,7 @@ trap failed ERR
 
 # export LD_LIBRARY_PATH="${ACMACSD_ROOT}/lib:${LD_LIBRARY_PATH}"
 cd "$TESTDIR"
-for test_prog in ../dist/test-double-to-string ../dist/test-rjson2 ../dist/test-settings-v1 ../dist/test-string-split ../dist/test-date2; do
+for test_prog in ../dist/test-settings ../dist/test-double-to-string ../dist/test-rjson2 ../dist/test-settings-v1 ../dist/test-string-split ../dist/test-date2; do
     echo $(basename ${test_prog})
     if ! ${test_prog}; then
         failed ${test_prog}

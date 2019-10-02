@@ -1,0 +1,13 @@
+{ "_":"-*- js-indent-level: 2 -*-",
+  "  version": "test-settings-v2",
+  "main": [
+      {"N": "set", "continent:russia": "red"},
+      {"N": "set", "lab": "cdc"},
+      "report",
+      {"N": "report"},
+      {"N": "report", "lab": "vidrl"},
+  ],
+  "report": [
+      {"N": "print-environment"},
+  ]
+}

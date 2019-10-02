@@ -30,6 +30,16 @@ namespace acmacs
         auto& emplace(const Key& key, const Value& value) { return data_.emplace_back(key, value); }
         auto& emplace(Key&& key, Value&& value) { return data_.emplace_back(std::move(key), std::move(value)); }
 
+        auto& emplace_or_replace(const Key& key, const Value& value)
+        {
+            if (auto found = find(key); found != std::end(data_)) {
+                found->second = value;
+                return *found;
+            }
+            else
+                return emplace(key, value);
+        }
+
         void reserve(size_t sz) { data_.reserve(sz); }
 
       private:
