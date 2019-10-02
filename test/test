@@ -1,16 +1,16 @@
 #! /bin/bash
 
-TDIR=$(mktemp -d -t XXXXXX)
+# TDIR=$(mktemp -d -t XXXXXX)
 TESTDIR=$(dirname $0)
 
 # ======================================================================
 
-function on_exit
-{
-    rm -rf "$TDIR"
-}
+# function on_exit
+# {
+#     rm -rf "$TDIR"
+# }
 
-trap on_exit EXIT
+# trap on_exit EXIT
 
 function failed
 {
@@ -24,7 +24,7 @@ trap failed ERR
 
 # export LD_LIBRARY_PATH="${ACMACSD_ROOT}/lib:${LD_LIBRARY_PATH}"
 cd "$TESTDIR"
-for test_prog in ../dist/test-settings ../dist/test-double-to-string ../dist/test-rjson2 ../dist/test-settings-v1 ../dist/test-string-split ../dist/test-date2; do
+for test_prog in ./test-settings.sh ../dist/test-double-to-string ../dist/test-rjson2 ../dist/test-settings-v1 ../dist/test-string-split ../dist/test-date2; do
     echo $(basename ${test_prog})
     if ! ${test_prog}; then
         failed ${test_prog}

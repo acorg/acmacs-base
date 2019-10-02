@@ -1,0 +1,16 @@
+"continent:russia": "red"
+"lab": "cdc"
+"a-number": 42.42
+"lab+a-number+russia": "cdc+42.42+red"
+"continent:russia": "blue"
+"lab": "cdc"
+"a-number": 42.42
+"lab+a-number+russia": "cdc+42.42+blue"
+"continent:russia": "red"
+"lab": "cdc"
+"a-number": 42.42
+"lab+a-number+russia": "cdc+42.42+red"
+"continent:russia": "red"
+"lab": "vidrl"
+"a-number": 42.42
+"lab+a-number+russia": "vidrl+42.42+red"
