@@ -4,6 +4,7 @@
       {"N": "set", "continent:russia": "red"},
       {"N": "set", "lab": "cdc"},
       "report",
+      {"N": "report", "continent:russia": "blue"},
       {"N": "report"},
       {"N": "report", "lab": "vidrl"},
   ],

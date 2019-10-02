@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stack>
-
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/rjson.hh"
 #include "acmacs-base/flat-map.hh"
@@ -23,6 +21,7 @@ namespace acmacs::settings
             void load(const std::vector<std::string_view>& filenames);
 
             virtual void apply(std::string_view name = "main") const;
+            virtual bool apply_built_in(std::string_view name) const; // returns true if built-in command with that name found and applied
 
           protected:
             template <typename ... Key> const rjson::value& get(Key&& ... keys) const;
@@ -32,15 +31,17 @@ namespace acmacs::settings
             class Environment
             {
               public:
-                Environment() { data_.emplace(); }
+                Environment() { push(); }
 
                 const rjson::value& get(std::string_view key) const;
-                void push() { data_.emplace(); }
-                void pop() { data_.pop(); }
-                void add(const std::string& key, const rjson::value& val) { data_.top().emplace_or_replace(key, val); }
+                void push() { data_.emplace_back(); }
+                void pop() { data_.erase(std::prev(std::end(data_))); }
+                size_t size() const { return data_.size(); }
+                void add(const std::string& key, const rjson::value& val) { data_.rbegin()->emplace_or_replace(key, val); }
+                void print() const;
 
               private:
-                std::stack<acmacs::flat_map_t<std::string, rjson::value>> data_;
+                std::vector<acmacs::flat_map_t<std::string, rjson::value>> data_;
             };
 
             std::vector<rjson::value> data_;

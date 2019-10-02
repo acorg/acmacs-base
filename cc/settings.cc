@@ -1,4 +1,5 @@
 #include "acmacs-base/settings.hh"
+#include "acmacs-base/enumerate.hh"
 
 // ----------------------------------------------------------------------
 
@@ -19,7 +20,7 @@ namespace acmacs::settings::inline v2
         }
 
       private:
-        Settings::Environment env_;
+        Settings::Environment& env_;
         const bool push_;
     };
 } // namespace acmacs::settings::inlinev2
@@ -38,12 +39,31 @@ void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& f
 
 void acmacs::settings::v2::Settings::apply(std::string_view name) const
 {
-    if (const auto& val = get(name); !val.is_const_null())
-        apply(val);
-    else
-        throw error(fmt::format("settings entry not found: \"{}\"", name));
+    if (name.empty())
+        throw error("cannot apply command with an empty name");
+    if (name.front() != '?') { // not commented out
+        if (const auto& val1 = environment_.get(name); !val1.is_const_null()) {
+            apply(val1);
+        }
+        else if (const auto& val2 = get(name); !val2.is_const_null())
+            apply(val2);
+        else if (!apply_built_in(name))
+            throw error(fmt::format("settings entry not found: \"{}\"", name));
+    }
 
 } // acmacs::settings::v2::Settings::apply
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
+{
+    if (name == "print-environment") {
+        environment_.print();
+        return true;
+    }
+    return false;
+
+} // acmacs::settings::v2::Settings::apply_built_in
 
 // ----------------------------------------------------------------------
 
@@ -97,6 +117,30 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 
 
 } // acmacs::settings::v2::Settings::push_and_apply
+
+// ----------------------------------------------------------------------
+
+const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string_view key) const
+{
+    for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
+        if (auto found = it->find(key); found != it->end())
+            return found->second;
+    }
+    return rjson::ConstNull;
+
+} // acmacs::settings::v2::Settings::Environment::get
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::Environment::print() const
+{
+    fmt::print("INFO: Settings::Environment {}\n", data_.size());
+    for (auto [level, entries] : acmacs::enumerate(data_)) {
+        for (const auto& entry : entries)
+            fmt::print("    {} \"{}\": {}\n", level, entry.first, entry.second);
+    }
+
+} // acmacs::settings::v2::Settings::Environment::print
 
 // ----------------------------------------------------------------------
 
