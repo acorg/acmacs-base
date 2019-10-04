@@ -3,13 +3,13 @@
 #include "acmacs-base/string.hh"
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/float.hh"
 #include "acmacs-base/range.hh"
 
 // Simplified version of https://github.com/joboccara/NamedType
 // Also see https://github.com/Enhex/phantom_type
 
 // ----------------------------------------------------------------------
-
 
 namespace acmacs
 {
@@ -48,40 +48,59 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    template <typename Tag> class named_size_t : public named_t<size_t, Tag>
+    template <typename T, typename Tag> class named_number_t : public named_t<T, Tag>
     {
       public:
-        template <typename T> explicit constexpr named_size_t(T&& value) : named_t<size_t, Tag>(static_cast<size_t>(std::forward<T>(value))) {}
+        template <typename TT> explicit constexpr named_number_t(TT&& value) : named_t<T, Tag>(static_cast<T>(std::forward<TT>(value))) {}
 
-        constexpr auto& operator++() { ++this->get(); return *this; }
-        constexpr auto& operator--() { --this->get(); return *this; }
+        constexpr auto& operator++()
+        {
+            ++this->get();
+            return *this;
+        }
+        constexpr auto& operator--()
+        {
+            --this->get();
+            return *this;
+        }
     };
 
-    template <typename T> constexpr bool operator<(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
-    template <typename T> constexpr bool operator<=(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() <= rhs.get(); }
-    template <typename T> constexpr bool operator>(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() > rhs.get(); }
-    template <typename T> constexpr bool operator>=(const named_size_t<T>& lhs, const named_size_t<T>& rhs) noexcept { return lhs.get() >= rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator<(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator<=(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return lhs.get() <= rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator>(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return lhs.get() > rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator>=(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return lhs.get() >= rhs.get(); }
 
-    template <typename Tag> range(int, named_size_t<Tag>) -> range<named_size_t<Tag>>;
-    template <typename Tag> range(size_t, named_size_t<Tag>) -> range<named_size_t<Tag>>;
-    template <typename Tag> range(named_size_t<Tag>) -> range<named_size_t<Tag>>;
-    template <typename Tag> range(named_size_t<Tag>, named_size_t<Tag>) -> range<named_size_t<Tag>>;
+    template <typename T, typename Tag> constexpr named_number_t<T, Tag> operator+(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return named_number_t<T, Tag>{lhs.get() + rhs.get()}; }
+    template <typename T, typename Tag> constexpr named_number_t<T, Tag> operator-(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return named_number_t<T, Tag>{lhs.get() - rhs.get()}; }
+    template <typename T, typename Tag> constexpr named_number_t<T, Tag> operator*(const named_number_t<T, Tag>& lhs, const named_number_t<T, Tag>& rhs) noexcept { return named_number_t<T, Tag>{lhs.get() * rhs.get()}; }
+    // no operator/
 
     // ----------------------------------------------------------------------
 
-    template <typename Tag> class named_double_t : public named_t<double, Tag>
+    template <typename Tag> class named_size_t : public named_number_t<size_t, Tag>
     {
       public:
-        template <typename T> explicit constexpr named_double_t(T&& value) : named_t<double_t, Tag>(static_cast<double>(std::forward<T>(value))) {}
-
-        constexpr auto& operator++() { ++this->get(); return *this; }
-        constexpr auto& operator--() { --this->get(); return *this; }
+        using named_number_t<size_t, Tag>::named_number_t;
     };
 
-    template <typename T> constexpr bool operator<(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
-    template <typename T> constexpr bool operator<=(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() <= rhs.get(); }
-    template <typename T> constexpr bool operator>(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() > rhs.get(); }
-    template <typename T> constexpr bool operator>=(const named_double_t<T>& lhs, const named_double_t<T>& rhs) noexcept { return lhs.get() >= rhs.get(); }
+    template <typename Tag> constexpr bool operator==(const named_size_t<Tag>& lhs, const named_size_t<Tag>& rhs) noexcept { return lhs.get() == rhs.get(); }
+    template <typename Tag> constexpr bool operator!=(const named_size_t<Tag>& lhs, const named_size_t<Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
+
+    template <typename Tag> range(int, named_size_t<Tag>)->range<named_size_t<Tag>>;
+    template <typename Tag> range(size_t, named_size_t<Tag>)->range<named_size_t<Tag>>;
+    template <typename Tag> range(named_size_t<Tag>)->range<named_size_t<Tag>>;
+    template <typename Tag> range(named_size_t<Tag>, named_size_t<Tag>)->range<named_size_t<Tag>>;
+
+    // ----------------------------------------------------------------------
+
+    template <typename Tag> class named_double_t : public named_number_t<double, Tag>
+    {
+      public:
+        using named_number_t<double, Tag>::named_number_t;
+    };
+
+    template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
+    template <typename Tag> constexpr bool operator!=(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
 
     // ----------------------------------------------------------------------
 
@@ -130,12 +149,24 @@ namespace acmacs
         constexpr void push_back(const T& val) { this->get().push_back(val); }
         constexpr void push_back(T&& val) { this->get().push_back(std::forward<T>(val)); }
 
-        void remove(const T& val) { if (const auto found = std::find(begin(), end(), val); found != end()) this->get().erase(found); }
+        void remove(const T& val)
+        {
+            if (const auto found = std::find(begin(), end(), val); found != end())
+                this->get().erase(found);
+        }
 
         // set like
         bool exists(const T& val) const { return std::find(begin(), end(), val) != end(); }
-        void insert_if_not_present(const T& val) { if (!exists(val)) push_back(val); }
-        void insert_if_not_present(T&& val) { if (!exist(val)) push_back(std::forward<T>(val)); }
+        void insert_if_not_present(const T& val)
+        {
+            if (!exists(val))
+                push_back(val);
+        }
+        void insert_if_not_present(T&& val)
+        {
+            if (!exist(val))
+                push_back(std::forward<T>(val));
+        }
         void merge_in(const named_vector_t<T, Tag>& another)
         {
             for (const auto& val : another)
@@ -165,6 +196,10 @@ namespace acmacs
 
 template <typename Tag> struct fmt::formatter<acmacs::named_size_t<Tag>> : fmt::formatter<size_t> {
     template <typename FormatCtx> auto format(const acmacs::named_size_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<size_t>::format(nt.get(), ctx); }
+};
+
+template <typename Tag> struct fmt::formatter<acmacs::named_double_t<Tag>> : fmt::formatter<double> {
+    template <typename FormatCtx> auto format(const acmacs::named_double_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<double>::format(nt.get(), ctx); }
 };
 
 template <typename Tag> struct fmt::formatter<acmacs::named_string_t<Tag>> : fmt::formatter<std::string> {
