@@ -112,6 +112,7 @@ namespace acmacs
         using base_t = named_t<std::variant<Number, std::string_view>, Tag>;
 
         template <typename TT> explicit constexpr named_number_from_string_t(TT&& value) : base_t(std::forward<TT>(value)) {}
+        using base_t::get;
 
         Number as_number() const
         {
@@ -122,7 +123,7 @@ namespace acmacs
                     else
                         return string::from_chars<Number>(content);
                 },
-                base_t::get());
+                get());
         }
 
         std::string as_string() const
@@ -134,8 +135,29 @@ namespace acmacs
                     else
                         return std::string{content};
                 },
-                base_t::get());
+                get());
         }
+
+        bool is_zero() const
+        {
+            return std::visit(
+                []<typename Repr>(Repr content)->bool {
+                    if constexpr (std::is_same_v<Repr, double>) {
+                        return float_zero(content);
+                    }
+                    else if constexpr (std::is_integral_v<Repr>) {
+                        return content == 0;
+                    }
+                    else {
+                        if (content.empty())
+                            return true;
+                        else
+                            return float_zero(string::from_chars<double>(content));
+                    }
+                },
+                get());
+        }
+
     };
 
     template <typename Tag> class named_size_t_from_string_t : public named_number_from_string_t<size_t, Tag>
