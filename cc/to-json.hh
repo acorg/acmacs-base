@@ -178,6 +178,13 @@ namespace to_json
             }
         };
 
+        class raw : public json
+        {
+          public:
+            raw(std::string_view data) { push_back(data); }
+            raw(std::string&& data) { push_back(std::move(data)); }
+        };
+
         class key_val : public json
         {
           public:
