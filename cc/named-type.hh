@@ -117,11 +117,16 @@ namespace acmacs
         Number as_number() const
         {
             return std::visit(
-                []<typename Repr>(Repr content) -> Number {
-                    if constexpr (std::is_same_v<Repr, Number>)
+                []<typename Repr>(Repr content)->Number {
+                    if constexpr (std::is_same_v<Repr, Number>) {
                         return content;
-                    else
-                        return string::from_chars<Number>(content);
+                    }
+                    else {
+                        if (content.empty())
+                            return 0;
+                        else
+                            return string::from_chars<Number>(content);
+                    }
                 },
                 get());
         }
@@ -160,17 +165,23 @@ namespace acmacs
 
     };
 
-    template <typename Tag> class named_size_t_from_string_t : public named_number_from_string_t<size_t, Tag>
-    {
-      public:
-        using named_number_from_string_t<size_t, Tag>::named_number_from_string_t;
-    };
+    template <typename Number, typename Tag> constexpr bool operator<(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return lhs.as_number() < rhs.as_number(); }
+    template <typename Number, typename Tag> constexpr bool operator<=(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return lhs.as_number() <= rhs.as_number(); }
+    template <typename Number, typename Tag> constexpr bool operator>(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return lhs.as_number() > rhs.as_number(); }
+    template <typename Number, typename Tag> constexpr bool operator>=(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return lhs.as_number() >= rhs.as_number(); }
 
-    template <typename Tag> class named_double_from_string_t : public named_number_from_string_t<double, Tag>
-    {
-      public:
-        using named_number_from_string_t<double, Tag>::named_number_from_string_t;
-    };
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator+(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() + rhs.as_number()}; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator-(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() - rhs.as_number()}; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator*(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() * rhs.as_number()}; }
+    // no operator/
+
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator+=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() + rhs.as_number(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator-=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() - rhs.as_number(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator*=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() * rhs.as_number(); return lhs; }
+    // no operator/
+
+    template <typename Tag> using named_size_t_from_string_t  = named_number_from_string_t<size_t, Tag>;
+    template <typename Tag> using named_double_from_string_t  = named_number_from_string_t<double, Tag>;
 
     // ----------------------------------------------------------------------
 
