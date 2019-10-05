@@ -87,9 +87,10 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
 void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& filenames)
 {
-    for (const auto& filename : filenames)
+    for (const auto& filename : filenames) {
         data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
-    std::reverse(std::begin(data_), std::end(data_));
+        apply_top("init");
+    }
 
 } // acmacs::settings::v2::Settings::load
 
@@ -111,6 +112,20 @@ void acmacs::settings::v2::Settings::apply(std::string_view name) const
     }
 
 } // acmacs::settings::v2::Settings::apply
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
+{
+    if (name.empty())
+        throw error("cannot apply command with an empty name");
+    if (name.front() != '?') { // not commented out
+        const auto substituted_name = static_cast<std::string>(environment_.substitute(name));
+        if (const auto& val = data_.back().get(substituted_name); !val.is_const_null())
+            apply(val);
+    }
+
+} // acmacs::settings::v2::Settings::apply_top
 
 // ----------------------------------------------------------------------
 

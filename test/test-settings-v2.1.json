@@ -1,5 +1,8 @@
 { "_":"-*- js-indent-level: 2 -*-",
   "  version": "test-settings-v2",
+  "init": [
+    {"?N": ":print-all-environment"}
+  ],
   "main": [
       {"N": "set", "continent:russia": "red"},
       {"N": "set", "a-number": 42.42},
