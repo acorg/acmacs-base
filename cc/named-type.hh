@@ -125,7 +125,7 @@ namespace acmacs
                         if (content.empty())
                             return 0;
                         else
-                            return string::from_chars<Number>(content);
+                            return ::string::from_chars<Number>(content);
                     }
                 },
                 get());
@@ -157,7 +157,7 @@ namespace acmacs
                         if (content.empty())
                             return true;
                         else
-                            return float_zero(string::from_chars<double>(content));
+                            return float_zero(::string::from_chars<double>(content));
                     }
                 },
                 get());
