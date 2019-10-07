@@ -296,6 +296,16 @@ template <typename T, typename Tag> struct fmt::formatter<acmacs::named_vector_t
     template <typename FormatCtx> auto format(const acmacs::named_vector_t<T, Tag>& vec, FormatCtx& ctx) { return fmt::formatter<std::vector<T>>::format(vec.get(), ctx); }
 };
 
+template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_number_from_string_t<Number, Tag>>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const acmacs::named_number_from_string_t<Number, Tag>& num, FormatContext& ctx)
+    {
+        return std::visit(
+            [&ctx]<typename Repr>(Repr content) { return format_to(ctx.out(), "{}", content); }, num.get());
+    }
+};
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))

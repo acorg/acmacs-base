@@ -43,6 +43,7 @@ namespace acmacs::settings::inline v2
         void setenv_from_string(std::string_view key, std::string_view value);
         template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
 
+        const rjson::value& getenv(std::string_view key) const { return environment_.get(static_cast<std::string>(environment_.substitute(key))); }
         template <typename T> T getenv(std::string_view key, T&& a_default) const
         {
             if (const auto& val = environment_.get(static_cast<std::string>(environment_.substitute(key))); !val.is_const_null())
