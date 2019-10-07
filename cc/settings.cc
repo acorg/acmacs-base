@@ -58,7 +58,8 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
         if (const auto& found1 = get(m1.str(1)); found1.is_const_null()) {
-            throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
+            return found1;
+            // throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
         }
         else if (m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) { // entire source matched
             return found1;
