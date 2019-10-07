@@ -2,6 +2,7 @@
 
 #include "acmacs-base/settings.hh"
 #include "acmacs-base/enumerate.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -85,14 +86,53 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& filenames)
+void acmacs::settings::v2::Settings::load(std::string_view filename)
 {
-    for (const auto& filename : filenames) {
-        data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
-        apply_top("init");
-    }
+    data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
+    apply_top("init");
 
 } // acmacs::settings::v2::Settings::load
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, std::string_view value)
+{
+    if (value == "true") {
+        setenv(key, true);
+    }
+    else if (value == "false") {
+        setenv(key, true);
+    }
+    else if (value.empty() || value == "null") {
+        setenv(key, rjson::ConstNull);
+    }
+    else if (value.front() == '"') {
+        if (value.back() == '"')
+            setenv(key, value.substr(1, value.size() - 2));
+        else
+            setenv(key, value);
+    }
+    else {
+        size_t processed = 0;
+        try {
+            if (const auto val = ::string::from_chars<int>(value, processed); processed == value.size())
+                setenv(key, val);
+        }
+        catch (std::exception&) {
+        }
+        if (processed != value.size()) {
+            try {
+                if (const auto val = ::string::from_chars<double>(value, processed); processed == value.size())
+                    setenv(key, val);
+            }
+            catch (std::exception&) {
+            }
+        }
+        if (processed != value.size())
+            setenv(key, std::string{value});
+    }
+
+} // acmacs::settings::v2::Settings::setenv_from_string
 
 // ----------------------------------------------------------------------
 

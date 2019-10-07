@@ -307,7 +307,7 @@ namespace string
     template <typename T, typename S> T from_chars(S&& source)
     {
         if constexpr (std::is_same_v<T, double>) { // double is not supported by std::from_chars in clang8
-            return stod(std::string{source});
+            return std::stod(std::string{source});
         }
         else {
             const std::string_view src{source};
@@ -321,7 +321,7 @@ namespace string
     template <typename T, typename S> T from_chars(S&& source, size_t& processed)
     {
         if constexpr (std::is_same_v<T, double>) { // double is not supported by std::from_chars in clang8
-            return stod(std::string{source}, &processed);
+            return std::stod(std::string{source}, &processed);
         }
         else {
             const std::string_view src{source};
