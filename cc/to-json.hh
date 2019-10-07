@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <optional>
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/sfinae.hh"
@@ -199,6 +200,22 @@ namespace to_json
             }
         };
 
+        class key_val_if_not_empty
+        {
+          public:
+            template <typename T> key_val_if_not_empty(std::string_view key, T&& value, json::escape_double_quotes esc = json::escape_double_quotes::no)
+            {
+                if (!value.empty())
+                    kv_ = key_val(key, std::move(value), esc);
+            }
+
+            constexpr bool empty() const { return !kv_.has_value(); }
+            constexpr key_val&& get() && { return std::move(kv_.value()); }
+
+          private:
+            std::optional<key_val> kv_;
+        };
+
         class array : public json
         {
           public:
@@ -279,6 +296,7 @@ namespace to_json
             }
 
             friend object& operator<<(object& target, key_val&& kv);
+            friend object& operator<<(object& target, key_val_if_not_empty&& kv);
         };
 
         template <typename T> inline array& operator<<(array& target, T&& value)
@@ -293,6 +311,13 @@ namespace to_json
         inline object& operator<<(object& target, key_val&& kv)
         {
             target.move_before_end(std::move(kv));
+            return target;
+        }
+
+        inline object& operator<<(object& target, key_val_if_not_empty&& kv)
+        {
+            if (!kv.empty())
+                target.move_before_end(std::move(kv).get());
             return target;
         }
 
