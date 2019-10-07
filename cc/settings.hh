@@ -46,7 +46,18 @@ namespace acmacs::settings::inline v2
         const rjson::value& getenv(std::string_view key) const { return environment_.get(static_cast<std::string>(environment_.substitute(key))); }
         template <typename T> T getenv(std::string_view key, T&& a_default) const
         {
-            if (const auto& val = environment_.get(static_cast<std::string>(environment_.substitute(key))); !val.is_const_null())
+            if (const auto& val = environment_.get(static_cast<std::string>(environment_.substitute(key))); val.is_string()) {
+                auto orig = static_cast<std::string>(val);
+                for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
+                    const auto substituted = environment_.substitute(std::string_view{orig});
+                    if (substituted.is_string() && orig != static_cast<std::string>(substituted))
+                        orig = substituted;
+                    else
+                        return static_cast<T>(substituted);
+                }
+                throw error(fmt::format("Settings::getenv: too many substitutions in {}", val));
+            }
+            else if (!val.is_const_null())
                 return static_cast<T>(val);
             else
                 return std::move(a_default);
