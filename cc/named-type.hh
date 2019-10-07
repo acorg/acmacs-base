@@ -183,6 +183,10 @@ namespace acmacs
     template <typename Tag> using named_size_t_from_string_t  = named_number_from_string_t<size_t, Tag>;
     template <typename Tag> using named_double_from_string_t  = named_number_from_string_t<double, Tag>;
 
+    template <typename Tag> constexpr named_double_from_string_t<Tag> operator/(const named_double_from_string_t<Tag>& lhs, const named_double_from_string_t<Tag>& rhs) noexcept { return named_double_from_string_t<Tag>{lhs.as_number() / rhs.as_number()}; }
+    template <typename Tag, typename Denom> constexpr named_double_from_string_t<Tag> operator/(const named_double_from_string_t<Tag>& lhs, Denom rhs) noexcept { return named_double_from_string_t<Tag>{lhs.as_number() / rhs}; }
+    template <typename Tag> constexpr named_double_from_string_t<Tag>& operator*=(named_double_from_string_t<Tag>& lhs, const named_double_from_string_t<Tag>& rhs) noexcept { lhs.get() = lhs.as_number() / rhs.as_number(); return lhs; }
+
     // ----------------------------------------------------------------------
 
     template <typename Tag> class named_string_t : public named_t<std::string, Tag>
