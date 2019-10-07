@@ -52,6 +52,7 @@ namespace acmacs::settings::inline v2
         }
 
         std::string getenv(std::string_view key, const char* a_default) const { return getenv(key, std::string{a_default}); }
+        void printenv() const { environment_.print(); }
 
       protected:
         template <typename... Key> const rjson::value& get(Key&&... keys) const;
