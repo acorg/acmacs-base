@@ -173,6 +173,7 @@ namespace acmacs
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator+(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() + rhs.as_number()}; }
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator-(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() - rhs.as_number()}; }
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator*(const named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() * rhs.as_number()}; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag> operator*(const named_number_from_string_t<Number, Tag>& lhs, double rhs) noexcept { return named_number_from_string_t<Number, Tag>{lhs.as_number() * rhs}; }
     // no operator/
 
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator+=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() + rhs.as_number(); return lhs; }
