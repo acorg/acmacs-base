@@ -189,7 +189,7 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
 {
     try {
-        fmt::print("INFO: settings::apply: {}\n", rjson::to_string(entry));
+        fmt::print(stderr, "INFO: settings::apply: {}\n", rjson::to_string(entry));
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
                 [this](auto&& sub_entry_val) {
