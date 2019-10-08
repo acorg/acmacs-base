@@ -949,9 +949,10 @@ namespace rjson::inline v2
 
         inline value& value::update(const value& to_merge)
         {
-            auto visitor = [this]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
-                // using T1 = std::decay_t<decltype(arg1)>;
-                // using T2 = std::decay_t<decltype(arg2)>;
+            // auto visitor = [this]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
+            auto visitor = [this](auto& arg1, auto&& arg2) {
+                using T1 = std::decay_t<decltype(arg1)>;
+                using T2 = std::decay_t<decltype(arg2)>;
                 if constexpr (std::is_same_v<T1, T2>) {
                     if constexpr (std::is_same_v<T1, object>)
                         arg1.update(std::forward<decltype(arg2)>(arg2));
