@@ -132,7 +132,7 @@ namespace acmacs::settings
             base& parent_;
         };
 
-        inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << obj.get(); }
+        inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << rjson::to_string(obj.get()); }
 
         // --------------------------------------------------
 
@@ -162,7 +162,7 @@ namespace acmacs::settings
             base& parent_;
         };
 
-        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << arr.get(); }
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << rjson::to_string(arr.get()); }
 
         // --------------------------------------------------
 
@@ -232,7 +232,7 @@ namespace acmacs::settings
             std::string make_element_path(size_t index) const { return path() + '[' + std::to_string(index) + ']'; }
         };
 
-        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << arr.get(); }
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << rjson::to_string(arr.get()); }
 
         // --------------------------------------------------
 

@@ -21,10 +21,8 @@
 
 // ----------------------------------------------------------------------
 
-namespace rjson
+namespace rjson::inline v2
 {
-    inline namespace v2
-    {
         class value;
         class array;
         class object;
@@ -371,6 +369,40 @@ namespace rjson
 
         // --------------------------------------------------
 
+        std::string to_string(const object& val, show_empty_values a_show_empty_values = show_empty_values::yes);
+        std::string to_string(const array& val, show_empty_values a_show_empty_values = show_empty_values::yes);
+        inline std::string to_string(bool val, show_empty_values = show_empty_values::yes) { return val ? "true" : "false"; }
+        inline std::string to_string(null, show_empty_values = show_empty_values::yes) { return "null"; }
+        inline std::string to_string(const_null, show_empty_values = show_empty_values::yes) { return "*ConstNull"; }
+        inline std::string to_string(const std::string& val, show_empty_values = show_empty_values::yes) { return "\"" + val + '"'; }
+
+        inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
+        {
+            return std::visit([a_show_empty_values](auto&& arg) -> std::string { return to_string(arg, a_show_empty_values); }, val.val_());
+        }
+
+        // inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
+
+    }
+
+// ----------------------------------------------------------------------
+
+template <typename T> struct fmt::formatter<T, std::enable_if_t<
+                                                   std::is_same_v<rjson::value, T>
+                                                   || std::is_base_of_v<rjson::object, T>
+                                                   || std::is_base_of_v<rjson::array, T>
+                                                   || std::is_base_of_v<rjson::null, T>
+                                                   || std::is_base_of_v<rjson::const_null, T>
+                                                   || std::is_base_of_v<rjson::number, T>
+                                                   || std::is_base_of_v<bool, T>
+                                                   , char>> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
+};
+
+// ----------------------------------------------------------------------
+
+namespace rjson::inline v2
+{
         inline const value& array::get(size_t index) const noexcept // if index out of range, returns ConstNull
         {
             if (index < content_.size())
@@ -917,9 +949,9 @@ namespace rjson
 
         inline value& value::update(const value& to_merge)
         {
-            auto visitor = [this,&to_merge](auto& arg1, auto&& arg2) {
-                using T1 = std::decay_t<decltype(arg1)>;
-                using T2 = std::decay_t<decltype(arg2)>;
+            auto visitor = [this,&to_merge]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
+                // using T1 = std::decay_t<decltype(arg1)>;
+                // using T2 = std::decay_t<decltype(arg2)>;
                 if constexpr (std::is_same_v<T1, T2>) {
                     if constexpr (std::is_same_v<T1, object>)
                         arg1.update(std::forward<decltype(arg2)>(arg2));
@@ -935,7 +967,7 @@ namespace rjson
                 else if constexpr (std::is_same_v<T1, const_null>)
                     throw merge_error(std::string{"cannot update ConstNull"});
                 else
-                    throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", *this, to_merge));
+                    throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", arg1, arg2));
             };
 
             std::visit(visitor, value_, to_merge.value_);
@@ -1186,17 +1218,10 @@ namespace rjson
                 target = converter(source);
         }
 
-    } // namespace v2
-} // namespace rjson
-
 // ----------------------------------------------------------------------
 // to string and pretty
 // ----------------------------------------------------------------------
 
-namespace rjson
-{
-    inline namespace v2
-    {
         class PrettyHandler
         {
           public:
@@ -1220,43 +1245,15 @@ namespace rjson
 
           // ----------------------------------------------------------------------
 
-        std::string to_string(const object& val, show_empty_values a_show_empty_values);
-        std::string to_string(const array& val, show_empty_values a_show_empty_values);
-        inline std::string to_string(bool val, show_empty_values) { return val ? "true" : "false"; }
-        inline std::string to_string(null, show_empty_values) { return "null"; }
-        inline std::string to_string(const_null, show_empty_values) { return "*ConstNull"; }
-        inline std::string to_string(std::string val, show_empty_values) { return "\"" + val + '"'; }
-
-        inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
-        {
-            return std::visit([a_show_empty_values](auto&& arg) -> std::string { return to_string(arg, a_show_empty_values); }, val.val_());
-        }
-
-        inline std::ostream& operator<<(std::ostream& out, const value& val) { return out << to_string(val); }
-
           // ----------------------------------------------------------------------
 
         std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
 
         inline bool value::operator==(const value& to_compare) const { return to_string(*this) == to_string(to_compare); }
 
-    } // namespace v2
 } // namespace rjson
 
 // ----------------------------------------------------------------------
-
-template <typename T> struct fmt::formatter<T, std::enable_if_t<
-                                                      std::is_base_of_v<rjson::value, T>
-                                                   || std::is_base_of_v<rjson::object, T>
-                                                   || std::is_base_of_v<rjson::array, T>
-                                                   || std::is_base_of_v<rjson::null, T>
-                                                   || std::is_base_of_v<rjson::const_null, T>
-                                                   || std::is_base_of_v<rjson::number, T>
-                                                   || std::is_base_of_v<bool, T>
-                                                   , char>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const rjson::value& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
-};
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:

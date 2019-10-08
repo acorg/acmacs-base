@@ -189,7 +189,7 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
 {
     try {
-        fmt::print("INFO: settings::apply: {}\n", entry);
+        fmt::print("INFO: settings::apply: {}\n", rjson::to_string(entry));
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
                 [this](auto&& sub_entry_val) {
@@ -205,7 +205,7 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
         });
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
+        throw error(fmt::format("cannot apply: {} : {}\n", err, rjson::to_string(entry)));
     }
 
 } // acmacs::settings::v2::Settings::apply
@@ -257,7 +257,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
     fmt::print("INFO: Settings::Environment {}\n", data_.size());
     for (auto [level, entries] : acmacs::enumerate(data_)) {
         for (const auto& entry : entries)
-            fmt::print("    {} \"{}\": {}\n", level, entry.first, substitute(entry.second));
+            fmt::print("    {} \"{}\": {}\n", level, entry.first, rjson::to_string(substitute(entry.second)));
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
@@ -266,7 +266,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("{}: {}\n", get("key"), substitute(get("value")));
+    fmt::print("{}: {}\n", rjson::to_string(get("key")), rjson::to_string(substitute(get("value"))));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
 

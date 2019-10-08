@@ -57,7 +57,7 @@ namespace acmacs::settings::inline v2
                     else
                         return static_cast<T>(substituted);
                 }
-                throw error(fmt::format("Settings::getenv: too many substitutions in {}", val));
+                throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
             }
             else if (!val.is_const_null())
                 return static_cast<T>(val);
@@ -66,6 +66,7 @@ namespace acmacs::settings::inline v2
         }
 
         std::string getenv(std::string_view key, const char* a_default) const { return getenv(key, std::string{a_default}); }
+
         void printenv() const { environment_.print(); }
 
       protected:
