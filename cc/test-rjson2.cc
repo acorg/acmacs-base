@@ -184,6 +184,10 @@ int main()
     v1 = rjson::v2::number{51L};
     assert(v1.is_number());
 
+    // fmt::print(stderr, "DEBUG: fmt::format rjson::value test pre\n");
+    fmt::format("{}", v1);
+    // fmt::print(stderr, "DEBUG: fmt::format rjson::value test post\n");
+
     rjson::v2::value v2{rjson::v2::object{{"first", 1}, {"second", 2}}};
     assert(v2.is_object());
     assert(!v2.empty());
@@ -212,7 +216,7 @@ int main()
     for (auto [source, look_for, expected]: s_find_if_data) {
         try {
             auto parsed = rjson::v2::parse_string(source);
-            const auto& found = rjson::v2::find_if(parsed, [look_for=look_for](const rjson::v2::value& val) -> bool { return static_cast<std::string_view>(val["name"]) == look_for; });
+            const auto& found = rjson::v2::find_if(parsed, [look_for=look_for](const rjson::v2::value& val) -> bool { return val["name"].to_string_view() == look_for; });
             assert(rjson::v2::to_string(found) == expected);
               // std::cerr << "DEBUG: found: " << found << '\n';
         }

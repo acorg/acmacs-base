@@ -503,7 +503,7 @@ namespace acmacs::settings
         template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {static_cast<double>(from[0]), static_cast<double>(from[1])}; }
 
         template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
-        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(static_cast<std::string_view>(from)); }
+        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to_string_view()); }
 
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from) { to = rjson::object{{"family", *from.font_family}, {"slant", static_cast<std::string>(*from.slant)}, {"weight", static_cast<std::string>(*from.weight)}}; }
         template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const

@@ -199,7 +199,7 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
                     else if constexpr (std::is_same_v<T, rjson::object>)
                         this->push_and_apply(sub_entry_val);
                     else
-                        throw error(fmt::format("cannot apply: {}\n", sub_entry_val));
+                        throw error(fmt::format("cannot apply: {}\n", rjson::to_string(sub_entry_val)));
                 },
                 sub_entry.val_());
         });
@@ -216,7 +216,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 {
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
-            const std::string_view command{command_v};
+            const std::string_view command{command_v.to_string_view()};
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N")
@@ -229,10 +229,10 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
             // command is commented out
         }
         else
-            throw error(fmt::format("cannot apply: {}\n", entry));
+            throw error(fmt::format("cannot apply: {}\n", rjson::to_string(entry)));
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
+        throw error(fmt::format("cannot apply: {} : {}\n", err, rjson::to_string(entry)));
     }
 
 
