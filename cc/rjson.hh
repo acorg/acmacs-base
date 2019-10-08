@@ -328,13 +328,13 @@ namespace rjson::inline v2
 
             explicit operator std::string() const;
             explicit operator std::string_view() const;
-            operator double() const;
-            operator size_t() const { return to_integer<size_t>(); }
-            operator long() const { return to_integer<long>(); }
-            operator int() const { return to_integer<int>(); }
-            operator unsigned() const { return to_integer<unsigned>(); }
-            operator short() const { return to_integer<short>(); }
-            operator unsigned short() const { return to_integer<unsigned short>(); }
+            explicit operator double() const;
+            explicit operator size_t() const { return to_integer<size_t>(); }
+            explicit operator long() const { return to_integer<long>(); }
+            explicit operator int() const { return to_integer<int>(); }
+            explicit operator unsigned() const { return to_integer<unsigned>(); }
+            explicit operator short() const { return to_integer<short>(); }
+            explicit operator unsigned short() const { return to_integer<unsigned short>(); }
             bool get_bool() const;
             explicit operator bool() const { return get_bool(); }
             template <typename R> R get_or_default(R&& dflt) const;
