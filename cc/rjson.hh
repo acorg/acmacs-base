@@ -388,8 +388,8 @@ namespace rjson::inline v2
 // ----------------------------------------------------------------------
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<
-                                                   std::is_same_v<rjson::value, T>
-                                                   || std::is_base_of_v<rjson::object, T>
+                                                   // std::is_same_v<rjson::value, T>
+                                                   std::is_base_of_v<rjson::object, T>
                                                    || std::is_base_of_v<rjson::array, T>
                                                    || std::is_base_of_v<rjson::null, T>
                                                    || std::is_base_of_v<rjson::const_null, T>
@@ -949,7 +949,7 @@ namespace rjson::inline v2
 
         inline value& value::update(const value& to_merge)
         {
-            auto visitor = [this,&to_merge]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
+            auto visitor = [this]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
                 // using T1 = std::decay_t<decltype(arg1)>;
                 // using T2 = std::decay_t<decltype(arg2)>;
                 if constexpr (std::is_same_v<T1, T2>) {

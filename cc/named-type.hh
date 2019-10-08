@@ -276,20 +276,12 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-// template <typename T, typename Tag> struct fmt::formatter<acmacs::named_t<T, Tag>> : fmt::formatter<T> {
-//     template <typename FormatCtx> auto format(const acmacs::named_t<T, Tag>& nt, FormatCtx& ctx) { return fmt::formatter<T>::format(nt.get(), ctx); }
-// };
-
 template <typename Tag> struct fmt::formatter<acmacs::named_size_t<Tag>> : fmt::formatter<size_t> {
     template <typename FormatCtx> auto format(const acmacs::named_size_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<size_t>::format(nt.get(), ctx); }
 };
 
 template <typename Tag> struct fmt::formatter<acmacs::named_double_t<Tag>> : fmt::formatter<double> {
     template <typename FormatCtx> auto format(const acmacs::named_double_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<double>::format(nt.get(), ctx); }
-};
-
-template <typename Tag> struct fmt::formatter<acmacs::named_string_t<Tag>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const acmacs::named_string_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(nt.get(), ctx); }
 };
 
 template <typename T, typename Tag> struct fmt::formatter<acmacs::named_vector_t<T, Tag>> : fmt::formatter<std::vector<T>> {

@@ -44,24 +44,6 @@ namespace acmacs
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
-
-template <typename Tag> struct fmt::formatter<acmacs::uppercased<Tag>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const acmacs::uppercased<Tag>& uc, FormatCtx& ctx) { return fmt::formatter<std::string>::format(uc.get(), ctx); }
-};
-
-template <typename Tag> struct fmt::formatter<acmacs::lowercased<Tag>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const acmacs::lowercased<Tag>& uc, FormatCtx& ctx) { return fmt::formatter<std::string>::format(uc.get(), ctx); }
-};
-
-template <> struct fmt::formatter<acmacs::uppercase> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const acmacs::uppercase& uc, FormatCtx& ctx) { return fmt::formatter<std::string>::format(uc.get(), ctx); }
-};
-
-template <> struct fmt::formatter<acmacs::lowercase> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const acmacs::lowercase& uc, FormatCtx& ctx) { return fmt::formatter<std::string>::format(uc.get(), ctx); }
-};
-
-// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
