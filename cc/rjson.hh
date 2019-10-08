@@ -327,7 +327,7 @@ namespace rjson::inline v2
             size_t max_index() const; // returns (size-1) for array, assumes object keys are size_t and returns max of them
 
             explicit operator std::string() const;
-            operator std::string_view() const;
+            explicit operator std::string_view() const;
             operator double() const;
             operator size_t() const { return to_integer<size_t>(); }
             operator long() const { return to_integer<long>(); }
@@ -388,7 +388,7 @@ namespace rjson::inline v2
 // ----------------------------------------------------------------------
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<
-                                                   // std::is_same_v<rjson::value, T>
+                                                   // std::is_same_v<rjson::value, T> ||
                                                    std::is_base_of_v<rjson::object, T>
                                                    || std::is_base_of_v<rjson::array, T>
                                                    || std::is_base_of_v<rjson::null, T>
@@ -398,6 +398,16 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<
                                                    , char>> : fmt::formatter<std::string> {
     template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
 };
+
+// template <> struct fmt::formatter<rjson::value> : fmt::formatter<std::string> {
+//     template <typename FormatCtx> auto format(const rjson::value& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
+// };
+
+// template <> struct fmt::formatter<rjson::value>
+// {
+//     template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+//     template <typename FormatContext> auto format(const rjson::value& val, FormatContext& ctx) { return format_to(ctx.out(), "{}", rjson::to_string(val)); }
+// };
 
 // ----------------------------------------------------------------------
 
@@ -1167,7 +1177,7 @@ namespace rjson::inline v2
             if (source.is_null())
                 return default_value;
             else if (const auto& val = source[field_name]; !val.is_null())
-                return val;
+                return static_cast<std::string_view>(val);
             else
                 return default_value;
         }
@@ -1185,7 +1195,7 @@ namespace rjson::inline v2
             if (source.is_null())
                 return default_value;
             else
-                return source;
+                return static_cast<std::string_view>(source);
         }
 
         template <typename... Args> inline const value& one_of(const value& source, const char* field_name, Args... args)
