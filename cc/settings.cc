@@ -216,7 +216,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 {
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
-            const std::string_view command = command_v;
+            const std::string_view command{command_v};
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N")

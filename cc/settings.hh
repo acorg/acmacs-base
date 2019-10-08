@@ -51,7 +51,7 @@ namespace acmacs::settings::inline v2
                 for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
                     const auto substituted = environment_.substitute(std::string_view{orig});
                     if (substituted.is_string() && orig != static_cast<std::string>(substituted))
-                        orig = substituted;
+                        orig = static_cast<std::string>(substituted);
                     else if (substituted.is_const_null()) // substitutions lead to const-null
                         return std::move(a_default);
                     else
