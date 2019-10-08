@@ -224,7 +224,7 @@ namespace to_json
             template <typename... Args> array(Args&&... args) : array() { append(std::forward<Args>(args)...); }
 
             template <typename Iterator, typename Transformer, typename = acmacs::sfinae::iterator_t<Iterator>>
-            array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no, escape_double_quotes esc = escape_double_quotes::no)
+            array(Iterator first, Iterator last, Transformer transformer, compact_output co = compact_output::no, [[maybe_unused]] escape_double_quotes esc = escape_double_quotes::no)
                 : array()
             {
                 for (; first != last; ++first) {
