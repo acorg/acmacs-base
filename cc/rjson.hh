@@ -173,12 +173,12 @@ namespace rjson::inline v2
 
     inline double to_double(const number& val)
     {
-        auto visitor = []<typename T>(T arg) -> double {
-            if constexpr (std::is_same_v<T, long>)
+        auto visitor = []<typename T>(T&& arg) -> double {
+            if constexpr (std::is_same_v<std::decay_t<T>, long>)
                 return static_cast<double>(arg);
-            else if constexpr (std::is_same_v<T, double>)
+            else if constexpr (std::is_same_v<std::decay_t<T>, double>)
                 return arg;
-            else if constexpr (std::is_same_v<T, std::string>)
+            else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                 return std::stod(arg);
             else
                 return std::numeric_limits<double>::quiet_NaN();
@@ -188,12 +188,12 @@ namespace rjson::inline v2
 
     template <typename T> T to_integer(const number& val)
     {
-        auto visitor = []<typename Arg>(Arg arg) -> T {
+        auto visitor = []<typename Arg>(Arg&& arg) -> T {
             if constexpr (std::is_same_v<Arg, long>)
                 return static_cast<T>(arg);
-            else if constexpr (std::is_same_v<Arg, double>)
+            else if constexpr (std::is_same_v<std::decay_t<Arg>, double>)
                 return static_cast<T>(std::lround(arg));
-            else if constexpr (std::is_same_v<Arg, std::string>)
+            else if constexpr (std::is_same_v<std::decay_t<Arg>, std::string>)
                 return static_cast<T>(std::stoul(arg));
             else
                 return std::numeric_limits<T>::max();
@@ -385,8 +385,8 @@ namespace rjson::inline v2
     template <> inline double value::to<double>() const
     {
         return std::visit(
-            [this]<typename T>(T arg) -> double {
-                if constexpr (std::is_same_v<T, number>)
+            [this]<typename T>(T&& arg) -> double {
+                if constexpr (std::is_same_v<std::decay_t<T>, number>)
                     return to_double(arg);
                 else
                     throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
@@ -397,8 +397,8 @@ namespace rjson::inline v2
     template <> inline std::string value::to<std::string>() const
     {
         return std::visit(
-            [this]<typename T>(T arg) -> std::string {
-                if constexpr (std::is_same_v<T, std::string>)
+            [this]<typename T>(T&& arg) -> std::string {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                     return arg;
                 else
                     throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
@@ -409,8 +409,8 @@ namespace rjson::inline v2
     template <> inline std::string_view value::to<std::string_view>() const
     {
         return std::visit(
-            [this]<typename T>(T arg)->std::string_view {
-                if constexpr (std::is_same_v<T, std::string>)
+            [this]<typename T>(T&& arg) -> std::string_view {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                     return std::string_view{arg};
                 else
                     throw value_type_mismatch("std::string_view", actual_type(), DEBUG_LINE_FUNC);
@@ -421,8 +421,8 @@ namespace rjson::inline v2
     template <typename T> inline T value::to_integer() const
     {
         return std::visit(
-            [this]<typename TT>(TT arg) -> T {
-                if constexpr (std::is_same_v<TT, number>)
+            [this]<typename TT>(TT&& arg) -> T {
+                if constexpr (std::is_same_v<std::decay_t<TT>, number>)
                     return rjson::to_integer<T>(arg);
                 else
                     throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
@@ -440,10 +440,10 @@ namespace rjson::inline v2
     template <> inline bool value::to<bool>() const
     {
         return std::visit(
-            [this]<typename T>(T arg) -> bool {
-                if constexpr (std::is_same_v<T, bool>)
+            [this]<typename T>(T&& arg) -> bool {
+                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
                     return arg;
-                else if constexpr (std::is_same_v<T, number>) {
+                else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
                     const auto val = rjson::to_integer<int>(arg);
                     if (val != 0 && val != 1)
                         fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), DEBUG_LINE_FUNC);
@@ -960,8 +960,8 @@ namespace rjson::inline v2
     template <typename R> inline R value::get_or_default(R&& dflt) const
     {
         return std::visit(
-            [this,&dflt]<typename T>(T) -> R {
-                if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null>)
+            [this,&dflt]<typename T>(T&&) -> R {
+                if constexpr (std::is_same_v<std::decay_t<T>, null> || std::is_same_v<std::decay_t<T>, const_null>)
                     return dflt;
                 else
                     return this->to<R>();
@@ -971,11 +971,9 @@ namespace rjson::inline v2
 
     inline value& value::update(const value& to_merge)
     {
-        // auto visitor = [this]<typename T1, typename T2>(T1& arg1, T2&& arg2) {
-        // must use decay for std::is_same_v to work correctly
-        auto visitor = [this](auto& arg1, auto&& arg2) {
-            using T1 = std::decay_t<decltype(arg1)>;
-            using T2 = std::decay_t<decltype(arg2)>;
+        auto visitor = [this]<typename TT1, typename TT2>(TT1& arg1, TT2&& arg2) {
+            using T1 = std::decay_t<TT1>;
+            using T2 = std::decay_t<TT2>;
             if constexpr (std::is_same_v<T1, T2>) {
                 if constexpr (std::is_same_v<T1, object>)
                     arg1.update(std::forward<decltype(arg2)>(arg2));

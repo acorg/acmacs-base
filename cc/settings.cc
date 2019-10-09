@@ -139,6 +139,7 @@ void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, st
 
 void acmacs::settings::v2::Settings::apply(std::string_view name) const
 {
+    // fmt::print(stderr, "DEBUG: Settings::apply \"{}\"\n", name);
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
@@ -189,10 +190,11 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
 {
     try {
-        fmt::print(stderr, "INFO: settings::apply: {}\n", rjson::to_string(entry));
+        // fmt::print(stderr, "INFO: settings::apply: {}\n", rjson::to_string(entry));
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
                 [this](auto&& sub_entry_val) {
+                    // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
                     using T = std::decay_t<decltype(sub_entry_val)>;
                     if constexpr (std::is_same_v<T, std::string>)
                         this->apply(std::string_view{sub_entry_val});
@@ -214,13 +216,17 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
 
 void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) const
 {
+    fmt::print(stderr, "INFO: settings::push_and_apply: {}\n", rjson::to_string(entry));
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
-            const std::string_view command{command_v.to<std::string_view>()};
+            const auto command{command_v.to<std::string_view>()};
+            // fmt::print(stderr, "DEBUG: Settings::push_and_apply command {} -> {}\n", command_v, command);
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
-                if (key != "N")
+                if (key != "N") {
+                    // fmt::print(stderr, "DEBUG: Settings env add \"{}\": {}\n", key, val);
                     environment_.add(key, val);
+                }
             });
             if (command != "set")
                 apply(command);
