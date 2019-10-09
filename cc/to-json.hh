@@ -200,20 +200,37 @@ namespace to_json
             }
         };
 
-        class key_val_if_not_empty
+        class key_val_if
+        {
+          public:
+            constexpr bool empty() const { return !kv_.has_value(); }
+            constexpr key_val&& get() && { return std::move(kv_.value()); }
+
+          protected:
+            template <typename T> void set(std::string_view key, T&& value, json::escape_double_quotes esc = json::escape_double_quotes::no) { kv_ = key_val(key, std::move(value), esc); }
+
+          private:
+            std::optional<key_val> kv_;
+        };
+
+        class key_val_if_not_empty : public key_val_if
         {
           public:
             template <typename T> key_val_if_not_empty(std::string_view key, T&& value, json::escape_double_quotes esc = json::escape_double_quotes::no)
             {
                 if (!value.empty())
-                    kv_ = key_val(key, std::move(value), esc);
+                    set(key, std::move(value), esc);
             }
+        };
 
-            constexpr bool empty() const { return !kv_.has_value(); }
-            constexpr key_val&& get() && { return std::move(kv_.value()); }
-
-          private:
-            std::optional<key_val> kv_;
+        class key_val_if_true : public key_val_if
+        {
+          public:
+            key_val_if_true(std::string_view key, bool value)
+            {
+                if (value)
+                    set(key, std::move(value));
+            }
         };
 
         class array : public json
@@ -296,7 +313,7 @@ namespace to_json
             }
 
             friend object& operator<<(object& target, key_val&& kv);
-            friend object& operator<<(object& target, key_val_if_not_empty&& kv);
+            friend object& operator<<(object& target, key_val_if&& kv);
         };
 
         template <typename T> inline array& operator<<(array& target, T&& value)
@@ -314,7 +331,7 @@ namespace to_json
             return target;
         }
 
-        inline object& operator<<(object& target, key_val_if_not_empty&& kv)
+        inline object& operator<<(object& target, key_val_if&& kv)
         {
             if (!kv.empty())
                 target.move_before_end(std::move(kv).get());
