@@ -145,9 +145,9 @@ namespace acmacs::settings
             void inject_default() override {}
             bool empty() const { return parent_.get().empty(); }
             size_t size() const { return parent_.get().size(); }
-            T operator[](size_t index) const { return static_cast<T>(get()[index]); }
+            T operator[](size_t index) const { return get()[index].template to<T>(); }
             rjson::value& operator[](size_t index) { return set()[index]; }
-            T append(const T& to_append) { return static_cast<T>(set().append(to_append)); }
+            T append(const T& to_append) { return set().append(to_append).template to<T>(); }
             void erase(size_t index) { set().remove(index); }
             void clear() { set().clear(); }
             void set(std::initializer_list<T> vals) { rjson::value& stored = set(); stored.clear(); for (auto val : vals) stored.append(std::move(val)); }
@@ -264,7 +264,7 @@ namespace acmacs::settings
 
               // to be specialised for complex types
             void assign(rjson::value& to, const T& from) { to = from; }
-            T extract(const rjson::value& from) const { return static_cast<T>(from); }
+            T extract(const rjson::value& from) const { return from.to<T>(); }
         };
 
         template <typename T> inline std::ostream& operator<<(std::ostream& out, const field<T>& fld) { return out << static_cast<T>(fld); }
@@ -480,8 +480,8 @@ namespace acmacs::settings
           // specialisations
           // ----------------------------------------------------------------------
 
-        template <> inline bool field<bool>::extract(const rjson::value& from) const { return static_cast<bool>(from); }
-        template <> inline std::string field<std::string>::extract(const rjson::value& from) const { return std::string(from); }
+        template <> inline bool field<bool>::extract(const rjson::value& from) const { return from.to<bool>(); }
+        template <> inline std::string field<std::string>::extract(const rjson::value& from) const { return from.to<std::string>(); }
 
         template <> inline void field<std::map<std::string, std::string>>::assign(rjson::value& to, const std::map<std::string, std::string>& from)
         {
@@ -492,18 +492,18 @@ namespace acmacs::settings
         template <> inline std::map<std::string, std::string> field<std::map<std::string, std::string>>::extract(const rjson::value& from) const
         {
             std::map<std::string, std::string> result;
-            rjson::for_each(from, [&result](const std::string& field_name, const rjson::value& item_value) { result.emplace(field_name, static_cast<std::string>(item_value)); });
+            rjson::for_each(from, [&result](const std::string& field_name, const rjson::value& item_value) { result.emplace(field_name, item_value.to<std::string>()); });
             return result;
         }
 
         template <> inline void field<Size>::assign(rjson::value& to, const Size& from) { to = rjson::array{from.width, from.height}; }
-        template <> inline Size field<Size>::extract(const rjson::value& from) const { return {static_cast<double>(from[0]), static_cast<double>(from[1])}; }
+        template <> inline Size field<Size>::extract(const rjson::value& from) const { return {from[0].to<double>(), from[1].to<double>()}; }
 
         template <> inline void field<Offset>::assign(rjson::value& to, const Offset& from) { to = rjson::array{from.x(), from.y()}; }
-        template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {static_cast<double>(from[0]), static_cast<double>(from[1])}; }
+        template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {from[0].to<double>(), from[1].to<double>()}; }
 
         template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
-        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to_string_view()); }
+        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to<std::string_view>()); }
 
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from) { to = rjson::object{{"family", *from.font_family}, {"slant", static_cast<std::string>(*from.slant)}, {"weight", static_cast<std::string>(*from.weight)}}; }
         template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const

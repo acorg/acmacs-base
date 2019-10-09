@@ -66,7 +66,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
         }
         else {
             const auto replace = [](const auto& src, size_t prefix, const rjson::value& infix, size_t suffix) {
-                return fmt::format("{}{}{}", src.substr(0, prefix), infix.is_string() ? static_cast<std::string>(infix) : rjson::to_string(infix), src.substr(suffix));
+                return fmt::format("{}{}{}", src.substr(0, prefix), infix.is_string() ? infix.to<std::string>() : rjson::to_string(infix), src.substr(suffix));
             };
 
             std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
@@ -142,7 +142,7 @@ void acmacs::settings::v2::Settings::apply(std::string_view name) const
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = static_cast<std::string>(environment_.substitute(name));
+        const auto substituted_name = environment_.substitute(name).to<std::string>();
         if (const auto& val1 = environment_.get(substituted_name); !val1.is_const_null()) {
             apply(val1);
         }
@@ -161,7 +161,7 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = static_cast<std::string>(environment_.substitute(name));
+        const auto substituted_name = environment_.substitute(name).to<std::string>();
         if (const auto& val = data_.back().get(substituted_name); !val.is_const_null())
             apply(val);
     }
@@ -216,7 +216,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 {
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
-            const std::string_view command{command_v.to_string_view()};
+            const std::string_view command{command_v.to<std::string_view>()};
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N")

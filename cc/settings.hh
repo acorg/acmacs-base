@@ -43,24 +43,24 @@ namespace acmacs::settings::inline v2
         void setenv_from_string(std::string_view key, std::string_view value);
         template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
 
-        const rjson::value& getenv(std::string_view key) const { return environment_.get(static_cast<std::string>(environment_.substitute(key))); }
+        const rjson::value& getenv(std::string_view key) const { return environment_.get(environment_.substitute(key).to<std::string>()); }
         template <typename T> T getenv(std::string_view key, T&& a_default) const
         {
-            if (const auto& val = environment_.get(static_cast<std::string>(environment_.substitute(key))); val.is_string()) {
-                auto orig = static_cast<std::string>(val);
+            if (const auto& val = environment_.get(environment_.substitute(key).to<std::string>()); val.is_string()) {
+                auto orig = val.to<std::string>();
                 for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
                     const auto substituted = environment_.substitute(std::string_view{orig});
-                    if (substituted.is_string() && orig != static_cast<std::string>(substituted))
-                        orig = static_cast<std::string>(substituted);
+                    if (substituted.is_string() && orig != substituted.to<std::string>())
+                        orig = substituted.to<std::string>();
                     else if (substituted.is_const_null()) // substitutions lead to const-null
                         return std::move(a_default);
                     else
-                        return static_cast<T>(substituted);
+                        return substituted.to<T>();
                 }
                 throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
             }
             else if (!val.is_const_null())
-                return static_cast<T>(val);
+                return val.to<T>();
             else
                 return std::move(a_default);
         }
