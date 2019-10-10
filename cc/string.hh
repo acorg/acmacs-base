@@ -194,11 +194,9 @@ namespace string
             return r;
     }
 
-    inline int compare(const std::string& a, const std::string& b) { return compare(a.c_str(), a.size(), b.c_str(), b.size()); }
-    inline int compare(const std::string& a, const char* b) { return compare(a.c_str(), a.size(), b, std::strlen(b)); }
-    inline int compare(const char* a, const std::string& b) { return compare(a, std::strlen(a), b.c_str(), b.size()); }
+    inline int compare(std::string_view s1, std::string_view s2) { return compare(s1.data(), s1.size(), s2.data(), s2.size()); }
 
-    inline int compare(std::initializer_list<std::string> as, std::initializer_list<std::string> bs)
+    inline int compare(std::initializer_list<std::string_view> as, std::initializer_list<std::string_view> bs)
     {
         assert(as.size() == bs.size());
         for (auto ap = as.begin(), bp = bs.begin(); ap != as.end(); ++ap, ++bp) {

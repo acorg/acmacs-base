@@ -190,10 +190,10 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    template <typename Tag> class named_string_t : public named_t<std::string, Tag>
+    template <typename T, typename Tag> class named_string_base_t : public named_t<T, Tag>
     {
       public:
-        using named_t<std::string, Tag>::named_t;
+        using named_t<T, Tag>::named_t;
 
         bool empty() const noexcept { return this->get().empty(); }
         size_t size() const noexcept { return this->get().size(); }
@@ -201,16 +201,28 @@ namespace acmacs
         size_t find(const char* s, size_t pos = 0) const noexcept { return this->get().find(s, pos); }
         size_t find(char ch, size_t pos = 0) const noexcept { return this->get().find(ch, pos); }
         constexpr operator std::string_view() const noexcept { return this->get(); }
-        int compare(const named_string_t<Tag>& rhs) const { return ::string::compare(this->get(), rhs.get()); }
+        int compare(const named_string_base_t<T, Tag>& rhs) const { return ::string::compare(this->get(), rhs.get()); }
+    };
+
+    template <typename T, typename Tag> constexpr bool operator==(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() == rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator==(const named_string_base_t<T, Tag>& lhs, std::string_view rhs) noexcept { return lhs.get() == rhs; }
+    template <typename T, typename Tag> constexpr bool operator==(std::string_view lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs == rhs.get(); }
+
+    template <typename T, typename Tag> constexpr bool operator!=(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
+    template <typename T, typename Tag> constexpr bool operator!=(const named_string_base_t<T, Tag>& lhs, std::string_view rhs) noexcept { return !operator==(lhs, rhs); }
+    template <typename T, typename Tag> constexpr bool operator!=(std::string_view lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
+
+    template <typename T, typename Tag> constexpr bool operator<(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() < rhs.get(); }
+
+    template <typename Tag> class named_string_t : public named_string_base_t<std::string, Tag>
+    {
+      public:
+        using named_string_base_t<std::string, Tag>::named_string_base_t;
+
         void assign(std::string_view source) { this->get().assign(source); }
     };
 
-    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() == rhs.get(); }
-    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const std::string& rhs) noexcept { return lhs.get() == rhs; }
-    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, const char* rhs) noexcept { return lhs.get() == rhs; }
-    template <typename T> constexpr bool operator==(const named_string_t<T>& lhs, std::string_view rhs) noexcept { return lhs.get() == rhs; }
-    template <typename T, typename R> constexpr bool operator!=(const named_string_t<T>& lhs, R&& rhs) noexcept { return !operator==(lhs, std::forward<R>(rhs)); }
-    template <typename T> constexpr bool operator<(const named_string_t<T>& lhs, const named_string_t<T>& rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename Tag> using named_string_view_t = named_string_base_t<std::string_view, Tag>;
 
     // ----------------------------------------------------------------------
 
