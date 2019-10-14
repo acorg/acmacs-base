@@ -26,15 +26,22 @@ namespace acmacs::settings::inline v2
         Settings::Environment& env_;
         const bool push_;
     };
+
+    struct raii_true
+    {
+        constexpr raii_true(bool& val) : val_{val} { val_ = true; }
+        ~raii_true() { val_ = false; }
+        bool& val_;
+    };
+
 } // namespace acmacs::settings::inlinev2
 
 // ----------------------------------------------------------------------
 
 inline rjson::value acmacs::settings::v2::Settings::Environment::substitute(const rjson::value& source) const
 {
-    return std::visit([this,&source](auto&& arg) -> rjson::value {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, std::string>)
+    return std::visit([this,&source]<typename T>(T&& arg) -> rjson::value {
+        if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
             return substitute(std::string_view{arg});
         else
             return source;
@@ -173,7 +180,11 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
 
 bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 {
-    if (name == ":print-all-environment") {
+    if (name == "if") {
+        apply_if();
+        return true;
+    }
+    else if (name == ":print-all-environment") {
         environment_.print();
         return true;
     }
@@ -193,12 +204,11 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
         // fmt::print(stderr, "INFO: settings::apply: {}\n", rjson::to_string(entry));
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
-                [this](auto&& sub_entry_val) {
+                [this]<typename T>(T&& sub_entry_val) {
                     // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
-                    using T = std::decay_t<decltype(sub_entry_val)>;
-                    if constexpr (std::is_same_v<T, std::string>)
+                    if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                         this->apply(std::string_view{sub_entry_val});
-                    else if constexpr (std::is_same_v<T, rjson::object>)
+                    else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
                         this->push_and_apply(sub_entry_val);
                     else
                         throw error(fmt::format("cannot apply: {}\n", rjson::to_string(sub_entry_val)));
@@ -230,6 +240,8 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
             });
             if (command != "set")
                 apply(command);
+            else if (warn_if_set_used_)
+                fmt::print(stderr, "WARNING: \"set\" command has no effect (used inside \"if\"?): {}\n", entry);
         }
         else if (const auto& commented_command_v = entry.get("?N"); !commented_command_v.is_const_null()) {
             // command is commented out
@@ -243,6 +255,100 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
 
 
 } // acmacs::settings::v2::Settings::push_and_apply
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::apply_if() const
+{
+    raii_true warn_if_set_used{warn_if_set_used_};
+    if (const auto& condition_clause = getenv("condition"); eval_condition(condition_clause)) {
+        if (const auto& then_clause = getenv("then"); !then_clause.is_null())
+            apply(then_clause);
+    }
+    else {
+        if (const auto& else_clause = getenv("else"); !else_clause.is_null())
+            apply(else_clause);
+    }
+
+} // acmacs::settings::v2::Settings::apply_if
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& condition) const
+{
+    try {
+        return std::visit(
+            [this]<typename T>(T && arg)->bool {
+                if constexpr (std::is_same_v<std::decay_t<T>, rjson::null> || std::is_same_v<std::decay_t<T>, rjson::const_null>)
+                    return false;
+                else if constexpr (std::is_same_v<std::decay_t<T>, rjson::number>)
+                    return !float_zero(rjson::to_double(arg));
+                else if constexpr (std::is_same_v<std::decay_t<T>, bool>)
+                    return arg;
+                else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>) {
+                    if (arg.size() != 1)
+                        throw error{"object must have exactly one key"};
+                    if (const auto& and_clause = arg.get("and"); !and_clause.is_null())
+                        return eval_and(and_clause);
+                    else if (const auto& or_clause = arg.get("or"); !or_clause.is_null())
+                        return eval_or(or_clause);
+                    else if (const auto& not_clause = arg.get("not"); !not_clause.is_null())
+                        return eval_not(not_clause);
+                    else
+                        throw error{"unrecognized clause"};
+                }
+                else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+                    if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string() && substituted.to<std::string_view>() == arg)
+                        throw error{"unsupported value type"};
+                    else
+                        return eval_condition(substituted);
+                }
+                else if constexpr (std::is_same_v<std::decay_t<T>, rjson::array>)
+                    throw error{"unsupported value type"};
+            },
+            condition.val_());
+    }
+    catch (std::exception& err) {
+        throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
+    }
+
+} // acmacs::settings::v2::Settings::eval_condition
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::eval_and(const rjson::value& condition) const
+{
+    if (condition.empty()) {
+        fmt::print(stderr, "WARNING: empty and clause evaluates to false\n");
+        return false;
+    }
+    bool result = true;
+    rjson::for_each(condition, [this, &result](const rjson::value& sub_condition) { result &= eval_condition(sub_condition); });
+    return result;
+
+} // acmacs::settings::v2::Settings::eval_and
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::eval_or(const rjson::value& condition) const
+{
+    if (condition.empty()) {
+        fmt::print(stderr, "WARNING: empty and clause evaluates to false\n");
+        return false;
+    }
+    bool result = false;
+    rjson::for_each(condition, [this, &result](const rjson::value& sub_condition) { result |= eval_condition(sub_condition); });
+    return result;
+
+} // acmacs::settings::v2::Settings::eval_or
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::eval_not(const rjson::value& condition) const
+{
+    return !eval_condition(condition);
+
+} // acmacs::settings::v2::Settings::eval_not
 
 // ----------------------------------------------------------------------
 

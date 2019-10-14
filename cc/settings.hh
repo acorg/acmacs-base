@@ -98,11 +98,17 @@ namespace acmacs::settings::inline v2
 
         std::vector<rjson::value> data_;
         mutable Environment environment_;
+        mutable bool warn_if_set_used_{false};
 
         void push_and_apply(const rjson::object& entry) const;
+        void apply_if() const;
+        bool eval_condition(const rjson::value& condition) const;
+        bool eval_and(const rjson::value& condition) const;
+        bool eval_or(const rjson::value& condition) const;
+        bool eval_not(const rjson::value& condition) const;
 
         friend class Subenvironment;
-    };
+    }; // class Settings
 } // namespace acmacs::settings::inline v2
 
 // ----------------------------------------------------------------------
