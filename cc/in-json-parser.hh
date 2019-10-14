@@ -24,8 +24,9 @@ namespace in_json
         class parse_error : public std::runtime_error
         {
           public:
-            parse_error(std::string_view m1) : std::runtime_error{fmt::format("in_json parsing error: {}", m1)} {}
-            parse_error(std::string_view m1, std::string_view m2) : parse_error(fmt::format("{}{}", m1, m2)) {}
+            using std::runtime_error::runtime_error;
+            // parse_error(std::string_view m1) : std::runtime_error{fmt::format("in_json parsing error: {}", m1)} {}
+            // parse_error(std::string_view m1, std::string_view m2) : parse_error(fmt::format("{}{}", m1, m2)) {}
         };
 
         namespace detail
@@ -85,6 +86,14 @@ namespace in_json
                 }
                 throw error(0, 0, "read_number internal");
             }
+
+            template <typename Iter> Iter read_symbol(Iter first, Iter /*last*/, std::string_view expected)
+            {
+                if (std::string_view(&*first, expected.size()) != expected)
+                    throw error(0, 0, "read_symbol internal");
+                return std::next(first, static_cast<ssize_t>(expected.size()));
+            }
+
         } // namespace detail
 
         // ----------------------------------------------------------------------
@@ -145,6 +154,18 @@ namespace in_json
                         }
                         first = end - 1; // incremented after switch
                     } break;
+                    case 't':
+                        first = detail::read_symbol(first + 1, last, "rue") - 1; // incremented after switch
+                        sink.injson_bool(true);
+                        break;
+                    case 'f':
+                        first = detail::read_symbol(first + 1, last, "alse") - 1; // incremented after switch
+                        sink.injson_bool(false);
+                        break;
+                    case 'n':
+                        first = detail::read_symbol(first + 1, last, "ull") - 1; // incremented after switch
+                        sink.injson_null();
+                        break;
                     default:
                         throw error(line_no, first - line_start, "unexpected '{}'"_format(*first));
                 }
@@ -166,6 +187,8 @@ namespace in_json
             virtual void injson_put_string(std::string_view data) { throw parse_error(fmt::format("{}: unexpected string \"{}\" for key \"{}\"", injson_name(), data, key_)); }
             virtual void injson_put_integer(std::string_view data) { throw parse_error(fmt::format("{}: unexpected integer {} for key \"{}\"", injson_name(), data, key_)); }
             virtual void injson_put_real(std::string_view data) { throw parse_error(fmt::format("{}: unexpected real {} for key \"{}\"", injson_name(), data, key_)); }
+            virtual void injson_put_bool(bool val) { throw parse_error(fmt::format("{}: unexpected bool {} for key \"{}\"", injson_name(), val, key_)); }
+            virtual void injson_put_null() { throw parse_error(fmt::format("{}: unexpected null for key \"{}\"", injson_name(), key_)); }
             virtual void injson_put_array() { throw parse_error(fmt::format("{}: unexpected array for key \"{}\"", injson_name(), key_)); }
             virtual void injson_pop_array() {} //  throw parse_error("stack_entry::injson_pop_array");
             bool key_empty() const { return key_.empty(); }
@@ -202,6 +225,8 @@ namespace in_json
             }
             template <typename Iter> void injson_integer(Iter first, Iter last) { stack_.top()->injson_put_integer({&*first, static_cast<size_t>(last - first)}); }
             template <typename Iter> void injson_real(Iter first, Iter last) { stack_.top()->injson_put_real({&*first, static_cast<size_t>(last - first)}); }
+            void injson_bool(bool val) { stack_.top()->injson_put_bool(val); }
+            void injson_null() { stack_.top()->injson_put_null(); }
 
           private:
             TargetContainer& target_;

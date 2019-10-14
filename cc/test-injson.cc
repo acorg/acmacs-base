@@ -9,30 +9,15 @@
 class EmptySink
 {
   public:
-    void injson_object_start()
-    {
-        ++objects;
-    }
+    void injson_object_start() { ++objects; }
 
-    void injson_object_end()
-    {
-        ++object_balance;
-    }
+    void injson_object_end() { ++object_balance; }
 
-    void injson_array_start()
-    {
-        ++arrays;
-    }
+    void injson_array_start() { ++arrays; }
 
-    void injson_array_end()
-    {
-        ++array_balance;
-    }
+    void injson_array_end() { ++array_balance; }
 
-    template <typename Iter> void injson_string(Iter /*first*/, Iter /*last*/)
-    {
-        ++strings;
-    }
+    template <typename Iter> void injson_string(Iter /*first*/, Iter /*last*/) { ++strings; }
 
     template <typename Iter> void injson_integer(Iter first, Iter /*last*/)
     {
@@ -46,9 +31,13 @@ class EmptySink
         ++reals;
     }
 
+    void injson_bool(bool /*val*/) { ++bools; }
+    void injson_null() { ++nulls; }
+
     void report() const
     {
-        fmt::print("EmptySink: strings:{} ints:{} reals:{} objects:{} (balance:{}) arrays:{} (balance: {})\n", strings, integers, reals, objects, objects - object_balance, arrays, arrays - array_balance);
+        fmt::print("EmptySink: strings:{} ints:{} reals:{} bools:{} nulls:{} objects:{} (balance:{}) arrays:{} (balance: {})\n", strings, integers, reals, bools, nulls, objects,
+                   objects - object_balance, arrays, arrays - array_balance);
     }
 
   private:
@@ -57,6 +46,8 @@ class EmptySink
     int arrays = 0;
     int integers = 0;
     int reals = 0;
+    int bools = 0;
+    int nulls = 0;
     int object_balance = 0;
     int array_balance = 0;
 };
@@ -351,35 +342,20 @@ class SeqdbSink
         // fmt::print(stderr, "injson_object_end --> {}\n", target_.top().get().injson_name());
     }
 
-    void injson_array_start()
-    {
-        target_.top().get().injson_put_array();
-    }
+    void injson_array_start() { target_.top().get().injson_put_array(); }
 
-    void injson_array_end()
-    {
-        target_.top().get().injson_pop_array();
+    void injson_array_end() { target_.top().get().injson_pop_array(); }
 
-    }
+    template <typename Iter> void injson_string(Iter first, Iter last) { target_.top().get().injson_put_string({&*first, static_cast<size_t>(last - first)}); }
 
-    template <typename Iter> void injson_string(Iter first, Iter last)
-    {
-        target_.top().get().injson_put_string({&*first, static_cast<size_t>(last - first)});
-    }
+    template <typename Iter> void injson_integer(Iter first, Iter /*last*/) { target_.top().get().injson_put_integer(std::strtol(&*first, nullptr, 0)); }
 
-    template <typename Iter> void injson_integer(Iter first, Iter /*last*/)
-    {
-        target_.top().get().injson_put_integer(std::strtol(&*first, nullptr, 0));
-    }
+    template <typename Iter> void injson_real(Iter /*first*/, Iter /*last*/) {}
 
-    template <typename Iter> void injson_real(Iter /*first*/, Iter /*last*/)
-    {
-    }
+    void injson_bool(bool /*val*/) {}
+    void injson_null() {}
 
-    void report() const
-    {
-        fmt::print("SeqdbSink: entries:{}\n", seqdb_.entries().size());
-    }
+    void report() const { fmt::print("SeqdbSink: entries:{}\n", seqdb_.entries().size()); }
 
   private:
     Seqdb seqdb_;
