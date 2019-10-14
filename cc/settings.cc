@@ -180,19 +180,24 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
 
 bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 {
-    if (name == "if") {
-        apply_if();
-        return true;
+    try {
+        if (name == "if") {
+            apply_if();
+            return true;
+        }
+        else if (name == ":print-all-environment") {
+            environment_.print();
+            return true;
+        }
+        else if (name == ":print-environment-key-value") {
+            environment_.print_key_value();
+            return true;
+        }
+        return false;
     }
-    else if (name == ":print-all-environment") {
-        environment_.print();
-        return true;
+    catch (std::exception& err) {
+        throw error{fmt::format("cannot apply \"{}\": {}", name, err)};
     }
-    else if (name == ":print-environment-key-value") {
-        environment_.print_key_value();
-        return true;
-    }
-    return false;
 
 } // acmacs::settings::v2::Settings::apply_built_in
 
@@ -262,12 +267,19 @@ void acmacs::settings::v2::Settings::apply_if() const
 {
     raii_true warn_if_set_used{warn_if_set_used_};
     if (const auto& condition_clause = getenv("condition"); eval_condition(condition_clause)) {
-        if (const auto& then_clause = getenv("then"); !then_clause.is_null())
+        // fmt::print(stderr, "DEBUG: apply then: {}\n", getenv("then"));
+        if (const auto& then_clause = getenv("then"); !then_clause.is_null()) {
+            if (!then_clause.is_array())
+                throw error{"\"then\" clause must be array"};
             apply(then_clause);
+        }
     }
     else {
-        if (const auto& else_clause = getenv("else"); !else_clause.is_null())
+        if (const auto& else_clause = getenv("else"); !else_clause.is_null()) {
+            if (!else_clause.is_array())
+                throw error{"\"else\" clause must be array"};
             apply(else_clause);
+        }
     }
 
 } // acmacs::settings::v2::Settings::apply_if
@@ -324,6 +336,7 @@ bool acmacs::settings::v2::Settings::eval_and(const rjson::value& condition) con
     }
     bool result = true;
     rjson::for_each(condition, [this, &result](const rjson::value& sub_condition) { result &= eval_condition(sub_condition); });
+    // fmt::print(stderr, "DEBUG: \"and\" : {} yields {}\n", condition, result);
     return result;
 
 } // acmacs::settings::v2::Settings::eval_and
