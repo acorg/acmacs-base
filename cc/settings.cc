@@ -73,7 +73,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
         }
         else {
             const auto replace = [](const auto& src, size_t prefix, const rjson::value& infix, size_t suffix) {
-                return fmt::format("{}{}{}", src.substr(0, prefix), infix.is_string() ? infix.to<std::string>() : rjson::to_string(infix), src.substr(suffix));
+                return fmt::format("{}{}{}", src.substr(0, prefix), infix, src.substr(suffix));
             };
 
             std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
@@ -144,7 +144,7 @@ void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, st
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply(std::string_view name) const
+void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb) const
 {
     // fmt::print(stderr, "DEBUG: Settings::apply \"{}\"\n", name);
     if (name.empty())
@@ -152,10 +152,10 @@ void acmacs::settings::v2::Settings::apply(std::string_view name) const
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_.substitute(name).to<std::string>();
         if (const auto& val1 = environment_.get(substituted_name); !val1.is_const_null()) {
-            apply(val1);
+            apply(val1, verb);
         }
         else if (const auto& val2 = get(substituted_name); !val2.is_const_null())
-            apply(val2);
+            apply(val2, verb);
         else if (!apply_built_in(substituted_name))
             throw error(fmt::format("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name));
     }
@@ -171,7 +171,7 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_.substitute(name).to<std::string>();
         if (const auto& val = data_.back().get(substituted_name); !val.is_const_null())
-            apply(val);
+            apply(val, verbose::yes);
     }
 
 } // acmacs::settings::v2::Settings::apply_top
@@ -203,35 +203,36 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply(const rjson::value& entry) const
+void acmacs::settings::v2::Settings::apply(const rjson::value& entry, verbose verb) const
 {
     try {
-        // fmt::print(stderr, "INFO: settings::apply: {}\n", rjson::to_string(entry));
-        rjson::for_each(entry, [this](const rjson::value& sub_entry) {
+        // fmt::print(stderr, "INFO: settings::apply: {}\n", entry);
+        rjson::for_each(entry, [this,verb](const rjson::value& sub_entry) {
             std::visit(
-                [this]<typename T>(T&& sub_entry_val) {
+                [this,verb]<typename T>(T&& sub_entry_val) {
                     // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
                     if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                         this->apply(std::string_view{sub_entry_val});
                     else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
-                        this->push_and_apply(sub_entry_val);
+                                              this->push_and_apply(sub_entry_val, verb);
                     else
-                        throw error(fmt::format("cannot apply: {}\n", rjson::to_string(sub_entry_val)));
+                        throw error(fmt::format("cannot apply: {}\n", sub_entry_val));
                 },
                 sub_entry.val_());
         });
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, rjson::to_string(entry)));
+        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
     }
 
 } // acmacs::settings::v2::Settings::apply
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) const
+void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry, verbose verb) const
 {
-    fmt::print(stderr, "INFO: settings::push_and_apply: {}\n", rjson::to_string(entry));
+    if (verb == verbose::yes)
+        fmt::print(stderr, "INFO: {}\n", entry);
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
             const auto command{command_v.to<std::string_view>()};
@@ -252,10 +253,10 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry) 
             // command is commented out
         }
         else
-            throw error(fmt::format("cannot apply: {}\n", rjson::to_string(entry)));
+            throw error(fmt::format("cannot apply: {}\n", entry));
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, rjson::to_string(entry)));
+        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
     }
 
 
@@ -271,14 +272,14 @@ void acmacs::settings::v2::Settings::apply_if() const
         if (const auto& then_clause = getenv("then"); !then_clause.is_null()) {
             if (!then_clause.is_array())
                 throw error{"\"then\" clause must be array"};
-            apply(then_clause);
+            apply(then_clause, verbose::no);
         }
     }
     else {
         if (const auto& else_clause = getenv("else"); !else_clause.is_null()) {
             if (!else_clause.is_array())
                 throw error{"\"else\" clause must be array"};
-            apply(else_clause);
+            apply(else_clause, verbose::no);
         }
     }
 
@@ -382,7 +383,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
     fmt::print("INFO: Settings::Environment {}\n", data_.size());
     for (auto [level, entries] : acmacs::enumerate(data_)) {
         for (const auto& entry : entries)
-            fmt::print("    {} \"{}\": {}\n", level, entry.first, rjson::to_string(substitute(entry.second)));
+            fmt::print("    {} \"{}\": {}\n", level, entry.first, substitute(entry.second));
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
@@ -391,13 +392,9 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("{}: {}\n", rjson::to_string(get("key")), rjson::to_string(substitute(get("value"))));
+    fmt::print("{}: {}\n", get("key"), substitute(get("value")));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
-
-// ----------------------------------------------------------------------
-
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "acmacs-base/fmt.hh"
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/rjson.hh"
 #include "acmacs-base/flat-map.hh"
 
@@ -31,8 +32,8 @@ namespace acmacs::settings::inline v2
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name = "main") const;
-        void apply(const char* name) const { apply(std::string_view{name}); }
+        virtual void apply(std::string_view name = "main", verbose verb = verbose::yes) const;
+        void apply(const char* name, verbose verb = verbose::yes) const { apply(std::string_view{name}, verb); }
 
         // substitute vars in name, find name in the top of data_ and apply it
         // do nothing if name starts with ? or if it is not found in top of data_
@@ -71,7 +72,7 @@ namespace acmacs::settings::inline v2
 
       protected:
         template <typename... Key> const rjson::value& get(Key&&... keys) const;
-        void apply(const rjson::value& entry) const;
+        void apply(const rjson::value& entry, verbose verb) const;
 
       private:
         class Environment
@@ -100,7 +101,7 @@ namespace acmacs::settings::inline v2
         mutable Environment environment_;
         mutable bool warn_if_set_used_{false};
 
-        void push_and_apply(const rjson::object& entry) const;
+        void push_and_apply(const rjson::object& entry, verbose verb) const;
         void apply_if() const;
         bool eval_condition(const rjson::value& condition) const;
         bool eval_and(const rjson::value& condition) const;

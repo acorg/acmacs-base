@@ -12,6 +12,7 @@
 namespace acmacs
 {
     enum class debug { no, yes };
+    enum class verbose { no, yes };
 
     // class debug
     // {
