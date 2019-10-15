@@ -114,7 +114,7 @@ namespace acmacs
         template <typename TT> explicit constexpr named_number_from_string_t(TT&& value) : base_t(std::forward<TT>(value)) {}
         using base_t::get;
 
-        Number as_number() const
+        constexpr Number as_number() const
         {
             return std::visit(
                 []<typename Repr>(Repr content)->Number {
@@ -143,7 +143,7 @@ namespace acmacs
                 get());
         }
 
-        bool is_zero() const
+        constexpr bool is_zero() const
         {
             return std::visit(
                 []<typename Repr>(Repr content)->bool {
