@@ -380,83 +380,6 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<
 
 namespace rjson::inline v2
 {
-    // --------------------------------------------------
-
-    template <> inline double value::to<double>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> double {
-                if constexpr (std::is_same_v<std::decay_t<T>, number>)
-                    return to_double(arg);
-                else
-                    throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
-            },
-            value_);
-    }
-
-    template <> inline std::string value::to<std::string>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> std::string {
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return arg;
-                else
-                    throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
-            },
-            value_);
-    }
-
-    template <> inline std::string_view value::to<std::string_view>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> std::string_view {
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return std::string_view{arg};
-                else
-                    throw value_type_mismatch("std::string_view", actual_type(), DEBUG_LINE_FUNC);
-            },
-            value_);
-    }
-
-    template <typename T> inline T value::to_integer() const
-    {
-        return std::visit(
-            [this]<typename TT>(TT&& arg) -> T {
-                if constexpr (std::is_same_v<std::decay_t<TT>, number>)
-                    return rjson::to_integer<T>(arg);
-                else
-                    throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
-            },
-            value_);
-    }
-
-    template <> inline size_t value::to<size_t>() const { return to_integer<size_t>(); }
-    template <> inline long value::to<long>() const { return to_integer<long>(); }
-    template <> inline int value::to<int>() const { return to_integer<int>(); }
-    template <> inline unsigned value::to<unsigned>() const { return to_integer<unsigned>(); }
-    template <> inline short value::to<short>() const { return to_integer<short>(); }
-    template <> inline unsigned short value::to<unsigned short>() const { return to_integer<unsigned short>(); }
-
-    template <> inline bool value::to<bool>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> bool {
-                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
-                    return arg;
-                else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
-                    const auto val = rjson::to_integer<int>(arg);
-                    if (val != 0 && val != 1)
-                        fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), DEBUG_LINE_FUNC);
-                    return val;
-                }
-                else
-                    throw value_type_mismatch("bool", actual_type(), DEBUG_LINE_FUNC);
-            },
-            value_);
-    }
-
-    // ----------------------------------------------------------------------
-
     inline const value& array::get(size_t index) const noexcept // if index out of range, returns ConstNull
     {
         if (index < content_.size())
@@ -576,6 +499,101 @@ namespace rjson::inline v2
 #endif
             return std::optional<size_t>{};
 #pragma GCC diagnostic pop
+    }
+
+    // --------------------------------------------------
+
+    template <> inline double value::to<double>() const
+    {
+        return std::visit(
+            [this]<typename T>(T&& arg) -> double {
+                if constexpr (std::is_same_v<std::decay_t<T>, number>)
+                    return to_double(arg);
+                else
+                    throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
+    }
+
+    template <> inline std::string value::to<std::string>() const
+    {
+        return std::visit(
+            [this]<typename T>(T&& arg) -> std::string {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+                    return arg;
+                else
+                    throw value_type_mismatch("std::string", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
+    }
+
+    template <> inline std::string_view value::to<std::string_view>() const
+    {
+        return std::visit(
+            [this]<typename T>(T&& arg) -> std::string_view {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+                    return std::string_view{arg};
+                else
+                    throw value_type_mismatch("std::string_view", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
+    }
+
+    template <typename T> inline T value::to_integer() const
+    {
+        return std::visit(
+            [this]<typename TT>(TT&& arg) -> T {
+                if constexpr (std::is_same_v<std::decay_t<TT>, number>)
+                    return rjson::to_integer<T>(arg);
+                else
+                    throw value_type_mismatch("number", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
+    }
+
+    template <> inline size_t value::to<size_t>() const { return to_integer<size_t>(); }
+    template <> inline long value::to<long>() const { return to_integer<long>(); }
+    template <> inline int value::to<int>() const { return to_integer<int>(); }
+    template <> inline unsigned value::to<unsigned>() const { return to_integer<unsigned>(); }
+    template <> inline short value::to<short>() const { return to_integer<short>(); }
+    template <> inline unsigned short value::to<unsigned short>() const { return to_integer<unsigned short>(); }
+
+    template <> inline bool value::to<bool>() const
+    {
+        return std::visit(
+            [this]<typename T>(T&& arg) -> bool {
+                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
+                    return arg;
+                else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
+                    const auto val = rjson::to_integer<int>(arg);
+                    if (val != 0 && val != 1)
+                        fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), DEBUG_LINE_FUNC);
+                    return val;
+                }
+                else
+                    throw value_type_mismatch("bool", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
+    }
+
+    template <> inline std::vector<std::string_view> value::to<std::vector<std::string_view>>() const
+    {
+        return std::visit(
+            [this]<typename T>(T && arg)->std::vector<std::string_view> {
+                if constexpr (std::is_same_v<std::decay_t<T>, array>) {
+                    try {
+                        std::vector<std::string_view> result;
+                        arg.for_each([&result](const rjson::value& elt) { result.push_back(elt.to<std::string_view>()); });
+                        return result;
+                    }
+                    catch (std::exception& /*err*/) {
+                        throw value_type_mismatch("array of strings", actual_type(), DEBUG_LINE_FUNC);
+                    }
+                }
+                else
+                    throw value_type_mismatch("array of strings", actual_type(), DEBUG_LINE_FUNC);
+            },
+            value_);
     }
 
     // --------------------------------------------------
