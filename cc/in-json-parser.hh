@@ -2,6 +2,7 @@
 
 #include <stack>
 #include <memory>
+#include <stdexcept>
 
 #include "acmacs-base/fmt.hh"
 
