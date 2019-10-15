@@ -181,6 +181,7 @@ namespace acmacs
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator*=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() * rhs.as_number(); return lhs; }
     // no operator/
 
+    template <typename Tag> using named_int_from_string_t  = named_number_from_string_t<int, Tag>;
     template <typename Tag> using named_size_t_from_string_t  = named_number_from_string_t<size_t, Tag>;
     template <typename Tag> using named_double_from_string_t  = named_number_from_string_t<double, Tag>;
 
@@ -222,7 +223,12 @@ namespace acmacs
         void assign(std::string_view source) { this->get().assign(source); }
     };
 
-    template <typename Tag> using named_string_view_t = named_string_base_t<std::string_view, Tag>;
+    template <typename Tag> class named_string_view_t : public named_string_base_t<std::string_view, Tag>
+    {
+      public:
+        using named_string_base_t<std::string_view, Tag>::named_string_base_t;
+        template <typename Tag2> constexpr named_string_view_t(const named_string_t<Tag2>& src) : named_string_base_t<std::string_view, Tag>{*src} {}
+    };
 
     // ----------------------------------------------------------------------
 
