@@ -41,10 +41,17 @@ namespace date
 
     inline std::string display(const year_month_day& dt, allow_incomplete allow)
     {
-        if (dt.ok())
+        if (dt.ok()) {
             return format("%Y-%m-%d", dt);
-        else if (allow == allow_incomplete::yes)
-            return fmt::format("{}-{:02d}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+        }
+        else if (allow == allow_incomplete::yes) {
+            if (static_cast<unsigned>(dt.month()) == 0)
+                return fmt::format("{}", static_cast<int>(dt.year()));
+            else if (static_cast<unsigned>(dt.day()) == 0)
+                return fmt::format("{}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()));
+            else
+                return fmt::format("{}-{:02d}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+        }
         else
             return fmt::format("*invalid-date: {}-{}-{}*", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
     }
