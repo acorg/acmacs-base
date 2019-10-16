@@ -67,8 +67,6 @@ namespace acmacs
         }
     };
 
-    template <typename Number, typename Tag> constexpr bool operator==(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() == rhs.get(); }
-    template <typename Number, typename Tag> constexpr bool operator!=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return !operator==(lhs, rhs); }
     template <typename Number, typename Tag> constexpr bool operator<(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() < rhs.get(); }
     template <typename Number, typename Tag> constexpr bool operator<=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() <= rhs.get(); }
     template <typename Number, typename Tag> constexpr bool operator>(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() > rhs.get(); }
@@ -114,7 +112,6 @@ namespace acmacs
     };
 
     template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
-    template <typename Tag> constexpr bool operator!=(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
 
     // ----------------------------------------------------------------------
 
@@ -220,14 +217,6 @@ namespace acmacs
         int compare(const named_string_base_t<T, Tag>& rhs) const { return ::string::compare(this->get(), rhs.get()); }
     };
 
-    template <typename T, typename Tag> constexpr bool operator==(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() == rhs.get(); }
-    template <typename T, typename Tag> constexpr bool operator==(const named_string_base_t<T, Tag>& lhs, std::string_view rhs) noexcept { return lhs.get() == rhs; }
-    template <typename T, typename Tag> constexpr bool operator==(std::string_view lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs == rhs.get(); }
-
-    template <typename T, typename Tag> constexpr bool operator!=(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
-    template <typename T, typename Tag> constexpr bool operator!=(const named_string_base_t<T, Tag>& lhs, std::string_view rhs) noexcept { return !operator==(lhs, rhs); }
-    template <typename T, typename Tag> constexpr bool operator!=(std::string_view lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
-
     template <typename T, typename Tag> constexpr bool operator<(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() < rhs.get(); }
 
     template <typename Tag> class named_string_t : public named_string_base_t<std::string, Tag>
@@ -283,7 +272,7 @@ namespace acmacs
         }
         void insert_if_not_present(T&& val)
         {
-            if (!exist(val))
+            if (!exists(std::forward<T>(val)))
                 push_back(std::forward<T>(val));
         }
         void merge_in(const named_vector_t<T, Tag>& another)
