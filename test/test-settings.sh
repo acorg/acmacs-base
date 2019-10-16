@@ -26,7 +26,7 @@ cd "$TESTDIR"
 # ../dist/test-settings
 ../dist/test-settings >"${TDIR}/test-settings.output.txt" 2>/dev/null
 if ! cmp "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt; then
-    diff "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt
+    diff "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt || true
     echo
     echo
     ../dist/test-settings
