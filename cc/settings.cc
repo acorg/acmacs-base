@@ -73,7 +73,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
         }
         else {
             const auto replace = [](const auto& src, size_t prefix, const rjson::value& infix, size_t suffix) {
-                return fmt::format("{}{}{}", src.substr(0, prefix), infix, src.substr(suffix));
+                return fmt::format("{}{}{}", src.substr(0, prefix), rjson::to_string_raw(infix), src.substr(suffix));
             };
 
             std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
