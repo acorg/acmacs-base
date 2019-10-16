@@ -67,14 +67,27 @@ namespace acmacs
         }
     };
 
-    template <typename Number, typename Tag> constexpr bool operator<(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return lhs.get() < rhs.get(); }
-    template <typename Number, typename Tag> constexpr bool operator<=(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return lhs.get() <= rhs.get(); }
-    template <typename Number, typename Tag> constexpr bool operator>(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return lhs.get() > rhs.get(); }
-    template <typename Number, typename Tag> constexpr bool operator>=(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return lhs.get() >= rhs.get(); }
+    template <typename Number, typename Tag> constexpr bool operator==(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() == rhs.get(); }
+    template <typename Number, typename Tag> constexpr bool operator!=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return !operator==(lhs, rhs); }
+    template <typename Number, typename Tag> constexpr bool operator<(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename Number, typename Tag> constexpr bool operator<=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() <= rhs.get(); }
+    template <typename Number, typename Tag> constexpr bool operator>(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() > rhs.get(); }
+    template <typename Number, typename Tag> constexpr bool operator>=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() >= rhs.get(); }
 
-    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator+(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() + rhs.get()}; }
-    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator-(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() - rhs.get()}; }
-    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator*(const named_number_t<Number, Tag>& lhs, const named_number_t<Number, Tag>& rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() * rhs.get()}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator+(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() + rhs.get()}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator+(named_number_t<Number, Tag> lhs, Number rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() + rhs}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator-(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() - rhs.get()}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator-(named_number_t<Number, Tag> lhs, Number rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() - rhs}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator*(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() * rhs.get()}; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator*(named_number_t<Number, Tag> lhs, Number rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() * rhs}; }
+    // no operator/
+
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator+=(named_number_t<Number, Tag>& lhs, named_number_t<Number, Tag> rhs) noexcept { lhs.get() = lhs.get() + rhs.get(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator+=(named_number_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.get() + rhs; return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator-=(named_number_t<Number, Tag>& lhs, named_number_t<Number, Tag> rhs) noexcept { lhs.get() = lhs.get() - rhs.get(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator-=(named_number_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.get() - rhs; return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator*=(named_number_t<Number, Tag>& lhs, named_number_t<Number, Tag> rhs) noexcept { lhs.get() = lhs.get() * rhs.get(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag>& operator*=(named_number_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.get() * rhs; return lhs; }
     // no operator/
 
     // ----------------------------------------------------------------------
@@ -83,10 +96,8 @@ namespace acmacs
     {
       public:
         using named_number_t<size_t, Tag>::named_number_t;
+        constexpr named_size_t(named_number_t<size_t, Tag> src) : named_number_t<size_t, Tag>{src} {}
     };
-
-    template <typename Tag> constexpr bool operator==(const named_size_t<Tag>& lhs, const named_size_t<Tag>& rhs) noexcept { return lhs.get() == rhs.get(); }
-    template <typename Tag> constexpr bool operator!=(const named_size_t<Tag>& lhs, const named_size_t<Tag>& rhs) noexcept { return !operator==(lhs, rhs); }
 
     template <typename Tag> range(int, named_size_t<Tag>)->range<named_size_t<Tag>>;
     template <typename Tag> range(size_t, named_size_t<Tag>)->range<named_size_t<Tag>>;
@@ -99,6 +110,7 @@ namespace acmacs
     {
       public:
         using named_number_t<double, Tag>::named_number_t;
+        constexpr named_double_t(named_number_t<double, Tag> src) : named_number_t<double, Tag>{src} {}
     };
 
     template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
@@ -177,8 +189,11 @@ namespace acmacs
     // no operator/
 
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator+=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() + rhs.as_number(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator+=(named_number_from_string_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.as_number() + rhs; return lhs; }
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator-=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() - rhs.as_number(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator-=(named_number_from_string_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.as_number() - rhs; return lhs; }
     template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator*=(named_number_from_string_t<Number, Tag>& lhs, const named_number_from_string_t<Number, Tag>& rhs) noexcept { lhs.get() = lhs.as_number() * rhs.as_number(); return lhs; }
+    template <typename Number, typename Tag> constexpr named_number_from_string_t<Number, Tag>& operator*=(named_number_from_string_t<Number, Tag>& lhs, Number rhs) noexcept { lhs.get() = lhs.as_number() * rhs; return lhs; }
     // no operator/
 
     template <typename Tag> using named_int_from_string_t  = named_number_from_string_t<int, Tag>;
