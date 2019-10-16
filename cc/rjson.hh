@@ -358,8 +358,21 @@ namespace rjson::inline v2
 
     inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
     {
-        return std::visit([a_show_empty_values](auto&& arg) -> std::string { return to_string(arg, a_show_empty_values); }, val.val_());
+        return std::visit([a_show_empty_values]<typename T>(T&& arg) -> std::string { return to_string(std::forward<T>(arg), a_show_empty_values); }, val.val_());
     }
+
+    inline std::string to_string_raw(const value& val) // if val is string, return it without quotes
+    {
+        return std::visit(
+            []<typename T>(T&& arg)->std::string {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+                    return arg;
+                else
+                    return to_string(std::forward<T>(arg));
+            },
+            val.val_());
+    }
+
 } // namespace rjson::inlinev2
 
 // ----------------------------------------------------------------------
