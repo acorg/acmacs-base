@@ -65,6 +65,19 @@ namespace acmacs
         return _enumerate_internal::enumerate_range<iter_type, index_type>(std::begin(content), std::end(content), initial);
     }
 
+    template <typename Container, typename index_type = size_t> inline auto enumerate(Container&&, size_t = 0)
+    {
+        static_assert(std::is_same_v<int, Container>, "acmacs::enumerate cannot use temp (&&) values as a container (g++9 will destroy container before starting enumeration");
+    }
+
+    template <typename Container, typename Func, typename Index = size_t> inline void enumerate(Container&& content, Func callback, Index index = 0)
+    {
+        for (auto& element : content) {
+            callback(index, element);
+            ++index;
+        }
+    }
+
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
