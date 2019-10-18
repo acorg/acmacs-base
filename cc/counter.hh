@@ -84,6 +84,7 @@ namespace acmacs
                 ++counter_[func(*first)];
         }
         template <typename Container, typename F> CounterChar(const Container& container, F func) : CounterChar(std::begin(container), std::end(container), func) {}
+
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj)]; }
 
         std::pair<char, size_t> max() const
@@ -91,6 +92,8 @@ namespace acmacs
             const auto me = std::max_element(counter_.begin(), counter_.end(), [](size_t e1, size_t e2) { return e1 < e2; });
             return {static_cast<char>(me - counter_.begin()), *me};
         }
+
+        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](size_t val) { return val == 0; }); }
 
         std::vector<char> sorted() const
         {
