@@ -32,17 +32,18 @@ namespace acmacs::settings::inline v2
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name = "main", verbose verb = verbose::yes) const;
-        void apply(const char* name, verbose verb = verbose::yes) const { apply(std::string_view{name}, verb); }
+        virtual void apply(std::string_view name = "main", verbose verb = verbose::yes);
+        void apply(const char* name, verbose verb = verbose::yes) { apply(std::string_view{name}, verb); }
 
         // substitute vars in name, find name in the top of data_ and apply it
         // do nothing if name starts with ? or if it is not found in top of data_
-        virtual void apply_top(std::string_view name) const;
+        virtual void apply_top(std::string_view name);
 
-        virtual bool apply_built_in(std::string_view name) const; // returns true if built-in command with that name found and applied
+        virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
 
         void setenv_from_string(std::string_view key, std::string_view value);
         template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
+        template <typename T> void setenv_toplevel(std::string_view key, T&& value) { setenv_toplevel(key, rjson::value{std::forward<T>(value)}); }
 
         const rjson::value& getenv(std::string_view key) const { return environment_.get(environment_.substitute(key).to<std::string>()); }
         template <typename T> T getenv(std::string_view key, T&& a_default) const
@@ -72,7 +73,7 @@ namespace acmacs::settings::inline v2
 
       protected:
         template <typename... Key> const rjson::value& get(Key&&... keys) const;
-        void apply(const rjson::value& entry, verbose verb) const;
+        void apply(const rjson::value& entry, verbose verb);
 
       private:
         class Environment
@@ -86,6 +87,8 @@ namespace acmacs::settings::inline v2
             size_t size() const { return data_.size(); }
             void add(std::string_view key, const rjson::value& val) { data_.rbegin()->emplace_or_replace(std::string{key}, val); }
             void add(std::string_view key, rjson::value&& val) { data_.rbegin()->emplace_or_replace(std::string{key}, std::move(val)); }
+            void add_to_toplevel(std::string_view key, const rjson::value& val) { data_.begin()->emplace_or_replace(std::string{key}, val); }
+            void add_to_toplevel(std::string_view key, rjson::value&& val) { data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
             void print() const;
             void print_key_value() const;
 
@@ -101,8 +104,8 @@ namespace acmacs::settings::inline v2
         mutable Environment environment_;
         mutable bool warn_if_set_used_{false};
 
-        void push_and_apply(const rjson::object& entry, verbose verb) const;
-        void apply_if() const;
+        void push_and_apply(const rjson::object& entry, verbose verb);
+        void apply_if();
         bool eval_condition(const rjson::value& condition) const;
         bool eval_and(const rjson::value& condition) const;
         bool eval_or(const rjson::value& condition) const;
@@ -128,6 +131,8 @@ namespace acmacs::settings::inline v2
 
     template <> inline void Settings::setenv(std::string_view key, const rjson::value& value) { environment_.add(key, value); }
     template <> inline void Settings::setenv(std::string_view key, rjson::value && value) { environment_.add(key, std::move(value)); }
+    template <> inline void Settings::setenv_toplevel(std::string_view key, const rjson::value& value) { environment_.add_to_toplevel(key, value); }
+    template <> inline void Settings::setenv_toplevel(std::string_view key, rjson::value && value) { environment_.add_to_toplevel(key, std::move(value)); }
 
 } // namespace acmacs::settings::inline v2
 

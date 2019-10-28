@@ -144,7 +144,7 @@ void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, st
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb) const
+void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb)
 {
     // fmt::print(stderr, "DEBUG: Settings::apply \"{}\"\n", name);
     if (name.empty())
@@ -164,7 +164,7 @@ void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb) 
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
+void acmacs::settings::v2::Settings::apply_top(std::string_view name)
 {
     if (name.empty())
         throw error("cannot apply command with an empty name");
@@ -178,7 +178,7 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name) const
 
 // ----------------------------------------------------------------------
 
-bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
+bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
 {
     try {
         if (name == "if") {
@@ -203,18 +203,18 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name) const
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply(const rjson::value& entry, verbose verb) const
+void acmacs::settings::v2::Settings::apply(const rjson::value& entry, verbose verb)
 {
     try {
         // fmt::print(stderr, "INFO: settings::apply: {}\n", entry);
-        rjson::for_each(entry, [this,verb](const rjson::value& sub_entry) {
+        rjson::for_each(entry, [this, verb](const rjson::value& sub_entry) {
             std::visit(
-                [this,verb]<typename T>(T&& sub_entry_val) {
+                [this, verb]<typename T>(T && sub_entry_val) {
                     // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
                     if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                         this->apply(std::string_view{sub_entry_val});
                     else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
-                                              this->push_and_apply(sub_entry_val, verb);
+                        this->push_and_apply(sub_entry_val, verb);
                     else
                         throw error(fmt::format("cannot apply: {}\n", sub_entry_val));
                 },
@@ -229,7 +229,7 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry, verbose ve
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry, verbose verb) const
+void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry, verbose verb)
 {
     if (verb == verbose::yes)
         fmt::print(stderr, "INFO: {}\n", entry);
@@ -264,7 +264,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry, 
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply_if() const
+void acmacs::settings::v2::Settings::apply_if()
 {
     raii_true warn_if_set_used{warn_if_set_used_};
     if (const auto& condition_clause = getenv("condition"); eval_condition(condition_clause)) {
