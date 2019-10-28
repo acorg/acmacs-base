@@ -46,7 +46,7 @@ namespace acmacs::settings::inline v2
         template <typename T> void setenv_toplevel(std::string_view key, T&& value) { setenv_toplevel(key, rjson::value{std::forward<T>(value)}); }
 
         const rjson::value& getenv(std::string_view key) const { return environment_.get(environment_.substitute(key).to<std::string>()); }
-        template <typename T> T getenv(std::string_view key, T&& a_default) const
+        template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default) const
         {
             if (const auto& val = environment_.get(environment_.substitute(key).to<std::string>()); val.is_string()) {
                 auto orig = val.to<std::string>();
@@ -57,12 +57,12 @@ namespace acmacs::settings::inline v2
                     else if (substituted.is_const_null()) // substitutions lead to const-null
                         return std::move(a_default);
                     else
-                        return substituted.to<T>();
+                        return substituted.to<std::decay_t<T>>();
                 }
                 throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
             }
             else if (!val.is_const_null())
-                return val.to<T>();
+                return val.to<std::decay_t<T>>();
             else
                 return std::move(a_default);
         }
