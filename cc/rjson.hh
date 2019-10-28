@@ -32,28 +32,39 @@ namespace rjson::inline v2
     enum class space_after_comma { no, yes };
     enum class show_empty_values { no, yes };
 
-    class value_type_mismatch : public std::runtime_error
-    {
-      public:
-        value_type_mismatch(std::string requested_type, std::string actual_type, std::string source_ref)
-            : std::runtime_error{"value type mismatch, requested: " + requested_type + ", stored: " + actual_type + source_ref}
-        {
-        }
-    };
-    class merge_error : public std::runtime_error
+    // --------------------------------------------------
+
+    class error : public std::runtime_error
     {
       public:
         using std::runtime_error::runtime_error;
     };
-    class array_index_out_of_range : public std::runtime_error
+
+    class value_type_mismatch : public error
     {
       public:
-        array_index_out_of_range() : std::runtime_error{"array_index_out_of_range"} {}
+        value_type_mismatch(std::string requested_type, std::string actual_type, std::string source_ref)
+            : error{"value type mismatch, requested: " + requested_type + ", stored: " + actual_type + source_ref}
+        {
+        }
     };
-    class const_null_modification_attempt : public std::runtime_error
+
+    class merge_error : public error
     {
       public:
-        const_null_modification_attempt() : std::runtime_error{"ConstNull modification attempt"} {}
+        using error::error;
+    };
+
+    class array_index_out_of_range : public error
+    {
+      public:
+        array_index_out_of_range() : error{"array_index_out_of_range"} {}
+    };
+
+    class const_null_modification_attempt : public error
+    {
+      public:
+        const_null_modification_attempt() : error{"ConstNull modification attempt"} {}
     };
 
     // --------------------------------------------------
@@ -173,7 +184,8 @@ namespace rjson::inline v2
 
     inline double to_double(const number& val)
     {
-        auto visitor = []<typename T>(T&& arg) -> double {
+        auto visitor = []<typename T>(T && arg)->double
+        {
             if constexpr (std::is_same_v<std::decay_t<T>, long>)
                 return static_cast<double>(arg);
             else if constexpr (std::is_same_v<std::decay_t<T>, double>)
@@ -188,7 +200,8 @@ namespace rjson::inline v2
 
     template <typename T> T to_integer(const number& val)
     {
-        auto visitor = []<typename Arg>(Arg&& arg) -> T {
+        auto visitor = []<typename Arg>(Arg && arg)->T
+        {
             if constexpr (std::is_same_v<Arg, long>)
                 return static_cast<T>(arg);
             else if constexpr (std::is_same_v<std::decay_t<Arg>, double>)
@@ -358,13 +371,14 @@ namespace rjson::inline v2
 
     inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
     {
-        return std::visit([a_show_empty_values]<typename T>(T&& arg) -> std::string { return to_string(std::forward<T>(arg), a_show_empty_values); }, val.val_());
+        return std::visit(
+            [a_show_empty_values]<typename T>(T && arg)->std::string { return to_string(std::forward<T>(arg), a_show_empty_values); }, val.val_());
     }
 
     inline std::string to_string_raw(const value& val) // if val is string, return it without quotes
     {
         return std::visit(
-            []<typename T>(T&& arg)->std::string {
+            []<typename T>(T && arg)->std::string {
                 if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                     return arg;
                 else
