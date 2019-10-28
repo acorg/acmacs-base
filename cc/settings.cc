@@ -307,6 +307,10 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
                         return eval_or(or_clause);
                     else if (const auto& not_clause = arg.get("not"); !not_clause.is_null())
                         return eval_not(not_clause);
+                    else if (const auto& empty_clause = arg.get("empty"); !empty_clause.is_null())
+                        return eval_empty(empty_clause, true);
+                    else if (const auto& not_empty_clause = arg.get("not-empty"); !not_empty_clause.is_null())
+                        return eval_empty(not_empty_clause, false);
                     else
                         throw error{"unrecognized clause"};
                 }
@@ -363,6 +367,32 @@ bool acmacs::settings::v2::Settings::eval_not(const rjson::value& condition) con
     return !eval_condition(condition);
 
 } // acmacs::settings::v2::Settings::eval_not
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, bool true_if_empty) const
+{
+    try {
+        return std::visit(
+            [this,true_if_empty]<typename T>(T && arg)->bool {
+                if constexpr (std::is_same_v<std::decay_t<T>, rjson::null> || std::is_same_v<std::decay_t<T>, rjson::const_null>)
+                    return true_if_empty;
+                else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+                    if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string())
+                        return rjson::to_string_raw(substituted).empty() == true_if_empty;
+                    else
+                        throw error{"unsupported value type"};
+                }
+                else
+                    throw error{"unsupported value type"};
+            },
+            condition.val_());
+    }
+    catch (std::exception& err) {
+        throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
+    }
+
+} // acmacs::settings::v2::Settings::eval_empty
 
 // ----------------------------------------------------------------------
 

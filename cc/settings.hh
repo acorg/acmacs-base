@@ -110,6 +110,7 @@ namespace acmacs::settings::inline v2
         bool eval_and(const rjson::value& condition) const;
         bool eval_or(const rjson::value& condition) const;
         bool eval_not(const rjson::value& condition) const;
+        bool eval_empty(const rjson::value& condition, bool true_if_empty) const;
 
         friend class Subenvironment;
     }; // class Settings
