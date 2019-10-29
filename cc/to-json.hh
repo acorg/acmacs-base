@@ -175,6 +175,7 @@ namespace to_json
                           break;
                     }
                 }
+                result.erase(output, std::end(result));
                 return result;
             }
         };
