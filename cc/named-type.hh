@@ -218,6 +218,9 @@ namespace acmacs
     };
 
     template <typename T, typename Tag> constexpr bool operator<(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() < rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator<=(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() <= rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator>(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() > rhs.get(); }
+    template <typename T, typename Tag> constexpr bool operator>=(const named_string_base_t<T, Tag>& lhs, const named_string_base_t<T, Tag>& rhs) noexcept { return lhs.get() >= rhs.get(); }
 
     template <typename Tag> class named_string_t : public named_string_base_t<std::string, Tag>
     {
