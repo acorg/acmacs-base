@@ -202,14 +202,16 @@ namespace rjson::inline v2
     {
         auto visitor = []<typename Arg>(Arg && arg)->T
         {
-            if constexpr (std::is_same_v<Arg, long>)
+            if constexpr (std::is_same_v<std::decay_t<Arg>, long>)
                 return static_cast<T>(arg);
             else if constexpr (std::is_same_v<std::decay_t<Arg>, double>)
                 return static_cast<T>(std::lround(arg));
             else if constexpr (std::is_same_v<std::decay_t<Arg>, std::string>)
                 return static_cast<T>(std::stoul(arg));
-            else
+            else {
+                fmt::print(stderr, "WARNING: rjson::number::to_integer: unexpected internal type, value is {}\n", arg);
                 return std::numeric_limits<T>::max();
+            }
         };
         return std::visit(visitor, val);
     }
@@ -801,8 +803,8 @@ namespace rjson::inline v2
     inline bool value::is_object() const noexcept
     {
         return std::visit(
-            [](auto&& arg) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+            []<typename T>(T&&) {
+                if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     return true;
                 else
                     return false;
@@ -813,8 +815,8 @@ namespace rjson::inline v2
     inline bool value::is_array() const noexcept
     {
         return std::visit(
-            [](auto&& arg) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+            []<typename T>(T&&) {
+                if constexpr (std::is_same_v<std::decay_t<T>, array>)
                     return true;
                 else
                     return false;
@@ -825,8 +827,8 @@ namespace rjson::inline v2
     inline bool value::is_string() const noexcept
     {
         return std::visit(
-            [](auto&& arg) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>)
+            []<typename T>(T&&) {
+                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                     return true;
                 else
                     return false;
@@ -837,8 +839,8 @@ namespace rjson::inline v2
     inline bool value::is_number() const noexcept
     {
         return std::visit(
-            [](auto&& arg) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, number>)
+            []<typename T>(T&&) {
+                if constexpr (std::is_same_v<std::decay_t<T>, number>)
                     return true;
                 else
                     return false;
@@ -849,8 +851,8 @@ namespace rjson::inline v2
     inline bool value::is_bool() const noexcept
     {
         return std::visit(
-            [](auto&& arg) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, bool>)
+            []<typename T>(T&&) {
+                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
                     return true;
                 else
                     return false;
@@ -862,8 +864,8 @@ namespace rjson::inline v2
     template <typename S, typename> inline void value::remove(S field_name)
     {
         std::visit(
-            [&field_name, this](auto&& arg) -> void {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+            [&field_name, this]<typename T>(T&& arg) -> void {
+                if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     arg.remove(field_name);
                 else
                     throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
@@ -875,8 +877,8 @@ namespace rjson::inline v2
     inline void value::remove(size_t index)
     {
         std::visit(
-            [index, this](auto&& arg) -> void {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+            [index, this]<typename T>(T&& arg) -> void {
+                if constexpr (std::is_same_v<std::decay_t<T>, array>)
                     arg.remove(index);
                 else
                     throw value_type_mismatch("array", actual_type(), DEBUG_LINE_FUNC);
@@ -888,10 +890,10 @@ namespace rjson::inline v2
     inline void value::clear()
     {
         std::visit(
-            [this](auto&& arg) -> void {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array> || std::is_same_v<std::decay_t<decltype(arg)>, object>)
+            [this]<typename T>(T&& arg) -> void {
+                if constexpr (std::is_same_v<std::decay_t<T>, array> || std::is_same_v<std::decay_t<T>, object>)
                     arg.clear();
-                else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, null>)
+                else if constexpr (std::is_same_v<std::decay_t<T>, null>)
                     ;
                 else
                     throw value_type_mismatch("array or object", actual_type(), DEBUG_LINE_FUNC);
@@ -903,8 +905,8 @@ namespace rjson::inline v2
     inline value& value::operator[](S field_name) // if this is not object, throws value_type_mismatch; if field not present, inserts field with null value and returns it
     {
         return std::visit(
-            [&field_name, this](auto&& arg) -> value& {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+            [&field_name, this]<typename T>(T&& arg) -> value& {
+                if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     return arg[field_name];
                 else
                     throw value_type_mismatch("object", actual_type(), DEBUG_LINE_FUNC);
@@ -915,8 +917,8 @@ namespace rjson::inline v2
     template <typename S> inline const value& value::get1(S field_name) const noexcept // if this is not object or field not present, returns ConstNull
     {
         return std::visit(
-            [&field_name](auto&& arg) -> const value& {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, object>)
+            [&field_name]<typename T>(T&& arg) -> const value& {
+                if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     return arg.get(field_name);
                 else
                     return ConstNull;
@@ -987,8 +989,8 @@ namespace rjson::inline v2
     inline value& value::append(value && aValue)
     {
         return std::visit(
-            [&aValue, this](auto&& arg) -> value& {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, array>)
+            [&aValue, this]<typename T>(T&& arg) -> value& {
+                if constexpr (std::is_same_v<std::decay_t<T>, array>)
                     return arg.append(std::move(aValue));
                 else
                     throw value_type_mismatch("array", actual_type(), DEBUG_LINE_FUNC);
