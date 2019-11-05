@@ -170,6 +170,7 @@ namespace acmacs
                   // returns true on success
                 bool parse(int argc, const char* const argv[], on_error on_err = on_error::exit);
 
+                constexpr auto argv0() const { return argv0_; }
                 constexpr auto program_name() const { return prog_name_; }
                 constexpr const errors_t& errors() const { return errors_; }
                 void show_help(std::ostream& out) const;
@@ -180,6 +181,7 @@ namespace acmacs
                 argv() = default;
 
               private:
+                std::string_view argv0_;
                 std::string_view prog_name_;
                 std::vector<detail::option_base*> options_;
                 std::vector<std::string_view> args_;

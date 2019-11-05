@@ -33,7 +33,11 @@ std::string acmacs::argv::v2::detail::option_base::names() const noexcept
 
 bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::argv::v2::argv::on_error on_err)
 {
-    prog_name_ = argv[0];
+    argv0_ = argv[0];
+    if (const auto last_slash_pos = argv0_.rfind('/'); last_slash_pos != std::string_view::npos)
+        prog_name_ = argv0_.substr(last_slash_pos + 1);
+    else
+        prog_name_ = argv0_;
     const std::vector command_line(argv + 1, argv + argc);
     for (auto arg = command_line.begin(); arg != command_line.end(); ) {
         use(arg, command_line.end());
