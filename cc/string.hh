@@ -33,7 +33,7 @@ namespace string
 {
       // ----------------------------------------------------------------------
 
-    inline std::string first_letter_of_words(std::string s)
+    inline std::string first_letter_of_words(std::string_view s)
     {
         std::string result;
         bool add = true;

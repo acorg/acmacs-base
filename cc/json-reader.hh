@@ -8,6 +8,7 @@
 #include <typeinfo>
 #include <memory>
 
+#include "acmacs-base/fmt.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/rapidjson.hh"
 
@@ -316,7 +317,7 @@ namespace json_reader
 
 // ----------------------------------------------------------------------
 
-    template <typename Target, typename RootHandler> inline void read_from_file(std::string aFilename, Target& aTarget)
+    template <typename Target, typename RootHandler> inline void read_from_file(std::string_view aFilename, Target& aTarget)
     {
         const std::string buffer = aFilename == "-" ? acmacs::file::read_stdin() : static_cast<std::string>(acmacs::file::read(aFilename));
         if (buffer[0] == '{') {
@@ -325,10 +326,10 @@ namespace json_reader
             rapidjson::StringStream stream{buffer.c_str()};
             reader.Parse(stream, handler);
             if (reader.HasParseError())
-                throw Error("cannot read " + aFilename + ": data parsing failed at pos " + std::to_string(reader.GetErrorOffset()) + ": " +  GetParseError_En(reader.GetParseErrorCode()) + "\n" + buffer.substr(reader.GetErrorOffset(), 50));
+                throw Error{fmt::format("cannot read {}: data parsing failed at pos {}: {}\n{}", aFilename, reader.GetErrorOffset(), GetParseError_En(reader.GetParseErrorCode()), buffer.substr(reader.GetErrorOffset(), 50))};
         }
         else
-            throw json_reader::Error("cannot read " + aFilename + ": unrecognized source format");
+            throw json_reader::Error{fmt::format("cannot read {}: unrecognized source format", aFilename)};
     }
 
 // ----------------------------------------------------------------------
