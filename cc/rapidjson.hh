@@ -21,6 +21,7 @@ namespace from_json
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #pragma GCC diagnostic ignored "-Wextra-semi-stmt"
+#pragma GCC diagnostic ignored "-Wnewline-eof"
 #endif
 
 #include "rapidjson/reader.h"
