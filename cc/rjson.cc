@@ -795,6 +795,13 @@ std::vector<rjson::object::content_t::const_iterator> rjson::v2::PrettyHandler::
     std::vector<object::content_t::const_iterator> result;
     for (auto iter = val.content_.begin(); iter != val.content_.end(); ++iter)
         result.push_back(iter);
+    std::sort(std::begin(result), std::end(result), [](const auto& en1, const auto& en2) {
+        if (en1->first == "N" || en1->first == "?N")
+            return true;
+        if (en2->first == "N" || en2->first == "?N")
+            return false;
+        return en1->first < en2->first;
+    });
     return result;
 
 } // rjson::v2::PrettyHandler::sorted
