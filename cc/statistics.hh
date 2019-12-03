@@ -14,63 +14,36 @@ namespace acmacs::statistics
 
 // ----------------------------------------------------------------------
 
-    template <typename ForwardIterator> inline double mean(ForwardIterator first, ForwardIterator last)
+    template <typename T> constexpr inline T identity(T val) { return val; }
+
+    template <typename ForwardIterator, typename Extractor> inline std::pair<double, size_t> mean_size(ForwardIterator first, ForwardIterator last, Extractor extractor)
     {
         size_t num = 0;
         double sum = 0;
         for (; first != last; ++first, ++num)
-            sum += *first;
-        if (num == 0)
-            throw Error("mean(): empty range");
-        return sum / num;
-    }
-
-    template <typename Container> inline double mean(const Container& cont) { return mean(std::begin(cont), std::end(cont)); }
-
-    template <typename ForwardIterator> inline double mean_abs(ForwardIterator first, ForwardIterator last)
-    {
-        size_t num = 0;
-        double sum = 0;
-        for (; first != last; ++first, ++num)
-            sum += std::abs(*first);
-        if (num == 0)
-            throw Error("mean_abs(): empty range");
-        return sum / num;
-    }
-
-    template <typename Container> inline double mean_abs(const Container& cont) { return mean_abs(std::begin(cont), std::end(cont)); }
-
-    template <typename ForwardIterator> inline double mean(ForwardIterator first, size_t size)
-    {
-        if (size == 0)
-            throw Error("mean(): empty range");
-        double sum = 0;
-        for (size_t no = 0; no < size; ++no, ++first)
-            sum += *first;
-        return sum / size;
-    }
-
-    template <typename ForwardIterator> inline std::pair<double, size_t> mean_size(ForwardIterator first, ForwardIterator last)
-    {
-        size_t num = 0;
-        double sum = 0;
-        for (; first != last; ++first, ++num)
-            sum += *first;
+            sum += extractor(*first);
         if (num == 0)
             throw Error("mean(): empty range");
         return {sum / num, num};
     }
 
+    template <typename ForwardIterator, typename Extractor> inline double mean(ForwardIterator first, ForwardIterator last, Extractor extractor) { return mean_size(first, last, extractor).first; }
+    template <typename ForwardIterator> inline double mean(ForwardIterator first, ForwardIterator last) { return mean(first, last, identity<double>); }
+    template <typename Container> inline double mean(const Container& cont) { return mean(std::begin(cont), std::end(cont), identity<double>); }
+
+    template <typename ForwardIterator> inline double mean_abs(ForwardIterator first, ForwardIterator last) { return mean(first, last, [](const auto& en) { return std::abs(en); }); }
+    template <typename Container> inline double mean_abs(const Container& cont) { return mean_abs(std::begin(cont), std::end(cont)); }
+
 // ----------------------------------------------------------------------
 
-    template <typename ForwardIterator> inline double varianceN(ForwardIterator first, ForwardIterator last, double mean)
+    template <typename ForwardIterator, typename Extractor> inline double varianceN(ForwardIterator first, ForwardIterator last, double mean, Extractor extractor)
     {
-        return std::accumulate(first, last, 0.0, [mean](double sum, double value) { return sum + sqr(value - mean); });
+        return std::accumulate(first, last, 0.0, [mean,extractor](double sum, const auto& value) { return sum + sqr(extractor(value) - mean); });
     }
 
-    template <typename ForwardIterator> inline double varianceN(ForwardIterator first, ForwardIterator last)
+    template <typename ForwardIterator, typename Extractor> inline double varianceN(ForwardIterator first, ForwardIterator last, Extractor extractor)
     {
-        return varianceN(first, last, mean(first, last));
+        return varianceN(first, last, mean(first, last, extractor), extractor);
     }
 
     template <typename XForwardIterator, typename YForwardIterator> inline double covarianceN(XForwardIterator x_first, XForwardIterator x_last, double x_mean, YForwardIterator y_first, double y_mean)
@@ -98,36 +71,29 @@ namespace acmacs::statistics
         double population_sd_ = 0;
         double sample_sd_;
 
-        template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator, double);
-        template <typename ForwardIterator> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator);
+        template <typename ForwardIterator, typename Extractor> friend StandardDeviation standard_deviation(ForwardIterator, ForwardIterator, double, Extractor);
     };
 
-    template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
+    template <typename ForwardIterator, typename Extractor> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean, Extractor extractor)
     {
-        const auto vari = varianceN(first, last, mean);
+        const auto vari = varianceN(first, last, mean, extractor);
         const auto size = last - first;
         return {mean, std::sqrt(vari / size), std::sqrt(vari / (size - 1))};
     }
 
+    template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean) { return standard_deviation(first, last, mean, identity<double>); }
+
+    template <typename ForwardIterator, typename Extractor> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, Extractor extactor)
+    {
+        return standard_deviation(first, last, mean(first, last, extactor), extactor);
+    }
+
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last)
     {
-        return standard_deviation(first, last, mean(first, last));
+        return standard_deviation(first, last, identity<double>);
     }
 
     template <typename Container> inline StandardDeviation standard_deviation(const Container& cont) { return standard_deviation(std::begin(cont), std::end(cont)); }
-
-    // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean)
-    // {
-    //     StandardDeviation result(mean);
-    //     const auto sum_of_squares = std::inner_product(first, last, first, 0.0, std::plus<double>(), [m = result.mean_](double xx, double yy) { return (xx - m) * (yy - m); });
-    //     result.sd_ = std::sqrt(sum_of_squares / (last - first));
-    //     return result;
-    // }
-
-    // template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last)
-    // {
-    //     return standard_deviation(first, last, mean(first, last));
-    // }
 
 // ----------------------------------------------------------------------
 
@@ -150,9 +116,9 @@ namespace acmacs::statistics
     // Adopted from GNU Scientific library (gsl_fit_linear)
     template <typename XForwardIterator, typename YForwardIterator> inline SimpleLinearRegression simple_linear_regression(XForwardIterator x_first, XForwardIterator x_last, YForwardIterator y_first)
     {
-        const auto [x_mean, x_size] = mean_size(x_first, x_last);
-        const auto y_mean = mean(y_first, x_size);
-        const auto slope = covarianceN(x_first, x_last, x_mean, y_first, y_mean) / varianceN(x_first, x_last, x_mean);
+        const auto [x_mean, x_size] = mean_size(x_first, x_last, identity<double>);
+        const auto y_mean = mean(y_first, y_first + static_cast<ssize_t>(x_size));
+        const auto slope = covarianceN(x_first, x_last, x_mean, y_first, y_mean) / varianceN(x_first, x_last, x_mean, identity<double>);
         const auto intercept = y_mean - slope * x_mean;
 
         // SSE: sum of squared residuals
@@ -161,7 +127,7 @@ namespace acmacs::statistics
             sse += sqr(*yi - (intercept + slope * (*xi)));
 
         // SST:  total sum of squares http://en.wikipedia.org/wiki/Total_sum_of_squares
-        const auto sst = varianceN(y_first, y_first + static_cast<typename XForwardIterator::difference_type>(x_size), y_mean);
+        const auto sst = varianceN(y_first, y_first + static_cast<typename XForwardIterator::difference_type>(x_size), y_mean, identity<double>);
         if (sst <= 0)
             throw std::runtime_error(::string::concat("simple_linear_regression: cannot calculate R2: SST is wrong: ", sst));
         const auto r2 = 1.0 - sse / sst;
@@ -179,7 +145,7 @@ namespace acmacs::statistics
         if (x_first == x_last)
             return 0.0;
         const auto size = x_last - x_first;
-        const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, static_cast<size_t>(size));
+        const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, y_first + size);
         return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / (size - 1) / standard_deviation(x_first, x_last, x_mean).population_sd() / standard_deviation(y_first, y_first + size, y_mean).population_sd();
     }
 
