@@ -94,10 +94,12 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::load(std::string_view filename)
+void acmacs::settings::v2::Settings::load(std::string_view filename, verbose verb)
 {
+    if (verb == verbose::yes)
+        fmt::print(stderr, "INFO: settings loading {}\n", filename);
     data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
-    apply_top("init");
+    apply_top("init", verb);
 
 } // acmacs::settings::v2::Settings::load
 
@@ -156,7 +158,7 @@ void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb)
         }
         else if (const auto& val2 = get(substituted_name); !val2.is_const_null())
             apply(val2, verb);
-        else if (!apply_built_in(substituted_name))
+        else if (!apply_built_in(substituted_name, verb))
             throw error(fmt::format("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name));
     }
 
@@ -164,21 +166,21 @@ void acmacs::settings::v2::Settings::apply(std::string_view name, verbose verb)
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::apply_top(std::string_view name)
+void acmacs::settings::v2::Settings::apply_top(std::string_view name, verbose verb)
 {
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_.substitute(name).to<std::string>();
         if (const auto& val = data_.back().get(substituted_name); !val.is_const_null())
-            apply(val, verbose::yes);
+            apply(val, verb);
     }
 
 } // acmacs::settings::v2::Settings::apply_top
 
 // ----------------------------------------------------------------------
 
-bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
+bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name, verbose verb)
 {
     try {
         if (name == "if") {
@@ -212,7 +214,7 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry, verbose ve
                 [this, verb]<typename T>(T && sub_entry_val) {
                     // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
                     if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                        this->apply(std::string_view{sub_entry_val});
+                        this->apply(std::string_view{sub_entry_val}, verb);
                     else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
                         this->push_and_apply(sub_entry_val, verb);
                     else
