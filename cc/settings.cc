@@ -180,7 +180,7 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name, verbose ve
 
 // ----------------------------------------------------------------------
 
-bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name, verbose verb)
+bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name, verbose /*verb*/)
 {
     try {
         if (name == "if") {
@@ -407,6 +407,17 @@ const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string
     return rjson::ConstNull;
 
 } // acmacs::settings::v2::Settings::Environment::get
+
+// ----------------------------------------------------------------------
+
+const rjson::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
+{
+    if (auto found = data_.back().find(key); found != data_.back().end())
+        return found->second;
+    else
+        return rjson::ConstNull;
+
+} // acmacs::settings::v2::Settings::Environment::get_toplevel
 
 // ----------------------------------------------------------------------
 
