@@ -1088,6 +1088,25 @@ namespace rjson::inline v2
             source.val_());
     }
 
+    template <typename T> inline void copy_if_not_null(const value& source, T& target)
+    {
+        std::visit(
+            [&target, &source](auto&& arg) {
+                using TT = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_constructible_v<TT, T>)
+                    target = T{arg};
+                else if constexpr (std::is_same_v<TT, number> && std::is_same_v<T, std::string>)
+                    target = arg.to_string();
+                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<double, T>)
+                    target = T{arg.to_double()};
+                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<long, T>)
+                    target = T{arg.to_integer()};
+                else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
+                    throw value_type_mismatch("scalar", source.actual_type(), DEBUG_LINE_FUNC);
+            },
+            source.val_());
+    }
+
     template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
     {
         static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, const std::string&, const value&> || std::is_invocable_v<F, const value&> ||
