@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/flat-map.hh"
 
 // ----------------------------------------------------------------------
 
@@ -116,6 +117,11 @@ constexpr const Color PINK{0xFFC0CB};
 constexpr const Color YELLOW{0xFFFF00};
 constexpr const Color GREY{0xBEBEBE};
 constexpr const Color GREY50{0x7F7F7F};
+
+const acmacs::flat_map_t<std::string, Color>& continent_colors();
+const acmacs::flat_map_t<std::string, Color>& continent_colors_dark();
+Color continent_color(std::string_view continent);
+Color continent_color_dark(std::string_view continent);
 
 // ----------------------------------------------------------------------
 

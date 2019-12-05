@@ -11,9 +11,11 @@ namespace acmacs
       public:
         using key_type = Key;
         using value_type = Value;
+        using entry_type = std::pair<Key, Value>;
 
         flat_map_t() = default;
         template <typename Iter> flat_map_t(Iter first, Iter last) : data_(first, last) {}
+        flat_map_t(std::initializer_list<entry_type> init) : data_{init} {}
 
         auto begin() const { return data_.begin(); }
         auto end() const { return data_.end(); }
@@ -43,7 +45,7 @@ namespace acmacs
         void reserve(size_t sz) { data_.reserve(sz); }
 
       private:
-        std::vector<std::pair<Key, Value>> data_;
+        std::vector<entry_type> data_;
     };
 
 } // namespace acmacs
