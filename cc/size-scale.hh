@@ -14,24 +14,24 @@ namespace acmacs::detail
     template <char Tag> class SizeScale
     {
      public:
-        inline SizeScale() : mValue(0) {}
-        inline explicit SizeScale(double aValue) : mValue(aValue) {}
-        inline SizeScale(const SizeScale& a) = default;
-        constexpr inline bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
-        constexpr inline bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
-        constexpr inline bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
-        inline SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
-        inline SizeScale& operator = (const SizeScale& a) = default;
-        constexpr inline double value() const { return mValue; }
-        constexpr inline SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
-        constexpr inline SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
-        constexpr inline SizeScale& operator *= (double a) { mValue *= a; return *this; }
-        constexpr inline SizeScale operator - () const { return SizeScale{- mValue}; }
-        constexpr inline SizeScale operator - (SizeScale<Tag> a) const { return SizeScale{mValue - a.mValue}; }
-        constexpr inline SizeScale operator + (SizeScale<Tag> a) const { return SizeScale{mValue + a.mValue}; }
-        constexpr inline SizeScale& operator += (SizeScale<Tag> a) { mValue += a.mValue; return *this; }
-        constexpr inline bool empty() const { return std::isnan(mValue); }
-        static SizeScale make_empty() { return SizeScale(std::numeric_limits<double>::quiet_NaN()); }
+        constexpr SizeScale() : mValue(0) {}
+        constexpr explicit SizeScale(double aValue) : mValue(aValue) {}
+        constexpr SizeScale(const SizeScale& a) = default;
+        constexpr bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
+        constexpr bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
+        constexpr bool operator<(SizeScale<Tag> a) const { return mValue < a.mValue; }
+        constexpr SizeScale& operator = (double aValue) { mValue = aValue; return *this; }
+        constexpr SizeScale& operator = (const SizeScale& a) = default;
+        constexpr double value() const { return mValue; }
+        constexpr SizeScale operator / (double a) const { return SizeScale{mValue / a}; }
+        constexpr SizeScale operator * (double a) const { return SizeScale{mValue * a}; }
+        constexpr SizeScale& operator *= (double a) { mValue *= a; return *this; }
+        constexpr SizeScale operator - () const { return SizeScale{- mValue}; }
+        constexpr SizeScale operator - (SizeScale<Tag> a) const { return SizeScale{mValue - a.mValue}; }
+        constexpr SizeScale operator + (SizeScale<Tag> a) const { return SizeScale{mValue + a.mValue}; }
+        constexpr SizeScale& operator += (SizeScale<Tag> a) { mValue += a.mValue; return *this; }
+        constexpr bool empty() const { return std::isnan(mValue); }
+        static constexpr SizeScale make_empty() { return SizeScale(std::numeric_limits<double>::quiet_NaN()); }
 
      private:
         double mValue;
@@ -46,19 +46,17 @@ using Scaled = acmacs::detail::SizeScale<'S'>; // size in the surface internal c
 using Aspect = acmacs::detail::SizeScale<'A'>;
 using Rotation = acmacs::detail::SizeScale<'R'>;
 
-#include "acmacs-base/global-constructors-push.hh"
-
-const Rotation NoRotation{0.0};
-const Rotation RotationReassortant{0.5};
-const Aspect AspectNormal{1.0};
-const Aspect AspectEgg{0.75};
-
-#include "acmacs-base/diagnostics-pop.hh"
-
-inline Rotation RotationDegrees(double aAngle)
+constexpr inline Rotation RotationDegrees(double aAngle)
 {
     return Rotation{aAngle * M_PI / 180.0};
 }
+
+constexpr const Rotation NoRotation{0.0};
+constexpr const Rotation RotationReassortant{0.5};
+constexpr const Rotation Rotation90DegreesClockwise{RotationDegrees(90)};
+constexpr const Rotation Rotation90DegreesAnticlockwise{RotationDegrees(-90)};
+constexpr const Aspect AspectNormal{1.0};
+constexpr const Aspect AspectEgg{0.75};
 
 // ----------------------------------------------------------------------
 
