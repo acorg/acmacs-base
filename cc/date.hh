@@ -29,6 +29,8 @@ namespace date
         using std::runtime_error::runtime_error;
     };
 
+    using period_diff_t = int;
+
     enum class throw_on_error { no, yes };
     enum class allow_incomplete { no, yes };
 
@@ -83,20 +85,20 @@ namespace date
     // returns date for the last day of the year-month stored in this
     inline auto end_of_month(const year_month_day& dt) { return year_month_day(year_month_day_last(dt.year(), month_day_last(dt.month()))); }
 
-    inline auto months_ago(const year_month_day& dt, int number_of_months) { return dt - date::months(number_of_months); }
-    inline auto years_ago(const year_month_day& dt, int number_of_years) { return dt - date::years(number_of_years); }
-    inline auto weeks_ago(const year_month_day& dt, int number_of_weeks) { return static_cast<date::sys_days>(dt) - date::weeks(number_of_weeks); }
+    inline auto months_ago(const year_month_day& dt, period_diff_t number_of_months) { return dt - date::months(number_of_months); }
+    inline auto years_ago(const year_month_day& dt, period_diff_t number_of_years) { return dt - date::years(number_of_years); }
+    inline auto weeks_ago(const year_month_day& dt, period_diff_t number_of_weeks) { return static_cast<date::sys_days>(dt) - date::weeks(number_of_weeks); }
 
     inline auto next_month(const year_month_day& dt) { return dt + date::months(1); }
     inline auto next_year(const year_month_day& dt) { return dt + date::years(1); }
     inline auto next_week(const year_month_day& dt) { return year_month_day{static_cast<sys_days>(dt) + date::weeks(1)}; }
 
-    inline auto& increment_month(year_month_day& dt, int number_of_months = 1) { dt += date::months(number_of_months); return dt; }
-    inline auto& decrement_month(year_month_day& dt, int number_of_months = 1) { dt -= date::months(number_of_months); return dt; }
-    inline auto& increment_year(year_month_day& dt, int number_of_years = 1) { dt += date::years(number_of_years); return dt; }
-    inline auto& decrement_year(year_month_day& dt, int number_of_years = 1) { dt -= date::years(number_of_years); return dt; }
-    inline auto& increment_week(year_month_day& dt, int number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) + date::weeks{number_of_weeks}; return dt; }
-    inline auto& decrement_week(year_month_day& dt, int number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) - date::weeks{number_of_weeks}; return dt; }
+    inline auto& increment_month(year_month_day& dt, period_diff_t number_of_months = 1) { dt += date::months(number_of_months); return dt; }
+    inline auto& decrement_month(year_month_day& dt, period_diff_t number_of_months = 1) { dt -= date::months(number_of_months); return dt; }
+    inline auto& increment_year(year_month_day& dt, period_diff_t number_of_years = 1) { dt += date::years(number_of_years); return dt; }
+    inline auto& decrement_year(year_month_day& dt, period_diff_t number_of_years = 1) { dt -= date::years(number_of_years); return dt; }
+    inline auto& increment_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) + date::weeks{number_of_weeks}; return dt; }
+    inline auto& decrement_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) - date::weeks{number_of_weeks}; return dt; }
 
     template <typename S> inline year_month_day from_string(S&& source, const char* fmt)
     {
@@ -171,27 +173,27 @@ namespace date
         return fmt::format("{:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&in_time_t));
     }
 
-    inline int days_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<days>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+    inline period_diff_t days_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<days>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
 
-    inline int weeks_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<weeks>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+    inline period_diff_t weeks_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<weeks>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
 
-    inline int months_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<months>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+    inline period_diff_t months_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<months>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
 
-    inline int calendar_months_between_dates(const year_month_day& a, const year_month_day& b)
+    inline period_diff_t calendar_months_between_dates(const year_month_day& a, const year_month_day& b)
     {
         return std::chrono::duration_cast<months>(static_cast<sys_days>(beginning_of_month(b)) - static_cast<sys_days>(beginning_of_month(a))).count();
     }
 
-    inline int calendar_months_between_dates_inclusive(const year_month_day& a, const year_month_day& b) { return calendar_months_between_dates(a, b) + 1; }
+    inline period_diff_t calendar_months_between_dates_inclusive(const year_month_day& a, const year_month_day& b) { return calendar_months_between_dates(a, b) + 1; }
 
-    inline int years_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<years>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
+    inline period_diff_t years_between_dates(const year_month_day& a, const year_month_day& b) { return std::chrono::duration_cast<years>(static_cast<sys_days>(b) - static_cast<sys_days>(a)).count(); }
 
 } // namespace date
 
 // ----------------------------------------------------------------------
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<date::year_month_day, T>::value, char>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt), ctx); }
+    template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt, date::allow_incomplete::yes), ctx); }
 };
 
 
