@@ -135,7 +135,7 @@ namespace date
             }
         }
         if (toe == throw_on_error::yes)
-            throw date_parse_error(fmt::format("cannot parse date from \"{}\" (allow_incomplete: {})", source, allow = allow_incomplete::yes));
+            throw date_parse_error(fmt::format("cannot parse date from \"{}\" (allow_incomplete: {})", source, allow == allow_incomplete::yes));
         return invalid_date();
     }
 
