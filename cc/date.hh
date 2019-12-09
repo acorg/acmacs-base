@@ -16,8 +16,7 @@
 #pragma GCC diagnostic pop
 
 #include "acmacs-base/fmt.hh"
-// #include "acmacs-base/string_view.hh"
-#include "acmacs-base/sfinae.hh"
+// #include "acmacs-base/sfinae.hh"
 
 // ----------------------------------------------------------------------
 

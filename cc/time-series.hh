@@ -1,6 +1,5 @@
 #pragma once
 
-// #include <string_view>
 #include <vector>
 
 #include <iterator>
@@ -19,6 +18,7 @@ namespace acmacs::time_series::inline v2
     struct slot
     {
         date::year_month_day first, after_last;
+        constexpr bool operator==(const slot& rhs) const { return first == rhs.first && after_last == rhs.after_last; }
     };
 
     using series = std::vector<slot>;
@@ -42,10 +42,42 @@ namespace acmacs::time_series::inline v2
 
 // ----------------------------------------------------------------------
 
-// template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<date::year_month_day, T>::value, char>> : fmt::formatter<std::string> {
-//     template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt, date::allow_incomplete::yes), ctx); }
-// };
+template <> struct fmt::formatter<acmacs::time_series::series>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const acmacs::time_series::series& series, FormatContext& ctx)
+    {
+        format_to(ctx.out(), "time-series{{");
+        for (const auto& slot : series)
+            format_to(ctx.out(), " {}..{}", slot.first, slot.after_last);
+        return format_to(ctx.out(), "}}");
+    }
+};
 
+template <> struct fmt::formatter<acmacs::time_series::interval> : fmt::formatter<std::string> {
+    template <typename FormatCtx> auto format(const acmacs::time_series::interval& intervl, FormatCtx& ctx)
+    {
+        switch (intervl) {
+            case acmacs::time_series::v2::interval::year:
+                return fmt::formatter<std::string>::format("year", ctx);
+            case acmacs::time_series::v2::interval::month:
+                return fmt::formatter<std::string>::format("month", ctx);
+            case acmacs::time_series::v2::interval::week:
+                return fmt::formatter<std::string>::format("week", ctx);
+            case acmacs::time_series::v2::interval::day:
+                return fmt::formatter<std::string>::format("day", ctx);
+        }
+    }
+};
+
+template <> struct fmt::formatter<acmacs::time_series::parameters>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const acmacs::time_series::parameters& param, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "time-series{{{} .. {}, {}:{}}}", param.first, param.after_last, param.intervl, param.number_of_intervals);
+    }
+};
 
 // ======================================================================
 

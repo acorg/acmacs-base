@@ -14,6 +14,7 @@ TARGETS = \
   $(DIST)/test-settings \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
+  $(DIST)/test-time-series \
   $(DIST)/test-read-file
 
 all: install-acmacs-base
