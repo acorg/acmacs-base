@@ -29,7 +29,7 @@ namespace acmacs::time_series::inline v2
 
     struct parameters
     {
-        date::year_month_day first, after_last; // {date::invalid_date()};
+        date::year_month_day first{date::invalid_date()}, after_last{date::invalid_date()};
         interval intervl{interval::month};
         size_t number_of_intervals{1};
     };
