@@ -121,6 +121,32 @@ acmacs::time_series::v2::series acmacs::time_series::v2::make(const rjson::value
 } // acmacs::time_series::v2::make
 
 // ----------------------------------------------------------------------
+
+std::string acmacs::time_series::v2::text_name(const slot& a_slot)
+{
+    if (const auto days = date::days_between_dates(a_slot.first, a_slot.after_last); days < 28)
+        return date::display(a_slot.first);
+    else if (days < 360)
+        return date::monthtext_year(a_slot.first);
+    else
+        return date::year_4(a_slot.first);
+
+} // acmacs::time_series::v2::text_name
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
+{
+    if (const auto days = date::days_between_dates(a_slot.first, a_slot.after_last); days < 28)
+        return date::display(a_slot.first);
+    else if (days < 360)
+        return date::year4_month2(a_slot.first);
+    else
+        return date::year_4(a_slot.first);
+
+} // acmacs::time_series::v2::numeric_name
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
