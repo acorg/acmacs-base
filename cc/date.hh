@@ -16,7 +16,7 @@
 #pragma GCC diagnostic pop
 
 #include "acmacs-base/fmt.hh"
-#include "acmacs-base/string.hh"
+// #include "acmacs-base/string_view.hh"
 #include "acmacs-base/sfinae.hh"
 
 // ----------------------------------------------------------------------
@@ -100,7 +100,7 @@ namespace date
     inline auto& increment_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) + date::weeks{number_of_weeks}; return dt; }
     inline auto& decrement_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) - date::weeks{number_of_weeks}; return dt; }
 
-    template <typename S> inline year_month_day from_string(S&& source, const char* fmt)
+    inline year_month_day from_string(std::string_view source, const char* fmt)
     {
             year_month_day result = invalid_date();
             std::istringstream in(std::string{source});
@@ -113,20 +113,20 @@ namespace date
             return result;
     }
 
-    template <typename S> inline year_month_day from_string(S&& source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
+    inline year_month_day from_string(std::string_view source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
     {
         for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
-            if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
+            // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
+            if (const auto result = from_string(source, fmt); result.ok())
                 return result;
         }
         if (allow == allow_incomplete::yes) {
             for (const char* fmt : {"%Y-00-00", "%Y-%m-00", "%Y-%m", "%Y%m", "%Y"}) {
                 // date lib cannot parse incomplete date
-                const std::string_view src{source};
                 constexpr int invalid = 99999;
                 struct tm tm;
                 tm.tm_mon = tm.tm_mday = invalid;
-                if (strptime(src.data(), fmt, &tm) == &*src.end()) {
+                if (strptime(source.data(), fmt, &tm) == &*source.end()) {
                     if (tm.tm_mon == invalid)
                         return year{tm.tm_year + 1900} / 0 / 0;
                     else
@@ -139,7 +139,7 @@ namespace date
         return invalid_date();
     }
 
-    template <typename S> inline year year_from_string(S&& source)
+    inline year year_from_string(std::string_view source)
     {
         int yr;
         if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), yr); ec == std::errc{} && p == &*source.end())
@@ -148,7 +148,7 @@ namespace date
             return year{9999};
     }
 
-    template <typename S> inline month month_from_string(S&& source)
+    inline month month_from_string(std::string_view source)
     {
         unsigned mo;
         if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), mo); ec == std::errc{} && p == &*source.end())
@@ -157,7 +157,7 @@ namespace date
             return month{99};
     }
 
-    template <typename S> inline day day_from_string(S&& source)
+    inline day day_from_string(std::string_view source)
     {
         unsigned dy;
         if (const auto [p, ec] = std::from_chars(&*source.begin(), &*source.end(), dy); ec == std::errc{} && p == &*source.end())
@@ -195,7 +195,6 @@ namespace date
 template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<date::year_month_day, T>::value, char>> : fmt::formatter<std::string> {
     template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt, date::allow_incomplete::yes), ctx); }
 };
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:
