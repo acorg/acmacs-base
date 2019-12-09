@@ -1,9 +1,53 @@
 #pragma once
 
-#include <string>
+// #include <string_view>
+#include <vector>
+
 #include <iterator>
 
 #include "acmacs-base/date.hh"
+
+// ----------------------------------------------------------------------
+
+namespace rjson::inline v2
+{
+    class value;
+}
+
+namespace acmacs::time_series::inline v2
+{
+    struct slot
+    {
+        date::year_month_day first, after_last;
+    };
+
+    using series = std::vector<slot>;
+
+    enum class interval { year, month, week, day };
+
+    interval interval_from_string(std::string_view interval_name);
+
+    struct parameters
+    {
+        date::year_month_day first, after_last; // {date::invalid_date()};
+        interval intervl{interval::month};
+        size_t number_of_intervals{1};
+    };
+
+    series make(const parameters& param);
+    series make(const rjson::value& source, const parameters& default_param);
+    inline series make(date::year_month_day first, date::year_month_day after_last) { return make(parameters{first, after_last}); }
+    inline series make(std::string_view first, std::string_view after_last) { return make(parameters{date::from_string(first, date::allow_incomplete::yes), date::from_string(after_last, date::allow_incomplete::yes)}); }
+}
+
+// ----------------------------------------------------------------------
+
+// template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<date::year_month_day, T>::value, char>> : fmt::formatter<std::string> {
+//     template <typename FormatCtx> auto format(const date::year_month_day& dt, FormatCtx& ctx) { return fmt::formatter<std::string>::format(date::display(dt, date::allow_incomplete::yes), ctx); }
+// };
+
+
+// ======================================================================
 
 // ----------------------------------------------------------------------
 

@@ -92,6 +92,7 @@ namespace date
     inline auto next_month(const year_month_day& dt) { return dt + date::months(1); }
     inline auto next_year(const year_month_day& dt) { return dt + date::years(1); }
     inline auto next_week(const year_month_day& dt) { return year_month_day{static_cast<sys_days>(dt) + date::weeks(1)}; }
+    inline auto next_day(const year_month_day& dt) { return year_month_day{static_cast<sys_days>(dt) + date::days(1)}; }
 
     inline auto& increment_month(year_month_day& dt, period_diff_t number_of_months = 1) { dt += date::months(number_of_months); return dt; }
     inline auto& decrement_month(year_month_day& dt, period_diff_t number_of_months = 1) { dt -= date::months(number_of_months); return dt; }

@@ -1,10 +1,124 @@
 #include "acmacs-base/time-series.hh"
+#include "acmacs-base/rjson.hh"
 
 // ----------------------------------------------------------------------
 
-TimeSeriesIterator::~TimeSeriesIterator()
+inline date::year_month_day next(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
 {
-}
+    switch (intervl) {
+        case acmacs::time_series::v2::interval::year:
+            return date::next_year(current);
+        case acmacs::time_series::v2::interval::month:
+            return date::next_month(current);
+        case acmacs::time_series::v2::interval::week:
+            return date::next_week(current);
+        case acmacs::time_series::v2::interval::day:
+            return date::next_day(current);
+    }
+
+} // next
+
+// ----------------------------------------------------------------------
+
+inline date::year_month_day first(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
+{
+    switch (intervl) {
+        case acmacs::time_series::v2::interval::year:
+            return date::beginning_of_year(current);
+        case acmacs::time_series::v2::interval::month:
+            return date::beginning_of_month(current);
+        case acmacs::time_series::v2::interval::week:
+            return current; // date::beginning_of_week(current);
+        case acmacs::time_series::v2::interval::day:
+            return current;
+    }
+
+} // next
+
+// ----------------------------------------------------------------------
+
+acmacs::time_series::v2::series acmacs::time_series::v2::make(const parameters& param)
+{
+    const auto increment = [](const date::year_month_day& cur, interval intervl, size_t count) {
+        auto result = cur;
+        for (size_t i = 0; i < count; ++i)
+            result = next(result, intervl);
+        return result;
+    };
+
+    series result;
+    for (auto current = first(param.first, param.intervl); current < param.after_last; ) {
+        const auto subsequent = increment(current, param.intervl, param.number_of_intervals);
+        result.push_back({current, subsequent});
+        current = subsequent;
+    }
+    return result;
+
+} // acmacs::time_series::v2::make
+
+// ----------------------------------------------------------------------
+
+acmacs::time_series::v2::interval acmacs::time_series::v2::interval_from_string(std::string_view interval_name)
+{
+    if (interval_name == "monthly")
+        return acmacs::time_series::interval::month;
+    else if (interval_name == "yearly")
+        return acmacs::time_series::interval::year;
+    else if (interval_name == "weekly")
+        return acmacs::time_series::interval::week;
+    else if (interval_name == "daily")
+        return acmacs::time_series::interval::day;
+    else {
+        fmt::print(stderr, "WARNING: unrecognized interval specification: \"{}\", month assumed\n", interval_name);
+        return acmacs::time_series::interval::month;
+    }
+
+} // acmacs::time_series::v2::interval_from_string
+
+// ----------------------------------------------------------------------
+
+acmacs::time_series::v2::series acmacs::time_series::v2::make(const rjson::value& source, const parameters& default_param)
+{
+    using namespace std::string_view_literals;
+    parameters param = default_param;
+    if (const auto& start = source["start"sv]; !start.is_null())
+        param.first = date::from_string(start.to<std::string_view>(), date::allow_incomplete::yes);
+    if (const auto& end = source["end"sv]; !end.is_null())
+        param.after_last = date::from_string(end.to<std::string_view>(), date::allow_incomplete::yes);
+    std::visit(
+        [&param]<typename T>(T && arg) {
+            if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+                param.intervl = interval_from_string(arg);
+            }
+            else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>) {
+                if (const auto& mon = arg.get("month"sv); !mon.is_null()) {
+                    param.intervl = interval::month;
+                    param.number_of_intervals = mon.template to<size_t>();
+                }
+                else if (const auto& yea = arg.get("year"sv); !yea.is_null()) {
+                    param.intervl = interval::year;
+                    param.number_of_intervals = yea.template to<size_t>();
+                }
+                else if (const auto& wee = arg.get("week"sv); !wee.is_null()) {
+                    param.intervl = interval::week;
+                    param.number_of_intervals = wee.template to<size_t>();
+                }
+                else if (const auto& da = arg.get("day"sv); !da.is_null()) {
+                    param.intervl = interval::day;
+                    param.number_of_intervals = da.template to<size_t>();
+                }
+                else {
+                    fmt::print(stderr, "WARNING: unrecognized interval specification: {}\n", arg);
+                }
+            }
+            else if constexpr (!std::is_same_v<std::decay_t<T>, rjson::const_null> && !std::is_same_v<std::decay_t<T>, rjson::null>) {
+                fmt::print(stderr, "WARNING: unrecognized interval specification: {}\n", arg);
+            }
+        },
+        source["interval"].val_());
+    return make(param);
+
+} // acmacs::time_series::v2::make
 
 // ----------------------------------------------------------------------
 /// Local Variables:
