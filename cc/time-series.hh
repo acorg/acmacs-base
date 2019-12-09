@@ -34,13 +34,17 @@ namespace acmacs::time_series::inline v2
         size_t number_of_intervals{1};
     };
 
+    parameters& update(const rjson::value& source, parameters& param);
+
     series make(const parameters& param);
-    series make(const rjson::value& source, const parameters& default_param);
     inline series make(date::year_month_day first, date::year_month_day after_last) { return make(parameters{first, after_last}); }
     inline series make(std::string_view first, std::string_view after_last) { return make(parameters{date::from_string(first, date::allow_incomplete::yes), date::from_string(after_last, date::allow_incomplete::yes)}); }
 
     std::string text_name(const slot& a_slot);
     std::string numeric_name(const slot& a_slot);
+
+     // returns slot number or ser.size() if not found
+    size_t find(const series& ser, const date::year_month_day& dat);
 }
 
 // ----------------------------------------------------------------------

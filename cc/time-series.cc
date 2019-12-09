@@ -1,5 +1,6 @@
 #include "acmacs-base/time-series.hh"
 #include "acmacs-base/rjson.hh"
+#include "acmacs-base/enumerate.hh"
 
 // ----------------------------------------------------------------------
 
@@ -60,13 +61,14 @@ acmacs::time_series::v2::series acmacs::time_series::v2::make(const parameters& 
 
 acmacs::time_series::v2::interval acmacs::time_series::v2::interval_from_string(std::string_view interval_name)
 {
-    if (interval_name == "monthly")
+    using namespace std::string_view_literals;
+    if (interval_name == "monthly"sv)
         return acmacs::time_series::interval::month;
-    else if (interval_name == "yearly")
+    else if (interval_name == "yearly"sv)
         return acmacs::time_series::interval::year;
-    else if (interval_name == "weekly")
+    else if (interval_name == "weekly"sv)
         return acmacs::time_series::interval::week;
-    else if (interval_name == "daily")
+    else if (interval_name == "daily"sv)
         return acmacs::time_series::interval::day;
     else {
         fmt::print(stderr, "WARNING: unrecognized interval specification: \"{}\", month assumed\n", interval_name);
@@ -77,10 +79,9 @@ acmacs::time_series::v2::interval acmacs::time_series::v2::interval_from_string(
 
 // ----------------------------------------------------------------------
 
-acmacs::time_series::v2::series acmacs::time_series::v2::make(const rjson::value& source, const parameters& default_param)
+acmacs::time_series::v2::parameters& acmacs::time_series::v2::update(const rjson::value& source, parameters& param)
 {
     using namespace std::string_view_literals;
-    parameters param = default_param;
     if (const auto& start = source["start"sv]; !start.is_null())
         param.first = date::from_string(start.to<std::string_view>(), date::allow_incomplete::yes);
     if (const auto& end = source["end"sv]; !end.is_null())
@@ -116,9 +117,21 @@ acmacs::time_series::v2::series acmacs::time_series::v2::make(const rjson::value
             }
         },
         source["interval"].val_());
-    return make(param);
+    return param;
 
 } // acmacs::time_series::v2::make
+
+// ----------------------------------------------------------------------
+
+size_t acmacs::time_series::v2::find(const series& ser, const date::year_month_day& dat)
+{
+    for (auto [no, slot] : acmacs::enumerate(ser)) {
+        if (dat >= slot.first && dat < slot.after_last)
+            return no;
+    }
+    return ser.size();
+
+} // acmacs::time_series::v2::find
 
 // ----------------------------------------------------------------------
 
