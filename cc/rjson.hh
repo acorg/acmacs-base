@@ -84,9 +84,10 @@ namespace rjson::inline v2
       public:
         using content_t = std::map<std::string, value>;
         using value_type = typename content_t::value_type;
+        using value_type_init = std::pair<std::string_view, value>;
 
         object() = default;
-        object(std::initializer_list<value_type> key_values);
+        object(std::initializer_list<value_type_init> key_values);
 
         bool empty() const noexcept { return content_.empty(); }
         size_t size() const noexcept { return content_.size(); }
@@ -627,7 +628,7 @@ namespace rjson::inline v2
 
     // --------------------------------------------------
 
-    inline object::object(std::initializer_list<value_type> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
+    inline object::object(std::initializer_list<value_type_init> key_values) : content_(std::begin(key_values), std::end(key_values)) {}
 
     template <typename S> inline const value& object::get(S key) const noexcept
     {
