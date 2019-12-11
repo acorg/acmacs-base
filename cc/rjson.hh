@@ -1094,14 +1094,16 @@ namespace rjson::inline v2
         std::visit(
             [&target, &source](auto&& arg) {
                 using TT = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_constructible_v<TT, T>)
-                    target = T{arg};
+                if constexpr (std::is_same_v<T, TT>)
+                    target = arg;
                 else if constexpr (std::is_same_v<TT, number> && std::is_same_v<T, std::string>)
-                    target = arg.to_string();
-                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<double, T>)
-                    target = T{arg.to_double()};
-                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<long, T>)
-                    target = T{arg.to_integer()};
+                    target = to_string(arg);
+                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<T, double>)
+                    target = T{to_double(arg)};
+                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<T, long>)
+                    target = T{to_integer<long>(arg)};
+                else if constexpr (std::is_constructible_v<T, TT> && !std::is_same_v<TT, bool>)
+                    target = T{arg};
                 else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
                     throw value_type_mismatch("scalar", source.actual_type(), DEBUG_LINE_FUNC);
             },
