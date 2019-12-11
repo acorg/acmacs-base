@@ -185,13 +185,14 @@ namespace rjson::inline v2
 
     inline double to_double(const number& val)
     {
-        auto visitor = []<typename T>(T && arg)->double
+        auto visitor = []<typename ArgX>(ArgX && arg)->double
         {
-            if constexpr (std::is_same_v<std::decay_t<T>, long>)
+            using Arg = std::decay_t<ArgX>;
+            if constexpr (std::is_same_v<Arg, long>)
                 return static_cast<double>(arg);
-            else if constexpr (std::is_same_v<std::decay_t<T>, double>)
+            else if constexpr (std::is_same_v<Arg, double>)
                 return arg;
-            else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+            else if constexpr (std::is_same_v<Arg, std::string>)
                 return std::stod(arg);
             else
                 return std::numeric_limits<double>::quiet_NaN();
@@ -199,19 +200,20 @@ namespace rjson::inline v2
         return std::visit(visitor, val);
     }
 
-    template <typename T> T to_integer(const number& val)
+    template <typename Target> Target to_integer(const number& val)
     {
-        auto visitor = []<typename Arg>(Arg && arg)->T
+        auto visitor = []<typename ArgX>(ArgX && arg) -> Target
         {
-            if constexpr (std::is_same_v<std::decay_t<Arg>, long>)
-                return static_cast<T>(arg);
-            else if constexpr (std::is_same_v<std::decay_t<Arg>, double>)
-                return static_cast<T>(std::lround(arg));
-            else if constexpr (std::is_same_v<std::decay_t<Arg>, std::string>)
-                return static_cast<T>(std::stoul(arg));
+            using Arg = std::decay_t<ArgX>;
+            if constexpr (std::is_same_v<Arg, long>)
+                return static_cast<Target>(arg);
+            else if constexpr (std::is_same_v<Arg, double>)
+                return static_cast<Target>(std::lround(arg));
+            else if constexpr (std::is_same_v<Arg, std::string>)
+                return static_cast<Target>(std::stoul(arg));
             else {
-                fmt::print(stderr, "WARNING: rjson::number::to_integer: unexpected internal type, value is {}\n", arg);
-                return std::numeric_limits<T>::max();
+                fmt::print(stderr, "WARNING: rjson::number::to_integer: unexpected Target, value is {}\n", arg);
+                return static_cast<Target>(-1);
             }
         };
         return std::visit(visitor, val);
@@ -1094,25 +1096,29 @@ namespace rjson::inline v2
         std::visit(
             [&target, &source](auto&& arg) {
                 using TT = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<Target, TT>)
+                if constexpr (std::is_same_v<TT, null> || std::is_same_v<TT, const_null>)
+                    ; // ignore nulls
+                else if constexpr (std::is_same_v<Target, TT>)
                     target = arg;
                 else if constexpr (std::is_same_v<TT, number>) {
                     if constexpr (std::is_same_v<Target, std::string>)
                         target = to_string(arg);
                     else if constexpr (std::is_same_v<Target, bool>)
-                        throw value_type_mismatch("bool", source.actual_type(), DEBUG_LINE_FUNC); // target = to_integer<long>(arg) != 0;
+                        throw value_type_mismatch("bool", source.actual_type(), DEBUG_LINE_FUNC);
                     else if constexpr (std::is_integral_v<Target>)
-                         target = Target{to_integer<Target>(arg)};
+                        target = Target{to_integer<Target>(arg)};
                     else if constexpr (std::is_floating_point_v<Target>)
-                         target = Target{to_double(arg)};
+                        target = Target{to_double(arg)};
                     else if constexpr (std::is_trivially_constructible_v<Target, double>)
                         target = Target{to_double(arg)};
+                    else if constexpr (std::is_constructible_v<Target, long> || std::is_constructible_v<Target, unsigned long>)
+                        target = Target{to_integer<Target>(arg)};
                     else
-                        throw value_type_mismatch("unknown", source.actual_type(), DEBUG_LINE_FUNC); // target = to_integer<long>(arg) != 0;
+                        throw value_type_mismatch("unknown", source.actual_type(), DEBUG_LINE_FUNC);
                 }
-                else if constexpr (std::is_constructible_v<Target, TT> && !std::is_same_v<TT, bool>)
-                    target = Target{arg};
-                else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
+                // else if constexpr (std::is_constructible_v<Target, TT> && !std::is_same_v<TT, bool>)
+                //     target = Target{arg};
+                else
                     throw value_type_mismatch("scalar", source.actual_type(), DEBUG_LINE_FUNC);
             },
             source.val_());
