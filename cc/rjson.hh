@@ -1089,21 +1089,29 @@ namespace rjson::inline v2
             source.val_());
     }
 
-    template <typename T> inline void copy_if_not_null(const value& source, T& target)
+    template <typename Target> inline void copy_if_not_null(const value& source, Target& target)
     {
         std::visit(
             [&target, &source](auto&& arg) {
                 using TT = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, TT>)
+                if constexpr (std::is_same_v<Target, TT>)
                     target = arg;
-                else if constexpr (std::is_same_v<TT, number> && std::is_same_v<T, std::string>)
-                    target = to_string(arg);
-                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<T, double>)
-                    target = T{to_double(arg)};
-                else if constexpr (std::is_same_v<TT, number> && std::is_constructible_v<T, long>)
-                    target = T{to_integer<long>(arg)};
-                else if constexpr (std::is_constructible_v<T, TT> && !std::is_same_v<TT, bool>)
-                    target = T{arg};
+                else if constexpr (std::is_same_v<TT, number>) {
+                    if constexpr (std::is_same_v<Target, std::string>)
+                        target = to_string(arg);
+                    else if constexpr (std::is_same_v<Target, bool>)
+                        throw value_type_mismatch("bool", source.actual_type(), DEBUG_LINE_FUNC); // target = to_integer<long>(arg) != 0;
+                    else if constexpr (std::is_integral_v<Target>)
+                         target = Target{to_integer<Target>(arg)};
+                    else if constexpr (std::is_floating_point_v<Target>)
+                         target = Target{to_double(arg)};
+                    else if constexpr (std::is_trivially_constructible_v<Target, double>)
+                        target = Target{to_double(arg)};
+                    else
+                        throw value_type_mismatch("unknown", source.actual_type(), DEBUG_LINE_FUNC); // target = to_integer<long>(arg) != 0;
+                }
+                else if constexpr (std::is_constructible_v<Target, TT> && !std::is_same_v<TT, bool>)
+                    target = Target{arg};
                 else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
                     throw value_type_mismatch("scalar", source.actual_type(), DEBUG_LINE_FUNC);
             },
