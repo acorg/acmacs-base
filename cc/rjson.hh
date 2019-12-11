@@ -1116,6 +1116,9 @@ namespace rjson::inline v2
                     else
                         throw value_type_mismatch("unknown", source.actual_type(), DEBUG_LINE_FUNC);
                 }
+                else if constexpr (std::is_same_v<TT, std::string> && std::is_constructible_v<Target, TT>) {
+                    target = Target{arg};
+                }
                 // else if constexpr (std::is_constructible_v<Target, TT> && !std::is_same_v<TT, bool>)
                 //     target = Target{arg};
                 else
