@@ -1109,7 +1109,7 @@ namespace rjson::inline v2
                         target = Target{to_integer<Target>(arg)};
                     else if constexpr (std::is_floating_point_v<Target>)
                         target = Target{to_double(arg)};
-                    else if constexpr (std::is_trivially_constructible_v<Target, double>)
+                    else if constexpr (std::is_constructible_v<Target, double>)
                         target = Target{to_double(arg)};
                     else if constexpr (std::is_constructible_v<Target, long> || std::is_constructible_v<Target, unsigned long>)
                         target = Target{to_integer<Target>(arg)};
