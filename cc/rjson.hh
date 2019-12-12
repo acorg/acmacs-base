@@ -43,8 +43,8 @@ namespace rjson::inline v2
     class value_type_mismatch : public error
     {
       public:
-        value_type_mismatch(std::string requested_type, std::string actual_type, std::string source_ref)
-            : error{"value type mismatch, requested: " + requested_type + ", stored: " + actual_type + source_ref}
+        value_type_mismatch(std::string_view requested_type, std::string_view actual_type, std::string_view source_ref)
+            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type, source_ref)}
         {
         }
     };
@@ -372,7 +372,7 @@ namespace rjson::inline v2
     inline std::string to_string(bool val, show_empty_values = show_empty_values::yes) { return val ? "true" : "false"; }
     inline std::string to_string(null, show_empty_values = show_empty_values::yes) { return "null"; }
     inline std::string to_string(const_null, show_empty_values = show_empty_values::yes) { return "*ConstNull"; }
-    inline std::string to_string(const std::string& val, show_empty_values = show_empty_values::yes) { return "\"" + val + '"'; }
+    inline std::string to_string(const std::string& val, show_empty_values = show_empty_values::yes) { return fmt::format("\"{}\"", val); }
 
     inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
     {
@@ -670,7 +670,7 @@ namespace rjson::inline v2
 
     inline void object::remove_comments()
     {
-        auto is_comment_key = [](const std::string& key) -> bool { return !key.empty() && (key.front() == '?' || key.back() == '?'); };
+        auto is_comment_key = [](std::string_view key) -> bool { return !key.empty() && (key.front() == '?' || key.back() == '?'); };
         for (auto it = content_.begin(); it != content_.end(); /* no increment! */) {
             if (is_comment_key(it->first)) {
                 it = content_.erase(it);
@@ -684,7 +684,7 @@ namespace rjson::inline v2
 
     template <typename F> inline void object::for_each(F && func) const
     {
-        if constexpr (std::is_invocable_v<F, const std::string&, const value&>)
+        if constexpr (std::is_invocable_v<F, std::string_view, const value&> || std::is_invocable_v<F, const std::string&, const value&>)
             std::for_each(content_.begin(), content_.end(), [&func](const auto& kv) { func(kv.first, kv.second); });
         else
             std::for_each(content_.begin(), content_.end(), std::forward<F>(func));
@@ -709,7 +709,7 @@ namespace rjson::inline v2
     class parse_error : public std::exception
     {
       public:
-        parse_error(size_t line, size_t column, std::string&& message) : message_{std::to_string(line) + ":" + std::to_string(column) + ": " + std::move(message)} {}
+        parse_error(size_t line, size_t column, std::string_view message) : message_{fmt::format("{}:{}: {}", line, column, message)} {}
         const char* what() const noexcept override { return message_.data(); }
 
       private:
@@ -719,9 +719,9 @@ namespace rjson::inline v2
 
     enum class remove_comments { no, yes };
 
-    value parse_string(std::string data, remove_comments rc = remove_comments::yes);
+    // value parse_string(std::string data, remove_comments rc = remove_comments::yes);
     value parse_string(std::string_view data, remove_comments rc = remove_comments::yes);
-    value parse_string(const char* data, remove_comments rc = remove_comments::yes);
+    // value parse_string(const char* data, remove_comments rc = remove_comments::yes);
     value parse_file(std::string_view filename, remove_comments rc = remove_comments::yes);
 
     inline std::string value::actual_type() const
@@ -1037,7 +1037,7 @@ namespace rjson::inline v2
             else if constexpr (std::is_same_v<T2, null> || std::is_same_v<T2, const_null>)
                 ; // updating with null: do nothing
             else if constexpr (std::is_same_v<T1, const_null>)
-                throw merge_error(std::string{"cannot update ConstNull"});
+                throw merge_error("cannot update ConstNull");
             else
                 throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", rjson::to_string(arg1), rjson::to_string(arg2)));
         };
@@ -1146,7 +1146,7 @@ namespace rjson::inline v2
 
     template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
     {
-        static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, const std::string&, const value&> || std::is_invocable_v<F, const value&> ||
+        static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, std::string_view, const value&> || std::is_invocable_v<F, const value&> ||
                           std::is_invocable_v<F, const value&, size_t>,
                       "rjson::transform: unsupported transformer signature");
 
@@ -1157,7 +1157,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<TT, object>) {
                     if constexpr (std::is_invocable_v<F, const key_value_t&>)
                         arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
-                    else if constexpr (std::is_invocable_v<F, const std::string&, const value&>)
+                    else if constexpr (std::is_invocable_v<F, const std::string_view, const value&>)
                         arg.transform_to(std::forward<T>(target), [&transformer](const key_value_t& kv) { return transformer(kv.first, kv.second); });
                     else
                         throw value_type_mismatch("object and corresponding transformer", source.actual_type(), DEBUG_LINE_FUNC);
@@ -1172,7 +1172,7 @@ namespace rjson::inline v2
 
     template <typename Value, typename F> inline void for_each(Value && val, F && func)
     {
-        static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, key_value_t&> || std::is_invocable_v<F, const std::string&, const value&> ||
+        static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, key_value_t&> || std::is_invocable_v<F, std::string_view, const value&> ||
                           std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>,
                       "rjson::for_each: unsupported func signature");
 
@@ -1182,7 +1182,7 @@ namespace rjson::inline v2
                 using TT = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<TT, object> && (std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, key_value_t&>))
                     arg.for_each(func);
-                else if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, const std::string&, const value&>)
+                else if constexpr (std::is_same_v<TT, object> && std::is_invocable_v<F, std::string_view, const value&>)
                     arg.for_each(func);
                 else if constexpr (std::is_same_v<TT, array> &&
                                    (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>))

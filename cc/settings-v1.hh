@@ -492,7 +492,7 @@ namespace acmacs::settings
         template <> inline std::map<std::string, std::string> field<std::map<std::string, std::string>>::extract(const rjson::value& from) const
         {
             std::map<std::string, std::string> result;
-            rjson::for_each(from, [&result](const std::string& field_name, const rjson::value& item_value) { result.emplace(field_name, item_value.to<std::string>()); });
+            rjson::for_each(from, [&result](std::string_view field_name, const rjson::value& item_value) { result.emplace(field_name, item_value.to<std::string>()); });
             return result;
         }
 
@@ -505,7 +505,11 @@ namespace acmacs::settings
         template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
         template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to<std::string_view>()); }
 
-        template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from) { to = rjson::object{{"family", *from.font_family}, {"slant", static_cast<std::string>(*from.slant)}, {"weight", static_cast<std::string>(*from.weight)}}; }
+        template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from)
+        {
+            using namespace std::string_view_literals;
+            to = rjson::object{{"family"sv, *from.font_family}, {"slant"sv, static_cast<std::string>(*from.slant)}, {"weight"sv, static_cast<std::string>(*from.weight)}};
+        }
         template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const
         {
             TextStyle style;

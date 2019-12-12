@@ -84,12 +84,12 @@ namespace rjson
 
                 [[noreturn]] void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const {
                     throw parse_error(aParser.line(), aParser.column(),
-                                      std::string{"unexpected symbol: '"} + aSymbol + "' (" + acmacs::to_hex_string(static_cast<unsigned char>(aSymbol), acmacs::ShowBase, acmacs::Uppercase) + ")");
+                                      fmt::format("unexpected symbol: '{}' ({})", aSymbol, acmacs::to_hex_string(static_cast<unsigned char>(aSymbol), acmacs::ShowBase, acmacs::Uppercase)));
                 }
 
-                    [[noreturn]] void error(Parser& aParser, std::string&& aMessage) const
+                    [[noreturn]] void error(Parser& aParser, std::string_view aMessage) const
                 {
-                    throw parse_error(aParser.line(), aParser.column(), std::move(aMessage));
+                    throw parse_error(aParser.line(), aParser.column(), aMessage);
                 }
 
                 [[noreturn]] void internal_error(Parser& aParser) const { throw parse_error(aParser.line(), aParser.column(), "internal error"); }
@@ -385,7 +385,7 @@ namespace rjson
                                     result = std::make_unique<StringHandler>(aParser);
                                     break;
                                 case Expected::Comma:
-                                    error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
+                                    error(aParser, fmt::format("unexpected {} -- did you forget comma?", aSymbol));
                                 case Expected::Colon:
                                     unexpected(aSymbol, aParser);
                             }
@@ -479,7 +479,7 @@ namespace rjson
                                     expected_ = Expected::Comma;
                                     break;
                                 case Expected::Comma:
-                                    error(aParser, "unexpected " + std::string{aSymbol} + " -- did you forget comma?");
+                                    error(aParser, fmt::format("unexpected {} -- did you forget comma?", aSymbol));
                             }
                             break;
                     }
@@ -615,51 +615,44 @@ namespace rjson
 
             inline void Parser::remove_comments() { dynamic_cast<ToplevelHandler*>(handlers_.top().get())->value_ref().remove_comments(); }
 
-            // --------------------------------------------------
-
-            template <typename S> inline value parse_string(S data, remove_comments rc)
-            {
-                Parser parser{};
-                parser.parse(data);
-                parser.remove_emacs_indent();
-                if (rc == remove_comments::yes)
-                    parser.remove_comments();
-                return parser.result_move();
-            }
-
         } // namespace parser_pop
     }     // namespace v2
 } // namespace rjson
 
 // ----------------------------------------------------------------------
 
-rjson::v2::value rjson::v2::parse_string(std::string data, remove_comments rc)
-{
-    return rjson::v2::parser_pop::parse_string(data, rc);
+// rjson::v2::value rjson::v2::parse_string(std::string data, remove_comments rc)
+// {
+//     return rjson::v2::parser_pop::parse_string(data, rc);
 
-} // rjson::v2::parse_string
+// } // rjson::v2::parse_string
 
 // ----------------------------------------------------------------------
 
 rjson::v2::value rjson::v2::parse_string(std::string_view data, remove_comments rc)
 {
-    return rjson::v2::parser_pop::parse_string(data, rc);
+    rjson::v2::parser_pop::Parser parser{};
+    parser.parse(data);
+    parser.remove_emacs_indent();
+    if (rc == remove_comments::yes)
+        parser.remove_comments();
+    return parser.result_move();
 
 } // rjson::v2::parse_string
 
 // ----------------------------------------------------------------------
 
-rjson::v2::value rjson::v2::parse_string(const char* data, remove_comments rc)
-{
-    return rjson::v2::parser_pop::parse_string(data, rc);
+// rjson::v2::value rjson::v2::parse_string(const char* data, remove_comments rc)
+// {
+//     return rjson::v2::parser_pop::parse_string(data, rc);
 
-} // rjson::v2::parse_string
+// } // rjson::v2::parse_string
 
 // ----------------------------------------------------------------------
 
 rjson::v2::value rjson::v2::parse_file(std::string_view filename, remove_comments rc)
 {
-    return parse_string(acmacs::file::read(filename), rc);
+    return parse_string(static_cast<std::string>(acmacs::file::read(filename)), rc);
 
 } // rjson::v2::parse_file
 
