@@ -1119,8 +1119,19 @@ namespace rjson::inline v2
                 else if constexpr (std::is_same_v<TT, std::string> && std::is_constructible_v<Target, TT>) {
                     target = Target{arg};
                 }
-                // else if constexpr (std::is_constructible_v<Target, TT> && !std::is_same_v<TT, bool>)
-                //     target = Target{arg};
+                else if constexpr (std::is_same_v<TT, array>) {
+                    if constexpr (std::is_same_v<Target, std::vector<double>>) {
+                        target.resize(arg.size());
+                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
+                    }
+                    else if constexpr (std::is_same_v<Target, std::array<double, 2>> || std::is_same_v<Target, std::array<double, 3>> || std::is_same_v<Target, std::array<double, 4>>) {
+                        if (arg.size() != target.size())
+                            throw value_type_mismatch(fmt::format("array<double, {}>", target.size()), source.actual_type(), DEBUG_LINE_FUNC);
+                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
+                    }
+                    else
+                        throw value_type_mismatch("array/vector", source.actual_type(), DEBUG_LINE_FUNC);
+                }
                 else
                     throw value_type_mismatch("scalar", source.actual_type(), DEBUG_LINE_FUNC);
             },
