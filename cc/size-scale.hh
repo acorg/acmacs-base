@@ -6,16 +6,17 @@
 
 #include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
 namespace acmacs::detail
 {
-    template <char Tag> class SizeScale
+    template <typename Tag> class SizeScale
     {
      public:
-        constexpr SizeScale() : mValue(0) {}
-        constexpr explicit SizeScale(double aValue) : mValue(aValue) {}
+        constexpr explicit SizeScale() : mValue{0} {}
+        constexpr explicit SizeScale(double aValue) : mValue{aValue} {}
         constexpr SizeScale(const SizeScale& a) = default;
         constexpr bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
         constexpr bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
@@ -38,13 +39,13 @@ namespace acmacs::detail
     };
 }
 
-using Pixels = acmacs::detail::SizeScale<'P'>; // size in pixels, indepenent from the surface internal coordinate system
-using Scaled = acmacs::detail::SizeScale<'S'>; // size in the surface internal coordinate system
+using Pixels = acmacs::detail::SizeScale<struct Pixels_tag>; // size in pixels, indepenent from the surface internal coordinate system
+using Scaled = acmacs::detail::SizeScale<struct Scaled_tag>; // size in the surface internal coordinate system
 
 // ----------------------------------------------------------------------
 
-using Aspect = acmacs::detail::SizeScale<'A'>;
-using Rotation = acmacs::detail::SizeScale<'R'>;
+using Aspect = acmacs::detail::SizeScale<struct Aspect_tag>;
+using Rotation = acmacs::detail::SizeScale<struct Rotation_tag>;
 
 constexpr inline Rotation RotationDegrees(double aAngle)
 {
@@ -79,6 +80,34 @@ namespace acmacs::detail
     using ::operator<<;
 
 } // namespace acmacs::detail
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<Pixels>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const Pixels& pixels, FormatContext& ctx) { return format_to(ctx.out(), "{}px", pixels.value()); }
+};
+
+
+template <> struct fmt::formatter<Scaled>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const Scaled& scaled, FormatContext& ctx) { return format_to(ctx.out(), "{}scaled", scaled.value()); }
+};
+
+template <> struct fmt::formatter<Rotation>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const Rotation& rotation, FormatContext& ctx) { return format_to(ctx.out(), "{}", rotation.value()); }
+};
+
+template <> struct fmt::formatter<Aspect>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const Aspect& aspect, FormatContext& ctx) { return format_to(ctx.out(), "{}", aspect.value()); }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:
