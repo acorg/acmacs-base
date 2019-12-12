@@ -1138,6 +1138,12 @@ namespace rjson::inline v2
             source.val_());
     }
 
+    template <typename ExtractedType, typename F> inline void call_if_not_null(const value& source, F&& callback)
+    {
+        if (!source.is_null())
+            callback(source.template to<ExtractedType>());
+    }
+
     template <typename T, typename F> inline void transform(const value& source, T&& target, F&& transformer)
     {
         static_assert(std::is_invocable_v<F, const key_value_t&> || std::is_invocable_v<F, const std::string&, const value&> || std::is_invocable_v<F, const value&> ||
