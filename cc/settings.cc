@@ -305,14 +305,18 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
                         throw error{"object must have exactly one key"};
                     if (const auto& and_clause = arg.get("and"); !and_clause.is_null())
                         return eval_and(and_clause);
-                    else if (const auto& or_clause = arg.get("or"); !or_clause.is_null())
-                        return eval_or(or_clause);
-                    else if (const auto& not_clause = arg.get("not"); !not_clause.is_null())
-                        return eval_not(not_clause);
                     else if (const auto& empty_clause = arg.get("empty"); !empty_clause.is_null())
                         return eval_empty(empty_clause, true);
                     else if (const auto& not_empty_clause = arg.get("not-empty"); !not_empty_clause.is_null())
                         return eval_empty(not_empty_clause, false);
+                    else if (const auto& equal_clause = arg.get("equal"); !equal_clause.is_null())
+                        return eval_equal(equal_clause);
+                    else if (const auto& not_clause = arg.get("not"); !not_clause.is_null())
+                        return eval_not(not_clause);
+                    else if (const auto& not_equal_clause = arg.get("not-equal"); !not_equal_clause.is_null())
+                        return eval_not_equal(not_equal_clause);
+                    else if (const auto& or_clause = arg.get("or"); !or_clause.is_null())
+                        return eval_or(or_clause);
                     else
                         throw error{"unrecognized clause"};
                 }
@@ -335,6 +339,22 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
 
 // ----------------------------------------------------------------------
 
+rjson::value acmacs::settings::v2::Settings::substitute(const rjson::value& source) const
+{
+    return std::visit(
+        [this, &source]<typename ArgX>(ArgX && arg) -> rjson::value {
+            using Arg = std::decay_t<ArgX>;
+            if constexpr (std::is_same_v<Arg, std::string>)
+                return environment_.substitute(std::string_view{arg});
+            else
+                return source;
+        },
+        source.val_());
+
+} // acmacs::settings::v2::Settings::substitute
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v2::Settings::eval_and(const rjson::value& condition) const
 {
     if (condition.empty()) {
@@ -353,7 +373,7 @@ bool acmacs::settings::v2::Settings::eval_and(const rjson::value& condition) con
 bool acmacs::settings::v2::Settings::eval_or(const rjson::value& condition) const
 {
     if (condition.empty()) {
-        fmt::print(stderr, "WARNING: empty and clause evaluates to false\n");
+        fmt::print(stderr, "WARNING: empty or clause evaluates to false\n");
         return false;
     }
     bool result = false;
@@ -364,11 +384,25 @@ bool acmacs::settings::v2::Settings::eval_or(const rjson::value& condition) cons
 
 // ----------------------------------------------------------------------
 
-bool acmacs::settings::v2::Settings::eval_not(const rjson::value& condition) const
+bool acmacs::settings::v2::Settings::eval_equal(const rjson::value& condition) const
 {
-    return !eval_condition(condition);
+    if (condition.empty()) {
+        fmt::print(stderr, "WARNING: empty equal clause evaluates to false\n");
+        return false;
+    }
+    if (!condition.is_array() || condition.size() < 2) {
+        fmt::print(stderr, "WARNING: equal clause condition must be an array with 2 or more elements: {}, evaluates to false\n", condition);
+        return false;
+    }
 
-} // acmacs::settings::v2::Settings::eval_not
+    const auto first = substitute(condition[0]);
+    for (size_t index = 1; index < condition.size(); ++index) {
+        if (substitute(condition[index]) != first)
+            return false;
+    }
+    return true;
+
+} // acmacs::settings::v2::Settings::eval_equal
 
 // ----------------------------------------------------------------------
 
@@ -376,23 +410,40 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, b
 {
     try {
         return std::visit(
-            [this,true_if_empty]<typename T>(T && arg)->bool {
-                if constexpr (std::is_same_v<std::decay_t<T>, rjson::null> || std::is_same_v<std::decay_t<T>, rjson::const_null>)
+            [true_if_empty]<typename ArgX>(ArgX&& arg) -> bool {
+                using Arg = std::decay_t<ArgX>;
+                if constexpr (std::is_same_v<Arg, rjson::null> || std::is_same_v<Arg, rjson::const_null>)
                     return true_if_empty;
-                else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
-                    if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string())
-                        return rjson::to_string_raw(substituted).empty() == true_if_empty;
-                    else
-                        throw error{"unsupported value type"};
-                }
+                else if constexpr (std::is_same_v<Arg, std::string>)
+                    return arg.empty() == true_if_empty;
                 else
                     throw error{"unsupported value type"};
             },
-            condition.val_());
+            substitute(condition).val_());
     }
     catch (std::exception& err) {
         throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
     }
+
+    // try {
+    //     return std::visit(
+    //         [this,true_if_empty]<typename T>(T && arg)->bool {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, rjson::null> || std::is_same_v<std::decay_t<T>, rjson::const_null>)
+    //                 return true_if_empty;
+    //             else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+    //                 if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string())
+    //                     return rjson::to_string_raw(substituted).empty() == true_if_empty;
+    //                 else
+    //                     throw error{"unsupported value type"};
+    //             }
+    //             else
+    //                 throw error{"unsupported value type"};
+    //         },
+    //         condition.val_());
+    // }
+    // catch (std::exception& err) {
+    //     throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
+    // }
 
 } // acmacs::settings::v2::Settings::eval_empty
 

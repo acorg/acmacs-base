@@ -1,14 +1,23 @@
-# Time-stamp: <2019-10-28 14:53:27 eu>
+# Time-stamp: <2019-12-13 10:53:32 eu>
 
 * Built in commands in settings-v2
 
--- conditional evaluation
+** conditional evaluation
 {"N": "if", "condition": {"and": ["{whocc}", {"not-empty": "{virus-type}"}]}, "then": ["clades-{virus-type}{lineage}"]},
 
--- prints environment at all levels
+*** conditions
+{"and": [<bool-condition>, ...]}
+{"or": [<bool-condition>, ...]}
+{"not": <bool-condition>}
+{"empty": "<string>"}
+{"not-empty": "<string>"}
+{"equal": [<value>, ...]}
+{"not-equal": [<value>, ...]}
+
+** prints environment at all levels
 {"N": ":print-all-environment"} 
 
--- prints string at "key" followed by colon followed by substituted "value"
+** prints string at "key" followed by colon followed by substituted "value"
 {"N": ":print-environment-key-value", "key": "continent:russia", "value": "{continent:russia}"}
 
 * COMMENT local vars ======================================================================

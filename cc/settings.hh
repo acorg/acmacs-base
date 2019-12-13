@@ -59,6 +59,8 @@ namespace acmacs::settings::inline v2
                 return val;
         }
 
+        rjson::value substitute(const rjson::value& source) const;
+
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default) const
         {
             if (const auto& val = getenv(key); !val.is_const_null())
@@ -127,8 +129,10 @@ namespace acmacs::settings::inline v2
         bool eval_condition(const rjson::value& condition) const;
         bool eval_and(const rjson::value& condition) const;
         bool eval_or(const rjson::value& condition) const;
-        bool eval_not(const rjson::value& condition) const;
+        bool eval_not(const rjson::value& condition) const { return !eval_condition(condition); }
         bool eval_empty(const rjson::value& condition, bool true_if_empty) const;
+        bool eval_equal(const rjson::value& condition) const;
+        bool eval_not_equal(const rjson::value& condition) const { return !eval_equal(condition); }
 
         friend class Subenvironment;
     }; // class Settings
