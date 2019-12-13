@@ -24,6 +24,10 @@ namespace acmacs
         const auto& front() const { return data_.front(); }
         void sort() { std::sort(std::begin(data_), std::end(data_)); }
 
+        auto find(const T& key) const { return std::find(std::begin(data_), std::end(data_), key); }
+        auto find(const T& key) { return std::find(std::begin(data_), std::end(data_), key); }
+        bool exists(const T& key) const { return find(key) != std::end(data_); }
+
         template <typename Predicate> void erase_if(Predicate&& pred)
         {
             data_.erase(std::remove_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
@@ -31,7 +35,7 @@ namespace acmacs
 
         void add(const T& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
         {
-            if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) {
+            if (!exists(elt)) {
                 data_.push_back(elt);
                 if (a_sort == flat_set_sort_afterwards::yes)
                     sort();
@@ -40,7 +44,7 @@ namespace acmacs
 
         void add(T&& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
         {
-            if (std::find(std::begin(data_), std::end(data_), elt) == std::end(data_)) {
+            if (!exists(elt)) {
                 data_.push_back(std::move(elt));
                 if (a_sort == flat_set_sort_afterwards::yes)
                     sort();

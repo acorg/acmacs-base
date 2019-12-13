@@ -28,6 +28,7 @@ namespace acmacs
 
         template <typename K> auto find(const K& key) const { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
         template <typename K> auto find(const K& key) { return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; }); }
+        template <typename K> bool exists(const K& key) const { return find(key) != std::end(data_); }
 
         auto& emplace(const Key& key, const Value& value) { return data_.emplace_back(key, value); }
         auto& emplace(Key&& key, Value&& value) { return data_.emplace_back(std::move(key), std::move(value)); }
