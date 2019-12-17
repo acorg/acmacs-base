@@ -277,7 +277,6 @@ template <> struct fmt::formatter<acmacs::PointCoordinates>
     std::string format_for_coord;
 };
 
-
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
