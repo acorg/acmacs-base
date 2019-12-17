@@ -76,7 +76,7 @@ namespace acmacs
 
         PointCoordinates copy() const noexcept { return *this; }
 
-        bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
+        bool operator==(const PointCoordinates& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end(), [](double x, double y) { return float_equal_or_both_nan(x, y); }); }
         bool operator!=(const PointCoordinates& rhs) const { return !operator==(rhs); }
 
         constexpr number_of_dimensions_t number_of_dimensions() const
@@ -243,6 +243,40 @@ namespace acmacs
     inline PointCoordinates operator/(const PointCoordinates& p1, double val) { PointCoordinates result(p1); result /= val; return result; }
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+// format for PointCoordinates is format for double of each element, e.g. :.8f
+
+template <> struct fmt::formatter<acmacs::PointCoordinates>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
+    {
+        if (const auto end_of_fomat = std::find(ctx.begin(), ctx.end(), '}'); end_of_fomat != ctx.end()) {
+            const auto begin = *ctx.begin() == ':' ? std::next(ctx.begin()) : ctx.begin();
+            format_for_coord.resize(static_cast<size_t>(end_of_fomat - begin + 3));
+            format_for_coord[0] = '{';
+            format_for_coord[1] = ':';
+            std::copy(begin, end_of_fomat, std::next(format_for_coord.begin(), 2));
+            format_for_coord.back() = '}';
+            return end_of_fomat;
+        }
+        return ctx.begin();
+    }
+
+    template <typename FormatContext> auto format(const acmacs::PointCoordinates& coord, FormatContext& ctx)
+    {
+        const auto format_val = [this](double val) { return fmt::format(format_for_coord, val); };
+        acmacs::number_of_dimensions_t dim{0};
+        format_to(ctx.out(), "{{{}", format_val(coord[dim]));
+        for (++dim; dim < coord.number_of_dimensions(); ++dim)
+            format_to(ctx.out(), ", {}", format_val(coord[dim]));
+        return format_to(ctx.out(), "}}");
+    }
+
+    std::string format_for_coord;
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -94,7 +94,7 @@ namespace acmacs
 
     inline std::string to_string(const Area& area, size_t precision = 32) { return acmacs::to_string(area.min, precision) + ' ' + acmacs::to_string(area.max, precision); }
 
-    inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
+    // inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
 
       // ----------------------------------------------------------------------
 
@@ -271,14 +271,14 @@ namespace acmacs
 
     }; // class Layout
 
-    inline std::ostream& operator<<(std::ostream& s, const Layout& aLayout)
-    {
-        s << "Layout [";
-        for (size_t no = 0; no < aLayout.number_of_points(); ++no)
-            s << aLayout[no] << ' ';
-        s << ']';
-        return s;
-    }
+    // inline std::ostream& operator<<(std::ostream& s, const Layout& aLayout)
+    // {
+    //     s << "Layout [";
+    //     for (size_t no = 0; no < aLayout.number_of_points(); ++no)
+    //         s << aLayout[no] << ' ';
+    //     s << ']';
+    //     return s;
+    // }
 
     inline PointCoordinates LayoutConstIterator::operator*() const
     {
@@ -296,6 +296,46 @@ namespace acmacs
 
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::Area>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+    template <typename FormatContext> auto format(const acmacs::Area& area, FormatContext& ctx) { return format_to(ctx.out(), "Area{{min:{:.4f}, max:{:.4f}}}", area.min, area.max); }
+};
+
+
+// format for Layout is format for double of each coordinate, e.g. :.8f
+
+template <> struct fmt::formatter<acmacs::Layout>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
+    {
+        if (const auto end_of_fomat = std::find(ctx.begin(), ctx.end(), '}'); end_of_fomat != ctx.end()) {
+            const auto begin = *ctx.begin() == ':' ? std::next(ctx.begin()) : ctx.begin();
+            format_for_point_coord.resize(static_cast<size_t>(end_of_fomat - begin + 3));
+            format_for_point_coord[0] = '{';
+            format_for_point_coord[1] = ':';
+            std::copy(begin, end_of_fomat, std::next(format_for_point_coord.begin(), 2));
+            format_for_point_coord.back() = '}';
+            return end_of_fomat;
+        }
+        return ctx.begin();
+    }
+
+    template <typename FormatContext> auto format(const acmacs::Layout& layout, FormatContext& ctx)
+    {
+        const auto format_val = [this](const acmacs::PointCoordinates& pc) { return fmt::format(format_for_point_coord, pc); };
+        format_to(ctx.out(), "Layout {}d ({})\n", layout.number_of_dimensions(), layout.number_of_points());
+        const auto num_digits_in_point_no = static_cast<int>(std::log10(layout.number_of_points())) + 1;
+        for (size_t no = 0; no < layout.number_of_points(); ++no)
+            format_to(ctx.out(), "  {:{}d} {}\n", no, num_digits_in_point_no, format_val(layout[no]));
+        return ctx.out();
+    }
+
+    std::string format_for_point_coord;
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
