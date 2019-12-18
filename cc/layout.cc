@@ -65,7 +65,7 @@ std::shared_ptr<acmacs::Layout> acmacs::Layout::transform(const acmacs::Transfor
 {
     auto result = std::make_shared<acmacs::Layout>(number_of_points(), number_of_dimensions());
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
-        (*result)[p_no] = aTransformation.transform(at(p_no));
+        result->update(p_no, aTransformation.transform(at(p_no)));
     return result;
 
 } // acmacs::Layout::transform
