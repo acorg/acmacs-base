@@ -206,7 +206,7 @@ namespace acmacs
             return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_)), Vec::begin() + static_cast<difference_type>((point_no + 1) * static_cast<size_t>(number_of_dimensions_)));
         }
 
-        PointCoordinates get(size_t point_no) const { return operator[](point_no); }
+        PointCoordinates at(size_t point_no) const { return operator[](point_no); }
 
         double operator()(size_t point_no, number_of_dimensions_t aDimensionNo) const { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
         double& operator()(size_t point_no, number_of_dimensions_t aDimensionNo) { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
@@ -271,20 +271,11 @@ namespace acmacs
 
     }; // class Layout
 
-    // inline std::ostream& operator<<(std::ostream& s, const Layout& aLayout)
-    // {
-    //     s << "Layout [";
-    //     for (size_t no = 0; no < aLayout.number_of_points(); ++no)
-    //         s << aLayout[no] << ' ';
-    //     s << ']';
-    //     return s;
-    // }
-
     inline PointCoordinates LayoutConstIterator::operator*() const
     {
         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
             ++point_no_; // skip disconnected points
-        return parent_.get(point_no_);
+        return parent_.at(point_no_);
     }
 
     inline double LayoutDimensionConstIterator::operator*() const
@@ -293,7 +284,6 @@ namespace acmacs
             ++point_no_; // skip disconnected points
         return parent_.coordinate(point_no_, dimension_no_);
     }
-
 
 } // namespace acmacs
 
