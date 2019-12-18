@@ -201,12 +201,9 @@ namespace acmacs
             return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_)), Vec::begin() + static_cast<difference_type>((point_no + 1) * static_cast<size_t>(number_of_dimensions_)));
         }
 
-        PointCoordinates operator[](size_t point_no)
-        {
-            return PointCoordinates(Vec::begin() + static_cast<difference_type>(point_no * static_cast<size_t>(number_of_dimensions_)), Vec::begin() + static_cast<difference_type>((point_no + 1) * static_cast<size_t>(number_of_dimensions_)));
-        }
+        // use update(index, point) instead of layout[index] = point
 
-        PointCoordinates at(size_t point_no) const { return operator[](point_no); }
+        const PointCoordinates at(size_t point_no) const { return operator[](point_no); }
 
         double operator()(size_t point_no, number_of_dimensions_t aDimensionNo) const { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
         double& operator()(size_t point_no, number_of_dimensions_t aDimensionNo) { return Vec::operator[](point_no * static_cast<size_t>(number_of_dimensions_) + static_cast<size_t>(aDimensionNo)); }
@@ -214,6 +211,14 @@ namespace acmacs
         double& coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const { return operator[](point_no).exists(); }
         const std::vector<double>& as_flat_vector_double() const { return *this; }
+
+        void update(size_t point_no, const PointCoordinates& point)
+        {
+            assert(point_no < number_of_points());
+            assert(point.number_of_dimensions() == number_of_dimensions());
+            for (number_of_dimensions_t dim{0}; dim < number_of_dimensions(); ++dim)
+                coordinate(point_no, dim) = point[dim];
+        }
 
         void set_nan(size_t point_no)
         {
