@@ -24,7 +24,7 @@ constexpr inline float_equal(T x, T y, int ulp=1)
 
 constexpr inline bool float_equal_or_both_nan(double x, double y, int ulp=1)
 {
-    return float_equal(x, y, ulp) || std::isnan(x) == std::isnan(y);
+    return float_equal(x, y, ulp) || (std::isnan(x) && std::isnan(y));
 }
 
 // ----------------------------------------------------------------------
