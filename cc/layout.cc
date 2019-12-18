@@ -65,7 +65,7 @@ std::shared_ptr<acmacs::Layout> acmacs::Layout::transform(const acmacs::Transfor
 {
     auto result = std::make_shared<acmacs::Layout>(number_of_points(), number_of_dimensions());
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no)
-        (*result)[p_no] = aTransformation.transform(get(p_no));
+        (*result)[p_no] = aTransformation.transform(at(p_no));
     return result;
 
 } // acmacs::Layout::transform
@@ -77,7 +77,7 @@ acmacs::PointCoordinates acmacs::Layout::centroid() const
     PointCoordinates result(*number_of_dimensions(), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
-        if (const auto coord = get(p_no); coord.exists())
+        if (const auto coord = at(p_no); coord.exists())
             result += coord;
         else
             --num_non_nan;
