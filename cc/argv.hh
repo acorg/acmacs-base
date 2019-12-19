@@ -71,19 +71,20 @@ namespace acmacs
 
                 }; // class option_base
 
-                template <typename T> T to_value(std::string_view source) { return source; }
-                  // template <> inline const char* to_value<const char*>(std::string_view source) { return source; }
-                // template <> inline string to_value<string>(std::string_view source) { return source; }
-                template <> inline int to_value<int>(std::string_view source) { return std::stoi(std::string(source)); }
-                template <> inline long to_value<long>(std::string_view source) { return std::stol(std::string(source)); }
-                template <> inline unsigned long to_value<unsigned long>(std::string_view source) { return std::stoul(std::string(source)); }
-                template <> inline double to_value<double>(std::string_view source) { return std::stod(std::string(source)); }
-                template <> inline bool to_value<bool>(std::string_view source) { return std::stoi(std::string(source)); }
+                template <typename T> T to_value(std::string_view source)
+                {
+                    if constexpr (std::is_same_v<T, bool>)
+                        return std::stoi(std::string(source));
+                    else if constexpr (std::is_arithmetic_v<T>)
+                        return ::string::from_chars<T>(source);
+                    else
+                        return source;
+                }
 
                 template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
-                template <> std::string to_string(const str& source) noexcept { return '"' + std::string(source) + '"'; }
-                template <> std::string to_string(const str_array& source) noexcept { return '"' + string::join("\" \"", source) + '"'; }
+                template <> std::string to_string(const str& source) noexcept { return fmt::format("\"{}\"", source); }
+                template <> std::string to_string(const str_array& source) noexcept { return fmt::format("\"{}\"", string::join("\" \"", source)); }
 
                 class invalid_option_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
