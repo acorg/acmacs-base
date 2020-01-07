@@ -16,6 +16,7 @@ inline date::year_month_day next(const date::year_month_day& current, acmacs::ti
         case acmacs::time_series::v2::interval::day:
             return date::next_day(current);
     }
+    return date::next_month(current); // to make g++-9 happy
 
 } // next
 
@@ -33,6 +34,7 @@ inline date::year_month_day first(const date::year_month_day& current, acmacs::t
         case acmacs::time_series::v2::interval::day:
             return current;
     }
+    return date::beginning_of_month(current); // to make g++-9 happy
 
 } // next
 

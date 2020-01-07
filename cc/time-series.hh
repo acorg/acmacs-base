@@ -74,6 +74,7 @@ template <> struct fmt::formatter<acmacs::time_series::interval> : fmt::formatte
             case acmacs::time_series::v2::interval::day:
                 return fmt::formatter<std::string>::format("day", ctx);
         }
+        return fmt::formatter<std::string>::format("month", ctx); // to make g++-9 happy
     }
 };
 
