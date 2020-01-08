@@ -153,6 +153,7 @@ namespace rjson::inline v2
 
         template <typename T> void copy_to(T&& target) const;
         template <typename T, typename F> void transform_to(T&& target, F&& transformer) const;
+        template <typename F> array map(F&& func) const;
         template <typename F> void for_each(F&& func) const;
         template <typename F> void for_each(F&& func);
         template <typename Func> const value& find_if(Func&& func) const; // returns ConstNull if not found, Func: bool (const value&)
@@ -487,6 +488,20 @@ namespace rjson::inline v2
             else
                 static_assert(std::is_invocable_v<F, value&>, "array::for_each: unsupported func signature");
         }
+    }
+
+    template <typename F> inline array array::map(F && func) const
+    {
+        array result;
+        for (auto [no, val] : acmacs::enumerate(content_)) {
+            if constexpr (std::is_invocable_v<F, value&>)
+                result.append(func(val));
+            else if constexpr (std::is_invocable_v<F, value&, size_t>)
+                result.append(func(val, no));
+            else
+                static_assert(std::is_invocable_v<F, value&>, "array::for_each: unsupported func signature");
+        }
+        return result;
     }
 
     template <typename T, typename F> inline void array::transform_to(T && target, F && transformer) const
