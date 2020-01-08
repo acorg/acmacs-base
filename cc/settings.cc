@@ -342,10 +342,12 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
 rjson::value acmacs::settings::v2::Settings::substitute(const rjson::value& source) const
 {
     return std::visit(
-        [this, &source]<typename ArgX>(ArgX && arg) -> rjson::value {
+        [this, &source]<typename ArgX>(ArgX && arg)->rjson::value {
             using Arg = std::decay_t<ArgX>;
             if constexpr (std::is_same_v<Arg, std::string>)
                 return environment_.substitute(std::string_view{arg});
+            else if constexpr (std::is_same_v<Arg, rjson::array>)
+                return arg.map([this](const auto& val) { return substitute(val); });
             else
                 return source;
         },
