@@ -300,7 +300,7 @@ template <> struct fmt::formatter<acmacs::Area> : public fmt::formatter<acmacs::
 {
     template <typename FormatContext> auto format(const acmacs::Area& area, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "Area{{min:{:{}}, max:{:{}}}}", area.min, format_float, area.max, format_float);
+        return format_to(ctx.out(), "Area{{min:{}, max:{}}}", format_val(area.min), format_val(area.max));
     }
 };
 
@@ -313,7 +313,7 @@ template <> struct fmt::formatter<acmacs::Layout> : public fmt::formatter<acmacs
         format_to(ctx.out(), "Layout {}d ({})\n", layout.number_of_dimensions(), layout.number_of_points());
         const auto num_digits_in_point_no = static_cast<int>(std::log10(layout.number_of_points())) + 1;
         for (size_t no = 0; no < layout.number_of_points(); ++no)
-            format_to(ctx.out(), "  {:{}d} {:{}}\n", no, num_digits_in_point_no, layout[no], format_float);
+            format_to(ctx.out(), "  {:{}d} {}\n", no, num_digits_in_point_no, format_val(layout[no]));
         return ctx.out();
     }
 };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #pragma GCC diagnostic push
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
@@ -23,14 +25,6 @@
 
 namespace acmacs
 {
-    template <typename ParseContext> inline std::string fmt_extract_format_float(const ParseContext& ctx, std::string_view a_default = {".4f"})
-    {
-        if (const auto end_of_fomat = std::find(ctx.begin(), ctx.end(), '}'); end_of_fomat != ctx.end())
-            return std::string(*ctx.begin() == ':' ? std::next(ctx.begin()) : ctx.begin(), end_of_fomat);
-        else
-            return std::string{a_default};
-    }
-
     struct fmt_default_formatter
     {
     };
@@ -54,11 +48,26 @@ template <> struct fmt::formatter<acmacs::fmt_float_formatter>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
     {
-        format_float = acmacs::fmt_extract_format_float(ctx, ".4f");
-        return ctx.begin();
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == ':')
+            ++it;
+        const auto end = std::find(it, ctx.end(), '}');
+        format_ = fmt::format("{{:{}}}", std::string(it, end));
+        return end;
     }
 
-    std::string format_float;
+    template <typename Val> std::string format_val(Val&& val)
+    {
+        return fmt::format(format_, std::forward<Val>(val));
+    }
+
+    template <typename Val, typename FormatContext> auto format_val(Val&& val, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), format_, std::forward<Val>(val));
+    }
+
+  private:
+    std::string format_;
 };
 
 // ----------------------------------------------------------------------

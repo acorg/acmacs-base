@@ -253,9 +253,11 @@ template <> struct fmt::formatter<acmacs::PointCoordinates> : public fmt::format
     template <typename FormatContext> auto format(const acmacs::PointCoordinates& coord, FormatContext& ctx)
     {
         acmacs::number_of_dimensions_t dim{0};
-        format_to(ctx.out(), "{{{:{}}", coord[dim], format_float);
-        for (++dim; dim < coord.number_of_dimensions(); ++dim)
-            format_to(ctx.out(), ", {:{}}", coord[dim], format_float);
+        format_val(coord[dim], ctx);
+        for (++dim; dim < coord.number_of_dimensions(); ++dim) {
+            format_to(ctx.out(), ", ");
+            format_val(coord[dim], ctx);
+        }
         return format_to(ctx.out(), "}}");
     }
 };
