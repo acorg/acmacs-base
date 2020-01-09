@@ -49,9 +49,8 @@ namespace acmacs::time_series::inline v2
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::time_series::series>
+template <> struct fmt::formatter<acmacs::time_series::series> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const acmacs::time_series::series& series, FormatContext& ctx)
     {
         format_to(ctx.out(), "time-series{{");
@@ -78,9 +77,8 @@ template <> struct fmt::formatter<acmacs::time_series::interval> : fmt::formatte
     }
 };
 
-template <> struct fmt::formatter<acmacs::time_series::parameters>
+template <> struct fmt::formatter<acmacs::time_series::parameters> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const acmacs::time_series::parameters& param, FormatContext& ctx)
     {
         return format_to(ctx.out(), "time-series{{{} .. {}, {}:{}}}", param.first, param.after_last, param.intervl, param.number_of_intervals);

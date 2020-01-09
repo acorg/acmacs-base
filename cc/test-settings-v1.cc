@@ -52,9 +52,9 @@ int main()
         std::cout << "line_length: " << s1.aa_at_pos->line_length << '\n';
         s1.aa_at_pos->line_length = 1.2;
         std::cout << "line_length: " << s1.aa_at_pos->line_length << '\n';
-        std::cout << "size: " << s1.size << '\n';
+        std::cout << "size: " << acmacs::to_string(s1.size) << '\n';
         s1.size = acmacs::Size{9, 10};
-        std::cout << "size: " << s1.size << '\n';
+        std::cout << "size: " << acmacs::to_string(s1.size) << '\n';
         std::cout << "offset: " << s1.offset << '\n';
         s1.offset = acmacs::Offset{12, -13.5};
         std::cout << "offset: " << s1.offset << '\n';

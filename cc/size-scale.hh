@@ -83,28 +83,24 @@ namespace acmacs::detail
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<Pixels>
+template <> struct fmt::formatter<Pixels> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const Pixels& pixels, FormatContext& ctx) { return format_to(ctx.out(), "{}px", pixels.value()); }
 };
 
 
-template <> struct fmt::formatter<Scaled>
+template <> struct fmt::formatter<Scaled> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const Scaled& scaled, FormatContext& ctx) { return format_to(ctx.out(), "{}scaled", scaled.value()); }
 };
 
-template <> struct fmt::formatter<Rotation>
+template <> struct fmt::formatter<Rotation> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const Rotation& rotation, FormatContext& ctx) { return format_to(ctx.out(), "{}", rotation.value()); }
 };
 
-template <> struct fmt::formatter<Aspect>
+template <> struct fmt::formatter<Aspect> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const Aspect& aspect, FormatContext& ctx) { return format_to(ctx.out(), "{}", aspect.value()); }
 };
 

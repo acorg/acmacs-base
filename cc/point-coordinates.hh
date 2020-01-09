@@ -39,10 +39,10 @@ namespace acmacs
                   break;
             }
         }
-        PointCoordinates(double x, double y) : data_(Store2D{x, y}) {}
-        PointCoordinates(double x, double y, double z) : data_(Store3D{x, y, z}) {}
-        PointCoordinates(enum zero2D) : PointCoordinates(0.0, 0.0) {}
-        PointCoordinates(enum zero3D) : PointCoordinates(0.0, 0.0, 0.0) {}
+        constexpr PointCoordinates(double x, double y) : data_(Store2D{x, y}) {}
+        constexpr PointCoordinates(double x, double y, double z) : data_(Store3D{x, y, z}) {}
+        constexpr PointCoordinates(enum zero2D) : PointCoordinates(0.0, 0.0) {}
+        constexpr PointCoordinates(enum zero3D) : PointCoordinates(0.0, 0.0, 0.0) {}
         PointCoordinates(const double* first, const double* last) : data_(ConstRef{first, static_cast<size_t>(last - first)}) {}
         PointCoordinates(double* first, double* last) : data_(Ref{first, static_cast<size_t>(last - first)}) {}
         PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : PointCoordinates(&*first, &*last) {}
@@ -248,33 +248,16 @@ namespace acmacs
 
 // format for PointCoordinates is format for double of each element, e.g. :.8f
 
-template <> struct fmt::formatter<acmacs::PointCoordinates>
+template <> struct fmt::formatter<acmacs::PointCoordinates> : public fmt::formatter<acmacs::fmt_float_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
-    {
-        if (const auto end_of_fomat = std::find(ctx.begin(), ctx.end(), '}'); end_of_fomat != ctx.end()) {
-            const auto begin = *ctx.begin() == ':' ? std::next(ctx.begin()) : ctx.begin();
-            format_for_coord.resize(static_cast<size_t>(end_of_fomat - begin + 3));
-            format_for_coord[0] = '{';
-            format_for_coord[1] = ':';
-            std::copy(begin, end_of_fomat, std::next(format_for_coord.begin(), 2));
-            format_for_coord.back() = '}';
-            return end_of_fomat;
-        }
-        return ctx.begin();
-    }
-
     template <typename FormatContext> auto format(const acmacs::PointCoordinates& coord, FormatContext& ctx)
     {
-        const auto format_val = [this](double val) { return fmt::format(format_for_coord, val); };
         acmacs::number_of_dimensions_t dim{0};
-        format_to(ctx.out(), "{{{}", format_val(coord[dim]));
+        format_to(ctx.out(), "{{{:{}}", coord[dim], format_float);
         for (++dim; dim < coord.number_of_dimensions(); ++dim)
-            format_to(ctx.out(), ", {}", format_val(coord[dim]));
+            format_to(ctx.out(), ", {:{}}", coord[dim], format_float);
         return format_to(ctx.out(), "}}");
     }
-
-    std::string format_for_coord;
 };
 
 // ----------------------------------------------------------------------

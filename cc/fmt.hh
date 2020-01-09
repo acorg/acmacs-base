@@ -21,6 +21,48 @@
 
 // ----------------------------------------------------------------------
 
+namespace acmacs
+{
+    template <typename ParseContext> inline std::string fmt_extract_format_float(const ParseContext& ctx, std::string_view a_default = {".4f"})
+    {
+        if (const auto end_of_fomat = std::find(ctx.begin(), ctx.end(), '}'); end_of_fomat != ctx.end())
+            return std::string(*ctx.begin() == ':' ? std::next(ctx.begin()) : ctx.begin(), end_of_fomat);
+        else
+            return std::string{a_default};
+    }
+
+    struct fmt_default_formatter
+    {
+    };
+
+    struct fmt_float_formatter
+    {
+    };
+}
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::fmt_default_formatter>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
+};
+
+template <> struct fmt::formatter<acmacs::fmt_float_formatter>
+{
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
+    {
+        format_float = acmacs::fmt_extract_format_float(ctx, ".4f");
+        return ctx.begin();
+    }
+
+    std::string format_float;
+};
+
+// ----------------------------------------------------------------------
+
 template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_v<std::exception, T>, char>> : fmt::formatter<const char*> {
     template <typename FormatCtx> auto format(const std::exception& err, FormatCtx& ctx) { return fmt::formatter<const char*>::format(err.what(), ctx); }
 };

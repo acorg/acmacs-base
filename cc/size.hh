@@ -65,7 +65,6 @@ namespace acmacs
     }; // class Size
 
     inline std::string to_string(const Size& size) { return '{' + to_string(size.width) + ", " + to_string(size.height) + '}'; }
-    inline std::ostream& operator<<(std::ostream& out, const acmacs::Size& size) { return out << to_string(size); }
 
     inline Size operator-(const Size& a, const PointCoordinates& b) { return {a.width - b.x(), a.height - b.y()}; }
     inline Size operator-(const Size& a, const Size& b) { return {a.width - b.width, a.height - b.height}; }
@@ -124,10 +123,20 @@ namespace acmacs
 
     }; // class Circle
 
-// ----------------------------------------------------------------------
-
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+// format for Size is format for double of each element, e.g. :.8f
+
+template <> struct fmt::formatter<acmacs::Size> : public fmt::formatter<acmacs::fmt_float_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::Size& size, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "Size[{:{}}, {:{}}]", size.width, format_float, size.height, format_float);
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -118,18 +118,16 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <typename Key> struct fmt::formatter<acmacs::Counter<Key>>
+template <typename Key> struct fmt::formatter<acmacs::Counter<Key>> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const acmacs::Counter<Key>& counter, FormatContext& ctx)
     {
         return format_to(ctx.out(), "counter{{{}}}", counter.counter());
     }
 };
 
-template <> struct fmt::formatter<acmacs::CounterChar>
+template <> struct fmt::formatter<acmacs::CounterChar> : public fmt::formatter<acmacs::fmt_default_formatter>
 {
-    template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
     template <typename FormatContext> auto format(const acmacs::CounterChar& counter, FormatContext& ctx)
     {
         auto out = format_to(ctx.out(), "counter{{");
