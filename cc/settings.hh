@@ -32,7 +32,7 @@ namespace acmacs::settings::inline v2
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name = "main", verbose verb = verbose::no);
+        virtual void apply(std::string_view name /* = "main" */, verbose verb /*= verbose::no*/);
         // void apply(const char* name, verbose verb = verbose::no) { apply(std::string_view{name}, verb); }
 
         void setenv_from_string(std::string_view key, std::string_view value);

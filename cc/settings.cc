@@ -247,7 +247,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry, 
                 }
             });
             if (command != "set")
-                apply(command);
+                apply(command, verb);
             else if (warn_if_set_used_)
                 fmt::print(stderr, "WARNING: \"set\" command has no effect (used inside \"if\"?): {}\n", entry);
         }
