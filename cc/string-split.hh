@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "acmacs-base/fmt.hh"
 #include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
@@ -91,28 +92,40 @@ namespace acmacs::string
 
           // ======================================================================
 
-        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, std::string_view delim, Extractor extractor, const char* extractor_name)
+        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, std::string_view delim, Extractor extractor, const char* extractor_name, Split keep_empty = Split::KeepEmpty)
         {
-            using namespace std::string_literals;
             auto extract = [&](auto chunk) -> T {
                                try {
                                    size_t pos = 0; // g++-9 warn about uninitialized otherwise
                                    const T result = extractor(chunk, &pos);
                                    if (pos != chunk.size())
-                                       throw split_error{"cannot read "s + extractor_name + " from \""s + std::string(chunk) + '"'};
+                                       throw split_error{fmt::format("cannot read {} from \"{}\"", extractor_name, chunk)};
                                    return result;
                                }
                                catch (split_error&) {
                                    throw;
                                }
                                catch (std::exception& err) {
-                                   throw split_error{"cannot read "s + extractor_name + " from \""s + std::string(chunk) + "\": " + err.what()};
+                                   throw split_error{fmt::format("cannot read {} from \"{}\": {}", extractor_name, chunk, err)};
                                }
                            };
 
             std::vector<T> result;
-            std::transform(internal::split_iterator<S>(s, delim, Split::KeepEmpty), internal::split_iterator<S>(), std::back_inserter(result), extract);
+            std::transform(internal::split_iterator<S>(s, delim, keep_empty), internal::split_iterator<S>(), std::back_inserter(result), extract);
             return result;
+        }
+
+        template <typename S, typename T, typename Extractor> inline std::vector<T> split_into(const S& s, Extractor extractor, const char* extractor_name, Split keep_empty = Split::KeepEmpty)
+        {
+            using namespace std::string_view_literals;
+            for (auto delim : {","sv, " "sv, ", "sv, ":"sv, ";"sv}) {
+                try {
+                    return internal::split_into<S, T>(s, delim, extractor, extractor_name, keep_empty);
+                }
+                catch (split_error&) {
+                }
+            }
+            throw split_error{fmt::format("cannot extract {}'s from \"{}\"", extractor_name, s)};
         }
 
     } // namespace internal
@@ -124,49 +137,33 @@ namespace acmacs::string
 
     template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned");
+        return internal::split_into<S, T>(s, delim, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
+    }
+
+    template <typename T, typename S> inline std::vector<T> split_into_uint(const S& s)
+    {
+        return internal::split_into<S, T>(s, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<size_t> split_into_size_t(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned");
+        return internal::split_into<S, size_t>(s, delim, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
+    }
+
+    template <typename S> inline std::vector<size_t> split_into_size_t(const S& s)
+    {
+        return internal::split_into<S, size_t>(s, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& s, std::string_view delim)
     {
-        return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double");
+        return internal::split_into<S, double>(s, delim, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& s)
     {
-        using namespace std::string_literals;
-        auto extractor = [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); };
-        for (const char* delim : {",", " ", ", "}) {
-            try {
-                return internal::split_into<S, double>(s, delim, extractor, "double");
-            }
-            catch (split_error&) {
-            }
-        }
-        throw split_error{::string::concat("cannot read double's from \"", s, '"')};
+        return internal::split_into<S, double>(s, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
     }
-
-    // inline std::vector<std::string_view> split(std::string_view s, std::string delim, Split keep_empty = Split::KeepEmpty)
-    // {
-    //     std::vector<std::string_view> result;
-    //     if (! delim.empty()) {
-    //         for (auto substart = s.cbegin(), subend = substart; substart <= s.cend(); substart = subend + delim.size()) {
-    //             subend = std::search(substart, s.end(), delim.begin(), delim.end());
-    //             if (substart != subend || keep_empty == Split::KeepEmpty) {
-    //                 result.emplace_back(substart, subend - substart);
-    //             }
-    //         }
-    //     }
-    //     else {
-    //         result.emplace_back(s.data(), s.size());
-    //     }
-    //     return result;
-    // }
 
 } // namespace acmacs::string
 
