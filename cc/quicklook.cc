@@ -2,7 +2,7 @@
 #include <chrono>
 #include <thread>
 #include <unistd.h>
-#include <iostream>
+#include <vector>
 
 #include "quicklook.hh"
 
@@ -12,8 +12,7 @@
 
 void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 {
-    const char * const argv[] = {"/usr/bin/qlmanage", "-p", aFilename.data(), nullptr};
-    run_and_detach(argv, 0);
+    run_and_detach({"/usr/bin/qlmanage", "-p", aFilename.data()}, 0);
     if (aDelayInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayInSeconds);
@@ -23,8 +22,7 @@ void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 
 void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
-    const char * const argv[] = {"/usr/bin/open", aFilename.data(), nullptr};
-    run_and_detach(argv, aDelayBeforeInSeconds);
+    run_and_detach({"/usr/bin/open", aFilename.data()}, aDelayBeforeInSeconds);
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
@@ -46,7 +44,7 @@ void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds
 
 // ----------------------------------------------------------------------
 
-void acmacs::run_and_detach(const char * const argv[], size_t aDelayBeforeInSeconds)
+void acmacs::run_and_detach(std::initializer_list<const char *> argv, size_t aDelayBeforeInSeconds)
 {
     if (!fork()) {
         close(0);
@@ -57,8 +55,10 @@ void acmacs::run_and_detach(const char * const argv[], size_t aDelayBeforeInSeco
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(1s * aDelayBeforeInSeconds);
         }
-        execvp(argv[0], const_cast<char *const *>(argv));
-        perror(argv[0]);
+        std::vector<const char *> argv_v{argv};
+        argv_v.push_back(nullptr);
+        execvp(argv_v[0], const_cast<char *const *>(argv_v.data()));
+        perror(argv_v[0]);
         std::exit(-1);
     }
 
