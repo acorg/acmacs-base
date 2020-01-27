@@ -46,6 +46,14 @@ namespace acmacs
             throw std::out_of_range{fmt::format("acmacs::flat_map_t::at(): no key: {}", key)};
         }
 
+        const Value* at_ptr(const Key& key) const
+        {
+            if (const auto found = find(key); found != std::end(data_))
+                return &found->second;
+            else
+                return nullptr;
+        }
+
         auto& emplace(const Key& key, const Value& value) { return data_.emplace_back(key, value); }
         auto& emplace(Key&& key, Value&& value) { return data_.emplace_back(std::move(key), std::move(value)); }
 
