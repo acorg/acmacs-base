@@ -67,6 +67,22 @@ namespace acmacs
                 return emplace(key, value);
         }
 
+        auto& emplace_not_replace(const Key& key, const Value& value)
+        {
+            if (auto found = find(key); found != std::end(data_))
+                return *found;
+            else
+                return emplace(key, value);
+        }
+
+        auto& emplace_not_replace(const Key& key)
+        {
+            if (auto found = find(key); found != std::end(data_))
+                return *found;
+            else
+                return emplace(key, Value{});
+        }
+
         void reserve(size_t sz) { data_.reserve(sz); }
 
       private:
