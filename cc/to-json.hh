@@ -108,6 +108,12 @@ namespace to_json
 
             void move_before_end(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::inserter(data_, std::prev(data_.end()))); }
 
+            void make_compact()
+            {
+                data_[0] = compact(embed_space::yes);
+                data_.erase(std::next(data_.begin()), data_.end());
+            }
+
           protected:
             using data_t = std::vector<std::string>;
 
@@ -125,12 +131,6 @@ namespace to_json
             void push_back(std::string&& str) { data_.push_back(std::move(str)); }
             void push_back(char c) { data_.push_back(std::string(1, c)); }
             void move(json&& value) { std::move(value.data_.begin(), value.data_.end(), std::back_inserter(data_)); }
-
-            void make_compact()
-            {
-                data_[0] = compact(embed_space::yes);
-                data_.erase(std::next(data_.begin()), data_.end());
-            }
 
         }; // class json
 
