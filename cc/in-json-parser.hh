@@ -200,6 +200,21 @@ namespace in_json
             void reset_key() { key_ = std::string_view{}; }
         };
 
+        class ignore : public stack_entry
+        {
+          public:
+            ignore() = default;
+            const char* injson_name() override { return "ignore"; }
+            std::unique_ptr<stack_entry> injson_put_object() override { return std::make_unique<ignore>(); }
+            void injson_put_array() override {}
+            void injson_put_key(std::string_view /*data*/) override {}
+            void injson_put_string(std::string_view /*data*/) override {}
+            void injson_put_integer(std::string_view /*data*/) override {}
+            void injson_put_real(std::string_view /*data*/) override {}
+            void injson_put_bool(bool /*val*/) override {}
+            void injson_put_null() override {}
+        };
+
         template <typename TargetContainer, typename ToplevelStackEntry> class object_sink
         {
           public:
