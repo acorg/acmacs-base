@@ -22,7 +22,7 @@ void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 
 void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
-    run_and_detach({"/usr/bin/open", "-g", aFilename.data()}, aDelayBeforeInSeconds);
+    run_and_detach({"/usr/bin/open", aFilename.data()}, aDelayBeforeInSeconds); // , "-g"
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
