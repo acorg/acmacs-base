@@ -12,6 +12,7 @@
 #pragma GCC diagnostic ignored "-Wsigned-enum-bitfield" // fmt/format.h
 #pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
 #pragma GCC diagnostic ignored "-Wshadow-field" // fmt/core.h
+#pragma GCC diagnostic ignored "-Wundef" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
 #endif
 
