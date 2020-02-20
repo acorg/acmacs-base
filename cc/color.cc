@@ -503,16 +503,16 @@ namespace _internal
         {"black", 0x000000},
         {"white", 0xFFFFFF},
 
-        {"ana1",  0x03569b},                  // dark blue
-        {"ana2",  0xe72f27},                  // dark red
-        {"ana3",  0xffc808},                  // yellow
-        {"ana4",  0xa2b324},                  // dark green
-        {"ana5",  0xa5b8c7},                  // grey
-        {"ana6",  0x049457},                  // green
-        {"ana7",  0xf1b066},                  // pale orange
-        {"ana8",  0x742f32},                  // brown
-        {"ana9",  0x9e806e},                  // brown
-        {"ana10", 0x75ada9},                  // turquoise
+        {"ana1", 0x03569b},  // dark blue
+        {"ana2", 0xe72f27},  // dark red
+        {"ana3", 0xffc808},  // yellow
+        {"ana4", 0xa2b324},  // dark green
+        {"ana5", 0xa5b8c7},  // grey
+        {"ana6", 0x049457},  // green
+        {"ana7", 0xf1b066},  // pale orange
+        {"ana8", 0x742f32},  // brown
+        {"ana9", 0x9e806e},  // brown
+        {"ana10", 0x75ada9}, // turquoise
         {"ana11", 0x675b2c},
         {"ana12", 0xa020f0},
         {"ana13", 0x8b8989},
@@ -520,18 +520,18 @@ namespace _internal
         {"ana15", 0xdde8cf},
         {"ana16", 0x00939f},
 
-        {"gmap1",  0xFF0000},
-        {"gmap2",  0x4B96F3},
-        {"gmap3",  0x4DB546},
-        {"gmap4",  0xFFFF00},
-        {"gmap5",  0xFF8000},
-        {"gmap6",  0x15B5C7},
-        {"gmap7",  0xF98182},
-        {"gmap8",  0x7B9EB1},
-        {"gmap9",  0x8F9CE2},
+        {"gmap1", 0xFF0000},
+        {"gmap2", 0x4B96F3},
+        {"gmap3", 0x4DB546},
+        {"gmap4", 0xFFFF00},
+        {"gmap5", 0xFF8000},
+        {"gmap6", 0x15B5C7},
+        {"gmap7", 0xF98182},
+        {"gmap8", 0x7B9EB1},
+        {"gmap9", 0x8F9CE2},
         {"gmap10", 0x0FBDFF},
 
-          // /usr/X11/share/X11/rgb.txt
+        // /usr/X11/share/X11/rgb.txt
         {"alice blue", 0xF0F8FF},
         {"aliceblue", 0xF0F8FF},
         {"antique white", 0xFAEBD7},
@@ -828,7 +828,7 @@ namespace _internal
         {"grey0", 0x000000},
         {"grey1", 0x030303},
         {"grey10", 0x1A1A1A},
-          //{"grey100", 0xFFFFFF},
+        //{"grey100", 0xFFFFFF},
         {"grey11", 0x1C1C1C},
         {"grey12", 0x1F1F1F},
         {"grey13", 0x212121},
@@ -1283,7 +1283,8 @@ namespace _internal
         {"yellow2", 0xEEEE00},
         {"yellow3", 0xCDCD00},
         {"yellow4", 0x8B8B00},
-        {"yellowgreen", 0x9ACD32}
+        {"yellowgreen", 0x9ACD32},
+
     };
 
     // ----------------------------------------------------------------------
