@@ -52,6 +52,14 @@ constexpr inline Rotation RotationDegrees(double aAngle)
     return Rotation{aAngle * M_PI / 180.0};
 }
 
+inline Rotation RotationRadiansOrDegrees(double aAngle)
+{
+    if (std::abs(aAngle) < 3.15)
+        return Rotation{aAngle};
+    else
+        return RotationDegrees(aAngle);
+}
+
 constexpr const Rotation NoRotation{0.0};
 constexpr const Rotation RotationReassortant{0.5};
 constexpr const Rotation Rotation90DegreesClockwise{RotationDegrees(90)};

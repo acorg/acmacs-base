@@ -9,6 +9,7 @@
 #include "acmacs-base/string.hh"
 #include "acmacs-base/point-coordinates.hh"
 #include "acmacs-base/line.hh"
+#include "acmacs-base/size-scale.hh"
 #include "acmacs-base/number-of-dimensions.hh"
 
 // ----------------------------------------------------------------------
@@ -110,6 +111,11 @@ namespace acmacs
             d() = sin * b() + cos * d();
             a() = r0;
             b() = r1;
+        }
+
+        void rotate(Rotation aAngle)
+        {
+            return rotate(aAngle.value());
         }
 
         void flip_transformed(double x, double y)
