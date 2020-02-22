@@ -17,6 +17,7 @@ namespace acmacs
         LineDefinedByEquation() = default;
         LineDefinedByEquation(const LineDefinedByEquation&) = default;
         LineDefinedByEquation(double slope, double intercept) : slope_{slope}, intercept_{intercept} {}
+        LineDefinedByEquation(const PointCoordinates& p1, const PointCoordinates& p2) : slope_{(p1.y() - p2.y()) / (p1.x() - p2.x())}, intercept_{p1.y() - slope_ * p1.x()} {}
         LineDefinedByEquation& operator=(const LineDefinedByEquation&) = default;
 
         constexpr double slope() const { return slope_; }
