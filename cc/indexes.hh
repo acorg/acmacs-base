@@ -31,6 +31,12 @@ namespace acmacs
             erase(std::remove_if(begin(), end(), [&to_remove](size_t ind) -> bool { return std::find(to_remove.begin(), to_remove.end(), ind) != to_remove.end(); }), end());
         }
 
+        bool contains(size_t look_for) const
+        {
+            const auto found = std::lower_bound(begin(), end(), look_for, cmp);
+            return found != end() && *found == look_for;
+        }
+
       private:
         static inline bool cmp(size_t i1, size_t i2) { return i1 > i2; }
         void sort() { std::sort(begin(), end(), cmp); erase(std::unique(begin(), end()), end()); }
