@@ -93,7 +93,7 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 void acmacs::argv::v2::argv::show_help(std::ostream& out) const
 {
     const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
-    out << "Usage: " << prog_name_ << " [options]";
+    out << fmt::format("Usage: {} [options]", prog_name_);
     for (const auto* opt : options_) {
         if (!opt->has_name()) {
             out << ' ';
@@ -111,6 +111,11 @@ void acmacs::argv::v2::argv::show_help(std::ostream& out) const
             if (opt->multiple_values())
                 out << " ...";
         }
+    }
+    out << "\n\n";
+    if (!descriptions_.empty()) {
+        for (const auto* desc : descriptions_)
+            out << desc->text() << '\n';
     }
     out << '\n';
     for (const auto* opt : options_) {

@@ -160,6 +160,17 @@ namespace acmacs
 
             // ----------------------------------------------------------------------
 
+            class description
+            {
+              public:
+                description(argv& parent, std::string_view text);
+                std::string_view text() const { return text_; }
+              private:
+                std::string_view text_;
+            };
+
+            // ----------------------------------------------------------------------
+
             class show_help : public std::exception {};
             class errors : public std::exception {};
 
@@ -185,6 +196,7 @@ namespace acmacs
                 std::string_view argv0_;
                 std::string_view prog_name_;
                 std::vector<detail::option_base*> options_;
+                std::vector<description*> descriptions_;
                 std::vector<std::string_view> args_;
                 errors_t errors_;
 
@@ -195,7 +207,10 @@ namespace acmacs
                 detail::option_base* find(std::string_view long_name);
 
                 void register_option(detail::option_base* opt);
+                void register_description(description* desc) { descriptions_.push_back(desc); }
+
                 friend class detail::option_base;
+                friend class description;
                 friend std::ostream& operator<<(std::ostream& out, const argv& args);
 
             }; // class argv
@@ -203,6 +218,8 @@ namespace acmacs
             // ----------------------------------------------------------------------
 
             inline detail::option_base::option_base(argv& parent) { parent.register_option(this); }
+
+            inline description::description(argv& parent, std::string_view text) : text_{text} { parent.register_description(this); }
 
             // ----------------------------------------------------------------------
 
