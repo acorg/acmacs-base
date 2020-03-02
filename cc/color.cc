@@ -11,6 +11,7 @@
 
 namespace _internal
 {
+    extern const std::map<uint32_t, std::string> sColorToName;
     extern const std::map<std::string, uint32_t> sNameToColor;
     extern std::array<uint32_t, 256> sScaleColorPerceptualViridis;
 }
@@ -38,10 +39,14 @@ Color& Color::operator=(const Color& src)
             case type::adjust_brightness:
                 adjust_brightness(static_cast<double>(src.color_.adjustment));
                 break;
+            case type::adjust_transparency:
+                adjust_transparency(static_cast<double>(src.color_.adjustment));
+                break;
           }
           break;
       case type::adjust_saturation:
       case type::adjust_brightness:
+      case type::adjust_transparency:
           throw std::runtime_error("Color::operator=: cannot assign to a non-regular color");
     }
 
@@ -60,8 +65,10 @@ std::string Color::to_string() const
           result = "*no_change*";
           break;
       case type::regular:
-          if (const auto e = std::find_if(sNameToColor.cbegin(), sNameToColor.cend(), [this](const auto& ee) { return this->color_.color == ee.second; }); e != sNameToColor.cend())
-              result = e->first;
+          // if (const auto e = std::find_if(sNameToColor.cbegin(), sNameToColor.cend(), [this](const auto& ee) { return this->color_.color == ee.second; }); e != sNameToColor.cend())
+          //     result = e->first;
+          if (const auto found = sColorToName.find(color_.color); found != sColorToName.end())
+              result = found->second;
           else
               result = to_hex_string();
           break;
@@ -70,6 +77,9 @@ std::string Color::to_string() const
           break;
       case type::adjust_brightness:
           result = "*adjust_brightness " + std::to_string(color_.adjustment) + '*';
+          break;
+      case type::adjust_transparency:
+          result = "*adjust_transparency " + std::to_string(color_.adjustment) + '*';
           break;
     }
     return result;
@@ -279,6 +289,17 @@ void Color::adjust_brightness(double value)
           // std::cerr << std::hex << color_ << "  " << std::dec << RGB(color_) << " --> " << rgb << std::endl;
         color_.color = (unsigned(rgb.r * 255) << 16) | (unsigned(rgb.g * 255) << 8) | unsigned(rgb.b * 255);
     }
+}
+
+void Color::adjust_transparency(double value)
+{
+    if (value < 0.0)
+        throw std::invalid_argument(fmt::format("Color::adjust_transparency: attempt to use negative value: {}", value));
+    const auto transparency = (1.0 - alpha()) * value;
+    if (transparency >= 1.0)
+        set_transparency(1.0);
+    else
+        set_transparency(transparency);
 }
 
 // ----------------------------------------------------------------------
@@ -498,6 +519,24 @@ namespace _internal
 #pragma GCC diagnostic ignored "-Wexit-time-destructors"
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
+    const std::map<uint32_t, std::string> sColorToName = {
+        {0xFF000000, "transparent"},
+        {0x000000,   "black"},
+        {0xFFFFFF,   "white"},
+        {0xFF0000,   "red"},
+        {0x00FF00,   "green"},
+        {0x0000FF,   "blue"},
+        {0x00FFFF,   "cyan"},
+        {0xFF00FF,   "magenta"},
+        {0xFFFF00,   "yellow"},
+        {0xA52A2A,   "brown"},
+        {0x6495ED,   "cornflowerblue"},
+        {0xFFD700,   "gold"},
+        {0xFFA500,   "orange"},
+        {0xFFC0CB,   "pink"},
+        {0xA020F0,   "purple"},
+    };
+
     const std::map<std::string, uint32_t> sNameToColor = {
         {"transparent", 0xFF000000},
         {"black", 0x000000},

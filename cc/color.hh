@@ -24,7 +24,7 @@ class Color
         float adjustment;
     };
       // constexpr static const uint32_t NoChange = 0xFFFFFFFE;
-    enum class type : char { regular, no_change, adjust_saturation, adjust_brightness };
+    enum class type : char { regular, no_change, adjust_saturation, adjust_brightness, adjust_transparency };
 
     Color() = default;
     Color(const Color& aSrc) = default;
@@ -49,7 +49,7 @@ class Color
     bool operator != (const Color& aColor) const { return ! operator==(aColor); }
     bool operator < (const Color& aColor) const { return color_.color < aColor.color_.color; }
 
-    constexpr double alpha() const { return double(0xFF - ((color_.color >> 24) & 0xFF)) / 255.0; }
+    constexpr double alpha() const { return double(0xFF - ((color_.color >> 24) & 0xFF)) / 255.0; } // 0.0 - transparent, 1.0 - opaque
     constexpr double red() const { return double((color_.color >> 16) & 0xFF) / 255.0; }
     constexpr double green() const { return double((color_.color >> 8) & 0xFF) / 255.0; }
     constexpr double blue() const { return double(color_.color & 0xFF) / 255.0; }
@@ -63,6 +63,7 @@ class Color
     void light(double value);
     void adjust_saturation(double value);
     void adjust_brightness(double value);
+    void adjust_transparency(double value);
 
     constexpr void set_transparency(double aTransparency) { color_.color = (color_.color & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
     Color without_transparency() const { return {color_.color & 0x00FFFFFF}; }
