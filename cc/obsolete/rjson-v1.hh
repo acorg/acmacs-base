@@ -460,7 +460,7 @@ namespace rjson
             // value(value&& aSrc) : value_base(std::move(aSrc)) { std::cerr << "rjson::value move " << to_json() << '\n'; }
             value& operator=(const value&) = default; // otherwise it is deleted
             value& operator=(value&&) = default;
-            // ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_LINE_FUNC << '\n'; }
+            // ~value() { std::cerr << "DEBUG: ~value " << to_json() << DEBUG_FILE_LINE_FUNC << '\n'; }
 
             // ----------------------------------------------------------------------
 

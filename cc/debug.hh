@@ -1,11 +1,12 @@
 #pragma once
 
-// #include "acmacs-base/stream.hh"
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
-#define DEBUG_LINE_FUNC_S (std::string{__FILE__} + ":" + std::to_string(__LINE__) + ": " + __PRETTY_FUNCTION__)
-#define DEBUG_LINE_FUNC (std::string{" ["} + __FILE__ + ":" + std::to_string(__LINE__) + ": " + __PRETTY_FUNCTION__ + "]")
+#define DEBUG_FILE_LINE fmt::format("{}:{}", __FILE__, __LINE__)
+#define DEBUG_FILE_LINE_FUNC_S fmt::format("{}:{}: {}", __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define DEBUG_FILE_LINE_FUNC fmt::format(" [{}]", DEBUG_FILE_LINE_FUNC_S)
 
 // ----------------------------------------------------------------------
 
