@@ -54,9 +54,12 @@ class Color
     constexpr double green() const { return double((color_.color >> 8) & 0xFF) / 255.0; }
     constexpr double blue() const { return double(color_.color & 0xFF) / 255.0; }
 
-    constexpr size_t alphaI() const { return static_cast<size_t>((color_.color >> 24) & 0xFF); }
+    constexpr uint32_t alphaI() const { return static_cast<uint32_t>((color_.color >> 24) & 0xFF); }
+    constexpr uint32_t redI() const { return static_cast<uint32_t>((color_.color >> 16) & 0xFF); }
+    constexpr uint32_t greenI() const { return static_cast<uint32_t>((color_.color >> 8) & 0xFF); }
+    constexpr uint32_t blueI() const { return static_cast<uint32_t>(color_.color & 0xFF); }
     constexpr void alphaI(uint32_t v) { color_.color = (color_.color & 0xFFFFFF) | ((v & 0xFF) << 24); }
-    constexpr size_t rgbI() const { return static_cast<size_t>(color_.color & 0xFFFFFF); }
+    constexpr uint32_t rgbI() const { return static_cast<uint32_t>(color_.color & 0xFFFFFF); }
 
     constexpr bool empty() const { return type_ == type::no_change; }
 
@@ -65,13 +68,16 @@ class Color
     void adjust_brightness(double value);
     void adjust_transparency(double value);
 
-    constexpr void set_transparency(double aTransparency) { color_.color = (color_.color & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); } // for importing from lispmds
+    constexpr void set_transparency(double aTransparency) { color_.color = (color_.color & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); }
+    constexpr void set_opacity(double aOpacity) { set_transparency(1.0 - aOpacity); }
+    constexpr double opacity() const { return alpha(); }
     Color without_transparency() const { return {color_.color & 0x00FFFFFF}; }
 
     void from_string(const std::string_view& aColor);
     explicit operator std::string() const { return to_string(); }
     std::string to_string() const;
     std::string to_hex_string() const;
+    std::string to_rgba_string() const;
     void from_string(const char* s, size_t len) { from_string(std::string(s, len)); }
 
     enum class distinct_t { Ana, GoogleMaps };
@@ -134,6 +140,12 @@ namespace acmacs
     }
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<Color> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const Color& val, FormatCtx& ctx) { return format_to(ctx.out(), "{}", val.to_string()); }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -2,9 +2,9 @@
 
 #include <optional>
 #include <iostream>
-// #include <type_traits>
 
 #include "acmacs-base/float.hh"
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
@@ -92,6 +92,11 @@ namespace acmacs::detail
     template <typename T> inline std::ostream& operator<<(std::ostream& s, const field_optional_with_default<T>& field) { return s << acmacs::to_string(field); }
 
 } // namespace acmacs::detail
+
+template <typename T> struct fmt::formatter<acmacs::detail::field_optional_with_default<T>> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::detail::field_optional_with_default<T>& val, FormatCtx& ctx) { return format_to(ctx.out(), "{}", *val); }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:

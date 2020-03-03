@@ -1,5 +1,3 @@
-#include <sstream>
-#include <iomanip>
 #include <map>
 #include <cmath>
 #include <array>
@@ -69,8 +67,10 @@ std::string Color::to_string() const
           //     result = e->first;
           if (const auto found = sColorToName.find(color_.color); found != sColorToName.end())
               result = found->second;
-          else
+          else if (alphaI() == 0)
               result = to_hex_string();
+          else
+              result = to_rgba_string();
           break;
       case type::adjust_saturation:
           result = "*adjust_saturation " + std::to_string(color_.adjustment) + '*';
@@ -90,12 +90,17 @@ std::string Color::to_string() const
 
 std::string Color::to_hex_string() const
 {
-    std::stringstream s;
-    s << '#' << std::hex << std::setw(6) << std::setfill('0') << color_.color;
-    return s.str();
-
+    return fmt::format("#{:06X}", color_.color);
 
 } // Color::to_hex_string
+
+// ----------------------------------------------------------------------
+
+std::string Color::to_rgba_string() const
+{
+    return fmt::format("rgba({},{},{},{:.3f})", redI(), greenI(), blueI(), opacity());
+
+} // Color::to_rgba_string
 
 // ----------------------------------------------------------------------
 
