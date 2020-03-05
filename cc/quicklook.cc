@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <vector>
 
-#include "quicklook.hh"
+#include "acmacs-base/quicklook.hh"
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
@@ -22,7 +23,14 @@ void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 
 void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
-    run_and_detach({"/usr/bin/open", aFilename.data()}, aDelayBeforeInSeconds); // , "-g"
+    if (aDelayBeforeInSeconds)
+        run_and_detach({"/usr/bin/open", aFilename.data()}, aDelayBeforeInSeconds); // , "-g"
+    else
+        std::system(fmt::format("/usr/bin/open '{}'", aFilename).data());
+
+    if (const auto* val = std::getenv("XPC_SERVICE_NAME"); val && std::string_view{val}.find("Emacs") != std::string_view::npos)
+        // run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 2);
+        std::system(fmt::format("sleep {}; /usr/bin/open -a /Applications/Emacs.app", aDelayBeforeInSeconds).data());
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
