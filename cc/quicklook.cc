@@ -30,7 +30,7 @@ void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size
 
     if (const auto* val = std::getenv("XPC_SERVICE_NAME"); val && std::string_view{val}.find("Emacs") != std::string_view::npos)
         // run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 2);
-        std::system(fmt::format("sleep {}; /usr/bin/open -a /Applications/Emacs.app", aDelayBeforeInSeconds).data());
+        std::system(fmt::format("( sleep {}; /usr/bin/open -a /Applications/Emacs.app ) &", aDelayBeforeInSeconds + 1).data());
     if (aDelayAfterInSeconds) {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
