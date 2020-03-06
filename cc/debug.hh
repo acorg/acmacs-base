@@ -15,6 +15,9 @@ namespace acmacs
     enum class debug { no, yes };
     enum class verbose { no, yes };
 
+    constexpr inline debug debug_from(bool verb) { return verb ? debug::yes : debug::no; }
+    constexpr inline verbose verbose_from(bool verb) { return verb ? verbose::yes : verbose::no; }
+
     // class debug
     // {
     //   public:
