@@ -21,8 +21,10 @@ namespace acmacs
         template <typename Range> void collect(Range&& rng)
         {
             data_ = rng | ranges::to<std::vector>;
-            ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; });
+            sort();
         }
+
+        void sort() { ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; }); }
 
         bool empty() const noexcept { return data_.empty(); }
 
@@ -34,6 +36,7 @@ namespace acmacs
         }
 
         constexpr const auto& data() const { return data_; }
+        constexpr auto& data() { return data_; }
 
       private:
         std::vector<entry_type> data_;
