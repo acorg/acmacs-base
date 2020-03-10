@@ -6,18 +6,6 @@
 #include <vector>
 #include <string>
 
-#pragma GCC diagnostic push
-
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wextra-semi"
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wunused-template"
-#endif
-
-// ======================================================================
-
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
@@ -2082,7 +2070,3 @@ namespace xxh
     using canonical64_t = canonical_t<64>;
     using canonical128_t = canonical_t<128>;
 }
-
-// ======================================================================
-
-#pragma GCC diagnostic pop
