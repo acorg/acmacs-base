@@ -59,7 +59,7 @@ install-acmacs-base: $(TARGETS)
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	$(call symbolic_link,$(abspath py)/acmacs_base,$(AD_PY)/acmacs_base)
 	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
-	ln -sf $(abspath cc)/*.hh $(AD_INCLUDE)/acmacs-base
+	ln -sf $(abspath cc)/*.{hh,hpp} $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
