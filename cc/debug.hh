@@ -28,12 +28,29 @@ namespace acmacs
     {
         using section_t = uint32_t;
 
+        extern section_t enabled;
+
+        inline bool is_enabled(section_t section) { return section & enabled; }
+
         template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
         {
-            if (section)
+            if (is_enabled(section))
                 fmt::print(stderr, "{}\n", get_message());
         }
-    }
+
+        template <typename... Sec> constexpr void enable(section_t en, Sec... rest)
+        {
+            enabled |= en;
+            if constexpr (sizeof...(rest) > 0)
+                enable(rest...);
+        }
+
+        void register_enabler(std::string_view name, section_t value);
+        inline void register_enabler_all(std::string_view name) { register_enabler(name, 0xFFFFFFFF); }
+        void enable(std::string_view names);
+        void enable(const std::vector<std::string_view>& names);
+
+    } // namespace log::inlinev1
 
     // class debug
     // {
