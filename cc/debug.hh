@@ -24,66 +24,59 @@ namespace acmacs
     constexpr inline debug debug_from(bool verb) { return verb ? debug::yes : debug::no; }
     constexpr inline verbose verbose_from(bool verb) { return verb ? verbose::yes : verbose::no; }
 
+    // ----------------------------------------------------------------------
+
     namespace log::inline v1
     {
-        using section_t = uint32_t;
+        enum {
+            timer,
+            settings
+        };
 
-        extern section_t enabled;
-
-        inline bool is_enabled(section_t section) { return section & enabled; }
-
-        template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
+        namespace detail
         {
-            if (is_enabled(section))
-                fmt::print(stderr, "{}\n", get_message());
+            using section_t = uint32_t;
+
+            extern section_t enabled;
+
+            inline bool is_enabled(section_t section) { return section & enabled; }
+
+            void register_enabler(std::string_view name, section_t value);
+            std::string section_names(section_t section);
+
+            template <typename Enum> section_t to_section_t(Enum value)
+            {
+                if (static_cast<size_t>(value) > (sizeof(section_t) * 8))
+                    throw std::runtime_error{fmt::format("acmacs::log::register_enabler: enum value is too big: {}", static_cast<size_t>(value))};
+                return section_t{1} << static_cast<size_t>(value);
+            }
+
+            template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
+            {
+                if (is_enabled(section))
+                    fmt::print(stderr, "[{}]: {}\n", section_names(section), get_message());
+            }
+
+        } // namespace detail
+
+        template <typename Enum> void register_enabler(std::string_view name, Enum value)
+        {
+            detail::register_enabler(name, detail::to_section_t(value));
         }
 
-        template <typename... Sec> constexpr void enable(section_t en, Sec... rest)
+        template <typename Enum, typename MesssageGetter> void message(Enum section, MesssageGetter get_message)
         {
-            enabled |= en;
-            if constexpr (sizeof...(rest) > 0)
-                enable(rest...);
+            detail::message(detail::to_section_t(section), get_message);
         }
 
-        void register_enabler(std::string_view name, section_t value);
-        inline void register_enabler_all(std::string_view name) { register_enabler(name, 0xFFFFFFFF); }
+        template <typename Enum> bool is_enabled(Enum value) { return detail::is_enabled(detail::to_section_t(value)); }
+
+        void register_enabler_acmacs_base();
+
         void enable(std::string_view names);
         void enable(const std::vector<std::string_view>& names);
 
     } // namespace log::inlinev1
-
-    // class debug
-    // {
-    //   public:
-    //     debug(bool enable) : enabled_(enable), stream_(std::cerr) {}
-    //     debug(bool enable, std::ostream& stream) : enabled_(enable), stream_(stream) {}
-
-    //     template <typename T> friend inline debug& operator<<(debug& output, T&& value)
-    //     {
-    //         if (output.enabled_) {
-    //             if (output.newline_) {
-    //                 bool add_debug = true;
-    //                 if constexpr (std::is_same_v<T, char>)
-    //                     add_debug = value != '\n';
-    //                 if (add_debug)
-    //                     output.stream_ << "DEBUG: ";
-    //                 output.newline_ = false;
-    //             }
-    //             output.stream_ << std::forward<T>(value);
-    //         }
-    //         if constexpr (std::is_same_v<T, char>) {
-    //             if (value == '\n')
-    //                 output.newline_ = true;
-    //         }
-    //         return output;
-    //     }
-
-    //   private:
-    //     bool enabled_;
-    //     std::ostream& stream_;
-    //     bool newline_ = true;
-
-    // }; // class debug
 
 } // namespace acmacs
 

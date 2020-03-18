@@ -21,19 +21,19 @@ namespace acmacs::settings::inline v2
         Settings(const std::vector<std::string_view>& filenames) { load(filenames); }
         virtual ~Settings() = default;
 
+        void load(std::string_view filename);
+
         // read settings from files, upon reading each file apply "init" in it (if found)
-        void load(const std::vector<std::string_view>& filenames, verbose verb = verbose::no)
+        void load(const std::vector<std::string_view>& filenames)
         {
             for (const auto& filename : filenames)
-                load(filename, verb);
+                load(filename);
         }
-        void load(std::string_view filename, verbose verb = verbose::no);
 
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name /* = "main" */, verbose verb /*= verbose::no*/);
-        // void apply(const char* name, verbose verb = verbose::no) { apply(std::string_view{name}, verb); }
+        virtual void apply(std::string_view name /* = "main" */);
 
         void setenv_from_string(std::string_view key, std::string_view value);
         template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
@@ -87,12 +87,12 @@ namespace acmacs::settings::inline v2
 
       protected:
         template <typename... Key> const rjson::value& get(Key&&... keys) const;
-        void apply(const rjson::value& entry, verbose verb);
-        virtual bool apply_built_in(std::string_view name, verbose verb); // returns true if built-in command with that name found and applied
+        void apply(const rjson::value& entry);
+        virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
 
         // substitute vars in name, find name in the top of data_ and apply it
         // do nothing if name starts with ? or if it is not found in top of data_
-        virtual void apply_top(std::string_view name, verbose verb);
+        virtual void apply_top(std::string_view name);
 
       private:
         class Environment
@@ -124,7 +124,7 @@ namespace acmacs::settings::inline v2
         mutable Environment environment_;
         mutable bool warn_if_set_used_{false};
 
-        void push_and_apply(const rjson::object& entry, verbose verb);
+        void push_and_apply(const rjson::object& entry);
         void apply_if();
         bool eval_condition(const rjson::value& condition) const;
         bool eval_and(const rjson::value& condition) const;
