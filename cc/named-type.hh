@@ -21,7 +21,7 @@ namespace acmacs
         using value_type = T;
 
         explicit constexpr named_t() = default;
-        template <typename T2> explicit constexpr named_t(T2&& value) : value_(std::forward<T2>(value)) {}
+        template <typename T2, typename = std::enable_if_t<std::is_constructible_v<T, T2>>> explicit constexpr named_t(T2&& value) : value_(std::forward<T2>(value)) {}
 
         // template <typename T2, typename = std::enable_if_t<std::is_same_v<T, size_t>>>
         //     explicit constexpr named_t(T2 value) : value_(static_cast<T>(value)) {}
