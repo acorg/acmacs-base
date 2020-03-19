@@ -83,7 +83,14 @@ namespace acmacs
             for (; first != last; ++first)
                 ++counter_[func(*first)];
         }
+        template <typename Iter> CounterChar(Iter first, Iter last)
+            : CounterChar()
+        {
+            for (; first != last; ++first)
+                ++counter_[static_cast<size_t>(*first)];
+        }
         template <typename Container, typename F> CounterChar(const Container& container, F func) : CounterChar(std::begin(container), std::end(container), func) {}
+        template <typename Container> CounterChar(const Container& container) : CounterChar(std::begin(container), std::end(container)) {}
 
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj)]; }
 
@@ -94,6 +101,7 @@ namespace acmacs
         }
 
         bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](size_t val) { return val == 0; }); }
+        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](size_t val) { return val > 0UL; })); }
 
         std::vector<char> sorted() const
         {
@@ -104,6 +112,17 @@ namespace acmacs
             }
             std::sort(std::begin(res), std::end(res), [this](auto e1, auto e2) { return counter_[static_cast<size_t>(e1)] > counter_[static_cast<size_t>(e2)]; });
             return res;
+        }
+
+        std::vector<std::pair<char, size_t>> sorted_pairs() const
+        {
+            std::vector<std::pair<char, size_t>> result;
+            for (auto it = std::begin(counter_); it != std::end(counter_); ++it) {
+                if (*it > 0)
+                    result.emplace_back(static_cast<char>(it - std::begin(counter_)), *it);
+            }
+            std::sort(std::begin(result), std::end(result), [](const auto& e1, const auto& e2) { return e1.second > e2.second; });
+            return result;
         }
 
         size_t operator[](char val) const { return counter_[static_cast<size_t>(val)]; }
