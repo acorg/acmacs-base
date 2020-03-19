@@ -306,7 +306,8 @@ namespace rjson::inline v2
 
         bool operator==(const value& to_compare) const;
         bool operator!=(const value& to_compare) const { return !operator==(to_compare); }
-        template <typename T> bool operator==(T to_compare) const { return to<T>() == to_compare; }
+        template <typename T> bool operator==(T&& to_compare) const { return to<std::decay_t<T>>() == std::forward<T>(to_compare); }
+        bool operator==(const char* to_compare) const { return operator==(std::string_view{to_compare}); }
         template <typename T> bool operator!=(T&& to_compare) const { return !operator==(std::forward<T>(to_compare)); }
 
         bool is_null() const noexcept;
@@ -337,6 +338,7 @@ namespace rjson::inline v2
         template <typename T> T to() const;
 
         template <typename R> R get_or_default(R&& dflt) const;
+        std::string get_or_default(std::string_view dflt) const { return get_or_default(std::string(dflt)); }
         std::string get_or_default(const char* dflt) const { return get_or_default(std::string(dflt)); }
 
         value& update(const value& to_merge);
@@ -1018,10 +1020,6 @@ namespace rjson::inline v2
 
     // ----------------------------------------------------------------------
 
-    template <> inline bool value::operator==(const char* to_compare) const { return to<std::string_view>() == to_compare; }
-
-    // --------------------------------------------------
-
     template <typename R> inline R value::get_or_default(R&& dflt) const
     {
         return std::visit(
@@ -1256,7 +1254,7 @@ namespace rjson::inline v2
 
     // ----------------------------------------------------------------------
 
-    inline void set_field_if_not_empty(value & target, const char* field_name, std::string_view source)
+    inline void set_field_if_not_empty(value & target, std::string_view field_name, std::string_view source)
     {
         if (!source.empty())
             target[field_name] = source;
@@ -1273,13 +1271,13 @@ namespace rjson::inline v2
         }
     } // namespace detail
 
-    template <typename T> inline void set_field_if_not_default(value & target, const char* field_name, T aValue, T aDefault)
+    template <typename T> inline void set_field_if_not_default(value & target, std::string_view field_name, T aValue, T aDefault)
     {
         if (!detail::equal(aValue, aDefault))
             target[field_name] = aValue;
     }
 
-    inline void set_field_if_not_default(value & target, const char* field_name, double aValue, double aDefault, size_t precision)
+    inline void set_field_if_not_default(value & target, std::string_view field_name, double aValue, double aDefault, size_t precision)
     {
         if (!detail::equal(aValue, aDefault))
             target[field_name] = number(acmacs::to_string(aValue, precision));
@@ -1301,7 +1299,7 @@ namespace rjson::inline v2
 
     // ----------------------------------------------------------------------
 
-    template <typename T, typename = std::enable_if_t<!acmacs::sfinae::is_const_char_ptr_v<T>>> inline T get_or(const value& source, const char* field_name, T default_value)
+    template <typename T, typename = std::enable_if_t<!acmacs::sfinae::is_const_char_ptr_v<T>>> inline T get_or(const value& source, std::string_view field_name, T default_value)
     {
         if (source.is_null())
             return default_value;
@@ -1314,7 +1312,7 @@ namespace rjson::inline v2
             return default_value;
     }
 
-    inline std::string_view get_or(const value& source, const char* field_name, const char* default_value)
+    inline std::string_view get_or(const value& source, std::string_view field_name, const char* default_value)
     {
         if (source.is_null())
             return default_value;
@@ -1340,7 +1338,7 @@ namespace rjson::inline v2
             return source.to<std::string_view>();
     }
 
-    template <typename... Args> inline const value& one_of(const value& source, const char* field_name, Args... args)
+    template <typename... Args> inline const value& one_of(const value& source, std::string_view field_name, Args... args)
     {
         if (const auto& val = source[field_name]; !val.is_null())
             return val;
