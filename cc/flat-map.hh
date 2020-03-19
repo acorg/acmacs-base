@@ -9,75 +9,110 @@
 
 namespace acmacs
 {
+    namespace detail
+    {
+        template <typename Key, typename Value> class map_base_t
+        {
+          public:
+            using entry_type = std::pair<Key, Value>;
+            using const_iterator = typename std::vector<entry_type>::const_iterator;
+
+            // map_base_t() = default;
+            virtual ~map_base_t() = default;
+
+            bool empty() const noexcept { return data_.empty(); }
+            constexpr const auto& data() const noexcept { return data_; }
+
+            template <typename Range> void collect(Range&& rng, bool check_result = true)
+            {
+                data_ = rng | ranges::to<std::vector>;
+                sorted_ = false;
+                if (check_result && data_.size() > 1)
+                    check();
+            }
+
+            template <typename EKey, typename EValue> auto& emplace(EKey&& key, EValue&& value)
+            {
+                sorted_ = false;
+                return data_.emplace_back(std::forward<EKey>(key), std::forward<EValue>(value));
+            }
+
+          protected:
+            constexpr auto& data() noexcept { return data_; }
+            // constexpr bool sorted() const noexcept { return sorted_; }
+
+            template <typename FindKey> const_iterator find_first(const FindKey& key) const noexcept
+            {
+                sort();
+                return std::lower_bound(std::begin(data_), std::end(data_), key, [](const auto& e1, const auto& k2) { return e1.first < k2; });
+            }
+
+            virtual void check() const {}
+
+            void sort() const noexcept
+            {
+                if (!sorted_) {
+                    ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; });
+                    sorted_ = true;
+                }
+            }
+
+          private:
+            mutable std::vector<entry_type> data_;
+            mutable bool sorted_{false};
+
+        };
+    } // namespace detail
+
+    // ----------------------------------------------------------------------
+
     // see seqdb.cc Seqdb::hash_index() for sample usage
-    template <typename Key, typename Value> class map_with_duplicating_keys_t
+    template <typename Key, typename Value> class map_with_duplicating_keys_t : public detail::map_base_t<Key, Value>
     {
       public:
-        using entry_type = std::pair<Key, Value>;
-        using const_iterator = typename std::vector<entry_type>::const_iterator;
-
-        map_with_duplicating_keys_t() = default;
-
-        template <typename Range> void collect(Range&& rng)
-        {
-            data_ = rng | ranges::to<std::vector>;
-            sort();
-        }
-
-        void sort() { ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; }); }
-
-        bool empty() const noexcept { return data_.empty(); }
+        using const_iterator = typename detail::map_base_t<Key, Value>::const_iterator;
 
         template <typename FindKey> std::pair<const_iterator, const_iterator> find(const FindKey& key) const noexcept
         {
-            const auto first = std::lower_bound(std::begin(data_), std::end(data_), key, [](const auto& e1, const auto& k2) { return e1.first < k2; });
+            const auto first = this->find_first(key);
             // first may point to the wrong key, if key is not in the map
-            return {first, std::find_if(first, std::end(data_), [&key](const auto& en) { return en.first != key; })};
+            return {first, std::find_if(first, std::end(this->data()), [&key](const auto& en) { return en.first != key; })};
         }
 
-        constexpr const auto& data() const { return data_; }
-        constexpr auto& data() { return data_; }
-
-      private:
-        std::vector<entry_type> data_;
     };
 
     // ----------------------------------------------------------------------
 
-    // see seqdb.cc Seqdb::seq_id_index() for sample usage
-    template <typename Key, typename Value> class map_with_unique_keys_t
+    class map_with_unique_keys_error : public std::runtime_error
     {
       public:
-        using entry_type = std::pair<Key, Value>;
+        using std::runtime_error::runtime_error;
+    };
 
-        map_with_unique_keys_t() = default;
+    // see seqdb.cc Seqdb::seq_id_index() for sample usage
+    template <typename Key, typename Value> class map_with_unique_keys_t : public detail::map_base_t<Key, Value>
+    {
+      public:
+        using const_iterator = typename detail::map_base_t<Key, Value>::const_iterator;
 
-        template <typename Range> void collect(Range&& rng, bool check = true)
+        template <typename FindKey> const Value* find(const FindKey& key) const noexcept
         {
-            data_ = rng | ranges::to<std::vector>;
-            ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; });
-            if (check && data_.size() > 1) {
-                for (auto cur = std::next(std::begin(data_)); cur != std::end(data_); ++cur) {
-                    if (cur->first == std::prev(cur)->first)
-                        throw std::runtime_error{"duplicating keys within map_with_unique_keys_t"};
-                }
-            }
-        }
-
-        bool empty() const noexcept { return data_.empty(); }
-
-        const Value* find(const Key& key) const noexcept
-        {
-            if (const auto first = std::lower_bound(std::begin(data_), std::end(data_), key, [](const auto& e1, const auto& k2) { return e1.first < k2; }); first->first == key)
+            if (const auto first = this->find_first(key); first->first == key)
                 return &first->second;
             else
                 return nullptr;
         }
 
-        constexpr const auto& data() const { return data_; }
+      protected:
+        void check() const override
+        {
+            this->sort();
+            for (auto cur = std::next(std::begin(this->data())); cur != std::end(this->data()); ++cur) {
+                if (cur->first == std::prev(cur)->first)
+                    throw map_with_unique_keys_error{"duplicating keys within map_with_unique_keys_t"};
+            }
+        }
 
-      private:
-        std::vector<entry_type> data_;
     };
 
     // ----------------------------------------------------------------------
