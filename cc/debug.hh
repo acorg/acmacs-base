@@ -12,6 +12,8 @@
 #define LOG(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} [{}]", fmt::format(__VA_ARGS__), DEBUG_FILE_LINE); })
 #define LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{}{}", fmt::format(__VA_ARGS__), DEBUG_FILE_LINE_FUNC); })
 
+#define DEBUG(...) fmt::print(stderr, "DEBUG {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+
 // ----------------------------------------------------------------------
 
 namespace acmacs
