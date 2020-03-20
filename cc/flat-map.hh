@@ -117,6 +117,56 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
+    template <typename Key, typename Value> class small_map_with_unique_keys_t
+    {
+      public:
+        using entry_type = std::pair<Key, Value>;
+        using const_iterator = typename std::vector<entry_type>::const_iterator;
+
+        constexpr const auto& data() const noexcept { return data_; }
+        auto begin() const noexcept { return data_.begin(); }
+        auto end() const noexcept { return data_.end(); }
+        auto empty() const noexcept { return data_.empty(); }
+        auto size() const noexcept { return data_.size(); }
+
+        template <typename K> auto find(const K& key) const noexcept
+        {
+            return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; });
+        }
+
+        template <typename K> auto find(const K& key) noexcept
+        {
+            return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; });
+        }
+
+        Value& at(const Key& key)
+        {
+            if (const auto found = find(key); found != std::end(data_))
+                return found->second;
+            throw std::out_of_range{fmt::format("acmacs::small_map_with_unique_keys_t::at(): no key: {}", key)};
+        }
+
+        const Value& at(const Key& key) const
+        {
+            if (const auto found = find(key); found != std::end(data_))
+                return found->second;
+            throw std::out_of_range{fmt::format("acmacs::small_map_with_unique_keys_t::at(): no key: {}", key)};
+        }
+
+        auto& emplace_or_replace(const Key& key, const Value& value)
+        {
+            if (auto found = find(key); found != end())
+                return *found;
+            else
+                return data_.emplace_back(key, value);
+        }
+
+      private:
+        std::vector<entry_type> data_;
+    };
+
+    // ----------------------------------------------------------------------
+
     template <typename Key, typename Value> class flat_map_t
     {
       public:
