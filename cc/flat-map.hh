@@ -123,6 +123,10 @@ namespace acmacs
         using entry_type = std::pair<Key, Value>;
         using const_iterator = typename std::vector<entry_type>::const_iterator;
 
+        small_map_with_unique_keys_t() = default;
+        // template <typename Iter> small_map_with_unique_keys_t(Iter first, Iter last) : data_(first, last) {}
+        small_map_with_unique_keys_t(std::initializer_list<entry_type> init) : data_{init} {}
+
         constexpr const auto& data() const noexcept { return data_; }
         auto begin() const noexcept { return data_.begin(); }
         auto end() const noexcept { return data_.end(); }
