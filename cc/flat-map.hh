@@ -143,31 +143,56 @@ namespace acmacs
             return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; });
         }
 
-        Value& at(const Key& key)
+        template <typename K, typename Callback> void find_then(const K& key, Callback callback) const noexcept
+        {
+            if (const auto& en = find(key); en != std::end(data_))
+                callback(en->second);
+        }
+
+        template <typename K> Value& get(const K& key)
         {
             if (const auto found = find(key); found != std::end(data_))
                 return found->second;
             throw std::out_of_range{fmt::format("acmacs::small_map_with_unique_keys_t::at(): no key: {}", key)};
         }
 
-        const Value& at(const Key& key) const
+        template <typename K> const Value& get(const K& key) const
         {
             if (const auto found = find(key); found != std::end(data_))
                 return found->second;
             throw std::out_of_range{fmt::format("acmacs::small_map_with_unique_keys_t::at(): no key: {}", key)};
         }
 
-        auto& emplace_or_replace(const Key& key, const Value& value)
+        template <typename K, typename V> const Value& get_or(const K& key, const V& dflt) const
+        {
+            if (const auto found = find(key); found != std::end(data_))
+                return found->second;
+            else
+                return dflt;
+        }
+
+        template <typename K, typename V> auto& emplace_or_replace(const K& key, const V& value)
+        {
+            if (auto found = find(key); found != end()) {
+                found->second = Value{value};
+                return *found;
+            }
+            else
+                return data_.emplace_back(Key{key}, Value{value});
+        }
+
+        template <typename K, typename V = Value> auto& emplace_not_replace(const K& key, const V& value = V{})
         {
             if (auto found = find(key); found != end())
                 return *found;
             else
-                return data_.emplace_back(key, value);
+                return data_.emplace_back(Key{key}, Value{value});
         }
 
       private:
         std::vector<entry_type> data_;
-    };
+
+    }; // small_map_with_unique_keys_t<Key, Value>
 
     // ----------------------------------------------------------------------
 
