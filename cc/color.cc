@@ -430,7 +430,7 @@ Color Color::perceptually_uniform_heatmap(size_t total_colors, size_t color_inde
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-inline Color continent_color(std::string_view continent, acmacs::small_map_with_unique_keys_t<std::string, Color> data)
+inline Color continent_color(std::string_view continent, const continent_colors_t& data)
 {
     if (auto found = data.find(continent); found != data.end())
         return found->second;
@@ -447,7 +447,7 @@ inline Color continent_color(std::string_view continent, acmacs::small_map_with_
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-static const acmacs::small_map_with_unique_keys_t<std::string, Color> sContinentColors = {
+static const continent_colors_t sContinentColors = {
     {"EUROPE"s,            0x00FF00},
     {"CENTRAL-AMERICA"s,   0xAAF9FF},
     {"MIDDLE-EAST"s,       0x8000FF},
@@ -466,7 +466,7 @@ static const acmacs::small_map_with_unique_keys_t<std::string, Color> sContinent
 
 #pragma GCC diagnostic pop
 
-const acmacs::small_map_with_unique_keys_t<std::string, Color>& continent_colors()
+const continent_colors_t& continent_colors()
 {
     return sContinentColors;
 
@@ -485,7 +485,7 @@ Color continent_color(std::string_view continent)
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-static const acmacs::small_map_with_unique_keys_t<std::string, Color> sContinentColorsDark = {
+static const continent_colors_t sContinentColorsDark = {
     {"EUROPE"s,            0x00A800},
     {"CENTRAL-AMERICA"s,   0x70A4A8},
     {"MIDDLE-EAST"s,       0x8000FF},
@@ -504,7 +504,7 @@ static const acmacs::small_map_with_unique_keys_t<std::string, Color> sContinent
 
 #pragma GCC diagnostic pop
 
-const acmacs::small_map_with_unique_keys_t<std::string, Color>& continent_colors_dark()
+const continent_colors_t& continent_colors_dark()
 {
     return sContinentColorsDark;
 
