@@ -241,6 +241,7 @@ namespace acmacs::settings
          public:
             field(object_base* parent, const char* name, const T& default_value) : field_base(*parent, name), default_(default_value) { }
             field(object_base* parent, const char* name, T&& default_value) : field_base(*parent, name), default_(std::move(default_value)) { }
+            field(object_base* parent, const char* name, const char* default_value) : field_base(*parent, name), default_(T{default_value}) { }
             field(object_base* parent, const char* name) : field_base(*parent, name) { }
             void inject_default() override;
 
@@ -267,7 +268,7 @@ namespace acmacs::settings
             T extract(const rjson::value& from) const { return from.to<T>(); }
         };
 
-        template <typename T> inline std::ostream& operator<<(std::ostream& out, const field<T>& fld) { return out << static_cast<T>(fld); }
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const field<T>& fld) { return out << fmt::format("{}", *fld); }
 
           // --------------------------------------------------
 
@@ -502,13 +503,13 @@ namespace acmacs::settings
         template <> inline void field<Offset>::assign(rjson::value& to, const Offset& from) { to = rjson::array{from.x(), from.y()}; }
         template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {from[0].to<double>(), from[1].to<double>()}; }
 
-        template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = from.to_string(); }
+        template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = fmt::format("{}", from); }
         template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to<std::string_view>()); }
 
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from)
         {
             using namespace std::string_view_literals;
-            to = rjson::object{{"family"sv, *from.font_family}, {"slant"sv, static_cast<std::string>(*from.slant)}, {"weight"sv, static_cast<std::string>(*from.weight)}};
+            to = rjson::object{{"family"sv, *from.font_family}, {"slant"sv, fmt::format("{}", *from.slant)}, {"weight"sv, fmt::format("{}", *from.weight)}};
         }
         template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const
         {

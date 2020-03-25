@@ -1357,10 +1357,10 @@ namespace rjson::inline v2
     template <typename T> inline void assign_string_if_not_null(const value& source, T& target)
     {
         if (!source.is_null()) {
-            if constexpr (std::is_convertible_v<T, std::string_view>)
+            if constexpr (std::is_assignable_v<T, std::string_view>)
                 target = source.to<std::string_view>();
             else
-                target = source.to<std::string>();
+                target = T{source.to<std::string>()};
         }
     }
 

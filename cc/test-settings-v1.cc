@@ -31,7 +31,7 @@ struct Settings : public acmacs::settings::v1::toplevel
     acmacs::settings::v1::field<acmacs::Size>      size{this, "size", {7, 8}};
     acmacs::settings::v1::field<acmacs::Offset>    offset{this, "offset", {-1, 111}};
     acmacs::settings::v1::field<Color>             fill{this, "fill", "cornflowerblue"};
-    acmacs::settings::v1::field<acmacs::TextStyle> text_style{this, "text_style", {"monospace"}};
+    acmacs::settings::v1::field<acmacs::TextStyle> text_style{this, "text_style", "monospace"};
 };
 
 // ----------------------------------------------------------------------
@@ -58,9 +58,9 @@ int main()
         std::cout << "offset: " << s1.offset << '\n';
         s1.offset = acmacs::Offset{12, -13.5};
         std::cout << "offset: " << s1.offset << '\n';
-        std::cout << "fill: \"" << s1.fill << "\" " << Color(s1.fill).to_hex_string() << '\n';
+        std::cout << fmt::format("fill: \"{}\"\n", *s1.fill);
         s1.fill = Color("#123456");
-        std::cout << "fill: \"" << s1.fill << "\" " << Color(s1.fill).to_hex_string() <<  '\n';
+        std::cout << fmt::format("fill: \"{}\"\n", *s1.fill);
         std::cout << "text_style: " << s1.text_style << '\n';
         s1.text_style = acmacs::TextStyle("serif");
         std::cout << "text_style: " << s1.text_style << '\n';

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include "acmacs-base/debug.hh"
@@ -25,7 +24,7 @@ int main(int, const char* const* argv)
         }
     }
     catch (std::exception& err) {
-        std::cerr << "ERROR: " << err.what() << '\n';
+        fmt::print(stderr, "> ERROR {}\n", err);
         exit_code = 1;
     }
     return exit_code;

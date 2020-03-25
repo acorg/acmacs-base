@@ -15,7 +15,8 @@ TARGETS = \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
   $(DIST)/test-time-series \
-  $(DIST)/test-read-file
+  $(DIST)/test-read-file \
+  $(DIST)/test-find-color
 
 all: install-acmacs-base
 
@@ -27,7 +28,8 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-  color.cc text-style.cc read-file.cc layout.cc \
+  color.cc color-continent.cc color-distinct.cc color-gradient.cc \
+  read-file.cc layout.cc \
   argv.cc argc-argv.cc \
   normalize.cc \
   quicklook.cc timeit.cc gzip.cc \

@@ -113,6 +113,7 @@ namespace acmacs
     };
 
     template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
+    template <typename Tag> constexpr bool operator!=(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return !float_equal(lhs.get(), rhs.get()); }
 
     // ----------------------------------------------------------------------
 

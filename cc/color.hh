@@ -1,152 +1,141 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <cstdint>
+#include "acmacs-base/fmt.hh"
 
-#include "acmacs-base/to-string.hh"
-#include "acmacs-base/flat-map.hh"
+// ----------------------------------------------------------------------
+
+namespace acmacs::color
+{
+    struct error : public std::runtime_error { using std::runtime_error::runtime_error; };
+}
 
 // ----------------------------------------------------------------------
 
 class Color
 {
- public:
-    union value_type
-    {
-        constexpr value_type() : color{0xFF00FF} {}
-        constexpr value_type(uint32_t regular) : color{regular} {}
-        constexpr value_type(double adj) : adjustment{static_cast<float>(adj)} {}
-        constexpr bool operator==(const value_type& rhs) const { return color == rhs.color; }
-        uint32_t color;
-        float adjustment;
-    };
-      // constexpr static const uint32_t NoChange = 0xFFFFFFFE;
-    enum class type : char { regular, no_change, adjust_saturation, adjust_brightness, adjust_transparency };
+  public:
+    constexpr Color() noexcept : color_{0xFF00FF} {}
+    constexpr Color(const Color&) noexcept = default;
+    template <typename Uint, typename std::enable_if_t<std::is_integral_v<Uint>>* = nullptr> constexpr Color(Uint aColor) noexcept : color_(static_cast<uint32_t>(aColor)) {}
+    Color(std::string_view src) { from_string(src); }
+    explicit Color(const char* src) { from_string(src); }
 
-    Color() = default;
-    Color(const Color& aSrc) = default;
-    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> constexpr Color(Uint aColor) : color_(static_cast<uint32_t>(aColor)) {}
-    explicit Color(const std::string& aColor) { from_string(aColor); }
-    explicit Color(const std::string_view& aColor) { from_string(aColor); }
-    constexpr explicit Color(type a_type, double value) : color_(value), type_(a_type) {}
-    Color& operator=(const std::string& aColor) { from_string(aColor); return *this; }
-    Color& operator=(const std::string_view& aColor) { from_string(aColor); return *this; }
-    Color& operator=(const char* aColor) { from_string(aColor); return *this; }
-    Color(const char* aColor) { from_string(aColor); }
-      // Color(const Color&) = default;
-    Color& operator=(const Color& aSrc);
-    template <typename Uint, typename std::enable_if<std::is_integral<Uint>::value>::type* = nullptr> Color& operator=(Uint aColor)
-        {
-            color_ = static_cast<uint32_t>(aColor);
-            type_ = type::regular;
-            return *this;
-        }
+    constexpr Color& operator=(const Color&) noexcept = default;
+    Color& operator=(std::string_view src) { from_string(src); return *this; }
+    Color& operator=(const char* src) { from_string(src); return *this; }
+    template <typename Uint, typename std::enable_if_t<std::is_integral_v<Uint>>* = nullptr> constexpr Color& operator=(Uint aColor) noexcept { color_ = static_cast<uint32_t>(aColor); return *this; }
 
-    bool operator == (const Color& aColor) const { return color_ == aColor.color_ && type_ == aColor.type_; }
-    bool operator != (const Color& aColor) const { return ! operator==(aColor); }
-    bool operator < (const Color& aColor) const { return color_.color < aColor.color_.color; }
+    constexpr bool operator == (const Color& aColor) const noexcept { return color_ == aColor.color_; }
+    constexpr bool operator != (const Color& aColor) const noexcept { return ! operator==(aColor); }
+    constexpr bool operator < (const Color& aColor) const noexcept { return color_ < aColor.color_; }
 
-    constexpr double alpha() const { return double(0xFF - ((color_.color >> 24) & 0xFF)) / 255.0; } // 0.0 - transparent, 1.0 - opaque
-    constexpr double red() const { return double((color_.color >> 16) & 0xFF) / 255.0; }
-    constexpr double green() const { return double((color_.color >> 8) & 0xFF) / 255.0; }
-    constexpr double blue() const { return double(color_.color & 0xFF) / 255.0; }
+    constexpr double alpha() const noexcept { return double(0xFF - ((color_ >> 24) & 0xFF)) / 255.0; } // 0.0 - transparent, 1.0 - opaque
+    constexpr double red() const noexcept { return double((color_ >> 16) & 0xFF) / 255.0; }
+    constexpr double green() const noexcept { return double((color_ >> 8) & 0xFF) / 255.0; }
+    constexpr double blue() const noexcept { return double(color_ & 0xFF) / 255.0; }
 
-    constexpr uint32_t alphaI() const { return static_cast<uint32_t>((color_.color >> 24) & 0xFF); }
-    constexpr uint32_t redI() const { return static_cast<uint32_t>((color_.color >> 16) & 0xFF); }
-    constexpr uint32_t greenI() const { return static_cast<uint32_t>((color_.color >> 8) & 0xFF); }
-    constexpr uint32_t blueI() const { return static_cast<uint32_t>(color_.color & 0xFF); }
-    constexpr void alphaI(uint32_t v) { color_.color = (color_.color & 0xFFFFFF) | ((v & 0xFF) << 24); }
-    constexpr uint32_t rgbI() const { return static_cast<uint32_t>(color_.color & 0xFFFFFF); }
-
-    constexpr bool empty() const { return type_ == type::no_change; }
+    constexpr uint32_t alphaI() const noexcept { return static_cast<uint32_t>((color_ >> 24) & 0xFF); }
+    constexpr uint32_t redI() const noexcept { return static_cast<uint32_t>((color_ >> 16) & 0xFF); }
+    constexpr uint32_t greenI() const noexcept { return static_cast<uint32_t>((color_ >> 8) & 0xFF); }
+    constexpr uint32_t blueI() const noexcept { return static_cast<uint32_t>(color_ & 0xFF); }
+    constexpr void alphaI(uint32_t v) noexcept { color_ = (color_ & 0xFFFFFF) | ((v & 0xFF) << 24); }
+    constexpr uint32_t rgbI() const noexcept { return static_cast<uint32_t>(color_ & 0xFFFFFF); }
 
     void light(double value);
     void adjust_saturation(double value);
     void adjust_brightness(double value);
     void adjust_transparency(double value);
 
-    constexpr void set_transparency(double aTransparency) { color_.color = (color_.color & 0x00FFFFFF) | ((static_cast<unsigned>(aTransparency * 255.0) & 0xFF) << 24); }
-    constexpr void set_opacity(double aOpacity) { set_transparency(1.0 - aOpacity); }
-    constexpr double opacity() const { return alpha(); }
-    Color without_transparency() const { return {color_.color & 0x00FFFFFF}; }
+    constexpr void set_transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }
+    constexpr void set_opacity(double opacity) noexcept { set_transparency(1.0 - opacity); }
+    constexpr double opacity() const noexcept { return alpha(); }
+    Color without_transparency() const noexcept { return {color_ & 0x00FFFFFF}; }
 
-    void from_string(const std::string_view& aColor);
-    explicit operator std::string() const { return to_string(); }
-    std::string to_string() const;
-    std::string to_hex_string() const;
-    std::string to_rgba_string() const;
-    void from_string(const char* s, size_t len) { from_string(std::string(s, len)); }
+    constexpr bool is_opaque() const noexcept { return (color_ & 0xFF000000) == 0; }
+    constexpr bool is_transparent() const noexcept { return !is_opaque(); }
 
-    enum class distinct_t { Ana, GoogleMaps };
-    static std::vector<std::string> distinct_s(distinct_t dtype = distinct_t::Ana);
-    static std::vector<Color> distinct(distinct_t dtype = distinct_t::Ana);
-    static Color distinct(size_t offset, distinct_t dtype = distinct_t::Ana);
-    static Color perceptually_uniform_heatmap(size_t total_colors, size_t color_index);
+    constexpr uint32_t get() const noexcept { return color_; }
+    std::string_view name() const noexcept;
 
- private:
-      // 4 bytes: most->least significant: transparency-red-green-blue, 0x00FF0000 - opaque red, 0xFF000000 - fully transparent
-    value_type color_;
-    type type_ = type::regular;
+  private:
+    uint32_t color_;
 
-}; // class Color
+    void from_string(std::string_view src);
+
+};                              // class Color
 
 // ----------------------------------------------------------------------
 
-inline std::ostream& operator<<(std::ostream& out, Color c)
+constexpr const Color BLACK{0};
+constexpr const Color WHITE{0xFFFFFF};
+constexpr const Color GREY{0xBEBEBE};
+constexpr const Color GREY50{0x7F7F7F};
+constexpr const Color GREY97{0xF7F7F7};
+constexpr const Color TRANSPARENT{0xFF000000};
+
+constexpr const Color BLUE{0x0000FF};
+constexpr const Color CYAN{0x00FFFF};
+constexpr const Color GREEN{0x00FF00};
+constexpr const Color MAGENTA{0xFF00FF};
+constexpr const Color ORANGE{0xFFA500};
+constexpr const Color PINK{0xFFC0CB};
+constexpr const Color PURPLE{0x800080};
+constexpr const Color RED{0xFF0000};
+constexpr const Color YELLOW{0xFFFF00};
+
+// ----------------------------------------------------------------------
+
+namespace acmacs::color
 {
-    return out << c.to_string();
+    int test_find_color_by_name(); // returns number of errors encountered
 }
 
 // ----------------------------------------------------------------------
 
-// the functions below combined with Color imlicit constructor from string lead to incorrect conversion to Color from string-like values (e.g. Titer)
-// inline std::string operator+(std::string s, Color c) { return s + c.to_string(); }
-// inline std::string operator+(Color c, std::string s) { return c.to_string() + s; }
-// inline std::string operator+(const char* s, Color c) { return s + c.to_string(); }
-// inline std::string operator+(Color c, const char* s) { return c.to_string() + s; }
-
-// ----------------------------------------------------------------------
-
-constexpr const Color ColorNoChange(Color::type::no_change, 0);
-constexpr const Color BLACK{0};
-constexpr const Color WHITE{0xFFFFFF};
-constexpr const Color GREY97{0xF7F7F7};
-constexpr const Color TRANSPARENT{0xFF000000};
-constexpr const Color RED{0xFF0000};
-constexpr const Color GREEN{0x00FF00};
-constexpr const Color BLUE{0x0000FF};
-constexpr const Color CYAN{0x00FFFF};
-constexpr const Color MAGENTA{0xFF00FF};
-constexpr const Color PINK{0xFFC0CB};
-constexpr const Color YELLOW{0xFFFF00};
-constexpr const Color GREY{0xBEBEBE};
-constexpr const Color GREY50{0x7F7F7F};
-
-using continent_colors_t = acmacs::small_map_with_unique_keys_t<std::string, Color>;
-
-const continent_colors_t& continent_colors();
-const continent_colors_t& continent_colors_dark();
-Color continent_color(std::string_view continent);
-Color continent_color_dark(std::string_view continent);
-
-// ----------------------------------------------------------------------
-
-namespace acmacs
+template <> struct fmt::formatter<Color>
 {
-    inline std::string to_string(Color aColor)
+    template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
     {
-        return aColor.to_string();
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == ':')
+            ++it;
+        if (it != ctx.end() && *it != '}') {
+            format_code_ = *it;
+            ++it;
+        }
+        return std::find(it, ctx.end(), '}');
     }
 
-} // namespace acmacs
+    template <typename FormatCtx> auto format(const Color& val, FormatCtx& ctx)
+    {
+        switch (format_code_) {
+          case 'X':
+          case '#':
+              return format_to(ctx.out(), "#{:06X}", val.get());
+          case 'x':
+              return format_to(ctx.out(), "#{:06x}", val.get());
+          case 'c':
+          case 'n':
+              if (const auto name = val.name(); !name.empty())
+                  return format_to(ctx.out(), "{}", name);
+              else if (val.is_transparent())
+                  return format_to(ctx.out(), "rgba({},{},{},{:.3f})", val.redI(), val.greenI(), val.blueI(), val.opacity());
+              return format_to(ctx.out(), "#{:06x}", val.get());
+          case 'a':
+          case 'r':
+              return format_to(ctx.out(), "rgba({},{},{},{:.3f})", val.redI(), val.greenI(), val.blueI(), val.opacity());
+          default:
+              fmt::print(stderr, "WARNING unrecognized Color format code '{}', 'X' assumed\n", format_code_);
+              return format_to(ctx.out(), "#{:06X}", val.get());
+        }
+        return format_to(ctx.out(), "#{:06x}", val.get()); // to avoid compiler warning
+    }
 
-// ----------------------------------------------------------------------
+  protected:
+    constexpr char format_code() const noexcept { return format_code_; }
 
-template <> struct fmt::formatter<Color> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const Color& val, FormatCtx& ctx) { return format_to(ctx.out(), "{}", val.to_string()); }
+  private:
+    char format_code_{'c'};
 };
 
 // ----------------------------------------------------------------------

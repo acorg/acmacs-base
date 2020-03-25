@@ -11,36 +11,19 @@ namespace acmacs
      public:
         enum Shape {Circle, Box, Triangle, Egg, UglyEgg};
 
-        PointShape() : mShape{Circle} {}
-        PointShape(const PointShape&) = default;
-        PointShape(Shape aShape) : mShape{aShape} {}
-        PointShape(std::string aShape) { from(aShape); }
+        PointShape() noexcept : mShape{Circle} {}
+        PointShape(const PointShape&) noexcept = default;
+        PointShape(Shape aShape) noexcept : mShape{aShape} {}
         PointShape(std::string_view aShape) { from(aShape); }
         PointShape(const char* aShape) { from(aShape); }
-        PointShape& operator=(const PointShape&) = default;
-        PointShape& operator=(Shape aShape) { mShape = aShape; return *this; }
-        PointShape& operator=(std::string aShape) { from(aShape); return *this; }
-        [[nodiscard]] bool operator==(const PointShape& ps) const { return mShape == ps.mShape; }
-        [[nodiscard]] bool operator!=(const PointShape& ps) const { return mShape != ps.mShape; }
+        PointShape& operator=(const PointShape&) noexcept = default;
+        PointShape& operator=(Shape aShape) noexcept { mShape = aShape; return *this; }
+        PointShape& operator=(std::string_view aShape) { from(aShape); return *this; }
+        [[nodiscard]] bool operator==(const PointShape& ps) const noexcept { return mShape == ps.mShape; }
+        [[nodiscard]] bool operator!=(const PointShape& ps) const noexcept { return mShape != ps.mShape; }
 
-        operator Shape() const { return mShape; }
-
-        operator std::string() const
-            {
-                switch(mShape) {
-                  case Circle:
-                      return "CIRCLE";
-                  case Box:
-                      return "BOX";
-                  case Triangle:
-                      return "TRIANGLE";
-                  case Egg:
-                      return "EGG";
-                  case UglyEgg:
-                      return "UGLYEGG";
-                }
-                return "CIRCLE"; // gcc 7.2 wants this
-            }
+        constexpr operator Shape() const noexcept { return mShape; }
+        constexpr Shape get() const noexcept { return mShape; }
 
      private:
         Shape mShape;
@@ -72,7 +55,7 @@ namespace acmacs
                           mShape = Triangle;
                           break;
                       default:
-                          std::runtime_error("Unrecognized point shape: " + std::string(aShape));
+                          std::runtime_error(fmt::format("Unrecognized point shape: {}", aShape));
                     }
                 }
                 else {
@@ -82,15 +65,15 @@ namespace acmacs
 
     }; // class PointShape
 
-    inline std::string to_string(const PointShape& shape) { return shape; }
+    // inline std::string to_string(const PointShape& shape) { return shape; }
 
-    template <> inline std::string to_string(const acmacs::detail::field_optional_with_default<PointShape>& shape)
-    {
-        if (shape.is_default())
-            return acmacs::to_string(*shape) + "(default)";
-        else
-            return acmacs::to_string(*shape);
-    }
+    // template <> inline std::string to_string(const acmacs::detail::field_optional_with_default<PointShape>& shape)
+    // {
+    //     if (shape.is_default())
+    //         return acmacs::to_string(*shape) + "(default)";
+    //     else
+    //         return acmacs::to_string(*shape);
+    // }
 
     // ----------------------------------------------------------------------
 
@@ -99,16 +82,16 @@ namespace acmacs
       public:
         template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
-        [[nodiscard]] bool operator==(const PointStyle& rhs) const
+        [[nodiscard]] bool operator==(const PointStyle& rhs) const noexcept
         {
             return shown == rhs.shown && fill == rhs.fill && outline == rhs.outline && outline_width == rhs.outline_width && size == rhs.size && rotation == rhs.rotation && aspect == rhs.aspect &&
                    shape == rhs.shape && label == rhs.label && label_text == rhs.label_text;
         }
-        [[nodiscard]] bool operator!=(const PointStyle& rhs) const { return !operator==(rhs); }
+        [[nodiscard]] bool operator!=(const PointStyle& rhs) const noexcept { return !operator==(rhs); }
 
         field<bool> shown{true};
-        field<Color> fill{TRANSPARENT};
-        field<Color> outline{BLACK};
+        field<color::Modifier> fill{TRANSPARENT};
+        field<color::Modifier> outline{BLACK};
         field<Pixels> outline_width{Pixels{1.0}};
         field<Pixels> size{Pixels{5.0}};
         field<Rotation> rotation{NoRotation};
@@ -122,25 +105,6 @@ namespace acmacs
 
     }; // class PointStyle
 
-    inline std::string to_string(const PointStyle& style)
-    {
-        return to_string(style.shape) + " shown:" + to_string(style.shown) + " F:" + to_string(style.fill) + " O:" + to_string(style.outline) + " o:" + to_string(style.outline_width) +
-                " S:" + to_string(style.size) + ' ' + to_string(style.aspect) + ' ' + to_string(style.rotation) + " label:[" + to_string(style.label) + "] t:" + to_string(style.label_text);
-    }
-
-      // for debugging
-    inline std::string equality_report(const PointStyle& s1, const PointStyle& s2)
-    {
-        return "shown:" + to_string(s1.shown == s2.shown) + " fill:" + to_string(s1.fill == s2.fill) + " outline:" + to_string(s1.outline == s2.outline) +
-               " outline_width:" + to_string(s1.outline_width == s2.outline_width) + " size:" + to_string(s1.size == s2.size) + " rotation:" + to_string(s1.rotation == s2.rotation) +
-               " aspect:" + to_string(s1.aspect == s2.aspect) + " shape:" + to_string(s1.shape == s2.shape) + " label:" + to_string(s1.label == s2.label) +
-               " label_text:" + to_string(s1.label_text == s2.label_text);
-    }
-
-    inline std::ostream& operator<<(std::ostream& s, const acmacs::PointShape& shape) { return s << to_string(shape); }
-
-    inline std::ostream& operator<<(std::ostream& s, const acmacs::PointStyle& style) { return s << to_string(style); }
-
     // ----------------------------------------------------------------------
 
     struct PointStylesCompacted
@@ -153,8 +117,8 @@ namespace acmacs
     class PointStyles
     {
      public:
-        PointStyles() = default;
-        PointStyles(const PointStyles&) = delete;
+        constexpr PointStyles() noexcept = default;
+        constexpr PointStyles(const PointStyles&) noexcept = delete;
         virtual ~PointStyles() = default;
 
         virtual size_t number_of_points() const = 0;
@@ -167,6 +131,33 @@ namespace acmacs
 } // namespace acmacs
 
 // ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::PointShape& shape, FormatCtx& ctx)
+    {
+        switch (shape.get()) {
+            case acmacs::PointShape::Circle:
+                return format_to(ctx.out(), "CIRCLE");
+            case acmacs::PointShape::Box:
+                return format_to(ctx.out(), "BOX");
+            case acmacs::PointShape::Triangle:
+                return format_to(ctx.out(), "TRIANGLE");
+            case acmacs::PointShape::Egg:
+                return format_to(ctx.out(), "EGG");
+            case acmacs::PointShape::UglyEgg:
+                return format_to(ctx.out(), "UGLYEGG");
+        }
+        return format_to(ctx.out(), "CIRCLE");
+    }
+};
+
+template <> struct fmt::formatter<acmacs::PointStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::PointStyle& style, FormatCtx& ctx) {
+        return format_to(ctx.out(), R"({{"shape": {}, "shown": {}, "fill": "{}", "outline": "{}", "outline_width": {}, "size": {}, "aspect": {}, "rotation": {}, "label": {}, "label_text": "{}"}})",
+                         *style.shape, *style.shown, *style.fill, *style.outline, *style.outline_width, *style.size, *style.aspect, *style.rotation, style.label, *style.label_text);
+    }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -4,7 +4,7 @@
 
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/size.hh"
-#include "acmacs-base/color.hh"
+#include "acmacs-base/color-modifier.hh"
 #include "acmacs-base/field.hh"
 #include "acmacs-base/string.hh"
 
@@ -18,51 +18,31 @@ namespace acmacs
      public:
         enum Value { Normal, Italic };
 
-        FontSlant(Value aFontSlant = Normal) : mFontSlant{aFontSlant} {}
-        FontSlant(const FontSlant&) = default;
-        FontSlant(std::string aFontSlant) { from(aFontSlant); }
+        FontSlant(Value aFontSlant = Normal) noexcept : mFontSlant{aFontSlant} {}
+        FontSlant(const FontSlant&) noexcept = default;
         FontSlant(std::string_view aFontSlant) { from(aFontSlant); }
         FontSlant(const char* aFontSlant) { from(aFontSlant); }
-        FontSlant& operator=(const FontSlant&) = default;
-        FontSlant& operator=(std::string aFontSlant) { from(aFontSlant); return *this; }
+        FontSlant& operator=(const FontSlant&) noexcept = default;
         FontSlant& operator=(std::string_view aFontSlant) { from(aFontSlant); return *this; }
 
-        operator std::string() const
-            {
-                switch (mFontSlant) {
-                  case Normal:
-                      return "normal";
-                  case Italic:
-                      return "italic";
-                }
-                return "normal";
-            }
-
-        operator Value() const { return mFontSlant; }
+        constexpr operator Value() const noexcept { return mFontSlant; }
+        constexpr Value get() const noexcept { return mFontSlant; }
 
      private:
         Value mFontSlant;
 
-        template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontSlant)
+        void from(std::string_view aFontSlant)
         {
-            const auto eq = [](auto&& lh, auto&& rh) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(lh)>, const char*>)
-                    return std::string_view(lh) == rh;
-                else
-                    return lh == rh;
-            };
-
-            if (eq(aFontSlant, "normal"))
+            using namespace std::string_view_literals;
+            if (aFontSlant == "normal"sv)
                 mFontSlant = Normal;
-            else if (eq(aFontSlant, "italic"))
+            else if (aFontSlant == "italic"sv)
                 mFontSlant = Italic;
             else
                 std::runtime_error(::string::concat("Unrecognized slant: ", aFontSlant));
         }
 
     }; // class FontSlant
-
-    inline std::string to_string(const FontSlant& slant) { return slant; }
 
 // ----------------------------------------------------------------------
 
@@ -71,51 +51,31 @@ namespace acmacs
      public:
         enum Value { Normal, Bold };
 
-        FontWeight(Value aFontWeight = Normal) : mFontWeight{aFontWeight} {}
-        FontWeight(const FontWeight&) = default;
-        FontWeight(std::string aFontWeight) { from(aFontWeight); }
+        FontWeight(Value aFontWeight = Normal) noexcept : mFontWeight{aFontWeight} {}
+        FontWeight(const FontWeight&) noexcept = default;
         FontWeight(std::string_view aFontWeight) { from(aFontWeight); }
         FontWeight(const char* aFontWeight) { from(aFontWeight); }
-        FontWeight& operator=(const FontWeight&) = default;
-        FontWeight& operator=(std::string aFontWeight) { from(aFontWeight); return *this; }
+        FontWeight& operator=(const FontWeight&) noexcept = default;
         FontWeight& operator=(std::string_view aFontWeight) { from(aFontWeight); return *this; }
 
-        operator std::string() const
-            {
-                switch (mFontWeight) {
-                  case Normal:
-                      return "normal";
-                  case Bold:
-                      return "bold";
-                }
-                return "normal";
-            }
-
-        operator Value() const { return mFontWeight; }
+        constexpr operator Value() const noexcept { return mFontWeight; }
+        constexpr Value get() const noexcept { return mFontWeight; }
 
      private:
         Value mFontWeight;
 
-        template <typename S, typename = std::enable_if_t<acmacs::sfinae::is_string_v<S>>> void from(S aFontWeight)
+        void from(std::string_view aFontWeight)
         {
-            const auto eq = [](auto&& lh, auto&& rh) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(lh)>, const char*>)
-                    return std::string_view(lh) == rh;
-                else
-                    return lh == rh;
-            };
-
-            if (eq(aFontWeight, "normal"))
+            using namespace std::string_view_literals;
+            if (aFontWeight == "normal"sv)
                 mFontWeight = Normal;
-            else if (eq(aFontWeight, "bold"))
+            else if (aFontWeight == "bold"sv)
                 mFontWeight = Bold;
             else
-                std::runtime_error(::string::concat("Unrecognized weight: ", aFontWeight));
+                std::runtime_error(fmt::format("Unrecognized font weight: \"{}\"", aFontWeight));
         }
 
     }; // class FontWeight
-
-    inline std::string to_string(const FontWeight& weight) { return weight; }
 
 // ----------------------------------------------------------------------
 
@@ -125,7 +85,7 @@ namespace acmacs
         template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
 
         TextStyle() = default;
-        template <typename S, typename = sfinae::string_only_t<S>> TextStyle(S font_name) : font_family{acmacs::to_string(font_name)} {}
+        TextStyle(std::string_view font_name) : font_family{std::string{font_name}} {}
 
         [[nodiscard]] bool operator==(const TextStyle& ts) const
             {
@@ -137,13 +97,6 @@ namespace acmacs
         field<std::string> font_family;
 
     }; // class TextStyle
-
-    inline std::string to_string(const TextStyle& style)
-    {
-        return ::string::concat("{slant:", to_string(*style.slant), " weight:", to_string(*style.weight), " familiy:", *style.font_family, '}');
-    }
-
-    inline std::ostream& operator<<(std::ostream& out, const TextStyle& ts) { return out << to_string(ts); }
 
 // ----------------------------------------------------------------------
 
@@ -160,24 +113,56 @@ namespace acmacs
         [[nodiscard]] bool operator!=(const LabelStyle& rhs) const { return !operator==(rhs); }
 
         field<bool> shown{true};
-        field<Offset> offset{sOffsetDefault};
+        field<Offset> offset{Offset{0, 1}};
         field<Pixels> size{Pixels{10.0}};
-        field<Color> color{BLACK};
+        field<color::Modifier> color{BLACK};
         field<Rotation> rotation{NoRotation};
         field<double> interline{0.2};
         TextStyle style;
 
-     private:
-        static const Offset sOffsetDefault;
-
     }; // class LabelStyle
 
-    inline std::string to_string(const LabelStyle& style)
-    {
-        return ::string::concat(" shown:", *style.shown, " p:", to_string(*style.offset), " s:", to_string(*style.size), " c:", to_string(*style.color), " r:", to_string(*style.rotation), " i:", to_string(*style.interline, 2), ' ', to_string(style.style));
-    }
-
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::FontSlant> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::FontSlant& slant, FormatCtx& ctx)
+    {
+        switch (slant.get()) {
+            case acmacs::FontSlant::Normal:
+                return format_to(ctx.out(), "normal");
+            case acmacs::FontSlant::Italic:
+                return format_to(ctx.out(), "italic");
+        }
+        return format_to(ctx.out(), "normal");
+    }
+};
+
+template <> struct fmt::formatter<acmacs::FontWeight> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::FontWeight& weight, FormatCtx& ctx)
+    {
+        switch (weight.get()) {
+            case acmacs::FontWeight::Normal:
+                return format_to(ctx.out(), "normal");
+            case acmacs::FontWeight::Bold:
+                return format_to(ctx.out(), "bold");
+        }
+        return format_to(ctx.out(), "normal");
+    }
+};
+
+template <> struct fmt::formatter<acmacs::TextStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::TextStyle& style, FormatCtx& ctx) {
+        return format_to(ctx.out(), R"({{"slant": {}, "weight": {}, "family": {}}})", *style.slant, *style.weight, *style.font_family);
+    }
+};
+
+template <> struct fmt::formatter<acmacs::LabelStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::LabelStyle& style, FormatCtx& ctx) {
+        return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {:2f}, "interline": {:.2f}, "style": {}}})", *style.shown, *style.offset, *style.size, *style.color, *style.rotation, *style.interline, style.style);
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -1,13 +1,14 @@
-#include "acmacs-base/text-style.hh"
+#pragma once
 
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wglobal-constructors"
-#pragma GCC diagnostic ignored "-Wexit-time-destructors"
-#endif
+#include "acmacs-base/color.hh"
 
 // ----------------------------------------------------------------------
 
-const acmacs::Offset acmacs::LabelStyle::sOffsetDefault{0, 1};
+namespace acmacs::color
+{
+    Color perceptually_uniform_heatmap(size_t total_colors, size_t color_index);
+
+} // namespace acmacs
 
 // ----------------------------------------------------------------------
 /// Local Variables:

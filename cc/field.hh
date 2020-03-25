@@ -14,7 +14,7 @@ namespace acmacs::detail
     {
      public:
         field_optional_with_default() = default;
-        field_optional_with_default(const T aDefault) : mDefault{aDefault} {}
+        template <typename TT, typename = std::enable_if_t<std::is_same_v<T, std::decay_t<TT>> || std::is_assignable_v<T, TT>>> field_optional_with_default(TT&& aDefault) : mDefault{std::forward<TT>(aDefault)} {}
         field_optional_with_default(const field_optional_with_default&) = default;
         field_optional_with_default(field_optional_with_default&&) = default;
         field_optional_with_default& operator=(const field_optional_with_default& aOther)
@@ -30,7 +30,7 @@ namespace acmacs::detail
                 return *this;
             }
         field_optional_with_default& operator=(field_optional_with_default&&) = default; // really move (unlike the above), to allow removing/inserting elements of vector<>
-        field_optional_with_default& operator=(const T aValue) { mValue = aValue; return *this; }
+        template <typename TT, typename = std::enable_if_t<std::is_same_v<T, TT> || std::is_assignable_v<T, std::decay_t<TT>>>> field_optional_with_default& operator=(TT&& aValue) { mValue = std::forward<TT>(aValue); return *this; }
 
         [[nodiscard]] bool operator==(const field_optional_with_default<T>& f) const { return mValue.value_or(mDefault) == f.mValue.value_or(f.mDefault); }
 
@@ -53,9 +53,9 @@ namespace acmacs::detail
         std::string to_string() const
             {
                 if (is_default())
-                    return acmacs::to_string(mDefault) + "(default)";
+                    return fmt::format("{}(default)", mDefault);
                 else
-                    return acmacs::to_string(*mValue);
+                    return fmt::format("{}", *mValue);
             }
 
      private:
