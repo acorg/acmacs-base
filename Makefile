@@ -16,7 +16,8 @@ TARGETS = \
   $(DIST)/test-to-json \
   $(DIST)/test-time-series \
   $(DIST)/test-read-file \
-  $(DIST)/test-find-color
+  $(DIST)/test-find-color \
+  $(DIST)/test-bezier-gradient
 
 all: install-acmacs-base
 

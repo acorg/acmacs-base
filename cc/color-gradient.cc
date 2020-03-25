@@ -1,4 +1,7 @@
-#include <array>
+#include <cmath>
+
+#include "acmacs-base/range-v3.hh"
+#include "acmacs-base/enumerate.hh"
 #include "acmacs-base/color-gradient.hh"
 
 // ----------------------------------------------------------------------
@@ -53,6 +56,42 @@ Color acmacs::color::perceptually_uniform_heatmap(size_t total_colors, size_t co
 
 } // acmacs::color::perceptually_uniform_heatmap
 
+// ----------------------------------------------------------------------
+// https://bsou.io/posts/color-gradients-with-python
+// ----------------------------------------------------------------------
+
+constexpr double factorial[] = {1.0, 1.0, 2.0}; // , 6.0};
+
+inline double bernstein(double t_arg, size_t n_arg, size_t i_arg)
+{
+    return factorial[n_arg] / (factorial[i_arg] * factorial[n_arg - i_arg]) * std::pow(1.0 - t_arg, n_arg - i_arg) * std::pow(t_arg, i_arg);
+}
+
+template <typename Colors> static Color bezier_interpolation(const Colors& colors, double t_arg)
+{
+    acmacs::color::RGB result{0, 0, 0};
+    for (auto [index, color] : acmacs::enumerate(colors)) {
+        const auto bernst = bernstein(t_arg, colors.size() - 1, index);
+        result[0] += static_cast<uint32_t>(color.redI()   * bernst);
+        result[1] += static_cast<uint32_t>(color.greenI() * bernst);
+        result[2] += static_cast<uint32_t>(color.blueI()  * bernst);
+    }
+    // fmt::print(stderr, ">>>> bezier_interpolation {}\n", result);
+    return acmacs::color::from(result);
+}
+
+// ----------------------------------------------------------------------
+
+std::vector<Color> acmacs::color::bezier_gradient(Color c1, Color c2, Color c3, size_t output_size)
+{
+    const std::array colors{c1, c2, c3};
+    return ranges::views::ints(0UL, output_size)
+            | ranges::views::transform([&colors,output_size](auto index) { return bezier_interpolation(colors, static_cast<double>(index) / (output_size - 1)); })
+            | ranges::to<std::vector>;
+
+} // acmacs::color::bezier_gradient
+
+// ----------------------------------------------------------------------
 
 // ----------------------------------------------------------------------
 /// Local Variables:
