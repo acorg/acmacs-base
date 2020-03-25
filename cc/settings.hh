@@ -115,7 +115,7 @@ namespace acmacs::settings::inline v2
             rjson::value substitute(std::string_view source) const;
 
           private:
-            std::vector<acmacs::flat_map_t<std::string, rjson::value>> data_;
+            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::value>> data_;
 
             rjson::value substitute(const rjson::value& source) const;
         };
