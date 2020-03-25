@@ -96,7 +96,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
 void acmacs::settings::v2::Settings::load(std::string_view filename)
 {
-    LOG(acmacs::log::settings, "loading {}", filename);
+    AD_LOG(acmacs::log::settings, "loading {}", filename);
     data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
     apply_top("init");
 
@@ -232,7 +232,7 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry)
 
 void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry)
 {
-    LOG(acmacs::log::settings, "{}", entry);
+    AD_LOG(acmacs::log::settings, "{}", entry);
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
             const auto command{command_v.to<std::string_view>()};

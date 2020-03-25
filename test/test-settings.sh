@@ -32,3 +32,7 @@ if ! cmp "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt; t
     ../dist/test-settings
     false
 fi
+
+if [[ -f "${ACMACSD_ROOT}/share/conf/tal.json" ]]; then
+    ../dist/test-settings "${ACMACSD_ROOT}/share/conf/tal.json"
+fi

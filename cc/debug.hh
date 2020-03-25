@@ -5,14 +5,16 @@
 
 // ----------------------------------------------------------------------
 
-#define DEBUG_FILE_LINE fmt::format("{}:{}", __FILE__, __LINE__)
-#define DEBUG_FILE_LINE_FUNC_S fmt::format("{}:{}: {}", __FILE__, __LINE__, __PRETTY_FUNCTION__)
-#define DEBUG_FILE_LINE_FUNC fmt::format(" [{}]", DEBUG_FILE_LINE_FUNC_S)
+#define AD_DEBUG_FILE_LINE fmt::format("{}:{}", __FILE__, __LINE__)
+#define AD_DEBUG_FILE_LINE_FUNC_S fmt::format("{}:{}: {}", __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define AD_DEBUG_FILE_LINE_FUNC fmt::format(" [{}]", AD_DEBUG_FILE_LINE_FUNC_S)
 
-#define LOG(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} [{}]", fmt::format(__VA_ARGS__), DEBUG_FILE_LINE); })
-#define LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{}{}", fmt::format(__VA_ARGS__), DEBUG_FILE_LINE_FUNC); })
+#define AD_LOG(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{}", fmt::format(__VA_ARGS__), __FILE__, __LINE__); })
+#define AD_LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} @F {}", fmt::format(__VA_ARGS__), __FILE__, __LINE__, __PRETTY_FUNCTION__); })
 
-#define DEBUG(...) fmt::print(stderr, "DEBUG {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_ERROR(...) fmt::print(stderr, "> ERROR {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_WARNING(...) fmt::print(stderr, ">> WARNING {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_DEBUG(...) fmt::print(stderr, ">>>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 // ----------------------------------------------------------------------
 
@@ -56,7 +58,7 @@ namespace acmacs
             template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
             {
                 if (is_enabled(section))
-                    fmt::print(stderr, "[{}]: {}\n", section_names(section), get_message());
+                    fmt::print(stderr, ">>> [{}]: {}\n", section_names(section), get_message());
             }
 
         } // namespace detail
