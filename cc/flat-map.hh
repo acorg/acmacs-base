@@ -37,6 +37,15 @@ namespace acmacs
                 return data_.emplace_back(std::forward<EKey>(key), std::forward<EValue>(value));
             }
 
+            // public to allow forcing sorting in the mutli-threaded app (seqdb3 -> acmacs-api)
+            void sort() const noexcept
+            {
+                if (!sorted_) {
+                    ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; });
+                    sorted_ = true;
+                }
+            }
+
           protected:
             constexpr auto& data() noexcept { return data_; }
             // constexpr bool sorted() const noexcept { return sorted_; }
@@ -48,14 +57,6 @@ namespace acmacs
             }
 
             virtual void check() const {}
-
-            void sort() const noexcept
-            {
-                if (!sorted_) {
-                    ranges::sort(data_, [](const auto& e1, const auto& e2) { return e1.first < e2.first; });
-                    sorted_ = true;
-                }
-            }
 
           private:
             mutable std::vector<entry_type> data_;
