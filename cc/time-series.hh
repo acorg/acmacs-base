@@ -19,6 +19,7 @@ namespace acmacs::time_series::inline v2
     {
         date::year_month_day first, after_last;
         constexpr bool operator==(const slot& rhs) const { return first == rhs.first && after_last == rhs.after_last; }
+        constexpr bool within(const date::year_month_day& date) const { return first <= date && date < after_last; }
     };
 
     using series = std::vector<slot>;
