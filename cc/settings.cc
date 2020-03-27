@@ -64,7 +64,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 #pragma GCC diagnostic pop
 
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
-        if (const auto& found1 = get(m1.str(1)); found1.is_const_null()) {
+        if (const auto& found1 = get(m1.str(1), toplevel_only::no); found1.is_const_null()) {
             return found1;
             // throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
         }
@@ -79,7 +79,7 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
             std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
             std::smatch m2;
             while (std::regex_search(result, m2, re)) {
-                if (const auto& found2 = get(m2.str(1)); found2.is_const_null())
+                if (const auto& found2 = get(m2.str(1), toplevel_only::no); found2.is_const_null())
                     throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
                 else
                     result = replace(result, static_cast<size_t>(m2.position(0)), found2, static_cast<size_t>(m2.position(0) + m2.length(0)));
@@ -147,16 +147,19 @@ void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, st
 
 void acmacs::settings::v2::Settings::apply(std::string_view name)
 {
-    // fmt::print(stderr, "DEBUG: Settings::apply \"{}\"\n", name);
+    AD_LOG(acmacs::log::settings, "apply \"{}\"", name);
     if (name.empty())
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_.substitute(name).to<std::string>();
-        if (const auto& val1 = environment_.get(substituted_name); !val1.is_const_null()) {
+        if (const auto& val1 = environment_.get(substituted_name, toplevel_only::no); !val1.is_const_null()) {
+            // AD_LOG(acmacs::log::settings, "apply val1 {}", val1);
             apply(val1);
         }
-        else if (const auto& val2 = get(substituted_name); !val2.is_const_null())
+        else if (const auto& val2 = get(substituted_name); !val2.is_const_null()) {
+            // AD_LOG(acmacs::log::settings, "apply val2 {}", val1);
             apply(val2);
+        }
         else if (!apply_built_in(substituted_name))
             throw error(fmt::format("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name));
     }
@@ -207,11 +210,10 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
 void acmacs::settings::v2::Settings::apply(const rjson::value& entry)
 {
     try {
-        // fmt::print(stderr, "INFO: settings::apply: {}\n", entry);
+        AD_LOG(acmacs::log::settings, "apply \"{}\"", entry);
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
                 [this]<typename T>(T && sub_entry_val) {
-                    // fmt::print(stderr, "DEBUG: apply {}\n", sub_entry_val);
                     if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                         this->apply(std::string_view{sub_entry_val});
                     else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
@@ -232,22 +234,23 @@ void acmacs::settings::v2::Settings::apply(const rjson::value& entry)
 
 void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry)
 {
+    AD_LOG_INDENT;
     AD_LOG(acmacs::log::settings, "{}", entry);
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
             const auto command{command_v.to<std::string_view>()};
-            // fmt::print(stderr, "DEBUG: Settings::push_and_apply command {} -> {}\n", command_v, command);
+            AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
                 if (key != "N") {
-                    // fmt::print(stderr, "DEBUG: Settings env add \"{}\": {}\n", key, val);
+                    AD_LOG(acmacs::log::settings, "environment_.add key:{} val:{}", key, val);
                     environment_.add(key, val);
                 }
             });
             if (command != "set")
                 apply(command);
             else if (warn_if_set_used_)
-                fmt::print(stderr, "WARNING: \"set\" command has no effect (used inside \"if\"?): {}\n", entry);
+                AD_WARNING("\"set\" command has no effect (used inside \"if\"?): {}", entry);
         }
         else if (const auto& commented_command_v = entry.get("?N"); !commented_command_v.is_const_null()) {
             // command is commented out
@@ -267,16 +270,17 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry)
 void acmacs::settings::v2::Settings::apply_if()
 {
     raii_true warn_if_set_used{warn_if_set_used_};
-    if (const auto& condition_clause = getenv("condition"); eval_condition(condition_clause)) {
-        // fmt::print(stderr, "DEBUG: apply then: {}\n", getenv("then"));
-        if (const auto& then_clause = getenv("then"); !then_clause.is_null()) {
+    if (const auto& condition_clause = getenv("condition", toplevel_only::yes); eval_condition(condition_clause)) {
+        if (const auto& then_clause = getenv("then", toplevel_only::yes); !then_clause.is_null()) {
+            AD_LOG(acmacs::log::settings, "if then {}", then_clause);
             if (!then_clause.is_array())
                 throw error{"\"then\" clause must be array"};
             apply(then_clause);
         }
     }
     else {
-        if (const auto& else_clause = getenv("else"); !else_clause.is_null()) {
+        if (const auto& else_clause = getenv("else", toplevel_only::yes); !else_clause.is_null()) {
+            AD_LOG(acmacs::log::settings, "if else {}", else_clause);
             if (!else_clause.is_array())
                 throw error{"\"else\" clause must be array"};
             apply(else_clause);
@@ -334,6 +338,26 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
     }
 
 } // acmacs::settings::v2::Settings::eval_condition
+
+// ----------------------------------------------------------------------
+
+rjson::value acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
+{
+    if (const auto& val = environment_.get(environment_.substitute(key).to<std::string>(), a_toplevel_only); val.is_string()) {
+        auto orig = val.to<std::string>();
+        for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
+            const auto substituted = environment_.substitute(std::string_view{orig});
+            if (substituted.is_string() && orig != substituted.to<std::string>())
+                orig = substituted.to<std::string>();
+            else
+                return substituted;
+        }
+        throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
+    }
+    else
+        return val;
+
+} // acmacs::settings::v2::Settings::getenv
 
 // ----------------------------------------------------------------------
 
@@ -449,11 +473,19 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, b
 
 // ----------------------------------------------------------------------
 
-const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string_view key) const
+const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
 {
-    for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
-        if (auto found = it->find(key); found != it->end())
-            return found->second;
+    switch (a_toplevel_only) {
+        case toplevel_only::no:
+            for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
+                if (auto found = it->find(key); found != it->end())
+                    return found->second;
+            }
+            break;
+        case toplevel_only::yes:
+            if (auto found = data_.back().find(key); found != data_.back().end())
+                return found->second;
+            break;
     }
     return rjson::ConstNull;
 
@@ -461,23 +493,23 @@ const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string
 
 // ----------------------------------------------------------------------
 
-const rjson::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
-{
-    if (auto found = data_.back().find(key); found != data_.back().end())
-        return found->second;
-    else
-        return rjson::ConstNull;
+// const rjson::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
+// {
+//     if (auto found = data_.back().find(key); found != data_.back().end())
+//         return found->second;
+//     else
+//         return rjson::ConstNull;
 
-} // acmacs::settings::v2::Settings::Environment::get_toplevel
+// } // acmacs::settings::v2::Settings::Environment::get_toplevel
 
 // ----------------------------------------------------------------------
 
 void acmacs::settings::v2::Settings::Environment::print() const
 {
-    fmt::print("INFO: Settings::Environment {}\n", data_.size());
+    AD_INFO("Settings::Environment {}", data_.size());
     for (auto [level, entries] : acmacs::enumerate(data_)) {
         for (const auto& entry : entries)
-            fmt::print("    {} \"{}\": {}\n", level, entry.first, substitute(entry.second));
+            AD_INFO("    {} \"{}\": {}", level, entry.first, substitute(entry.second));
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
@@ -486,7 +518,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("{}: {}\n", get("key"), substitute(get("value")));
+    fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute(get("value", toplevel_only::no)));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
 

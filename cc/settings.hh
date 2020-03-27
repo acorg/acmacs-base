@@ -17,6 +17,8 @@ namespace acmacs::settings::inline v2
     class Settings
     {
       public:
+        enum class toplevel_only { no, yes };
+
         Settings() = default;
         Settings(const std::vector<std::string_view>& filenames) { load(filenames); }
         virtual ~Settings() = default;
@@ -39,47 +41,34 @@ namespace acmacs::settings::inline v2
         template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
         template <typename T> void setenv_toplevel(std::string_view key, T&& value) { setenv_toplevel(key, rjson::value{std::forward<T>(value)}); }
 
-        const rjson::value& getenv_single_substitution(std::string_view key) const { return environment_.get(environment_.substitute(key).to<std::string>()); }
-
-        // returns ConstNull if not found
-        rjson::value getenv(std::string_view key) const
+        const rjson::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = environment_.get(environment_.substitute(key).to<std::string>()); val.is_string()) {
-                auto orig = val.to<std::string>();
-                for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-                    const auto substituted = environment_.substitute(std::string_view{orig});
-                    if (substituted.is_string() && orig != substituted.to<std::string>())
-                        orig = substituted.to<std::string>();
-                    else
-                        return substituted;
-                }
-                throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
-            }
-            else
-                return val;
+            return environment_.get(environment_.substitute(key).to<std::string>(), a_toplevel_only);
         }
 
+        // returns ConstNull if not found
+        rjson::value getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         rjson::value substitute(const rjson::value& source) const;
 
-        template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default) const
+        template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
                 return val.to<std::decay_t<T>>();
             else
                 return std::move(a_default);
         }
 
-        std::string getenv(std::string_view key, const char* a_default) const { return getenv(key, std::string{a_default}); }
+        std::string getenv(std::string_view key, const char* a_default, toplevel_only a_toplevel_only = toplevel_only::no) const { return getenv(key, std::string{a_default}, a_toplevel_only); }
 
-        template <typename T> void getenv_copy_if_present(std::string_view key, T& target) const
+        template <typename T> void getenv_copy_if_present(std::string_view key, T& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
                 target = val.to<std::decay_t<T>>();
         }
 
-        template <typename T1, typename T2> void getenv_extract_copy_if_present(std::string_view key, T2& target) const
+        template <typename T1, typename T2> void getenv_extract_copy_if_present(std::string_view key, T2& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
                 target = T2{val.to<std::decay_t<T1>>()};
         }
 
@@ -100,8 +89,7 @@ namespace acmacs::settings::inline v2
           public:
             Environment() { push(); }
 
-            const rjson::value& get(std::string_view key) const;
-            const rjson::value& get_toplevel(std::string_view key) const;
+            const rjson::value& get(std::string_view key, toplevel_only a_toplevel_only) const;
             void push() { data_.emplace_back(); }
             void pop() { data_.erase(std::prev(std::end(data_))); }
             size_t size() const { return data_.size(); }
