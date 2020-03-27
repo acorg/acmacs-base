@@ -14,6 +14,7 @@
 
 #define AD_ERROR(...) fmt::print(stderr, "> ERROR {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_WARNING(...) fmt::print(stderr, ">> WARNING {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_INFO(...) fmt::print(stderr, ">>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG(...) fmt::print(stderr, ">>>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 // ----------------------------------------------------------------------
@@ -34,7 +35,8 @@ namespace acmacs
     {
         enum {
             timer,
-            settings
+            settings,
+            vaccines
         };
 
         namespace detail
@@ -58,7 +60,7 @@ namespace acmacs
             template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
             {
                 if (is_enabled(section))
-                    fmt::print(stderr, ">>> [{}]: {}\n", section_names(section), get_message());
+                    fmt::print(stderr, ">>>> [{}]: {}\n", section_names(section), get_message());
             }
 
         } // namespace detail

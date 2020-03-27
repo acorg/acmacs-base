@@ -39,6 +39,7 @@ void acmacs::log::v1::register_enabler_acmacs_base()
     acmacs::log::detail::register_enabler("all"sv, log_all);
     acmacs::log::register_enabler("timer"sv, acmacs::log::timer);
     acmacs::log::register_enabler("settings"sv, acmacs::log::settings);
+    acmacs::log::register_enabler("vaccines"sv, acmacs::log::vaccines);
 
 } // acmacs::log::v1::register_enabler_acmacs_base
 
