@@ -11,6 +11,7 @@
 
 #define AD_LOG(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{}", fmt::format(__VA_ARGS__), __FILE__, __LINE__); })
 #define AD_LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} @F {}", fmt::format(__VA_ARGS__), __FILE__, __LINE__, __PRETTY_FUNCTION__); })
+#define AD_LOG_INDENT acmacs::log::indent _indent
 
 #define AD_ERROR(...) fmt::print(stderr, "> ERROR {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_WARNING(...) fmt::print(stderr, ">> WARNING {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
@@ -44,6 +45,8 @@ namespace acmacs
             using section_t = uint32_t;
 
             extern section_t enabled;
+            extern size_t indent;
+            constexpr size_t indent_size{4};
 
             inline bool is_enabled(section_t section) { return section & enabled; }
 
@@ -60,7 +63,7 @@ namespace acmacs
             template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
             {
                 if (is_enabled(section))
-                    fmt::print(stderr, ">>>> [{}]: {}\n", section_names(section), get_message());
+                    fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section_names(section), "", detail::indent, get_message());
             }
 
         } // namespace detail
@@ -81,6 +84,12 @@ namespace acmacs
 
         void enable(std::string_view names);
         void enable(const std::vector<std::string_view>& names);
+
+        struct indent
+        {
+            indent() { detail::indent += detail::indent_size; }
+            ~indent() { detail::indent -= detail::indent_size; }
+        };
 
     } // namespace log::inlinev1
 

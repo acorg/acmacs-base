@@ -5,6 +5,7 @@
 #include "acmacs-base/string-split.hh"
 
 acmacs::log::v1::detail::section_t acmacs::log::v1::detail::enabled{0};
+size_t acmacs::log::v1::detail::indent{0};
 
 #pragma GCC diagnostic push
 #ifdef __clang__
