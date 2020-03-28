@@ -62,12 +62,14 @@ namespace acmacs::settings::inline v2
 
         template <typename T> void getenv_copy_if_present(std::string_view key, T& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
+            static_assert(!std::is_same_v<std::decay_t<T>, std::string_view>);
             if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
                 target = val.to<std::decay_t<T>>();
         }
 
         template <typename T1, typename T2> void getenv_extract_copy_if_present(std::string_view key, T2& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
+            static_assert(!std::is_same_v<std::decay_t<T2>, std::string_view>);
             if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
                 target = T2{val.to<std::decay_t<T1>>()};
         }
