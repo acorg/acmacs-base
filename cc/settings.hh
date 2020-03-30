@@ -23,14 +23,10 @@ namespace acmacs::settings::inline v2
         Settings(const std::vector<std::string_view>& filenames) { load(filenames); }
         virtual ~Settings() = default;
 
-        void load(std::string_view filename);
-
         // read settings from files, upon reading each file apply "init" in it (if found)
-        void load(const std::vector<std::string_view>& filenames)
-        {
-            for (const auto& filename : filenames)
-                load(filename);
-        }
+        void load(std::string_view filename);
+        void load(const std::vector<std::string_view>& filenames);
+        void reload();          // reset environament, re-load previously loaded files, apply "init" in loaded files
 
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
@@ -77,7 +73,11 @@ namespace acmacs::settings::inline v2
         void printenv() const { environment_.print(); }
 
       protected:
-        template <typename... Key> const rjson::value& get(Key&&... keys) const;
+        template <typename... Key> const rjson::value& get(Key&&... keys) const
+        {
+            return loaded_data_.get(keys ...);
+        }
+
         void apply(const rjson::value& entry);
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
 
@@ -86,31 +86,54 @@ namespace acmacs::settings::inline v2
         virtual void apply_top(std::string_view name);
 
       private:
+        class LoadedDataFiles
+        {
+          public:
+            LoadedDataFiles() = default;
+
+            void load(std::string_view filename);
+            void reload(Settings& settings);
+            const rjson::value& get_top(std::string_view name) const { return file_data_.front().get(name); }
+
+            template <typename... Key> const rjson::value& get(Key&&... keys) const
+            {
+                for (const auto& per_file : file_data_) {
+                    if (const auto& val = per_file.get(std::forward<Key>(keys)...); !val.is_const_null())
+                        return val;
+                }
+                return rjson::ConstNull;
+            }
+
+          private:
+            std::vector<std::string> filenames_;
+            std::vector<rjson::value> file_data_;
+        };
+
         class Environment
         {
           public:
             Environment() { push(); }
 
             const rjson::value& get(std::string_view key, toplevel_only a_toplevel_only) const;
-            void push() { data_.emplace_back(); }
-            void pop() { data_.erase(std::prev(std::end(data_))); }
-            size_t size() const { return data_.size(); }
-            void add(std::string_view key, const rjson::value& val) { data_.rbegin()->emplace_or_replace(std::string{key}, val); }
-            void add(std::string_view key, rjson::value&& val) { data_.rbegin()->emplace_or_replace(std::string{key}, std::move(val)); }
-            void add_to_toplevel(std::string_view key, const rjson::value& val) { data_.begin()->emplace_or_replace(std::string{key}, val); }
-            void add_to_toplevel(std::string_view key, rjson::value&& val) { data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
+            void push() { env_data_.emplace_back(); }
+            void pop() { env_data_.erase(std::prev(std::end(env_data_))); }
+            size_t size() const { return env_data_.size(); }
+            void add(std::string_view key, const rjson::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
+            void add(std::string_view key, rjson::value&& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, std::move(val)); }
+            void add_to_toplevel(std::string_view key, const rjson::value& val) { env_data_.begin()->emplace_or_replace(std::string{key}, val); }
+            void add_to_toplevel(std::string_view key, rjson::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
             void print() const;
             void print_key_value() const;
 
             rjson::value substitute(std::string_view source) const;
 
           private:
-            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::value>> data_;
+            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::value>> env_data_;
 
             rjson::value substitute(const rjson::value& source) const;
         };
 
-        std::vector<rjson::value> data_;
+        LoadedDataFiles loaded_data_;
         mutable Environment environment_;
         mutable bool warn_if_set_used_{false};
 
@@ -132,16 +155,6 @@ namespace acmacs::settings::inline v2
 
 namespace acmacs::settings::inline v2
 {
-    template <typename... Key> const rjson::value& Settings::get(Key && ... keys) const
-    {
-        for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
-            if (const auto& val = it->get(std::forward<Key>(keys)...); !val.is_const_null())
-                return val;
-        }
-        return rjson::ConstNull;
-
-    } // acmacs::settings::v2::Settings::get
-
     template <> inline void Settings::setenv(std::string_view key, const rjson::value& value) { environment_.add(key, value); }
     template <> inline void Settings::setenv(std::string_view key, rjson::value && value) { environment_.add(key, std::move(value)); }
     template <> inline void Settings::setenv_toplevel(std::string_view key, const rjson::value& value) { environment_.add_to_toplevel(key, value); }

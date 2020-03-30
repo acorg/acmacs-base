@@ -5,37 +5,7 @@
 #include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
-
-namespace acmacs::settings::inline v2
-{
-    class Subenvironment
-    {
-      public:
-        Subenvironment(Settings::Environment& env, bool push) : env_{env}, push_{push}
-        {
-            if (push_)
-                env_.push();
-        }
-        ~Subenvironment()
-        {
-            if (push_)
-                env_.pop();
-        }
-
-      private:
-        Settings::Environment& env_;
-        const bool push_;
-    };
-
-    struct raii_true
-    {
-        constexpr raii_true(bool& val) : val_{val} { val_ = true; }
-        ~raii_true() { val_ = false; }
-        bool& val_;
-    };
-
-} // namespace acmacs::settings::inlinev2
-
+// Environment
 // ----------------------------------------------------------------------
 
 inline rjson::value acmacs::settings::v2::Settings::Environment::substitute(const rjson::value& source) const
@@ -94,14 +64,91 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::load(std::string_view filename)
+const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
 {
-    AD_LOG(acmacs::log::settings, "loading {}", filename);
-    data_.push_back(rjson::parse_file(filename, rjson::remove_comments::no));
-    apply_top("init");
+    switch (a_toplevel_only) {
+        case toplevel_only::no:
+            for (auto it = env_data_.rbegin(); it != env_data_.rend(); ++it) {
+                if (auto found = it->find(key); found != it->end())
+                    return found->second;
+            }
+            break;
+        case toplevel_only::yes:
+            if (auto found = env_data_.back().find(key); found != env_data_.back().end())
+                return found->second;
+            break;
+    }
+    return rjson::ConstNull;
 
-} // acmacs::settings::v2::Settings::load
+} // acmacs::settings::v2::Settings::Environment::get
 
+// ----------------------------------------------------------------------
+
+// const rjson::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
+// {
+//     if (auto found = env_data_.back().find(key); found != env_data_.back().end())
+//         return found->second;
+//     else
+//         return rjson::ConstNull;
+
+// } // acmacs::settings::v2::Settings::Environment::get_toplevel
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::Environment::print() const
+{
+    AD_INFO("Settings::Environment {}", env_data_.size());
+    for (auto [level, entries] : acmacs::enumerate(env_data_)) {
+        for (const auto& entry : entries)
+            AD_INFO("    {} \"{}\": {}", level, entry.first, substitute(entry.second));
+    }
+
+} // acmacs::settings::v2::Settings::Environment::print
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::Environment::print_key_value() const
+{
+    fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute(get("value", toplevel_only::no)));
+
+} // acmacs::settings::v2::Settings::Environment::print_value
+
+// ----------------------------------------------------------------------
+// Subenvironment
+// ----------------------------------------------------------------------
+
+namespace acmacs::settings::inline v2
+{
+    class Subenvironment
+    {
+      public:
+        Subenvironment(Settings::Environment& env, bool push) : env_{env}, push_{push}
+        {
+            if (push_)
+                env_.push();
+        }
+        ~Subenvironment()
+        {
+            if (push_)
+                env_.pop();
+        }
+
+      private:
+        Settings::Environment& env_;
+        const bool push_;
+    };
+
+    struct raii_true
+    {
+        constexpr raii_true(bool& val) : val_{val} { val_ = true; }
+        ~raii_true() { val_ = false; }
+        bool& val_;
+    };
+
+} // namespace acmacs::settings::inlinev2
+
+// ----------------------------------------------------------------------
+// Settings
 // ----------------------------------------------------------------------
 
 void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, std::string_view value)
@@ -174,7 +221,7 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name)
         throw error("cannot apply command with an empty name");
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_.substitute(name).to<std::string>();
-        if (const auto& val = data_.back().get(substituted_name); !val.is_const_null())
+        if (const auto& val = loaded_data_.get_top(substituted_name); !val.is_const_null())
             apply(val);
     }
 
@@ -472,55 +519,56 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, b
 } // acmacs::settings::v2::Settings::eval_empty
 
 // ----------------------------------------------------------------------
+// Load
+// ----------------------------------------------------------------------
 
-const rjson::value& acmacs::settings::v2::Settings::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
+void acmacs::settings::v2::Settings::LoadedDataFiles::load(std::string_view filename)
 {
-    switch (a_toplevel_only) {
-        case toplevel_only::no:
-            for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
-                if (auto found = it->find(key); found != it->end())
-                    return found->second;
-            }
-            break;
-        case toplevel_only::yes:
-            if (auto found = data_.back().find(key); found != data_.back().end())
-                return found->second;
-            break;
-    }
-    return rjson::ConstNull;
+    file_data_.insert(file_data_.begin(), rjson::parse_file(filename, rjson::remove_comments::no));
+    filenames_.insert(filenames_.begin(), std::string{filename});
 
-} // acmacs::settings::v2::Settings::Environment::get
+} // acmacs::settings::v2::Settings::LoadedDataFiles::load
 
 // ----------------------------------------------------------------------
 
-// const rjson::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
-// {
-//     if (auto found = data_.back().find(key); found != data_.back().end())
-//         return found->second;
-//     else
-//         return rjson::ConstNull;
-
-// } // acmacs::settings::v2::Settings::Environment::get_toplevel
-
-// ----------------------------------------------------------------------
-
-void acmacs::settings::v2::Settings::Environment::print() const
+void acmacs::settings::v2::Settings::LoadedDataFiles::reload(Settings& settings)
 {
-    AD_INFO("Settings::Environment {}", data_.size());
-    for (auto [level, entries] : acmacs::enumerate(data_)) {
-        for (const auto& entry : entries)
-            AD_INFO("    {} \"{}\": {}", level, entry.first, substitute(entry.second));
+    file_data_.clear();
+    for (auto fn  = filenames_.rbegin(); fn != filenames_.rend(); ++fn) {
+        file_data_.insert(file_data_.begin(), rjson::parse_file(*fn, rjson::remove_comments::no));
+        settings.apply_top("init");
     }
 
-} // acmacs::settings::v2::Settings::Environment::print
+} // acmacs::settings::v2::Settings::LoadedDataFiles::reload
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v2::Settings::Environment::print_key_value() const
+void acmacs::settings::v2::Settings::load(std::string_view filename)
 {
-    fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute(get("value", toplevel_only::no)));
+    AD_LOG(acmacs::log::settings, "loading {}", filename);
+    loaded_data_.load(filename);
+    apply_top("init");
 
-} // acmacs::settings::v2::Settings::Environment::print_value
+} // acmacs::settings::v2::Settings::load
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& filenames)
+{
+    for (const auto& filename : filenames)
+        load(filename);
+
+} // acmacs::settings::v2::Settings::load
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::reload()
+{
+
+} // acmacs::settings::v2::Settings::reload
+
+// ----------------------------------------------------------------------
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:
