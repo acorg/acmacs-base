@@ -5,7 +5,6 @@
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color-modifier.hh"
-#include "acmacs-base/field.hh"
 #include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
@@ -82,8 +81,6 @@ namespace acmacs
     class TextStyle
     {
      public:
-        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
-
         TextStyle() = default;
         TextStyle(std::string_view font_name) : font_family{std::string{font_name}} {}
 
@@ -92,9 +89,9 @@ namespace acmacs
                 return slant == ts.slant && weight == ts.weight && font_family == ts.font_family;
             }
 
-        field<FontSlant> slant;
-        field<FontWeight> weight;
-        field<std::string> font_family;
+        FontSlant slant;
+        FontWeight weight;
+        std::string font_family;
 
     }; // class TextStyle
 
@@ -103,21 +100,19 @@ namespace acmacs
     class LabelStyle
     {
      public:
-        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
-
         [[nodiscard]] bool operator==(const LabelStyle& ls) const
             {
                 return shown == ls.shown && offset == ls.offset && size == ls.size && color == ls.color
-                        && rotation == ls.rotation && interline == ls.interline && style == ls.style;
+                        && rotation == ls.rotation && float_equal(interline, ls.interline) && style == ls.style;
             }
         [[nodiscard]] bool operator!=(const LabelStyle& rhs) const { return !operator==(rhs); }
 
-        field<bool> shown{true};
-        field<Offset> offset{Offset{0, 1}};
-        field<Pixels> size{Pixels{10.0}};
-        field<color::Modifier> color{BLACK};
-        field<Rotation> rotation{NoRotation};
-        field<double> interline{0.2};
+        bool shown{true};
+        Offset offset{0, 1};
+        Pixels size{10.0};
+        color::Modifier color{BLACK};
+        Rotation rotation{NoRotation};
+        double interline{0.2};
         TextStyle style;
 
     }; // class LabelStyle
@@ -154,13 +149,13 @@ template <> struct fmt::formatter<acmacs::FontWeight> : fmt::formatter<acmacs::f
 
 template <> struct fmt::formatter<acmacs::TextStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::TextStyle& style, FormatCtx& ctx) {
-        return format_to(ctx.out(), R"({{"slant": {}, "weight": {}, "family": {}}})", *style.slant, *style.weight, *style.font_family);
+        return format_to(ctx.out(), R"({{"slant": {}, "weight": {}, "family": {}}})", style.slant, style.weight, style.font_family);
     }
 };
 
 template <> struct fmt::formatter<acmacs::LabelStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::LabelStyle& style, FormatCtx& ctx) {
-        return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {:2f}, "interline": {:.2f}, "style": {}}})", *style.shown, *style.offset, *style.size, *style.color, *style.rotation, *style.interline, style.style);
+        return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {:2f}, "interline": {:.2f}, "style": {}}})", style.shown, style.offset, style.size, style.color, style.rotation, style.interline, style.style);
     }
 };
 

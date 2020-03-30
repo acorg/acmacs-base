@@ -80,8 +80,6 @@ namespace acmacs
     class PointStyle
     {
       public:
-        template <typename T> using field = acmacs::detail::field_optional_with_default<T>;
-
         [[nodiscard]] bool operator==(const PointStyle& rhs) const noexcept
         {
             return shown == rhs.shown && fill == rhs.fill && outline == rhs.outline && outline_width == rhs.outline_width && size == rhs.size && rotation == rhs.rotation && aspect == rhs.aspect &&
@@ -89,16 +87,16 @@ namespace acmacs
         }
         [[nodiscard]] bool operator!=(const PointStyle& rhs) const noexcept { return !operator==(rhs); }
 
-        field<bool> shown{true};
-        field<color::Modifier> fill{TRANSPARENT};
-        field<color::Modifier> outline{BLACK};
-        field<Pixels> outline_width{Pixels{1.0}};
-        field<Pixels> size{Pixels{5.0}};
-        field<Rotation> rotation{NoRotation};
-        field<Aspect> aspect{AspectNormal};
-        field<PointShape> shape;
+        bool shown{true};
+        Color fill{TRANSPARENT};
+        Color outline{BLACK};
+        Pixels outline_width{1.0};
+        Pixels size{5.0};
+        Rotation rotation{NoRotation};
+        Aspect aspect{AspectNormal};
+        PointShape shape;
         LabelStyle label;
-        field<std::string> label_text;
+        std::string label_text;
 
         PointStyle& scale(double aScale) { size = static_cast<Pixels>(size) * aScale; return *this; }
         PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
@@ -154,7 +152,7 @@ template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::f
 template <> struct fmt::formatter<acmacs::PointStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::PointStyle& style, FormatCtx& ctx) {
         return format_to(ctx.out(), R"({{"shape": {}, "shown": {}, "fill": "{}", "outline": "{}", "outline_width": {}, "size": {}, "aspect": {}, "rotation": {}, "label": {}, "label_text": "{}"}})",
-                         *style.shape, *style.shown, *style.fill, *style.outline, *style.outline_width, *style.size, *style.aspect, *style.rotation, style.label, *style.label_text);
+                         style.shape, style.shown, style.fill, style.outline, style.outline_width, style.size, style.aspect, style.rotation, style.label, style.label_text);
     }
 };
 

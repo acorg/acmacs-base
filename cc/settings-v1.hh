@@ -509,7 +509,7 @@ namespace acmacs::settings
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from)
         {
             using namespace std::string_view_literals;
-            to = rjson::object{{"family"sv, *from.font_family}, {"slant"sv, fmt::format("{}", *from.slant)}, {"weight"sv, fmt::format("{}", *from.weight)}};
+            to = rjson::object{{"family"sv, from.font_family}, {"slant"sv, fmt::format("{}", from.slant)}, {"weight"sv, fmt::format("{}", from.weight)}};
         }
         template <> inline TextStyle field<TextStyle>::extract(const rjson::value& from) const
         {

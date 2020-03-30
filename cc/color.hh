@@ -93,6 +93,8 @@ namespace acmacs::color
     using RGB = std::array<uint32_t, 3>;
     constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
     constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
+
+    constexpr const Color& get(const Color& color) { return color; } // for compatibility with get(const acmacs::color::Modifier& color)
 }
 
 // ----------------------------------------------------------------------

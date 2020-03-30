@@ -34,7 +34,7 @@ namespace acmacs::detail
 
         [[nodiscard]] bool operator==(const field_optional_with_default<T>& f) const { return mValue.value_or(mDefault) == f.mValue.value_or(f.mDefault); }
 
-        bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
+        // bool is_default() const { return !mValue.has_value() || mValue.value() == mDefault; }
         bool not_default() const { return mValue.has_value() && mValue.value() != mDefault; }
         constexpr bool present() const { return mValue.has_value(); }
 
@@ -52,10 +52,7 @@ namespace acmacs::detail
 
         std::string to_string() const
             {
-                if (is_default())
-                    return fmt::format("{}(default)", mDefault);
-                else
-                    return fmt::format("{}", *mValue);
+                return fmt::format("{}{}", *mValue, not_default() ? "" : "(default)");
             }
 
      private:
@@ -69,10 +66,10 @@ namespace acmacs::detail
         return ((mValue.has_value() && f.mValue.has_value() && float_equal(mValue.value(), f.mValue.value())) || (!mValue.has_value() && !f.mValue.has_value())) && float_equal(mDefault, f.mDefault);
     }
 
-    template <> inline bool field_optional_with_default<double>::is_default() const
-    {
-        return !mValue.has_value() || float_equal(mValue.value(), mDefault);
-    }
+    // template <> inline bool field_optional_with_default<double>::is_default() const
+    // {
+    //     return !mValue.has_value() || float_equal(mValue.value(), mDefault);
+    // }
 
     template <> inline bool field_optional_with_default<double>::not_default() const
     {
