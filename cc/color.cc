@@ -75,7 +75,7 @@ struct HSV
     void adjust_saturation(double value) noexcept { s *= std::abs(value); if (s > 1.0) s = 1.0; }
     void adjust_brightness(double value) noexcept { v *= std::abs(value); if (v > 1.0) v = 1.0; }
 
-    void to_rgb(uint32_t dest) const noexcept
+    void to_rgb(uint32_t& dest) const noexcept
     {
         const auto from_rgb = [](double r, double g, double b) -> uint32_t { return (uint32_t(r * 255) << 16) | (uint32_t(g * 255) << 8) | uint32_t(b * 255); };
 

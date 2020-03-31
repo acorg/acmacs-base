@@ -65,16 +65,6 @@ namespace acmacs
 
     }; // class PointShape
 
-    // inline std::string to_string(const PointShape& shape) { return shape; }
-
-    // template <> inline std::string to_string(const acmacs::detail::field_optional_with_default<PointShape>& shape)
-    // {
-    //     if (shape.is_default())
-    //         return acmacs::to_string(*shape) + "(default)";
-    //     else
-    //         return acmacs::to_string(*shape);
-    // }
-
     // ----------------------------------------------------------------------
 
     class PointStyle
