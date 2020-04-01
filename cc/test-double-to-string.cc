@@ -17,9 +17,9 @@ int main(int, const char* const* argv)
 {
     int exit_code = 0;
     try {
-        std::vector<std::pair<double, const char*>> data{{0.1, "0.1"}, {0.2, "0.2"}, {0.3, "0.3"}, {0.4, "0.4"}, {0.5, "0.5"}, {0.6, "0.6"}, {0.7, "0.7"}, {0.8, "0.8"}, {0.9, "0.9"}, {0.91, "0.91"}, {0.912, "0.912"}, {0.9129, "0.9129"}, {1.0 / 3.1, "0.32258064516129031362723367237777"}};
+        std::vector<std::pair<double, const char*>> data{{0.1, "0.1"}, {0.2, "0.2"}, {0.3, "0.3"}, {0.4, "0.4"}, {0.5, "0.5"}, {0.6, "0.6"}, {0.7, "0.7"}, {0.8, "0.8"}, {0.9, "0.9"}, {0.91, "0.91"}, {0.912, "0.912"}, {0.9129, "0.9129"}, {1.0 / 3.1, "0.32258064516129031"}};
         for (auto [source, expected] : data) {
-            const auto result = acmacs::to_string(source);
+            const auto result = acmacs::format_double(source);
             my_assert(result == expected, argv[0] + std::string(" expected:") + expected + " got:" + result);
         }
     }

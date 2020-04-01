@@ -1,5 +1,16 @@
 #pragma once
 
+// ----------------------------------------------------------------------
+// Before <=> operator can be used
+// To avoid warnings about ==  and !=
+// ISO C++20 considers use of overloaded operator '==' (with operand types 'rjson::v2::value' and 'rjson::v2::value') to be ambiguous despite
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
+#endif
+
+// ----------------------------------------------------------------------
+
 #include <iostream>
 #include <variant>
 #include <string>
@@ -114,7 +125,7 @@ namespace rjson::inline v2
       private:
         content_t content_;
 
-        friend std::string to_string(const object& val, space_after_comma, const PrettyHandler&, show_empty_values);
+        friend std::string format(const object& val, space_after_comma, const PrettyHandler&, show_empty_values);
         friend std::string pretty(const object& val, emacs_indent, const PrettyHandler&, size_t prefix);
         friend class PrettyHandler;
 
@@ -139,11 +150,7 @@ namespace rjson::inline v2
         size_t max_index() const { return content_.size() - 1; }
 
         value& append(value&& aValue); // returns ref to inserted
-        void replace(const array& to_replace)
-        {
-            content_.resize(to_replace.size());
-            std::copy(to_replace.content_.begin(), to_replace.content_.end(), content_.begin());
-        }
+        void replace(const array& to_replace);
         void remove(size_t index);
         void clear();
 
@@ -163,7 +170,7 @@ namespace rjson::inline v2
       private:
         std::vector<value> content_;
 
-        friend std::string to_string(const array& val, space_after_comma, const PrettyHandler&, show_empty_values);
+        friend std::string format(const array& val, space_after_comma, const PrettyHandler&, show_empty_values);
         friend std::string pretty(const array& val, emacs_indent, const PrettyHandler&, size_t prefix);
         friend class PrettyHandler;
 
@@ -172,53 +179,6 @@ namespace rjson::inline v2
     // --------------------------------------------------
 
     using number = std::variant<long, double, std::string>;
-
-    inline std::string to_string(const number& val, show_empty_values = show_empty_values::yes)
-    {
-        auto visitor = [](auto&& arg) -> std::string {
-            if constexpr (acmacs::sfinae::decay_equiv_v<decltype(arg), std::string>)
-                return arg;
-            else
-                return acmacs::to_string(arg);
-        };
-        return std::visit(visitor, val);
-    }
-
-    inline double to_double(const number& val)
-    {
-        auto visitor = []<typename ArgX>(ArgX && arg)->double
-        {
-            using Arg = std::decay_t<ArgX>;
-            if constexpr (std::is_same_v<Arg, long>)
-                return static_cast<double>(arg);
-            else if constexpr (std::is_same_v<Arg, double>)
-                return arg;
-            else if constexpr (std::is_same_v<Arg, std::string>)
-                return std::stod(arg);
-            else
-                return std::numeric_limits<double>::quiet_NaN();
-        };
-        return std::visit(visitor, val);
-    }
-
-    template <typename Target> Target to_integer(const number& val)
-    {
-        auto visitor = []<typename ArgX>(ArgX && arg) -> Target
-        {
-            using Arg = std::decay_t<ArgX>;
-            if constexpr (std::is_same_v<Arg, long>)
-                return static_cast<Target>(arg);
-            else if constexpr (std::is_same_v<Arg, double>)
-                return static_cast<Target>(std::lround(arg));
-            else if constexpr (std::is_same_v<Arg, std::string>)
-                return static_cast<Target>(std::stoul(arg));
-            else {
-                fmt::print(stderr, "WARNING: rjson::number::to_integer: unexpected Target, value is {}\n", arg);
-                return static_cast<Target>(-1);
-            }
-        };
-        return std::visit(visitor, val);
-    }
 
     // --------------------------------------------------
 
@@ -355,7 +315,7 @@ namespace rjson::inline v2
         value_base value_;
 
         template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
-        template <typename T> T to_integer() const;
+//        template <typename T> T to_integer() const;
         void check_const_null() const
         {
             if (is_const_null())
@@ -370,48 +330,173 @@ namespace rjson::inline v2
 
     // --------------------------------------------------
 
-    std::string to_string(const object& val, show_empty_values a_show_empty_values = show_empty_values::yes);
-    std::string to_string(const array& val, show_empty_values a_show_empty_values = show_empty_values::yes);
-    inline std::string to_string(bool val, show_empty_values = show_empty_values::yes) { return val ? "true" : "false"; }
-    inline std::string to_string(null, show_empty_values = show_empty_values::yes) { return "null"; }
-    inline std::string to_string(const_null, show_empty_values = show_empty_values::yes) { return "*ConstNull"; }
-    inline std::string to_string(const std::string& val, show_empty_values = show_empty_values::yes) { return fmt::format("\"{}\"", val); }
+} // namespace rjson::inlinev2
 
-    inline std::string to_string(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
+// ----------------------------------------------------------------------
+
+namespace rjson::inline v2
+{
+    // ----------------------------------------------------------------------
+    // rjson::to - assign T from rjson::value, specify to classes, e.g. Color
+    // ----------------------------------------------------------------------
+
+    enum class ignore_null { no, yes };
+
+    // using value_base = std::variant<null, const_null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
+
+    template <typename Target> constexpr void to(null, Target& target)
     {
-        return std::visit(
-            [a_show_empty_values]<typename T>(T && arg)->std::string { return to_string(std::forward<T>(arg), a_show_empty_values); }, val.val_());
+        if constexpr (std::is_assignable_v<Target, const char*>)
+            target = "null";
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::null", AD_DEBUG_FILE_LINE_FUNC);
     }
 
-    inline std::string to_string_raw(const value& val) // if val is string, return it without quotes
+    template <typename Target> constexpr void to(const_null, Target& target)
+    {
+        if constexpr (std::is_assignable_v<Target, const char*>)
+            target = "*ConstNull";
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::const_null", AD_DEBUG_FILE_LINE_FUNC);
+    }
+
+    std::string format(const object& val, show_empty_values a_show_empty_values = show_empty_values::yes);
+
+    template <typename Target> constexpr void to(const object& source, Target& target)
+    {
+        if constexpr (std::is_assignable_v<Target, std::string>)
+            target = format(source, show_empty_values::yes);
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::object", AD_DEBUG_FILE_LINE_FUNC);
+    }
+
+    std::string format(const array& val, show_empty_values a_show_empty_values = show_empty_values::yes);
+
+    template <typename Target> void to(const array& source, Target& target)
+    {
+        if constexpr (std::is_assignable_v<Target, std::string>)
+            target = format(source, show_empty_values::yes);
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::array", AD_DEBUG_FILE_LINE_FUNC);
+    }
+
+    template <typename Target> void to(const std::string& source, Target& target)
+    {
+        // if constexpr (std::is_same_v<Target, std::string_view>)
+        //     target = source;
+        // else
+        if constexpr (std::is_assignable_v<Target, std::string>)
+            target = source; // fmt::format("\"{}\"", source);
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::string", AD_DEBUG_FILE_LINE_FUNC);
+    }
+
+    template <typename Target> void to(const number& source, Target& target)
+    {
+        std::visit(
+            [&]<typename Number>(const Number& from) {
+                if constexpr (std::is_same_v<Target, std::string>) {
+                    if constexpr (std::is_same_v<Number, std::string>)
+                        target = from;
+                    else if constexpr (std::is_same_v<Number, double>)
+                        target = acmacs::format_double(from);
+                    else
+                        target = fmt::format("{}", from);
+                }
+                else if constexpr (std::is_same_v<Target, std::string_view>)
+                    throw value_type_mismatch("std::string_view", "rjson::number", AD_DEBUG_FILE_LINE_FUNC);
+                else if constexpr (std::is_assignable_v<Target, Number>)
+                    target = from;
+                else if constexpr (std::is_convertible_v<Number, Target>)
+                    target = static_cast<Target>(from);
+                else if constexpr (std::is_same_v<Number, std::string>) {
+                    if constexpr (std::is_integral_v<Target>)
+                        target = static_cast<Target>(std::stoul(from));
+                    else
+                        target = std::stod(from);
+                }
+                else
+                    static_assert(std::is_same_v<Number, void>);
+            },
+            source);
+    }
+
+    template <typename Target> void to(bool source, Target& target)
+    {
+        if constexpr (std::is_integral_v<Target>)
+            target = source;
+        else if constexpr (std::is_assignable_v<Target, std::string>)
+            target = fmt::format("{}", source);
+        else
+            throw value_type_mismatch(typeid(Target).name(), "rjson::bool", AD_DEBUG_FILE_LINE_FUNC);
+    }
+
+    template <typename Target> void to(const value& source, Target& target, ignore_null ign = ignore_null::no)
+    {
+        std::visit(
+            [&target,ign]<typename Value>(const Value& arg) {
+                if constexpr (std::is_same_v<Value, null> || std::is_same_v<Value, const_null>) {
+                    if (ign == ignore_null::no)
+                        to(arg, target);
+                }
+                else {
+                    to(arg, target);
+                }
+            },
+            source.val_());
+    }
+
+    template <typename To, typename From = value> To to(const From& source)
+    {
+        To target;
+        to(source, target, ignore_null::no);
+        return target;
+    }
+
+    template <> inline value to<value, value>(const value& source) { return source; }
+
+    // ----------------------------------------------------------------------
+
+    template <typename Target> inline Target value::to() const { return rjson::to<Target>(*this); }
+
+    // ----------------------------------------------------------------------
+
+    inline std::string format(const value& val, show_empty_values a_show_empty_values = show_empty_values::yes)
     {
         return std::visit(
-            []<typename T>(T && arg)->std::string {
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return arg;
+            [=]<typename T>(const T& arg) -> std::string {
+                if constexpr (std::is_same_v<T, null> || std::is_same_v<T, const_null> || std::is_same_v<T, number> || std::is_same_v<T, bool>)
+                    return to<std::string>(arg);
+                else if constexpr (std::is_same_v<T, std::string>)
+                    return fmt::format("\"{}\"", arg);
                 else
-                    return to_string(std::forward<T>(arg));
+                    return format(arg, a_show_empty_values);
             },
             val.val_());
     }
 
 } // namespace rjson::inlinev2
 
-// ----------------------------------------------------------------------
+// ======================================================================
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<
-                                                   std::is_same_v<rjson::value, T>
-                                                   || std::is_base_of_v<rjson::object, T>
+                                                      std::is_base_of_v<rjson::object, T>
                                                    || std::is_base_of_v<rjson::array, T>
                                                    || std::is_base_of_v<rjson::null, T>
                                                    || std::is_base_of_v<rjson::const_null, T>
                                                    || std::is_base_of_v<rjson::number, T>
                                                    || std::is_base_of_v<bool, T>
                                                    , char>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to_string(val), ctx); }
+    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to<std::string>(val), ctx); }
 };
 
-// ----------------------------------------------------------------------
+template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_same_v<rjson::value, T>, char>> : fmt::formatter<std::string>
+// template <typename T> requires std::is_same_v<rjson::value, T> struct fmt::formatter<T> : fmt::formatter<std::string>
+{
+    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::format(val), ctx); }
+};
+
+// ======================================================================
 
 namespace rjson::inline v2
 {
@@ -442,6 +527,12 @@ namespace rjson::inline v2
         if (index >= content_.size())
             throw array_index_out_of_range{};
         content_.erase(content_.begin() + static_cast<decltype(content_.begin() - content_.begin())>(index));
+    }
+
+    inline void array::replace(const array& to_replace)
+    {
+        content_.resize(to_replace.size());
+        std::copy(to_replace.content_.begin(), to_replace.content_.end(), content_.begin());
     }
 
     inline void array::clear() { content_.clear(); }
@@ -552,98 +643,100 @@ namespace rjson::inline v2
 
     // --------------------------------------------------
 
-    template <> inline double value::to<double>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> double {
-                if constexpr (std::is_same_v<std::decay_t<T>, number>)
-                    return to_double(arg);
-                else
-                    throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <> inline double value::to<double>() const
+    // {
+    //     return std::visit(
+    //         [this]<typename T>(T&& arg) -> double {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, number>)
+    //                 return to_double(arg);
+    //             else
+    //                 throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
 
-    template <> inline std::string value::to<std::string>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> std::string {
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return arg;
-                else
-                    throw value_type_mismatch("std::string", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <> inline std::string value::to<std::string>() const
+    // {
+    //     return std::visit(
+    //         [this]<typename T>(T&& arg) -> std::string {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+    //                 return arg;
+    //             else
+    //                 throw value_type_mismatch("std::string", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
 
-    template <> inline std::string_view value::to<std::string_view>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> std::string_view {
-                if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
-                    return std::string_view{arg};
-                else
-                    throw value_type_mismatch("std::string_view", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <> inline std::string_view value::to<std::string_view>() const
+    // {
+    //     return std::visit(
+    //         [this]<typename T>(T&& arg) -> std::string_view {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+    //                 return std::string_view{arg};
+    //             else
+    //                 throw value_type_mismatch("std::string_view", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
 
-    template <typename T> inline T value::to_integer() const
-    {
-        return std::visit(
-            [this]<typename TT>(TT&& arg) -> T {
-                if constexpr (std::is_same_v<std::decay_t<TT>, number>)
-                    return rjson::to_integer<T>(arg);
-                else
-                    throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <typename T> inline T value::to_integer() const
+    // {
+    //     return std::visit(
+    //         [this]<typename TT>(TT&& arg) -> T {
+    //             if constexpr (std::is_same_v<std::decay_t<TT>, number>)
+    //                 return rjson::to_integer<T>(arg);
+    //             else
+    //                 throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
 
-    template <> inline size_t value::to<size_t>() const { return to_integer<size_t>(); }
-    template <> inline long value::to<long>() const { return to_integer<long>(); }
-    template <> inline int value::to<int>() const { return to_integer<int>(); }
-    template <> inline unsigned value::to<unsigned>() const { return to_integer<unsigned>(); }
-    template <> inline short value::to<short>() const { return to_integer<short>(); }
-    template <> inline unsigned short value::to<unsigned short>() const { return to_integer<unsigned short>(); }
+    // template <> inline size_t value::to<size_t>() const { return to_integer<size_t>(); }
+    // template <> inline long value::to<long>() const { return to_integer<long>(); }
+    // template <> inline int value::to<int>() const { return to_integer<int>(); }
+    // template <> inline unsigned value::to<unsigned>() const { return to_integer<unsigned>(); }
+    // template <> inline short value::to<short>() const { return to_integer<short>(); }
+    // template <> inline unsigned short value::to<unsigned short>() const { return to_integer<unsigned short>(); }
 
-    template <> inline bool value::to<bool>() const
-    {
-        return std::visit(
-            [this]<typename T>(T&& arg) -> bool {
-                if constexpr (std::is_same_v<std::decay_t<T>, bool>)
-                    return arg;
-                else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
-                    const auto val = rjson::to_integer<int>(arg);
-                    if (val != 0 && val != 1)
-                        fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), AD_DEBUG_FILE_LINE_FUNC);
-                    return val;
-                }
-                else
-                    throw value_type_mismatch("bool", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <> inline bool value::to<bool>() const
+    // {
+    //     return std::visit(
+    //         [this]<typename T>(T&& arg) -> bool {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, bool>)
+    //                 return arg;
+    //             else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
+    //                 const auto val = rjson::to_integer<int>(arg);
+    //                 if (val != 0 && val != 1)
+    //                     fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), AD_DEBUG_FILE_LINE_FUNC);
+    //                 return val;
+    //             }
+    //             else
+    //                 throw value_type_mismatch("bool", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
 
-    template <> inline std::vector<std::string_view> value::to<std::vector<std::string_view>>() const
-    {
-        return std::visit(
-            [this]<typename T>(T && arg)->std::vector<std::string_view> {
-                if constexpr (std::is_same_v<std::decay_t<T>, array>) {
-                    try {
-                        std::vector<std::string_view> result;
-                        arg.for_each([&result](const rjson::value& elt) { result.push_back(elt.to<std::string_view>()); });
-                        return result;
-                    }
-                    catch (std::exception& /*err*/) {
-                        throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-                    }
-                }
-                else
-                    throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            value_);
-    }
+    // template <> inline std::vector<std::string_view> value::to<std::vector<std::string_view>>() const
+    // {
+    //     return std::visit(
+    //         [this]<typename T>(T && arg)->std::vector<std::string_view> {
+    //             if constexpr (std::is_same_v<std::decay_t<T>, array>) {
+    //                 try {
+    //                     std::vector<std::string_view> result;
+    //                     arg.for_each([&result](const rjson::value& elt) { result.push_back(elt.to<std::string_view>()); });
+    //                     return result;
+    //                 }
+    //                 catch (std::exception& /*err*/) {
+    //                     throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //                 }
+    //             }
+    //             else
+    //                 throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+    //         },
+    //         value_);
+    // }
+
+    // template <> inline value value::to<value>() const { return *this; }
 
     // --------------------------------------------------
 
@@ -667,7 +760,7 @@ namespace rjson::inline v2
         return result;
     }
 
-    inline void object::insert(value&& aKey, value&& aValue) { content_.emplace(aKey.to<std::string>(), std::move(aValue)); }
+    inline void object::insert(value&& aKey, value&& aValue) { content_.emplace(to<std::string>(aKey), std::move(aValue)); }
 
     template <typename S> inline void object::insert(S aKey, const value& aValue) { content_.emplace(acmacs::to_string(aKey), aValue); }
 
@@ -1052,7 +1145,7 @@ namespace rjson::inline v2
             else if constexpr (std::is_same_v<T1, const_null>)
                 throw merge_error("cannot update ConstNull");
             else
-                throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", rjson::to_string(arg1), rjson::to_string(arg2)));
+                throw merge_error(fmt::format("cannot merge two rjson values of different types: {} and {}", arg1, arg2));
         };
 
         std::visit(visitor, value_, to_merge.value_);
@@ -1084,6 +1177,7 @@ namespace rjson::inline v2
     }
 
     // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 
     template <typename T> inline value to_value(T && source) { return std::forward<T>(source); }
 
@@ -1106,50 +1200,52 @@ namespace rjson::inline v2
 
     template <typename Target> inline void copy_if_not_null(const value& source, Target& target)
     {
-        std::visit(
-            [&target, &source](auto&& arg) {
-                using TT = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<TT, null> || std::is_same_v<TT, const_null>)
-                    ; // ignore nulls
-                else if constexpr (std::is_same_v<Target, TT>)
-                    target = arg;
-                else if constexpr (std::is_same_v<TT, number>) {
-                    if constexpr (std::is_same_v<Target, std::string>)
-                        target = to_string(arg);
-                    else if constexpr (std::is_same_v<Target, bool>)
-                        throw value_type_mismatch("bool", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-                    else if constexpr (std::is_integral_v<Target>)
-                        target = Target{to_integer<Target>(arg)};
-                    else if constexpr (std::is_floating_point_v<Target>)
-                        target = Target{to_double(arg)};
-                    else if constexpr (std::is_constructible_v<Target, double>)
-                        target = Target{to_double(arg)};
-                    else if constexpr (std::is_constructible_v<Target, long> || std::is_constructible_v<Target, unsigned long>)
-                        target = Target{to_integer<Target>(arg)};
-                    else
-                        throw value_type_mismatch("unknown", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-                }
-                else if constexpr (std::is_same_v<TT, std::string> && std::is_constructible_v<Target, TT>) {
-                    target = Target{arg};
-                }
-                else if constexpr (std::is_same_v<TT, array>) {
-                    if constexpr (std::is_same_v<Target, std::vector<double>>) {
-                        target.resize(arg.size());
-                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
-                    }
-                    else if constexpr (std::is_same_v<Target, std::array<double, 2>> || std::is_same_v<Target, std::array<double, 3>> || std::is_same_v<Target, std::array<double, 4>>) {
-                        if (arg.size() != target.size())
-                            throw value_type_mismatch(fmt::format("array<double, {}>", target.size()), source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
-                    }
-                    else
-                        throw value_type_mismatch("array/vector", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-                }
-                else
-                    throw value_type_mismatch("scalar", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
-            },
-            source.val_());
+        to(source, target, ignore_null::yes);
     }
+//        std::visit(
+//            [&target, &source](auto&& arg) {
+//                using TT = std::decay_t<decltype(arg)>;
+//                if constexpr (std::is_same_v<TT, null> || std::is_same_v<TT, const_null>)
+//                    ; // ignore nulls
+//                else if constexpr (std::is_same_v<Target, TT>)
+//                    target = arg;
+//                else if constexpr (std::is_same_v<TT, number>) {
+//                    if constexpr (std::is_same_v<Target, std::string>)
+//                        target = to_string(arg);
+//                    else if constexpr (std::is_same_v<Target, bool>)
+//                        throw value_type_mismatch("bool", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+//                    else if constexpr (std::is_integral_v<Target>)
+//                        target = Target{to_integer<Target>(arg)};
+//                    else if constexpr (std::is_floating_point_v<Target>)
+//                        target = Target{to_double(arg)};
+//                    else if constexpr (std::is_constructible_v<Target, double>)
+//                        target = Target{to_double(arg)};
+//                    else if constexpr (std::is_constructible_v<Target, long> || std::is_constructible_v<Target, unsigned long>)
+//                        target = Target{to_integer<Target>(arg)};
+//                    else
+//                        throw value_type_mismatch("unknown", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+//                }
+//                else if constexpr (std::is_same_v<TT, std::string> && std::is_constructible_v<Target, TT>) {
+//                    target = Target{arg};
+//                }
+//                else if constexpr (std::is_same_v<TT, array>) {
+//                    if constexpr (std::is_same_v<Target, std::vector<double>>) {
+//                        target.resize(arg.size());
+//                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
+//                    }
+//                    else if constexpr (std::is_same_v<Target, std::array<double, 2>> || std::is_same_v<Target, std::array<double, 3>> || std::is_same_v<Target, std::array<double, 4>>) {
+//                        if (arg.size() != target.size())
+//                            throw value_type_mismatch(fmt::format("array<double, {}>", target.size()), source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+//                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
+//                    }
+//                    else
+//                        throw value_type_mismatch("array/vector", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+//                }
+//                else
+//                    throw value_type_mismatch("scalar", source.actual_type(), AD_DEBUG_FILE_LINE_FUNC);
+//            },
+//            source.val_());
+//    }
 
     template <typename ExtractedType, typename F> inline void call_if_not_null(const value& source, F&& callback)
     {
@@ -1401,7 +1497,7 @@ namespace rjson::inline v2
 
     std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
 
-    inline bool value::operator==(const value& to_compare) const { return to_string(*this) == to_string(to_compare); }
+    inline bool value::operator==(const value& to_compare) const { return rjson::to<std::string>(*this) == rjson::to<std::string>(to_compare); }
 
 } // namespace rjson::inlinev2
 

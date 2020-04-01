@@ -74,7 +74,7 @@ std::shared_ptr<acmacs::Layout> acmacs::Layout::transform(const acmacs::Transfor
 
 acmacs::PointCoordinates acmacs::Layout::centroid() const
 {
-    PointCoordinates result(*number_of_dimensions(), 0.0);
+    PointCoordinates result(static_cast<double>(*number_of_dimensions()), 0.0);
     size_t num_non_nan = number_of_points();
     for (size_t p_no = 0; p_no < number_of_points(); ++p_no) {
         if (const auto coord = at(p_no); coord.exists())
@@ -82,7 +82,7 @@ acmacs::PointCoordinates acmacs::Layout::centroid() const
         else
             --num_non_nan;
     }
-    result /= num_non_nan;
+    result /= static_cast<double>(num_non_nan);
     return result;
 
 } // acmacs::Layout::centroid

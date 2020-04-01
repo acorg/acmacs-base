@@ -18,6 +18,8 @@
 #define AD_INFO(...) fmt::print(stderr, ">>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG(...) fmt::print(stderr, ">>>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
+#define AD_FORMAT(...) fmt::format("{} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+
 // ----------------------------------------------------------------------
 
 namespace acmacs

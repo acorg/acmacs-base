@@ -104,6 +104,12 @@ namespace acmacs::settings::inline v2
                 return rjson::ConstNull;
             }
 
+            void report() const
+            {
+                for (const auto& per_file : file_data_)
+                    AD_DEBUG("{}", per_file);
+            }
+
           private:
             std::vector<std::string> filenames_;
             std::vector<rjson::value> file_data_;
@@ -126,6 +132,7 @@ namespace acmacs::settings::inline v2
             void print_key_value() const;
 
             rjson::value substitute(std::string_view source) const;
+            std::string substitute_to_string(std::string_view source) const { return rjson::to<std::string>(substitute(source)); }
 
           private:
             std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::value>> env_data_;

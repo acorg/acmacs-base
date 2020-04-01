@@ -24,7 +24,7 @@ namespace acmacs::statistics
             sum += extractor(*first);
         if (num == 0)
             throw Error("mean(): empty range");
-        return {sum / num, num};
+        return {sum / static_cast<double>(num), num};
     }
 
     template <typename ForwardIterator, typename Extractor> inline double mean(ForwardIterator first, ForwardIterator last, Extractor extractor) { return mean_size(first, last, extractor).first; }
@@ -78,7 +78,7 @@ namespace acmacs::statistics
     {
         const auto vari = varianceN(first, last, mean, extractor);
         const auto size = last - first;
-        return {mean, std::sqrt(vari / size), std::sqrt(vari / (size - 1))};
+        return {mean, std::sqrt(vari / static_cast<double>(size)), std::sqrt(vari / static_cast<double>(size - 1))};
     }
 
     template <typename ForwardIterator> inline StandardDeviation standard_deviation(ForwardIterator first, ForwardIterator last, double mean) { return standard_deviation(first, last, mean, identity<double>); }
@@ -146,7 +146,7 @@ namespace acmacs::statistics
             return 0.0;
         const auto size = x_last - x_first;
         const auto x_mean = mean(x_first, x_last), y_mean = mean(y_first, y_first + size);
-        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / (size - 1) / standard_deviation(x_first, x_last, x_mean).population_sd() / standard_deviation(y_first, y_first + size, y_mean).population_sd();
+        return covarianceN(x_first, x_last, x_mean, y_first, y_mean) / static_cast<double>(size - 1) / standard_deviation(x_first, x_last, x_mean).population_sd() / standard_deviation(y_first, y_first + size, y_mean).population_sd();
     }
 
     template <typename Container> inline double correlation(const Container& first, const Container& second)

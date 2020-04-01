@@ -7,6 +7,7 @@
 #include <optional>
 #include <functional>
 
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/rjson.hh"
@@ -101,7 +102,7 @@ namespace acmacs::settings
             toplevel() = default;
 
             std::string path() const override { return {}; }
-            std::string to_string() const { return rjson::to_string(value_); }
+            std::string to_string() const { return rjson::format(value_); }
             std::string pretty() const { return rjson::pretty(value_); }
 
             void read_from_file(std::string_view filename) { value_ = rjson::parse_file(filename, rjson::remove_comments::no); }
@@ -122,7 +123,7 @@ namespace acmacs::settings
          public:
             object(base& parent) : parent_(parent) {}
             std::string path() const override { return parent_.path(); }
-            std::string to_json() const { return rjson::to_string(get()); }
+            std::string to_json() const { return rjson::format(get()); }
             std::string pretty() const { return rjson::pretty(get()); }
 
             rjson::value& set() override { auto& val = parent_.set(); if (val.is_null()) val = rjson::object{}; return val; }
@@ -132,7 +133,7 @@ namespace acmacs::settings
             base& parent_;
         };
 
-        inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << rjson::to_string(obj.get()); }
+        inline std::ostream& operator<<(std::ostream& out, const object& obj) { return out << rjson::format(obj.get()); }
 
         // --------------------------------------------------
 
@@ -162,7 +163,7 @@ namespace acmacs::settings
             base& parent_;
         };
 
-        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << rjson::to_string(arr.get()); }
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array_basic<T>& arr) { return out << rjson::format(arr.get()); }
 
         // --------------------------------------------------
 
@@ -232,7 +233,7 @@ namespace acmacs::settings
             std::string make_element_path(size_t index) const { return path() + '[' + std::to_string(index) + ']'; }
         };
 
-        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << rjson::to_string(arr.get()); }
+        template <typename T> inline std::ostream& operator<<(std::ostream& out, const array<T>& arr) { return out << rjson::format(arr.get()); }
 
         // --------------------------------------------------
 
@@ -504,7 +505,7 @@ namespace acmacs::settings
         template <> inline Offset field<Offset>::extract(const rjson::value& from) const { return {from[0].to<double>(), from[1].to<double>()}; }
 
         template <> inline void field<Color>::assign(rjson::value& to, const Color& from) { to = fmt::format("{}", from); }
-        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(from.to<std::string_view>()); }
+        template <> inline Color field<Color>::extract(const rjson::value& from) const { return Color(rjson::to<std::string_view>(from)); }
 
         template <> inline void field<TextStyle>::assign(rjson::value& to, const TextStyle& from)
         {

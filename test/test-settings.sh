@@ -24,7 +24,7 @@ trap failed ERR
 
 cd "$TESTDIR"
 # ../dist/test-settings
-../dist/test-settings >"${TDIR}/test-settings.output.txt" 2>/dev/null
+../dist/test-settings >"${TDIR}/test-settings.output.txt" 2>"${TDIR}/test-settings.err.txt" || ( echo "********************"; cat "${TDIR}/test-settings.output.txt"; echo "********************"; cat "${TDIR}/test-settings.err.txt"; false )
 if ! cmp "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt; then
     diff "${TDIR}/test-settings.output.txt" test-settings-expected-output.txt || true
     echo

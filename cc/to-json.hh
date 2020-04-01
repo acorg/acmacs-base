@@ -155,7 +155,7 @@ namespace to_json
 
             static inline std::string escape(std::string_view str)
             {
-                std::string result(static_cast<size_t>(str.size() * 1.2), ' ');
+                std::string result(str.size() * 6 / 5, ' '); // * 1.2 without using double
                 auto output = std::begin(result);
                 for (auto input = std::begin(str); input != std::end(str); ++input, ++output) {
                     switch (*input) {

@@ -22,6 +22,7 @@ TARGETS = \
 all: install-acmacs-base
 
 CONFIGURE_BOOST = 1
+# ECHO_COMPILATION_COMMAND = 1
 include $(ACMACSD_ROOT)/share/Makefile.config
 
 # ----------------------------------------------------------------------

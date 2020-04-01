@@ -43,14 +43,14 @@ rjson::value acmacs::settings::v2::Settings::Environment::substitute(std::string
         }
         else {
             const auto replace = [](const auto& src, size_t prefix, const rjson::value& infix, size_t suffix) {
-                return fmt::format("{}{}{}", src.substr(0, prefix), rjson::to_string_raw(infix), src.substr(suffix));
+                return fmt::format("{}{}{}", src.substr(0, prefix), rjson::to<std::string>(infix), src.substr(suffix));
             };
 
             std::string result = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
             std::smatch m2;
             while (std::regex_search(result, m2, re)) {
                 if (const auto& found2 = get(m2.str(1), toplevel_only::no); found2.is_const_null())
-                    throw error(fmt::format("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
+                    throw error(AD_FORMAT("cannot find substitution for \"{}\" in environment, source: \"{}\"", m1.str(1), source));
                 else
                     result = replace(result, static_cast<size_t>(m2.position(0)), found2, static_cast<size_t>(m2.position(0) + m2.length(0)));
             }
@@ -196,9 +196,9 @@ void acmacs::settings::v2::Settings::apply(std::string_view name)
 {
     AD_LOG(acmacs::log::settings, "apply \"{}\"", name);
     if (name.empty())
-        throw error("cannot apply command with an empty name");
+        throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = environment_.substitute(name).to<std::string>();
+        const auto substituted_name = environment_.substitute_to_string(name);
         if (const auto& val1 = environment_.get(substituted_name, toplevel_only::no); !val1.is_const_null()) {
             // AD_LOG(acmacs::log::settings, "apply val1 {}", val1);
             apply(val1);
@@ -207,8 +207,10 @@ void acmacs::settings::v2::Settings::apply(std::string_view name)
             // AD_LOG(acmacs::log::settings, "apply val2 {}", val1);
             apply(val2);
         }
-        else if (!apply_built_in(substituted_name))
-            throw error(fmt::format("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name));
+        else if (!apply_built_in(substituted_name)) {
+            loaded_data_.report();
+            throw error{AD_FORMAT("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name)};
+        }
     }
 
 } // acmacs::settings::v2::Settings::apply
@@ -217,10 +219,11 @@ void acmacs::settings::v2::Settings::apply(std::string_view name)
 
 void acmacs::settings::v2::Settings::apply_top(std::string_view name)
 {
+    AD_LOG(acmacs::log::settings, "apply_top \"{}\"", name);
     if (name.empty())
-        throw error("cannot apply command with an empty name");
+        throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = environment_.substitute(name).to<std::string>();
+        const auto substituted_name = environment_.substitute_to_string(name);
         if (const auto& val = loaded_data_.get_top(substituted_name); !val.is_const_null())
             apply(val);
     }
@@ -247,7 +250,7 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
         return false;
     }
     catch (std::exception& err) {
-        throw error{fmt::format("cannot apply \"{}\": {}", name, err)};
+        throw error{AD_FORMAT("cannot apply \"{}\": {}", name, err)};
     }
 
 } // acmacs::settings::v2::Settings::apply_built_in
@@ -257,22 +260,22 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
 void acmacs::settings::v2::Settings::apply(const rjson::value& entry)
 {
     try {
-        AD_LOG(acmacs::log::settings, "apply \"{}\"", entry);
+        AD_LOG(acmacs::log::settings, "apply {}", entry);
         rjson::for_each(entry, [this](const rjson::value& sub_entry) {
             std::visit(
-                [this]<typename T>(T && sub_entry_val) {
+                [this]<typename T>(const T& sub_entry_val) {
                     if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                         this->apply(std::string_view{sub_entry_val});
                     else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>)
                         this->push_and_apply(sub_entry_val);
                     else
-                        throw error(fmt::format("cannot apply: {}\n", sub_entry_val));
+                        throw error{AD_FORMAT("cannot apply: {}\n", sub_entry_val)};
                 },
                 sub_entry.val_());
         });
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
+        throw error(AD_FORMAT("cannot apply: {} : {}\n", err, entry));
     }
 
 } // acmacs::settings::v2::Settings::apply
@@ -285,7 +288,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry)
     AD_LOG(acmacs::log::settings, "{}", entry);
     try {
         if (const auto& command_v = entry.get("N"); !command_v.is_const_null()) {
-            const auto command{command_v.to<std::string_view>()};
+            const auto command{rjson::to<std::string_view>(command_v)};
             AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
             Subenvironment sub_env(environment_, command != "set");
             entry.for_each([this](const std::string& key, const rjson::value& val) {
@@ -303,10 +306,10 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::object& entry)
             // command is commented out
         }
         else
-            throw error(fmt::format("cannot apply: {}\n", entry));
+            throw error(AD_FORMAT("cannot apply: {}\n", entry));
     }
     catch (rjson::value_type_mismatch& err) {
-        throw error(fmt::format("cannot apply: {} : {}\n", err, entry));
+        throw error(AD_FORMAT("cannot apply: {} : {}\n", err, entry));
     }
 
 
@@ -321,7 +324,7 @@ void acmacs::settings::v2::Settings::apply_if()
         if (const auto& then_clause = getenv("then", toplevel_only::yes); !then_clause.is_null()) {
             AD_LOG(acmacs::log::settings, "if then {}", then_clause);
             if (!then_clause.is_array())
-                throw error{"\"then\" clause must be array"};
+                throw error{AD_FORMAT("\"then\" clause must be array")};
             apply(then_clause);
         }
     }
@@ -329,7 +332,7 @@ void acmacs::settings::v2::Settings::apply_if()
         if (const auto& else_clause = getenv("else", toplevel_only::yes); !else_clause.is_null()) {
             AD_LOG(acmacs::log::settings, "if else {}", else_clause);
             if (!else_clause.is_array())
-                throw error{"\"else\" clause must be array"};
+                throw error{AD_FORMAT("\"else\" clause must be array")};
             apply(else_clause);
         }
     }
@@ -342,16 +345,16 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
 {
     try {
         return std::visit(
-            [this]<typename T>(T && arg)->bool {
+            [this]<typename T>(T&& arg) -> bool {
                 if constexpr (std::is_same_v<std::decay_t<T>, rjson::null> || std::is_same_v<std::decay_t<T>, rjson::const_null>)
                     return false;
                 else if constexpr (std::is_same_v<std::decay_t<T>, rjson::number>)
-                    return !float_zero(rjson::to_double(arg));
+                    return !float_zero(rjson::to<double>(arg));
                 else if constexpr (std::is_same_v<std::decay_t<T>, bool>)
                     return arg;
                 else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>) {
                     if (arg.size() != 1)
-                        throw error{"object must have exactly one key"};
+                        throw error{AD_FORMAT("object must have exactly one key")};
                     if (const auto& and_clause = arg.get("and"); !and_clause.is_null())
                         return eval_and(and_clause);
                     else if (const auto& empty_clause = arg.get("empty"); !empty_clause.is_null())
@@ -367,21 +370,21 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
                     else if (const auto& or_clause = arg.get("or"); !or_clause.is_null())
                         return eval_or(or_clause);
                     else
-                        throw error{"unrecognized clause"};
+                        throw error{AD_FORMAT("unrecognized clause")};
                 }
                 else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
-                    if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string() && substituted.to<std::string_view>() == arg)
-                        throw error{"unsupported value type"};
+                    if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string() && rjson::to<std::string_view>(substituted) == arg)
+                        throw error{AD_FORMAT("unsupported value type")};
                     else
                         return eval_condition(substituted);
                 }
                 else if constexpr (std::is_same_v<std::decay_t<T>, rjson::array>)
-                    throw error{"unsupported value type"};
+                    throw error{AD_FORMAT("unsupported value type")};
             },
             condition.val_());
     }
     catch (std::exception& err) {
-        throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
+        throw error(AD_FORMAT("cannot eval condition: {} -- condition: {}\n", err, condition));
     }
 
 } // acmacs::settings::v2::Settings::eval_condition
@@ -390,16 +393,16 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
 
 rjson::value acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
 {
-    if (const auto& val = environment_.get(environment_.substitute(key).to<std::string>(), a_toplevel_only); val.is_string()) {
-        auto orig = val.to<std::string>();
+    if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
+        auto orig = rjson::to<std::string_view>(val);
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
             const auto substituted = environment_.substitute(std::string_view{orig});
-            if (substituted.is_string() && orig != substituted.to<std::string>())
-                orig = substituted.to<std::string>();
+            if (substituted.is_string() && orig != rjson::to<std::string_view>(substituted))
+                orig = rjson::to<std::string_view>(substituted);
             else
                 return substituted;
         }
-        throw error(fmt::format("Settings::getenv: too many substitutions in {}", rjson::to_string(val)));
+        throw error(AD_FORMAT("Settings::getenv: too many substitutions in {}", val));
     }
     else
         return val;
@@ -488,12 +491,12 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, b
                 else if constexpr (std::is_same_v<Arg, std::string>)
                     return arg.empty() == true_if_empty;
                 else
-                    throw error{"unsupported value type"};
+                    throw error{AD_FORMAT("unsupported value type")};
             },
             substitute(condition).val_());
     }
     catch (std::exception& err) {
-        throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
+        throw error(AD_FORMAT("cannot eval condition: {} -- condition: {}\n", err, condition));
     }
 
     // try {
@@ -503,7 +506,7 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::value& condition, b
     //                 return true_if_empty;
     //             else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
     //                 if (const rjson::value substituted = environment_.substitute(std::string_view{arg}); substituted.is_string())
-    //                     return rjson::to_string_raw(substituted).empty() == true_if_empty;
+    //                     return rjson::to<std::string>(substituted).empty() == true_if_empty;
     //                 else
     //                     throw error{"unsupported value type"};
     //             }

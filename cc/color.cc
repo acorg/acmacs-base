@@ -1,3 +1,4 @@
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/color.hh"
 
 #include "color-names.icc"
@@ -84,7 +85,7 @@ struct HSV
         }
         else {
             const double hh = (h > 360.0 ? 0.0 : h) / 60.0;
-            const double ff = hh - static_cast<long>(hh);
+            const double ff = hh - std::ceil(hh);
             const double p = v * (1.0 - s);
             const double q = v * (1.0 - (s * ff));
             const double t = v * (1.0 - (s * (1.0 - ff)));

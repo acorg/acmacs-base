@@ -33,7 +33,7 @@ std::string_view Color::name() const noexcept
     return {};
 }
 
-using ncp = std::pair<std::string_view, uint32_t>;
+using ncp = std::pair<const std::string_view, uint32_t>;
 
 // /usr/X11/share/X11/rgb.txt
 
@@ -796,9 +796,13 @@ static const std::array sNameColorSorted = {
 
 inline uint32_t find_color_by_name(std::string_view name)
 {
-    if (const auto found = std::lower_bound(std::begin(sNameColorSorted), std::end(sNameColorSorted), name, [](const auto& en, std::string_view nam) { return en.first < nam; }); found != std::end(sNameColorSorted) && found->first == name)
+    const auto cmp = [](const auto& en, std::string_view nam) { return en.first < nam; };
+    if (const auto found = std::lower_bound(std::begin(sNameColorSorted), std::end(sNameColorSorted), name, cmp); found != std::end(sNameColorSorted) && found->first == name)
         return found->second;
-    throw std::exception{};
+    else if (found != std::end(sNameColorSorted))
+        throw std::runtime_error{fmt::format("{}", found->first)};
+    else
+        throw std::runtime_error{"*end of color list reached*"};
 }
 
 int acmacs::color::test_find_color_by_name()
@@ -808,16 +812,14 @@ int acmacs::color::test_find_color_by_name()
         try {
             find_color_by_name(en.first);
         }
-        catch (std::exception&) {
-            fmt::print(stderr, ">> WARNING cannot find color \"{}\"\n", en.first);
+        catch (std::exception& err ) {
+            AD_WARNING("cannot find color \"{}\": {}", en.first, err);
             ++errors;
         }
     }
     return errors;
 
 } // acmacs::color::test_find_color_by_name
-
-// ----------------------------------------------------------------------
 
 // ----------------------------------------------------------------------
 /// Local Variables:

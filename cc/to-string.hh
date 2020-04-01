@@ -9,6 +9,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include "acmacs-base/format-double.hh"
+
 // ----------------------------------------------------------------------
 
 namespace acmacs
@@ -53,7 +55,8 @@ namespace acmacs
     } // namespace detail
 #pragma GCC diagnostic pop
 
-    inline std::string to_string(double value, size_t precision = 32) { return detail::to_string_double(value, precision, "%.*g"); }
+    // inline std::string to_string(double value, size_t precision = 32) { return detail::to_string_double(value, precision, "%.*g"); }
+    inline std::string to_string(double value, size_t /*precision*/ = 32) { return format_double(value); }
     inline std::string to_string(long double value, size_t precision = 64) { return detail::to_string_double(value, precision, "%.*Lg"); }
 
     inline std::string to_string(std::string src) { return src; }

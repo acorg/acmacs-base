@@ -1,4 +1,5 @@
 #include "acmacs-base/argv.hh"
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/settings.hh"
 
 // ----------------------------------------------------------------------
@@ -18,6 +19,8 @@ int main(int argc, const char* argv[])
 
     try {
         Options opt(argc, argv);
+        acmacs::log::register_enabler_acmacs_base();
+        // acmacs::log::enable("settings");
         if (!opt.settings_files->empty()) {
             acmacs::settings::Settings s1;
             AD_DEBUG("loading {}", opt.settings_files);

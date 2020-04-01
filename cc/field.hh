@@ -1,5 +1,7 @@
 #pragma once
 
+#error Unused!
+
 #include <optional>
 #include <iostream>
 

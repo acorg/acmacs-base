@@ -27,6 +27,9 @@ namespace py = pybind11;
 #pragma GCC diagnostic ignored "-Wundef"
 #pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+
+#pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
+
 #endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
