@@ -391,6 +391,10 @@ namespace rjson::inline v2
             throw value_type_mismatch(typeid(Target).name(), "rjson::string", AD_DEBUG_FILE_LINE);
     }
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
     template <typename Target> void to(const number& source, Target& target)
     {
         std::visit(
@@ -406,27 +410,23 @@ namespace rjson::inline v2
                 else if constexpr (std::is_same_v<Target, std::string_view>)
                     throw value_type_mismatch("std::string_view", "rjson::number", AD_DEBUG_FILE_LINE);
                 else if constexpr (std::is_assignable_v<Target, Number> || std::is_convertible_v<Number, Target>)
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
-#endif
                     target = static_cast<Target>(from);
-#pragma GCC diagnostic pop
                 else if constexpr (std::is_same_v<Number, std::string>) {
                     if constexpr (std::is_integral_v<Target>)
                         target = static_cast<Target>(std::stoul(from));
-                    else if constexpr (std::is_assignable_v<Target, double>)
+                    else if constexpr (std::is_floating_point_v<Target> || std::is_assignable_v<Target, double>)
                         target = static_cast<Target>(std::stod(from));
                     else if constexpr (std::is_constructible_v<Target, Number>)
                         target = Target{from}; // for named_string_t
                     else
-                        throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source), AD_DEBUG_FILE_LINE);
+                        throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number<std::string>({})", from), AD_DEBUG_FILE_LINE);
                 }
                 else
                     throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source), AD_DEBUG_FILE_LINE);
             },
             source);
     }
+#pragma GCC diagnostic pop
 
     template <typename Target> void to(bool source, Target& target)
     {
