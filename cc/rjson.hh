@@ -404,19 +404,26 @@ namespace rjson::inline v2
                         target = fmt::format("{}", from);
                 }
                 else if constexpr (std::is_same_v<Target, std::string_view>)
-                throw value_type_mismatch("std::string_view", "rjson::number", AD_DEBUG_FILE_LINE);
-                else if constexpr (std::is_assignable_v<Target, Number>)
-                    target = from;
-                else if constexpr (std::is_convertible_v<Number, Target>)
+                    throw value_type_mismatch("std::string_view", "rjson::number", AD_DEBUG_FILE_LINE);
+                else if constexpr (std::is_assignable_v<Target, Number> || std::is_convertible_v<Number, Target>)
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
                     target = static_cast<Target>(from);
+#pragma GCC diagnostic pop
                 else if constexpr (std::is_same_v<Number, std::string>) {
                     if constexpr (std::is_integral_v<Target>)
                         target = static_cast<Target>(std::stoul(from));
+                    else if constexpr (std::is_assignable_v<Target, double>)
+                        target = static_cast<Target>(std::stod(from));
+                    else if constexpr (std::is_constructible_v<Target, Number>)
+                        target = Target{from}; // for named_string_t
                     else
-                        target = std::stod(from);
+                        throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source), AD_DEBUG_FILE_LINE);
                 }
                 else
-                    static_assert(std::is_same_v<Number, void>);
+                    throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source), AD_DEBUG_FILE_LINE);
             },
             source);
     }
@@ -555,7 +562,7 @@ namespace rjson::inline v2
         }
         else {
             std::transform(content_.begin(), content_.end(), std::forward<T>(target),
-                           [](const value& val) -> std::remove_reference_t<decltype(*target)> { return val.to<std::remove_reference_t<decltype(*target)>>(); });
+                           [](const value& val) -> std::remove_reference_t<decltype(*target)> { return rjson::to<std::remove_reference_t<decltype(*target)>>(val); });
         }
     }
 
