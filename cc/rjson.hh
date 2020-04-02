@@ -1386,16 +1386,21 @@ namespace rjson::inline v2
             target[field_name] = number(acmacs::to_string(aValue, precision));
     }
 
-    template <typename S, typename Iterator> inline void set_array_field_if_not_empty(value & target, S key, Iterator first, Iterator last)
+    template <typename Iterator> inline void set_array_field_if_not_empty(value & target, std::string_view key, Iterator first, Iterator last)
     {
         if (first != last) {
             auto& ar = target[key] = array{};
             for (; first != last; ++first)
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
                 ar.append(*first);
+#pragma GCC diagnostic pop
         }
     }
 
-    template <typename S, typename Container> inline void set_array_field_if_not_empty(value & target, S key, Container && container)
+    template <typename Container> inline void set_array_field_if_not_empty(value & target, std::string_view key, Container && container)
     {
         set_array_field_if_not_empty(target, key, std::begin(container), std::end(container));
     }
