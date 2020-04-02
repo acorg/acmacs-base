@@ -5,7 +5,7 @@
 
 // ----------------------------------------------------------------------
 
-#define AD_DEBUG_FILE_LINE fmt::format("{}:{}", __FILE__, __LINE__)
+#define AD_DEBUG_FILE_LINE fmt::format(" @@ {}:{}", __FILE__, __LINE__)
 #define AD_DEBUG_FILE_LINE_FUNC_S fmt::format("{}:{}: {}", __FILE__, __LINE__, __PRETTY_FUNCTION__)
 #define AD_DEBUG_FILE_LINE_FUNC fmt::format(" [{}]", AD_DEBUG_FILE_LINE_FUNC_S)
 
