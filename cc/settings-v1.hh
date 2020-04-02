@@ -1,5 +1,10 @@
 #pragma once
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -524,6 +529,8 @@ namespace acmacs::settings
     } // namespace v1
 
 } // namespace acmacs::settings
+
+#pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 /// Local Variables:
