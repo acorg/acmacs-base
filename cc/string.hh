@@ -175,7 +175,7 @@ namespace string
       // ends_with
       // ----------------------------------------------------------------------
 
-    template <typename S> inline bool ends_with(const S& data, const char* end)
+    inline bool ends_with(std::string_view data, const char* end)
     {
         const std::string_view end_view{end};
         return std::string_view(data.data() + data.size() - end_view.size(), end_view.size()) == end_view;

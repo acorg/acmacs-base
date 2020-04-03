@@ -1,4 +1,4 @@
-#include <iostream>
+// #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cerrno>
@@ -8,12 +8,16 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include "acmacs-base/filesystem.hh"
+#include "acmacs-base/string.hh"
+#include "acmacs-base/fmt.hh"
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
 #include "acmacs-base/gzip.hh"
 #include "acmacs-base/date.hh"
 #include "acmacs-base/string.hh"
 #include "acmacs-base/read-file.hh"
+#include "acmacs-base/temp-file.hh"
 
 // ----------------------------------------------------------------------
 
@@ -138,7 +142,7 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir,
             fs::create_directory(backup_dir);
         }
         catch (std::exception& err) {
-            std::cerr << "ERROR: cannot create directory " << backup_dir << ": " << err.what() << '\n';
+            fmt::print(stderr, "> ERROR cannot create directory {}: {}\n", backup_dir.native(), err);
             throw;
         }
 
@@ -162,7 +166,7 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir,
                         fs::copy_file(to_backup, new_name, fs::copy_options::overwrite_existing);
                 }
                 catch (std::exception& err) {
-                    std::cerr << "WARNING: backing up \"" << to_backup << "\" to \"" << new_name << "\" failed: " << err.what() << '\n';
+                    fmt::print(stderr, ">> WARNING backing up \"{}\" to \"{}\" failed: {}\n", to_backup.native(), new_name.native(), err);
                 }
                 break;
             }
@@ -173,7 +177,15 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir,
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::write(std::string aFilename, std::string_view aData, force_compression aForceCompression, backup_file aBackupFile)
+void acmacs::file::backup(const fs::path& to_backup, backup_move bm)
+{
+    backup(to_backup, to_backup.parent_path() / ".backup", bm);
+
+} // acmacs::file::backup
+
+// ----------------------------------------------------------------------
+
+void acmacs::file::write(std::string_view aFilename, std::string_view aData, force_compression aForceCompression, backup_file aBackupFile)
 {
     int f = -1;
     if (aFilename == "-") {
@@ -190,7 +202,7 @@ void acmacs::file::write(std::string aFilename, std::string_view aData, force_co
     else {
         if (aBackupFile == backup_file::yes && aFilename.substr(0, 4) != "/dev") // allow writing to /dev/ without making backup attempt
             backup(aFilename);
-        f = open(aFilename.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
+        f = open(aFilename.data(), O_WRONLY | O_TRUNC | O_CREAT, 0644);
         if (f < 0)
             throw std::runtime_error(fmt::format("Cannot open {}: {}", aFilename, strerror(errno)));
     }
