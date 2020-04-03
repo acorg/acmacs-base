@@ -2,18 +2,8 @@
 
 #include <string>
 #include <string_view>
-// #include <variant>
-// #include <functional>
-
-// #include "acmacs-base/filesystem.hh"
 
 // ----------------------------------------------------------------------
-
-namespace std::filesystem
-{
-    class path;
-}
-namespace fs = std::filesystem;
 
 namespace acmacs::file
 {
@@ -22,8 +12,6 @@ namespace acmacs::file
     enum class backup_move { no, yes };
 
       // ----------------------------------------------------------------------
-
-    // inline bool exists(std::string aFilename) { return fs::exists(aFilename); }
 
     std::string decompress_if_necessary(std::string_view aSource);
 
@@ -61,10 +49,9 @@ namespace acmacs::file
     std::string read_from_file_descriptor(int fd, size_t chunk_size = 1024);
     inline std::string read_stdin() { return read_from_file_descriptor(0); }
     void write(std::string_view aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes);
-    // inline void write(std::string_view aFilename, std::string_view aData, force_compression aForceCompression = force_compression::no, backup_file aBackupFile = backup_file::yes) { write(std::string(aFilename), aData, aForceCompression, aBackupFile); }
 
-    void backup(const fs::path& to_backup, const fs::path& backup_dir, backup_move bm = backup_move::no);
-    void backup(const fs::path& to_backup, backup_move bm = backup_move::no);
+    void backup(std::string_view to_backup, std::string_view backup_dir, backup_move bm = backup_move::no);
+    void backup(std::string_view to_backup, backup_move bm = backup_move::no);
 
 } // namespace acmacs::file
 

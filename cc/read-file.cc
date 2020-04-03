@@ -135,8 +135,10 @@ std::string acmacs::file::read_from_file_descriptor(int fd, size_t chunk_size)
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir, backup_move bm)
+void acmacs::file::backup(std::string_view _to_backup, std::string_view _backup_dir, backup_move bm)
 {
+    const fs::path to_backup{_to_backup}, backup_dir{_backup_dir};
+
     if (fs::exists(to_backup)) {
         try {
             fs::create_directory(backup_dir);
@@ -177,9 +179,9 @@ void acmacs::file::backup(const fs::path& to_backup, const fs::path& backup_dir,
 
 // ----------------------------------------------------------------------
 
-void acmacs::file::backup(const fs::path& to_backup, backup_move bm)
+void acmacs::file::backup(const std::string_view to_backup, backup_move bm)
 {
-    backup(to_backup, to_backup.parent_path() / ".backup", bm);
+    backup(to_backup, (fs::path{to_backup}.parent_path() / ".backup").native(), bm);
 
 } // acmacs::file::backup
 
