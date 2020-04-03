@@ -264,11 +264,11 @@ namespace rjson::inline v2
         value& operator=(value&& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, std::move(src)); }
         template <typename T> value& operator=(T&& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src)); }
 
-        bool operator==(const value& to_compare) const;
-        bool operator!=(const value& to_compare) const { return !operator==(to_compare); }
-        template <typename T> bool operator==(T&& to_compare) const { return to<std::decay_t<T>>() == std::forward<T>(to_compare); }
+        template <typename T> bool operator==(const T& to_compare) const { return to<std::decay_t<T>>() == to_compare; }
+        template <> bool operator==(const value& to_compare) const;
+        // bool operator!=(const value& to_compare) const { return !operator==(to_compare); }
         bool operator==(const char* to_compare) const { return operator==(std::string_view{to_compare}); }
-        template <typename T> bool operator!=(T&& to_compare) const { return !operator==(std::forward<T>(to_compare)); }
+        template <typename T> bool operator!=(const T& to_compare) const { return !operator==(to_compare); }
 
         bool is_null() const noexcept;
         bool is_object() const noexcept;
@@ -376,6 +376,8 @@ namespace rjson::inline v2
     {
         if constexpr (std::is_assignable_v<Target, std::string>)
             target = format(source, show_empty_values::yes);
+        else if constexpr (acmacs::sfinae::container_has_iterator<Target>)
+            source.copy_to(target);
         else
             throw value_type_mismatch(typeid(Target).name(), "rjson::array", AD_DEBUG_FILE_LINE);
     }
@@ -560,9 +562,13 @@ namespace rjson::inline v2
             else
                 std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> std::decay_t<dest_t> { return val.to<std::decay_t<dest_t>>(); });
         }
-        else {
+        else if constexpr (acmacs::sfinae::is_iterator<T>) {
             std::transform(content_.begin(), content_.end(), std::forward<T>(target),
                            [](const value& val) -> std::remove_reference_t<decltype(*target)> { return rjson::to<std::remove_reference_t<decltype(*target)>>(val); });
+        }
+        else {
+            std::transform(content_.begin(), content_.end(), std::forward<T>(target),
+                           [](const value& val) -> std::remove_reference_t<decltype(target)> { return rjson::to<std::remove_reference_t<decltype(target)>>(val); });
         }
     }
 
@@ -1509,7 +1515,7 @@ namespace rjson::inline v2
 
     std::string pretty(const value& val, emacs_indent emacs_indent = emacs_indent::yes, const PrettyHandler& pretty_handler = PrettyHandler{});
 
-    inline bool value::operator==(const value& to_compare) const { return rjson::to<std::string>(*this) == rjson::to<std::string>(to_compare); }
+    template<> inline bool value::operator==(const value& to_compare) const { return rjson::to<std::string>(*this) == rjson::to<std::string>(to_compare); }
 
 } // namespace rjson::inlinev2
 

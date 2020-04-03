@@ -31,7 +31,8 @@ SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
   color.cc color-continent.cc color-distinct.cc color-gradient.cc \
-  read-file.cc layout.cc \
+  read-file.cc xz.cc \
+  layout.cc \
   argv.cc argc-argv.cc \
   normalize.cc \
   quicklook.cc timeit.cc gzip.cc \

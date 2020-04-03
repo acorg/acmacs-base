@@ -46,12 +46,19 @@ namespace acmacs::sfinae
             template <typename T> using container_end_t = decltype(std::declval<T&>().end());
             template <typename T> using container_resize_t = decltype(std::declval<T&>().resize(1));
 
+            template <typename T> using operator_plusplus_t = decltype(++std::declval<T&>());
+            template <typename T> using dereference = decltype(*std::declval<T&>());
+
         } // namespace detail
 
         template <typename T> constexpr bool container_has_begin = is_detected_v<detail::container_begin_t, T>;
         template <typename T> constexpr bool container_has_end = is_detected_v<detail::container_end_t, T>;
         template <typename T> constexpr bool container_has_iterator = container_has_begin<T>&& container_has_end<T>;
         template <typename T> constexpr bool container_has_resize = is_detected_v<detail::container_resize_t, T>;
+
+        template <typename T> constexpr bool has_operator_plusplus = is_detected_v<detail::operator_plusplus_t, T>;
+        template <typename T> constexpr bool has_dereference = is_detected_v<detail::dereference, T>;
+        template <typename T> constexpr bool is_iterator = has_operator_plusplus<T> && has_dereference<T>;
 
           // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
         template <typename T> using iterator_t = decltype(*std::declval<T&>(), void(), ++std::declval<T&>(), void());
