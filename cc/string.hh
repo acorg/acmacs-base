@@ -136,15 +136,15 @@ namespace string
         }
     }
 
-    template <typename S> inline std::string lower(const S& source) { return _internal::transform(source.begin(), source.end(), ::tolower); }
+    inline std::string lower(std::string_view source) { return _internal::transform(source.begin(), source.end(), ::tolower); }
     inline std::string lower(const char* source) { return _internal::transform(source, source + std::strlen(source), ::tolower); }
     inline std::string lower(char* source) { return lower(const_cast<const char*>(source)); }
 
-    template <typename S> inline std::string upper(const S& source) { return _internal::transform(source.begin(), source.end(), ::toupper); }
+    inline std::string upper(std::string_view source) { return _internal::transform(source.begin(), source.end(), ::toupper); }
     inline std::string upper(const char* source) { return _internal::transform(source, source + std::strlen(source), ::toupper); }
     inline std::string upper(char* source) { return upper(const_cast<const char*>(source)); }
 
-    template <typename S> inline std::string capitalize(const S& source)
+    inline std::string capitalize(std::string_view source)
     {
         std::string result;
         if (!source.empty()) {
@@ -154,12 +154,12 @@ namespace string
         return result;
     }
 
-    template <typename S> inline std::string remove_spaces(const S& source) { return _internal::copy_if(source.begin(), source.end(), [](auto c) -> bool { return !std::isspace(c); }); }
+    inline std::string remove_spaces(std::string_view source) { return _internal::copy_if(source.begin(), source.end(), [](auto c) -> bool { return !std::isspace(c); }); }
     inline std::string remove_spaces(const char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
     inline std::string remove_spaces(char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
 
-    // changes subequent spaces into one space
-    template <typename S> inline std::string collapse_spaces(const S& source)
+    // changes subsequent spaces into one space
+    inline std::string collapse_spaces(std::string_view source)
     {
         return _internal::copy_if(source.begin(), source.end(), [prev_was_space=false](auto c) mutable -> bool {
             const auto space = std::isspace(c);
