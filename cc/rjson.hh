@@ -265,7 +265,7 @@ namespace rjson::inline v2
         template <typename T> value& operator=(T&& src) { return assign(acmacs::sfinae::dispatching_priority_top{}, std::forward<T>(src)); }
 
         template <typename T> bool operator==(const T& to_compare) const { return to<std::decay_t<T>>() == to_compare; }
-        template <> bool operator==(const value& to_compare) const;
+        // template <> bool operator==(const value& to_compare) const;
         // bool operator!=(const value& to_compare) const { return !operator==(to_compare); }
         bool operator==(const char* to_compare) const { return operator==(std::string_view{to_compare}); }
         template <typename T> bool operator!=(const T& to_compare) const { return !operator==(to_compare); }
