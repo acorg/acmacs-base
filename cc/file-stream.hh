@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include <functional>           // std::reference_wrapper
 #include <iostream>
 #include <fstream>
 
@@ -11,7 +12,7 @@ namespace acmacs::file
     class ifstream
     {
      public:
-        ifstream(std::string_view filename) : backend_(std::cin)
+        ifstream(std::string_view filename) : backend_{std::cin}
             {
                 if (filename != "-")
                     backend_ = std::ifstream(std::string{filename});
@@ -34,7 +35,7 @@ namespace acmacs::file
     class ofstream
     {
      public:
-        ofstream(std::string_view filename) : backend_(std::cout)
+        ofstream(std::string_view filename) : backend_{std::cout}
             {
                 if (filename == "=")
                     backend_ = std::cerr;
