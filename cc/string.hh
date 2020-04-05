@@ -123,8 +123,8 @@ namespace string
     {
         template <typename Iter, typename F> inline std::string transform(Iter first, Iter last, F func)
         {
-            std::string result;
-            std::transform(first, last, std::back_inserter(result), func);
+            std::string result(static_cast<size_t>(last - first), '?');
+            std::transform(first, last, result.begin(), func);
             return result;
         }
 
@@ -139,10 +139,12 @@ namespace string
     inline std::string lower(std::string_view source) { return _internal::transform(source.begin(), source.end(), ::tolower); }
     inline std::string lower(const char* source) { return _internal::transform(source, source + std::strlen(source), ::tolower); }
     inline std::string lower(char* source) { return lower(const_cast<const char*>(source)); }
+    template <typename Iter> inline std::string lower(Iter beg, Iter end) { return _internal::transform(beg, end, ::tolower); }
 
     inline std::string upper(std::string_view source) { return _internal::transform(source.begin(), source.end(), ::toupper); }
     inline std::string upper(const char* source) { return _internal::transform(source, source + std::strlen(source), ::toupper); }
     inline std::string upper(char* source) { return upper(const_cast<const char*>(source)); }
+    template <typename Iter> inline std::string upper(Iter beg, Iter end) { return _internal::transform(beg, end, ::toupper); }
 
     inline std::string capitalize(std::string_view source)
     {
