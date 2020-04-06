@@ -38,6 +38,12 @@ namespace date
     inline year_month_day today() { return floor<days>(std::chrono::system_clock::now()); }
     inline size_t current_year() { return static_cast<size_t>(static_cast<int>(today().year())); }
 
+    inline auto get_year(const year_month_day& dt) { return static_cast<size_t>(static_cast<int>(dt.year())); }
+    inline auto year_ok(const year_month_day& dt) { const auto ye = get_year(dt); return ye >= 1900 && ye < current_year(); }
+    inline auto get_month(const year_month_day& dt) { return static_cast<unsigned>(dt.month()); }
+    inline auto month_ok(const year_month_day& dt) { const auto mont = get_month(dt); return mont > 0 && mont <= 12; }
+    inline auto get_day(const year_month_day& dt) { return static_cast<unsigned>(dt.day()); }
+
     inline std::string display(const year_month_day& dt, const char* fmt = "%Y-%m-%d") { return dt.ok() ? format(fmt, dt) : std::string{"*invalid-date*"}; }
 
     inline std::string display(const year_month_day& dt, allow_incomplete allow)
@@ -46,15 +52,15 @@ namespace date
             return format("%Y-%m-%d", dt);
         }
         else if (allow == allow_incomplete::yes) {
-            if (static_cast<unsigned>(dt.month()) == 0)
-                return fmt::format("{}", static_cast<int>(dt.year()));
-            else if (static_cast<unsigned>(dt.day()) == 0)
-                return fmt::format("{}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()));
+            if (get_month(dt) == 0)
+                return fmt::format("{}", get_year(dt));
+            else if (get_day(dt) == 0)
+                return fmt::format("{}-{:02d}", get_year(dt), get_month(dt));
             else
-                return fmt::format("{}-{:02d}-{:02d}", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+                return fmt::format("{}-{:02d}-{:02d}", get_year(dt), get_month(dt), get_day(dt));
         }
         else
-            return fmt::format("*invalid-date: {}-{}-{}*", static_cast<int>(dt.year()), static_cast<unsigned>(dt.month()), static_cast<unsigned>(dt.day()));
+            return fmt::format("*invalid-date: {}-{}-{}*", get_year(dt), get_month(dt), get_day(dt));
     }
 
     inline auto month_3(const year_month_day& dt) { return format("%b", dt); }
@@ -115,7 +121,7 @@ namespace date
 
     inline year_month_day from_string(std::string_view source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
     {
-        for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
+        for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
             // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
             if (const auto result = from_string(source, fmt); result.ok())
                 return result;
