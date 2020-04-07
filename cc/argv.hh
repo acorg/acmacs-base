@@ -110,6 +110,10 @@ namespace acmacs
 
                 bool is_bool() const noexcept override { if constexpr (std::is_same_v<T, bool>) return true; else return false; }
 
+                bool empty() const noexcept { return get().empty(); }
+                auto begin() const noexcept { return get().begin(); }
+                auto end() const noexcept { return get().end(); }
+
                 void add(detail::cmd_line_iter& arg, detail::cmd_line_iter last) override
                 {
                     ++arg;
