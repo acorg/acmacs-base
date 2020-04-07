@@ -234,13 +234,27 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <typename T> struct fmt::formatter<acmacs::argv::option<T>> : fmt::formatter<T> {
-    template <typename FormatCtx> auto format(const acmacs::argv::option<T>& opt, FormatCtx& ctx) { return fmt::formatter<T>::format(*opt, ctx); }
-};
-
+// do not use template <typename T> struct fmt::formatter<acmacs::argv::option<T>>
 // to avoid ambiguity between above and formatter for a collection (with begin() and end())
+
 template <> struct fmt::formatter<acmacs::argv::option<acmacs::argv::str_array>> : fmt::formatter<acmacs::argv::str_array> {
     template <typename FormatCtx> auto format(const acmacs::argv::option<acmacs::argv::str_array>& opt, FormatCtx& ctx) { return fmt::formatter<acmacs::argv::str_array>::format(*opt, ctx); }
+};
+
+template <> struct fmt::formatter<acmacs::argv::option<size_t>> : fmt::formatter<size_t> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<size_t>& opt, FormatCtx& ctx) { return fmt::formatter<size_t>::format(*opt, ctx); }
+};
+
+template <> struct fmt::formatter<acmacs::argv::option<int>> : fmt::formatter<int> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<int>& opt, FormatCtx& ctx) { return fmt::formatter<int>::format(*opt, ctx); }
+};
+
+template <> struct fmt::formatter<acmacs::argv::option<double>> : fmt::formatter<double> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<double>& opt, FormatCtx& ctx) { return fmt::formatter<double>::format(*opt, ctx); }
+};
+
+template <> struct fmt::formatter<acmacs::argv::option<bool>> : fmt::formatter<bool> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<bool>& opt, FormatCtx& ctx) { return fmt::formatter<bool>::format(*opt, ctx); }
 };
 
 
