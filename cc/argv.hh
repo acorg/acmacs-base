@@ -238,6 +238,11 @@ template <typename T> struct fmt::formatter<acmacs::argv::option<T>> : fmt::form
     template <typename FormatCtx> auto format(const acmacs::argv::option<T>& opt, FormatCtx& ctx) { return fmt::formatter<T>::format(*opt, ctx); }
 };
 
+// to avoid ambiguity between above and formatter for a collection (with begin() and end())
+template <> struct fmt::formatter<acmacs::argv::option<acmacs::argv::str_array>> : fmt::formatter<acmacs::argv::str_array> {
+    template <typename FormatCtx> auto format(const acmacs::argv::option<acmacs::argv::str_array>& opt, FormatCtx& ctx) { return fmt::formatter<acmacs::argv::str_array>::format(*opt, ctx); }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:

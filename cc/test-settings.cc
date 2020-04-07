@@ -21,7 +21,7 @@ int main(int argc, const char* argv[])
         Options opt(argc, argv);
         acmacs::log::register_enabler_acmacs_base();
         // acmacs::log::enable("settings");
-        if (!opt.settings_files->empty()) {
+        if (!opt.settings_files.empty()) {
             acmacs::settings::Settings s1;
             AD_DEBUG("loading {}", opt.settings_files);
             s1.load(opt.settings_files);
