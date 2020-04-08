@@ -14,7 +14,7 @@
 
 namespace acmacs::string
 {
-    enum class Split { RemoveEmpty, KeepEmpty };
+    enum class Split { RemoveEmpty, KeepEmpty, StripKeepEmpty };
 
     class split_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -42,7 +42,10 @@ namespace acmacs::string
 
             inline value_type operator*() noexcept
                 {
-                    return {mBegin, static_cast<typename value_type::size_type>(mEnd - mBegin)};
+                    value_type res{mBegin, static_cast<typename value_type::size_type>(mEnd - mBegin)};
+                    if (mKeepEmpty == Split::StripKeepEmpty)
+                        res = ::string::strip(res);
+                    return res;
                 }
 
             inline split_iterator& operator++() noexcept
@@ -79,7 +82,7 @@ namespace acmacs::string
                 {
                     for (const char* substart = mEnd == nullptr ? mBegin : mEnd + mDelim.size(), *subend; substart <= mInputEnd; substart = subend + mDelim.size()) {
                         subend = std::search(substart, mInputEnd, mDelim.cbegin(), mDelim.cend());
-                        if (substart != subend || mKeepEmpty == Split::KeepEmpty) {
+                        if (substart != subend || mKeepEmpty == Split::KeepEmpty || mKeepEmpty == Split::StripKeepEmpty) {
                             mBegin = substart;
                             mEnd = subend;
                             return;
