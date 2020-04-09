@@ -39,7 +39,7 @@ namespace stream_internal
         return out;
     }
 
-    template <typename Stream, typename Collection, typename = std::enable_if<acmacs::sfinae::container_has_iterator<Collection>>>
+    template <typename Stream, typename Collection, typename = std::enable_if<acmacs::sfinae::container_has_iterator_v<Collection>>>
                       inline Stream& write_to_stream(Stream& out, const Collection& aCollection, std::string prefix, std::string suffix, std::string separator)
     {
         return write_to_stream(out, std::begin(aCollection), std::end(aCollection), prefix, suffix, separator);

@@ -38,7 +38,7 @@ namespace acmacs
         constexpr static const char* field_separator = " ";
         constexpr static const char* record_separator = "\n";
 
-        template <typename F> static inline std::string prepare_field(F&& field) { return string::replace_spaces(acmacs::to_string(std::forward<F>(field)), '_'); }
+        template <typename F> static inline std::string prepare_field(F&& field) { return ::string::replace_spaces(acmacs::to_string(std::forward<F>(field)), '_'); }
     };
 
     struct DataFormatCSV

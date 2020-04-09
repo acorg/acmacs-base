@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "acmacs-base/string.hh"
+#include "acmacs-base/string-join.hh"
 #include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
@@ -84,7 +85,7 @@ namespace acmacs
                 template <typename T> std::string to_string(const T& source) noexcept { return std::to_string(source); }
                 // template <> std::string to_string(const std::string& source) { return '"' + source + '"'; }
                 template <> std::string to_string(const str& source) noexcept { return fmt::format("\"{}\"", source); }
-                template <> std::string to_string(const str_array& source) noexcept { return fmt::format("\"{}\"", string::join("\" \"", source)); }
+                template <> std::string to_string(const str_array& source) noexcept { return fmt::format("\"{}\"", string::join(std::string_view{"\" \""}, source)); }
 
                 class invalid_option_value : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 

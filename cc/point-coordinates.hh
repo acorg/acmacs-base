@@ -11,7 +11,8 @@
 #include <variant>
 
 #include "acmacs-base/float.hh"
-#include "acmacs-base/string.hh"
+#include "acmacs-base/string-join.hh"
+#include "acmacs-base/to-string.hh"
 #include "acmacs-base/number-of-dimensions.hh"
 
 // ----------------------------------------------------------------------
@@ -214,7 +215,7 @@ namespace acmacs
 
     inline std::string to_string(const PointCoordinates& coord, size_t precision = 32)
     {
-        return '{' + ::string::join(", ", std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
+        return '{' + acmacs::string::join(", ", std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
     }
 
     inline std::ostream& operator<<(std::ostream& out, const PointCoordinates& coord) { return out << to_string(coord); }

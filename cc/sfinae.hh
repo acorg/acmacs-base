@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <string>
+#include <string_view>
 
 // ----------------------------------------------------------------------
 
@@ -51,14 +52,14 @@ namespace acmacs::sfinae
 
         } // namespace detail
 
-        template <typename T> constexpr bool container_has_begin = is_detected_v<detail::container_begin_t, T>;
-        template <typename T> constexpr bool container_has_end = is_detected_v<detail::container_end_t, T>;
-        template <typename T> constexpr bool container_has_iterator = container_has_begin<T>&& container_has_end<T>;
-        template <typename T> constexpr bool container_has_resize = is_detected_v<detail::container_resize_t, T>;
+        template <typename T> constexpr bool container_has_begin_v = is_detected_v<detail::container_begin_t, T>;
+        template <typename T> constexpr bool container_has_end_v = is_detected_v<detail::container_end_t, T>;
+        template <typename T> constexpr bool container_has_iterator_v = container_has_begin_v<T>&& container_has_end_v<T>;
+        template <typename T> constexpr bool container_has_resize_v = is_detected_v<detail::container_resize_t, T>;
 
-        template <typename T> constexpr bool has_operator_plusplus = is_detected_v<detail::operator_plusplus_t, T>;
-        template <typename T> constexpr bool has_dereference = is_detected_v<detail::dereference, T>;
-        template <typename T> constexpr bool is_iterator = has_operator_plusplus<T> && has_dereference<T>;
+        template <typename T> constexpr bool has_operator_plusplus_v = is_detected_v<detail::operator_plusplus_t, T>;
+        template <typename T> constexpr bool has_dereference_v = is_detected_v<detail::dereference, T>;
+        template <typename T> constexpr bool is_iterator_v = has_operator_plusplus_v<T> && has_dereference_v<T>;
 
           // iterator SFINAE: https://stackoverflow.com/questions/12161109/stdenable-if-or-sfinae-for-iterator-or-pointer
         template <typename T> using iterator_t = decltype(*std::declval<T&>(), void(), ++std::declval<T&>(), void());

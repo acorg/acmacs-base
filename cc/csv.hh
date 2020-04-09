@@ -23,7 +23,7 @@ namespace acmacs
         {
             // https://www.ietf.org/rfc/rfc4180.txt
             if (aField.find(',') != std::string::npos || aField.find('\n') != std::string::npos || aField.find('"') != std::string::npos) {
-                aField = '"' + string::replace(aField, "\"", "\"\"") + '"';
+                aField = '"' + ::string::replace(aField, "\"", "\"\"") + '"';
             }
             if (!mData.empty() && mData.back() != '\n')
                 mData.append(1, ',');

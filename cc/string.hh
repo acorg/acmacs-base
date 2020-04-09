@@ -208,58 +208,6 @@ namespace string
         return 0;
     }
 
-      // ----------------------------------------------------------------------
-      // join
-      // ----------------------------------------------------------------------
-
-    template <typename Iterator> inline std::string join(std::string_view separator, Iterator first, Iterator last)
-    {
-        std::string result;
-        if (first != last) {
-              // Note last - first below does not supported for std::set
-              // const size_t resulting_size = std::accumulate(first, last, separator.size() * static_cast<size_t>(last - first - 1), [](size_t acc, const std::string& n) -> size_t { return acc + n.size(); });
-              // result.reserve(resulting_size);
-            for ( ; first != last; ++first) {
-                const auto f_s = acmacs::to_string(*first);
-                if (!f_s.empty()) {
-                    if (!result.empty())
-                        result.append(separator);
-                    result.append(f_s);
-                }
-            }
-        }
-        return result;
-    }
-
-    template <typename Iterator, typename Converter> inline std::string join(std::string_view separator, Iterator first, Iterator last, Converter convert)
-    {
-        std::string result;
-        for ( ; first != last; ++first) {
-            const auto f_s = convert(*first);
-            if (!f_s.empty()) {
-                if (!result.empty())
-                    result.append(separator);
-                result.append(f_s);
-            }
-        }
-        return result;
-    }
-
-    template <typename Collection> inline std::string join(std::string_view separator, const Collection& values)
-    {
-        return join(separator, std::begin(values), std::end(values));
-    }
-
-    inline std::string join(std::string_view separator, std::initializer_list<std::string_view>&& values)
-    {
-        return join(separator, std::begin(values), std::end(values));
-    }
-
-    inline std::string join(std::initializer_list<std::string_view>&& parts)
-    {
-        return join(" ", std::begin(parts), std::end(parts));
-    }
-
 // ----------------------------------------------------------------------
 
     template <typename S> inline std::string_view string_view(const S& aSrc, size_t aOffset)

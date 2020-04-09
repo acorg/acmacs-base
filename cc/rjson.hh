@@ -376,7 +376,7 @@ namespace rjson::inline v2
     {
         if constexpr (std::is_assignable_v<Target, std::string>)
             target = format(source, show_empty_values::yes);
-        else if constexpr (acmacs::sfinae::container_has_iterator<Target>)
+        else if constexpr (acmacs::sfinae::container_has_iterator_v<Target>)
             source.copy_to(target);
         else
             throw value_type_mismatch(typeid(Target).name(), "rjson::array", AD_DEBUG_FILE_LINE);
@@ -553,8 +553,8 @@ namespace rjson::inline v2
 
     template <typename T> inline void array::copy_to(T&& target) const
     {
-        if constexpr (acmacs::sfinae::container_has_iterator<T>) {
-            if constexpr (acmacs::sfinae::container_has_resize<T>)
+        if constexpr (acmacs::sfinae::container_has_iterator_v<T>) {
+            if constexpr (acmacs::sfinae::container_has_resize_v<T>)
                 target.resize(size());
             using dest_t = decltype(*target.begin());
             if constexpr (std::is_convertible_v<const value&, dest_t>)
@@ -562,7 +562,7 @@ namespace rjson::inline v2
             else
                 std::transform(content_.begin(), content_.end(), target.begin(), [](const value& val) -> std::decay_t<dest_t> { return val.to<std::decay_t<dest_t>>(); });
         }
-        else if constexpr (acmacs::sfinae::is_iterator<T>) {
+        else if constexpr (acmacs::sfinae::is_iterator_v<T>) {
             std::transform(content_.begin(), content_.end(), std::forward<T>(target),
                            [](const value& val) -> std::remove_reference_t<decltype(*target)> { return rjson::to<std::remove_reference_t<decltype(*target)>>(val); });
         }
@@ -817,8 +817,8 @@ namespace rjson::inline v2
 
     template <typename T, typename F> inline void object::transform_to(T && target, F && transformer) const
     {
-        if constexpr (acmacs::sfinae::container_has_iterator<T>) {
-            if constexpr (acmacs::sfinae::container_has_resize<T>)
+        if constexpr (acmacs::sfinae::container_has_iterator_v<T>) {
+            if constexpr (acmacs::sfinae::container_has_resize_v<T>)
                 target.resize(content_.size());
             std::transform(content_.begin(), content_.end(), target.begin(), std::forward<F>(transformer));
         }

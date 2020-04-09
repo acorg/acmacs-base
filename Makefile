@@ -17,7 +17,8 @@ TARGETS = \
   $(DIST)/test-time-series \
   $(DIST)/test-read-file \
   $(DIST)/test-find-color \
-  $(DIST)/test-bezier-gradient
+  $(DIST)/test-bezier-gradient \
+  $(DIST)/test-string-join
 
 all: install-acmacs-base
 
