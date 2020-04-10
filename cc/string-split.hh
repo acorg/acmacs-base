@@ -6,6 +6,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <algorithm>
+#include <cctype>
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/string.hh"
@@ -174,6 +175,30 @@ namespace acmacs::string
     template <typename S> inline std::vector<double> split_into_double(const S& source)
     {
         return internal::split_into<S, double>(source, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
+    }
+
+    // ----------------------------------------------------------------------
+
+    // retrurns empty vector in case source is not camel case, e.g. contains non-letters
+    inline std::vector<std::string_view> split_camel_case(std::string_view source)
+    {
+        std::vector<std::string_view> result;
+        bool lower_letter{true};
+        size_t start{0};
+        for (size_t pos = 0; pos < source.size(); ++pos) {
+            if (!std::isalpha(source[pos]))
+                return {};
+            if (const bool current_upper = std::isupper(source[pos]); current_upper && lower_letter) {
+                lower_letter = false;
+                if (pos > start)
+                    result.emplace_back(&source[start], pos - start);
+                start = pos;
+            }
+            else if (!current_upper && !lower_letter)
+                lower_letter = true;
+        }
+        result.emplace_back(&source[start], source.size() - start);
+        return result;
     }
 
 } // namespace acmacs::string

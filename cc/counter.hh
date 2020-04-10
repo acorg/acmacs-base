@@ -50,11 +50,11 @@ namespace acmacs
                 return 0;
         }
 
-        template <typename S> std::string report_sorted_max_first(S format) const
+        std::string report_sorted_max_first(std::string_view format) const
         {
             fmt::memory_buffer out;
             for (const auto& entry : sorted_max_first())
-                fmt::format_to(out, format, fmt::arg("first", entry->first), fmt::arg("second", entry->second));
+                fmt::format_to(out, format, fmt::arg("first", entry->first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry->first)), fmt::arg("second", entry->second));
             return fmt::to_string(out);
         }
 
