@@ -51,28 +51,6 @@ namespace string
 
       // ----------------------------------------------------------------------
 
-    namespace _internal {
-        template <typename InputIterator, typename Source> inline std::pair<InputIterator, InputIterator> strip_begin_end(Source& source)
-        {
-            auto predicate = [](auto c) { return std::isspace(c); }; // have to use lambda, other compiler cannot infer Predicate type from isspace
-            auto e = std::find_if_not(source.rbegin(), source.rend(), predicate);
-            auto b = std::find_if_not(source.begin(), e.base(), predicate);
-            return std::make_pair(b, e.base());
-        }
-    } // namespace _internal
-
-    inline std::string strip(std::string source)
-    {
-        auto be = _internal::strip_begin_end<std::string::const_iterator>(source);
-        return std::string(be.first, be.second);
-    }
-
-    inline std::string_view strip(std::string_view source)
-    {
-        auto be = _internal::strip_begin_end<std::string_view::const_iterator>(source);
-        return std::string_view(be.first, static_cast<size_t>(be.second - be.first));
-    }
-
       // ----------------------------------------------------------------------
 
     inline std::string replace(std::string_view source, std::string_view look_for, std::string_view replace_with)
@@ -248,38 +226,6 @@ namespace string
             return concat_precise(result, args...);
         else
             return result;
-    }
-
-// ----------------------------------------------------------------------
-
-    template <typename T, typename S> T from_chars(S&& source)
-    {
-        if constexpr (std::is_same_v<T, double>) { // double is not supported by std::from_chars in clang8
-            return std::stod(std::string{source});
-        }
-        else {
-            const std::string_view src{source};
-            T result;
-            if (const auto [p, ec] = std::from_chars(&*src.begin(), &*src.end(), result); ec == std::errc{} && p == &*src.end())
-                return result;
-        }
-        return std::numeric_limits<T>::max();
-    }
-
-    template <typename T, typename S> T from_chars(S&& source, size_t& processed)
-    {
-        if constexpr (std::is_same_v<T, double>) { // double is not supported by std::from_chars in clang8
-            return std::stod(std::string{source}, &processed);
-        }
-        else {
-            const std::string_view src{source};
-            T result;
-            if (const auto [p, ec] = std::from_chars(&*src.begin(), &*src.end(), result); ec == std::errc{}) {
-                processed = static_cast<size_t>(p - &*src.begin());
-                return result;
-            }
-        }
-        return std::numeric_limits<T>::max();
     }
 
 // ----------------------------------------------------------------------

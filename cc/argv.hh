@@ -6,8 +6,8 @@
 #include <vector>
 #include <optional>
 
-#include "acmacs-base/string.hh"
 #include "acmacs-base/string-join.hh"
+#include "acmacs-base/string-from-chars.hh"
 #include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
@@ -77,7 +77,7 @@ namespace acmacs
                     if constexpr (std::is_same_v<T, bool>)
                         return std::stoi(std::string(source));
                     else if constexpr (std::is_arithmetic_v<T>)
-                        return ::string::from_chars<T>(source);
+                        return acmacs::string::from_chars<T>(source);
                     else
                         return source;
                 }

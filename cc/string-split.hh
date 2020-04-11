@@ -9,7 +9,8 @@
 #include <cctype>
 
 #include "acmacs-base/fmt.hh"
-#include "acmacs-base/string.hh"
+#include "acmacs-base/string-from-chars.hh"
+#include "acmacs-base/string-strip.hh"
 
 // ----------------------------------------------------------------------
 
@@ -45,7 +46,7 @@ namespace acmacs::string
                 {
                     value_type res{mBegin, static_cast<typename value_type::size_type>(mEnd - mBegin)};
                     if (mKeepEmpty == Split::StripKeepEmpty)
-                        res = ::string::strip(res);
+                        res = acmacs::string::strip(res);
                     return res;
                 }
 
@@ -149,32 +150,32 @@ namespace acmacs::string
 
     template <typename T, typename S> inline std::vector<T> split_into_uint(const S& source, std::string_view delim)
     {
-        return internal::split_into<S, T>(source, delim, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
+        return internal::split_into<S, T>(source, delim, [](const auto& chunk, size_t* pos) -> T { return T{acmacs::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename T, typename S> inline std::vector<T> split_into_uint(const S& source)
     {
-        return internal::split_into<S, T>(source, [](const auto& chunk, size_t* pos) -> T { return T{::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
+        return internal::split_into<S, T>(source, [](const auto& chunk, size_t* pos) -> T { return T{acmacs::string::from_chars<size_t>(chunk, *pos)}; }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<size_t> split_into_size_t(const S& source, std::string_view delim)
     {
-        return internal::split_into<S, size_t>(source, delim, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
+        return internal::split_into<S, size_t>(source, delim, [](const auto& chunk, size_t* pos) -> size_t { return acmacs::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<size_t> split_into_size_t(const S& source)
     {
-        return internal::split_into<S, size_t>(source, [](const auto& chunk, size_t* pos) -> size_t { return ::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
+        return internal::split_into<S, size_t>(source, [](const auto& chunk, size_t* pos) -> size_t { return acmacs::string::from_chars<size_t>(chunk, *pos); }, "unsigned", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& source, std::string_view delim)
     {
-        return internal::split_into<S, double>(source, delim, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
+        return internal::split_into<S, double>(source, delim, [](const auto& chunk, size_t* pos) -> double { return acmacs::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
     }
 
     template <typename S> inline std::vector<double> split_into_double(const S& source)
     {
-        return internal::split_into<S, double>(source, [](const auto& chunk, size_t* pos) -> double { return ::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
+        return internal::split_into<S, double>(source, [](const auto& chunk, size_t* pos) -> double { return acmacs::string::from_chars<double>(chunk, *pos); }, "double", Split::RemoveEmpty);
     }
 
     // ----------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include <variant>
 
 #include "acmacs-base/string.hh"
+#include "acmacs-base/string-from-chars.hh"
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/float.hh"
@@ -136,7 +137,7 @@ namespace acmacs
                         if (content.empty())
                             return 0;
                         else
-                            return ::string::from_chars<Number>(content);
+                            return acmacs::string::from_chars<Number>(content);
                     }
                 },
                 get());
@@ -168,7 +169,7 @@ namespace acmacs
                         if (content.empty())
                             return true;
                         else
-                            return float_zero(::string::from_chars<double>(content));
+                            return float_zero(acmacs::string::from_chars<double>(content));
                     }
                 },
                 get());

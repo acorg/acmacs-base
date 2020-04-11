@@ -2,7 +2,7 @@
 
 #include "acmacs-base/settings.hh"
 #include "acmacs-base/enumerate.hh"
-#include "acmacs-base/string.hh"
+#include "acmacs-base/string-from-chars.hh"
 
 // ----------------------------------------------------------------------
 // Environment
@@ -171,14 +171,14 @@ void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, st
     else {
         size_t processed = 0;
         try {
-            if (const auto val = ::string::from_chars<int>(value, processed); processed == value.size())
+            if (const auto val = acmacs::string::from_chars<int>(value, processed); processed == value.size())
                 setenv(key, val);
         }
         catch (std::exception&) {
         }
         if (processed != value.size()) {
             try {
-                if (const auto val = ::string::from_chars<double>(value, processed); processed == value.size())
+                if (const auto val = acmacs::string::from_chars<double>(value, processed); processed == value.size())
                     setenv(key, val);
             }
             catch (std::exception&) {
