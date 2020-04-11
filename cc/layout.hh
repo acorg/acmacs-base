@@ -5,6 +5,7 @@
 #include <cmath>
 #include <memory>
 
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/number-of-dimensions.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"
@@ -100,16 +101,12 @@ namespace acmacs
 
     class Layout;
 
+    // skips disconnected points (with NaN coordinates)!
     class LayoutConstIterator
     {
       public:
         PointCoordinates operator*() const;
-        auto& operator++()
-        {
-            ++point_no_;
-            // do not skip disconnected points to avoid jumping over end iterator
-            return *this;
-        }
+        LayoutConstIterator& operator++();
         bool operator==(const LayoutConstIterator& rhs) const
         {
             if (&parent_ != &rhs.parent_)
@@ -128,19 +125,14 @@ namespace acmacs
 
     }; // class LayoutConstIterator
 
+    // skips disconnected points (with NaN coordinates)!
     class LayoutDimensionConstIterator
     {
       public:
         using difference_type = ssize_t;
 
         double operator*() const;
-
-        auto& operator++()
-        {
-            ++point_no_;
-            // do not skip disconnected points to avoid jumping over end iterator
-            return *this;
-        }
+        LayoutDimensionConstIterator& operator++();
 
         LayoutDimensionConstIterator operator+(difference_type offset) const
         {
@@ -283,11 +275,27 @@ namespace acmacs
         return parent_.at(point_no_);
     }
 
+    inline LayoutConstIterator& LayoutConstIterator::operator++()
+    {
+        if (point_no_ < parent_.number_of_points()) // point_no_ is incremented by operator*!
+            ++point_no_;
+        // do not skip disconnected points to avoid jumping over end iterator
+        return *this;
+    }
+
     inline double LayoutDimensionConstIterator::operator*() const
     {
         while (point_no_ < parent_.number_of_points() && !parent_.point_has_coordinates(point_no_))
             ++point_no_; // skip disconnected points
         return parent_.coordinate(point_no_, dimension_no_);
+    }
+
+    inline LayoutDimensionConstIterator& LayoutDimensionConstIterator::operator++()
+    {
+        if (point_no_ < parent_.number_of_points()) // point_no_ is incremented by operator*!
+            ++point_no_;
+        // do not skip disconnected points to avoid jumping over end iterator
+        return *this;
     }
 
 } // namespace acmacs

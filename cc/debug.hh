@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cmath>
+#include <cstdlib>
+
 #include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
@@ -21,6 +23,7 @@
 #define AD_DEBUG(...) fmt::print(stderr, ">>>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
+#define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define AD_FORMAT(...) fmt::format("{} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
@@ -101,6 +104,14 @@ namespace acmacs
         {
             if (dbg == acmacs::debug::yes)
                 fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
+        }
+
+        template <typename Filename, typename LineNo> inline void ad_assert(bool condition, std::string_view message, Filename filename, LineNo line_no)
+        {
+            if (!(condition)) {
+                fmt::print(stderr, "> ASSERTION FAILED {} @@ {}:{}\n", message, filename, line_no);
+                std::abort();
+            }
         }
 
     } // namespace log::inlinev1
