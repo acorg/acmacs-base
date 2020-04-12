@@ -16,6 +16,7 @@
 #include <charconv>
 
 #include "acmacs-base/sfinae.hh"
+#include "acmacs-base/debug.hh"
 #include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
@@ -33,11 +34,11 @@ namespace string
 {
       // ----------------------------------------------------------------------
 
-    inline std::string first_letter_of_words(std::string_view s)
+    inline std::string first_letter_of_words(std::string_view source)
     {
         std::string result;
         bool add = true;
-        for (char c: s) {
+        for (char c: source) {
             if (c == ' ') {
                 add = true;
             }
