@@ -208,9 +208,9 @@ namespace acmacs
     {
         switch (*t.number_of_dimensions) {
             case 2:
-                return ::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
+                return acmacs::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
             case 3:
-                return ::string::concat("[[", t._x(0, 0), t._x(0, 1), t._x(0, 2), "], [", t._x(1, 0), t._x(1, 1), t._x(1, 2), "], [", t._x(2, 0), t._x(2, 1), t._x(2, 2), "]]");
+                return acmacs::string::concat("[[", t._x(0, 0), t._x(0, 1), t._x(0, 2), "], [", t._x(1, 0), t._x(1, 1), t._x(1, 2), "], [", t._x(2, 0), t._x(2, 1), t._x(2, 2), "]]");
         }
         return "[[*invalid number_of_dimensions*]]";
     }

@@ -15,7 +15,6 @@
 #include "acmacs-base/bzip2.hh"
 #include "acmacs-base/gzip.hh"
 #include "acmacs-base/date.hh"
-#include "acmacs-base/string.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/temp-file.hh"
 
@@ -42,10 +41,10 @@ acmacs::file::read_access::read_access(std::string_view aFilename)
         if (fd >= 0) {
             mapped_ = reinterpret_cast<char*>(mmap(nullptr, len_, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0));
             if (mapped_ == MAP_FAILED)
-                throw cannot_read(::string::concat(aFilename, ": ", strerror(errno)));
+                throw cannot_read{fmt::format("{}: {}", aFilename, strerror(errno))};
         }
         else {
-            throw not_opened(::string::concat(aFilename, ": ", strerror(errno)));
+            throw not_opened{fmt::format("{}: {}", aFilename, strerror(errno))};
         }
     }
     else {
@@ -189,6 +188,7 @@ void acmacs::file::backup(const std::string_view to_backup, backup_move bm)
 
 void acmacs::file::write(std::string_view aFilename, std::string_view aData, force_compression aForceCompression, backup_file aBackupFile)
 {
+    using namespace std::string_view_literals;
     int f = -1;
     if (aFilename == "-") {
         f = 1;
@@ -209,8 +209,8 @@ void acmacs::file::write(std::string_view aFilename, std::string_view aData, for
             throw std::runtime_error(fmt::format("Cannot open {}: {}", aFilename, strerror(errno)));
     }
     try {
-        if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (string::ends_with(aFilename, ".xz") || string::ends_with(aFilename, ".gz")))) {
-            const auto compressed = string::ends_with(aFilename, ".gz") ? gzip_compress(aData) : xz_compress(aData);
+        if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (string::endswith(aFilename, ".xz"sv) || string::endswith(aFilename, ".gz"sv)))) {
+            const auto compressed = string::endswith(aFilename, ".gz"sv) ? gzip_compress(aData) : xz_compress(aData);
             if (::write(f, compressed.data(), compressed.size()) < 0)
                 throw std::runtime_error(fmt::format("Cannot write {}: {}", aFilename, strerror(errno)));
         }

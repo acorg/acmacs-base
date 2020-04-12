@@ -140,9 +140,9 @@ std::string argc_argv::option::as_string() const
         [](auto&& arg) -> std::string {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, double>)
-                return acmacs::to_string(arg, 8);
+                return fmt::format("{:.8f}", arg);
             else
-                return acmacs::to_string(arg);
+                return fmt::format("{}", arg);
         },
         default_);
 

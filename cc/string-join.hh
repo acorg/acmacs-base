@@ -112,6 +112,11 @@ namespace acmacs::string
 
     // ----------------------------------------------------------------------
 
+    template <typename ... Args> inline std::string concat(Args&& ... args)
+    {
+        return join("", std::forward<Args>(args) ...);
+    }
+
 } // namespace acmacs::string
 
 // ----------------------------------------------------------------------

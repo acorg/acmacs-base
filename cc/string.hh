@@ -17,7 +17,6 @@
 
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/debug.hh"
-#include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -156,10 +155,9 @@ namespace string
       // ends_with
       // ----------------------------------------------------------------------
 
-    inline bool ends_with(std::string_view data, const char* end)
+    inline bool endswith(std::string_view source, std::string_view ending)
     {
-        const std::string_view end_view{end};
-        return std::string_view(data.data() + data.size() - end_view.size(), end_view.size()) == end_view;
+        return source.size() >= ending.size() && source.substr(source.size() - ending.size()) == ending;
     }
 
       // ----------------------------------------------------------------------
@@ -192,41 +190,6 @@ namespace string
     template <typename S> inline std::string_view string_view(const S& aSrc, size_t aOffset)
     {
         return std::string_view(aSrc.data() + aOffset, aSrc.size() - aOffset);
-    }
-
-// ----------------------------------------------------------------------
-
-    namespace detail
-    {
-        template <typename S> inline std::string concat_to_string(S src, [[maybe_unused]] size_t precision = 6)
-        {
-            if constexpr (std::is_convertible_v<S, std::string>)
-                return static_cast<std::string>(src);
-            else if constexpr (std::is_same_v<S, double> || std::is_same_v<S, long double>)
-                return acmacs::to_string(src, precision);
-            else
-                return acmacs::to_string(src);
-        }
-    }
-
-    template <typename S1, typename S2, typename... Args> inline std::string concat(S1 s1, S2 s2, Args... args)
-    {
-        auto result = detail::concat_to_string(s1);
-        result.append(detail::concat_to_string(s2));
-        if constexpr (sizeof...(args) > 0)
-            return concat(result, args...);
-        else
-            return result;
-    }
-
-    template <typename S1, typename S2, typename... Args> inline std::string concat_precise(S1 s1, S2 s2, Args... args)
-    {
-        auto result = detail::concat_to_string(s1, 32);
-        result.append(detail::concat_to_string(s2, 32));
-        if constexpr (sizeof...(args) > 0)
-            return concat_precise(result, args...);
-        else
-            return result;
     }
 
 // ----------------------------------------------------------------------

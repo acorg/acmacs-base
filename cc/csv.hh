@@ -1,7 +1,6 @@
 #pragma once
 
 #include "acmacs-base/string.hh"
-#include "acmacs-base/sfinae.hh"
 
 // ----------------------------------------------------------------------
 
@@ -23,7 +22,7 @@ namespace acmacs
         {
             // https://www.ietf.org/rfc/rfc4180.txt
             if (aField.find(',') != std::string::npos || aField.find('\n') != std::string::npos || aField.find('"') != std::string::npos) {
-                aField = '"' + ::string::replace(aField, "\"", "\"\"") + '"';
+                aField = fmt::format("\"{}\"", ::string::replace(aField, "\"", "\"\""));
             }
             if (!mData.empty() && mData.back() != '\n')
                 mData.append(1, ',');
@@ -45,7 +44,7 @@ namespace acmacs
         // template <typename S, typename=sfinae::string_only_t<S>> CsvWriter& field(S field)
         template <typename S> CsvWriter& field(S field)
         {
-            add_field(to_string(field));
+            add_field(fmt::format("{}", field));
             return *this;
         }
 

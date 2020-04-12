@@ -83,6 +83,15 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_
 //     template <typename FormatContext> auto format(const std::exception& err, FormatContext& ctx) { return format_to(ctx.out(), "{}", err.what()); }
 // };
 
+// template <> struct fmt::formatter<###> : fmt::formatter<acmacs::fmt_default_formatter> {
+//     template <typename FormatCtx> auto format(const ###& value, FormatCtx& ctx)
+//     {
+//         format_to(ctx.out(), "{} {}", );
+//         return format_to(ctx.out(), "{} {}", );
+//         return ctx.out();
+//     }
+// };
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))

@@ -38,7 +38,7 @@ namespace acmacs
             else if (aFontSlant == "italic"sv)
                 mFontSlant = Italic;
             else
-                std::runtime_error(::string::concat("Unrecognized slant: ", aFontSlant));
+                std::runtime_error(acmacs::string::concat("Unrecognized slant: ", aFontSlant));
         }
 
     }; // class FontSlant

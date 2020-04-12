@@ -129,7 +129,7 @@ namespace acmacs::statistics
         // SST:  total sum of squares http://en.wikipedia.org/wiki/Total_sum_of_squares
         const auto sst = varianceN(y_first, y_first + static_cast<typename XForwardIterator::difference_type>(x_size), y_mean, identity<double>);
         if (sst <= 0)
-            throw std::runtime_error(::string::concat("simple_linear_regression: cannot calculate R2: SST is wrong: ", sst));
+            throw std::runtime_error(acmacs::string::concat("simple_linear_regression: cannot calculate R2: SST is wrong: ", sst));
         const auto r2 = 1.0 - sse / sst;
         const auto rbar2 = 1.0 - (1.0 - r2) * double(x_size - 1) / double(x_size - 2);
 
