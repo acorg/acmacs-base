@@ -1,6 +1,7 @@
 #pragma once
 
 #include <regex>
+#include <optional>
 
 #include "acmacs-base/fmt.hh"
 
@@ -13,34 +14,18 @@ namespace acmacs::regex
     struct look_replace_t
     {
         const std::regex look_for;
-        const char* replace_fmt; // syntax: http://ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
-    };
-
-    // returns empty string if no matches found
-    template <typename Container> std::string scan_replace(std::string_view source, const Container& scan_data)
-    {
-        for (const auto& entry : scan_data) {
-            if (std::cmatch match; std::regex_search(std::begin(source), std::end(source), match, entry.look_for))
-                return match.format(entry.replace_fmt);
-        }
-        return {};
-    }
-
-    // ----------------------------------------------------------------------
-
-    struct look_replace2_t
-    {
-        const std::regex look_for;
-        const char* replace_fmt1;
-        const char* replace_fmt2;
+        std::vector<const char*> fmt;
     };
 
     // returns pair of empty strings if no matches found
-    template <typename Container> std::pair<std::string, std::string> scan_replace2(std::string_view source, const Container& scan_data)
+    template <typename Container> std::optional<std::vector<std::string>> scan_replace(std::string_view source, const Container& scan_data)
     {
         for (const auto& entry : scan_data) {
-            if (std::cmatch match; std::regex_search(std::begin(source), std::end(source), match, entry.look_for))
-                return {match.format(entry.replace_fmt1), match.format(entry.replace_fmt2)};
+            if (std::cmatch match; std::regex_search(std::begin(source), std::end(source), match, entry.look_for)) {
+                std::vector<std::string> result(entry.fmt.size());
+                std::transform(std::begin(entry.fmt), std::end(entry.fmt), std::begin(result), [&match](const char* fmt) { return match.format(fmt); });
+                return result;
+            }
         }
         return {};
     }
