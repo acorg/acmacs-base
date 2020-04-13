@@ -209,8 +209,8 @@ void acmacs::file::write(std::string_view aFilename, std::string_view aData, for
             throw std::runtime_error(fmt::format("Cannot open {}: {}", aFilename, strerror(errno)));
     }
     try {
-        if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (string::endswith(aFilename, ".xz"sv) || string::endswith(aFilename, ".gz"sv)))) {
-            const auto compressed = string::endswith(aFilename, ".gz"sv) ? gzip_compress(aData) : xz_compress(aData);
+        if (aForceCompression == force_compression::yes || (aFilename.size() > 3 && (acmacs::string::endswith(aFilename, ".xz"sv) || acmacs::string::endswith(aFilename, ".gz"sv)))) {
+            const auto compressed = acmacs::string::endswith(aFilename, ".gz"sv) ? gzip_compress(aData) : xz_compress(aData);
             if (::write(f, compressed.data(), compressed.size()) < 0)
                 throw std::runtime_error(fmt::format("Cannot write {}: {}", aFilename, strerror(errno)));
         }

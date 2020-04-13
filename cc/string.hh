@@ -29,6 +29,22 @@ namespace std
 
 // ----------------------------------------------------------------------
 
+namespace acmacs::string
+{
+    inline bool endswith(std::string_view source, std::string_view suffix)
+    {
+        return source.size() >= suffix.size() && source.substr(source.size() - suffix.size()) == suffix;
+    }
+
+    inline bool startswith(std::string_view source, std::string_view prefix)
+    {
+        return source.size() >= prefix.size() && source.substr(0, prefix.size()) == prefix;
+    }
+
+}
+
+// ----------------------------------------------------------------------
+
 namespace string
 {
       // ----------------------------------------------------------------------
@@ -150,15 +166,6 @@ namespace string
     }
     inline std::string collapse_spaces(const char* source) { return collapse_spaces(std::string_view(source, std::strlen(source))); }
     inline std::string collapse_spaces(char* source) { return collapse_spaces(std::string_view(source, std::strlen(source))); }
-
-      // ----------------------------------------------------------------------
-      // ends_with
-      // ----------------------------------------------------------------------
-
-    inline bool endswith(std::string_view source, std::string_view ending)
-    {
-        return source.size() >= ending.size() && source.substr(source.size() - ending.size()) == ending;
-    }
 
       // ----------------------------------------------------------------------
       // compare
