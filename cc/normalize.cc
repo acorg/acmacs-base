@@ -14,7 +14,7 @@ static const std::array sVirusTypes = {
 
 std::string acmacs::normalize_virus_type(std::string_view vt)
 {
-    const auto look_for = string::upper(vt);
+    const auto look_for = ::string::upper(vt);
     if (const auto found = std::find_if(std::begin(sVirusTypes), std::end(sVirusTypes), [look_for](const auto& entry) { return entry.first == look_for; }); found != std::end(sVirusTypes))
         return found->second;
     return look_for;
@@ -32,7 +32,7 @@ static const std::array sLineages = {
 
 std::string acmacs::normalize_lineage(std::string_view lineage)
 {
-    const auto look_for = string::upper(lineage);
+    const auto look_for = ::string::upper(lineage);
     if (const auto found = std::find_if(std::begin(sLineages), std::end(sLineages), [look_for](const auto& entry) { return entry.first == look_for; }); found != std::end(sLineages))
         return found->second;
     return look_for;
