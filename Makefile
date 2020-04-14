@@ -35,7 +35,6 @@ ACMACS_BASE_SOURCES = \
   read-file.cc xz.cc \
   layout.cc \
   argv.cc argc-argv.cc \
-  normalize.cc \
   quicklook.cc timeit.cc gzip.cc \
   rjson.cc json-importer.cc settings.cc time-series.cc \
   debug.cc
