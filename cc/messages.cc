@@ -3,6 +3,14 @@
 
 // ----------------------------------------------------------------------
 
+void acmacs::messages::v1::move(messages_t& target, messages_t&& from)
+{
+    std::move(std::begin(from), std::end(from), std::back_inserter(target));
+
+} // acmacs::messages::v1::move
+
+// ----------------------------------------------------------------------
+
 void acmacs::messages::v1::move_and_add_source(messages_t& target, messages_t&& from, const position_t& source)
 {
     for (auto& msg : from)

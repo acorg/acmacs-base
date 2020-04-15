@@ -55,7 +55,9 @@ namespace acmacs::messages::inline v1
 
         // parsing_message_t(const parsing_message_t&) = default;
         message_t(key_t a_key, std::string_view a_value = {}) : key{a_key}, value{a_value} {}
+        message_t(key_t a_key, std::string_view a_value, const position_t& a_pos) : key{a_key}, value{a_value}, source{a_pos} {}
         message_t(key_t a_key, std::string_view a_value, const code_position_t& a_code) : key{a_key}, value{a_value}, code{a_code} {}
+        message_t(key_t a_key, std::string_view a_value, const position_t& a_pos, const code_position_t& a_code) : key{a_key}, value{a_value}, source{a_pos}, code{a_code} {}
         // // parsing_message_t(std::string_view a_key, std::string_view a_value, std::string_view a_suppliment) : key{a_key}, value{a_value}, suppliment{a_suppliment} {}
         // parsing_message_t(std::string_view a_key = unrecognized) : key(a_key) {}
         // bool operator==(std::string_view a_key) const { return key == a_key; }
@@ -64,6 +66,7 @@ namespace acmacs::messages::inline v1
 
     using messages_t = std::vector<message_t>;
 
+    void move(messages_t& target, messages_t&& from);
     void move_and_add_source(messages_t& target, messages_t&& from, const position_t& source);
     void report_by_type(messages_t& messages);
 
