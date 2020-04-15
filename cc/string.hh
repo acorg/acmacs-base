@@ -29,22 +29,6 @@ namespace std
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::string
-{
-    inline bool endswith(std::string_view source, std::string_view suffix)
-    {
-        return source.size() >= suffix.size() && source.substr(source.size() - suffix.size()) == suffix;
-    }
-
-    inline bool startswith(std::string_view source, std::string_view prefix)
-    {
-        return source.size() >= prefix.size() && source.substr(0, prefix.size()) == prefix;
-    }
-
-}
-
-// ----------------------------------------------------------------------
-
 namespace string
 {
       // ----------------------------------------------------------------------
@@ -64,8 +48,6 @@ namespace string
         }
         return result;
     }
-
-      // ----------------------------------------------------------------------
 
       // ----------------------------------------------------------------------
 
@@ -93,6 +75,12 @@ namespace string
         std::string result(source.size(), ' ');
         std::transform(std::begin(source), std::end(source), std::begin(result), [=](char c) { if (c == look_for) return replace_with; else return c; });
         return result;
+    }
+
+    inline std::string& replace_in_place(std::string& source, char look_for, char replace_with)
+    {
+        std::transform(std::begin(source), std::end(source), std::begin(source), [=](char c) { if (c == look_for) return replace_with; else return c; });
+        return source;
     }
 
     template <typename ... Args> inline std::string replace(std::string_view source, std::string_view l1, std::string_view r1, std::string_view l2, std::string_view r2, Args ... args)

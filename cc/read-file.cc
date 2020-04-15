@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 
 #include "acmacs-base/filesystem.hh"
-#include "acmacs-base/string.hh"
+#include "acmacs-base/string-compare.hh"
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"

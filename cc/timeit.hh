@@ -47,8 +47,8 @@ constexpr report_time do_report_time(bool do_report) { return do_report ? report
 class Timeit
 {
  public:
-    inline Timeit(std::string msg, report_time aReport = report_time::yes, std::ostream& out = std::cerr)
-        : message_(msg), out_stream_(out), report_(aReport), start_{acmacs::timestamp()} {}
+    inline Timeit(std::string_view msg, report_time aReport = report_time::yes, std::ostream& out = std::cerr)
+        : message_{msg}, out_stream_(out), report_(aReport), start_{acmacs::timestamp()} {}
 
     inline ~Timeit() { report(); }
 
