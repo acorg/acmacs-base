@@ -16,7 +16,7 @@
 
 namespace acmacs::string
 {
-    enum class Split { RemoveEmpty, KeepEmpty, StripKeepEmpty };
+    enum class Split { RemoveEmpty, KeepEmpty, StripRemoveEmpty, StripKeepEmpty };
 
     class split_error : public std::runtime_error { public: using std::runtime_error::runtime_error; };
 
@@ -45,7 +45,7 @@ namespace acmacs::string
             inline value_type operator*() noexcept
                 {
                     value_type res{mBegin, static_cast<typename value_type::size_type>(mEnd - mBegin)};
-                    if (mKeepEmpty == Split::StripKeepEmpty)
+                    if (mKeepEmpty == Split::StripKeepEmpty || mKeepEmpty == Split::StripRemoveEmpty)
                         res = acmacs::string::strip(res);
                     return res;
                 }

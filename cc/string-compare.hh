@@ -30,6 +30,11 @@ namespace acmacs::string
         return true;
     }
 
+    inline bool equals_ignore_case(std::string_view s1, std::string_view s2)
+    {
+        return s1.size() == s2.size() && equals_ignore_case_same_length(s1, s2);
+    }
+
     inline bool endswith_ignore_case(std::string_view source, std::string_view suffix)
     {
         return source.size() >= suffix.size() && equals_ignore_case_same_length(source.substr(source.size() - suffix.size()), suffix);
