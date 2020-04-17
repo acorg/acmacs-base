@@ -11,6 +11,8 @@
 
 namespace acmacs::regex
 {
+    constexpr auto icase = std::regex::icase | std::regex::ECMAScript | std::regex::optimize;
+
     struct look_replace_t
     {
         const std::regex look_for;
