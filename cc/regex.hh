@@ -13,6 +13,28 @@ namespace acmacs::regex
 {
     constexpr auto icase = std::regex::icase | std::regex::ECMAScript | std::regex::optimize;
 
+    inline bool search(std::string_view search_in, std::cmatch& match, const std::regex& re)
+    {
+        return std::regex_search(std::begin(search_in), std::end(search_in), match, re);
+    }
+
+    inline bool search(std::string_view search_in, const std::regex& re)
+    {
+        return std::regex_search(std::begin(search_in), std::end(search_in), re);
+    }
+
+    inline bool search(std::string_view search_in, ssize_t offset, std::cmatch& match, const std::regex& re)
+    {
+        return std::regex_search(std::next(std::begin(search_in), offset), std::end(search_in), match, re);
+    }
+
+    inline bool search(std::string_view search_in, ssize_t offset, const std::regex& re)
+    {
+        return std::regex_search(std::next(std::begin(search_in), offset), std::end(search_in), re);
+    }
+
+    // ----------------------------------------------------------------------
+
     struct look_replace_t
     {
         const std::regex look_for;
