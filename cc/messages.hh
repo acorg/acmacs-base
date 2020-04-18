@@ -78,6 +78,9 @@ namespace acmacs::messages::inline v1
 
     index_t make_index(messages_t& messages);
     void report(const index_t& index);
+    void report(iter_t first, iter_t last);
+    void report_by_count(iter_t first, iter_t last);
+    void report(key_t key, const index_t& index);
     index_entry_t find(key_t key, const index_t& index);
 
 } // namespace acmacs::messages::inline v1

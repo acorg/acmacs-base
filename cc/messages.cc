@@ -1,5 +1,6 @@
 #include "acmacs-base/messages.hh"
 #include "acmacs-base/debug.hh"
+#include "acmacs-base/counter.hh"
 
 // ----------------------------------------------------------------------
 
@@ -28,28 +29,66 @@ void acmacs::messages::v1::report_by_type(messages_t& messages)
 
 // ----------------------------------------------------------------------
 
+void acmacs::messages::v1::report(iter_t first, iter_t last)
+{
+    if (first != last) {
+        AD_INFO("\"{}\" ({}):", first->key, last - first);
+        for (auto cur = first; cur != last; ++cur) {
+            fmt::print(stderr, "  {}", cur->value);
+            if (!cur->source.filename.empty())
+                fmt::print(stderr, " @@ {}:{}", cur->source.filename, cur->source.line_no);
+            if (!cur->code.filename.empty())
+                fmt::print(stderr, " @@ {}:{}", cur->code.filename, cur->code.line_no);
+            fmt::print(stderr, "\n");
+        }
+        fmt::print(stderr, "\n");
+    }
+
+} // acmacs::messages::v1::report
+
+// ----------------------------------------------------------------------
+
 void acmacs::messages::v1::report(const index_t& index)
 {
     if (!index.empty()) {
         AD_INFO("Total messages: {}  keys: {}", index.back().second - index.front().first, index.size());
-
-        for (const auto& [first, last] : index) {
-            AD_INFO("\"{}\" ({}):", first->key, last - first);
-            for (auto cur = first; cur != last; ++cur) {
-                fmt::print(stderr, "  {}", cur->value);
-                if (!cur->source.filename.empty())
-                    fmt::print(stderr, " @@ {}:{}", cur->source.filename, cur->source.line_no);
-                if (!cur->code.filename.empty())
-                    fmt::print(stderr, " @@ {}:{}", cur->code.filename, cur->code.line_no);
-                fmt::print(stderr, "\n");
-            }
-            fmt::print(stderr, "\n");
-        }
+        for (const auto& [first, last] : index)
+            report(first, last);
     }
     else
         AD_INFO("No messages");
 
 } // acmacs::messages::v1::report
+
+// ----------------------------------------------------------------------
+
+void acmacs::messages::v1::report(key_t key, const index_t& index)
+{
+    const auto ien = find(key, index);
+    if (ien.first != ien.second)
+        report(ien.first, ien.second);
+    else
+        AD_INFO("{}: no messages", key);
+
+} // acmacs::messages::v1::report
+
+// ----------------------------------------------------------------------
+
+void acmacs::messages::v1::report_by_count(iter_t first, iter_t last)
+{
+    if (first != last) {
+        acmacs::Counter<std::string> counter;
+        size_t max_length{0};
+        std::for_each(first, last, [&counter, &max_length](const auto& en) {
+            counter.count(en.value);
+            max_length = std::max(max_length, en.value.size());
+        });
+        AD_INFO("{} ({}):", first->key, counter.size());
+        const auto format = fmt::format("  {{quoted_first:{}s}} {{second:4d}}\n", max_length);
+        fmt::print(stderr, "{}\n", counter.report_sorted_max_first(format));
+    }
+
+} // acmacs::messages::v1::report_by_count
 
 // ----------------------------------------------------------------------
 
