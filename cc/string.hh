@@ -142,6 +142,9 @@ namespace string
     inline std::string remove_spaces(const char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
     inline std::string remove_spaces(char* source) { return remove_spaces(std::string_view(source, std::strlen(source))); }
 
+    inline std::string remove(std::string_view source, char symbol) { return _internal::copy_if(source.begin(), source.end(), [symbol](auto c) -> bool { return c != symbol; }); }
+    inline std::string remove(std::string_view source, std::string_view symbols) { return _internal::copy_if(source.begin(), source.end(), [symbols](auto c) -> bool { return symbols.find(c) == std::string_view::npos; }); }
+
     // changes subsequent spaces into one space
     inline std::string collapse_spaces(std::string_view source)
     {
