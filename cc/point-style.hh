@@ -67,6 +67,8 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
+    class PointStyleModified;
+
     class PointStyle
     {
       public:
@@ -76,6 +78,7 @@ namespace acmacs
                    shape == rhs.shape && label == rhs.label && label_text == rhs.label_text;
         }
         [[nodiscard]] bool operator!=(const PointStyle& rhs) const noexcept { return !operator==(rhs); }
+        PointStyle& operator=(const PointStyleModified& src);
 
         bool shown{true};
         Color fill{TRANSPARENT};
@@ -92,6 +95,59 @@ namespace acmacs
         PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
 
     }; // class PointStyle
+
+    // ----------------------------------------------------------------------
+
+    class PointStyleModified : public PointStyle
+    {
+      public:
+        using PointStyle::PointStyle;
+        PointStyleModified(PointStyle&& style) : PointStyle(std::move(style)) { all_modified(); }
+        PointStyleModified(const PointStyle&& style) : PointStyle(style) { all_modified(); }
+
+        bool modified_shown{false};
+        bool modified_fill{false};
+        bool modified_outline{false};
+        bool modified_outline_width{false};
+        bool modified_size{false};
+        bool modified_rotation{false};
+        bool modified_aspect{false};
+        bool modified_shape{false};
+        bool modified_label{false};
+        bool modified_label_text{false};
+
+      private:
+        void all_modified() noexcept
+        {
+            modified_shown = true;
+            modified_fill = true;
+            modified_outline = true;
+            modified_outline_width = true;
+            modified_size = true;
+            modified_rotation = true;
+            modified_aspect = true;
+            modified_shape = true;
+            modified_label = true;
+            modified_label_text = true;
+        }
+    };
+
+    // ----------------------------------------------------------------------
+
+    inline PointStyle& PointStyle::operator=(const PointStyleModified& src)
+    {
+        if (src.modified_shown) shown = src.shown;
+        if (src.modified_fill) fill = src.fill;
+        if (src.modified_outline) outline = src.outline;
+        if (src.modified_outline_width) outline_width = src.outline_width;
+        if (src.modified_size) size = src.size;
+        if (src.modified_rotation) rotation = src.rotation;
+        if (src.modified_aspect) aspect = src.aspect;
+        if (src.modified_shape) shape = src.shape;
+        if (src.modified_label) label = src.label;
+        if (src.modified_label_text) label_text = src.label_text;
+        return *this;
+    }
 
     // ----------------------------------------------------------------------
 
