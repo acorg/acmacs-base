@@ -154,8 +154,10 @@ template <> struct fmt::formatter<acmacs::TextStyle> : fmt::formatter<acmacs::fm
 };
 
 template <> struct fmt::formatter<acmacs::LabelStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const acmacs::LabelStyle& style, FormatCtx& ctx) {
-        return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {:2f}, "interline": {:.2f}, "style": {}}})", style.shown, style.offset, style.size, style.color, style.rotation, style.interline, style.style);
+    template <typename FormatCtx> auto format(const acmacs::LabelStyle& style, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {}, "interline": {:.2f}, "style": {}}})", style.shown, style.offset, style.size, style.color,
+                         style.rotation, style.interline, style.style);
     }
 };
 
