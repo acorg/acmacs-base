@@ -125,6 +125,14 @@ namespace acmacs
             return result;
         }
 
+        std::string report_sorted_max_first(std::string_view format) const
+        {
+            fmt::memory_buffer out;
+            for (const auto& [key, val] : sorted_pairs())
+                fmt::format_to(out, format, fmt::arg("first", key), fmt::arg("second", val));
+            return fmt::to_string(out);
+        }
+
         size_t operator[](char val) const { return counter_[static_cast<size_t>(val)]; }
 
         constexpr const auto& counter() const { return counter_; }
