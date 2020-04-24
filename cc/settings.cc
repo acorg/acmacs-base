@@ -394,7 +394,7 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::value& conditio
 rjson::value acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
 {
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
-        auto orig = rjson::to<std::string_view>(val);
+        std::string orig{rjson::to<std::string_view>(val)}; // orig cannot be std::string_view! due to re-assignment below from the value that will be destroyed at the end of iteration
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
             const auto substituted = environment_.substitute(std::string_view{orig});
             if (substituted.is_string() && orig != rjson::to<std::string_view>(substituted))
