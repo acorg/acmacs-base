@@ -245,7 +245,7 @@ namespace rjson::inline v2
         value(value&&) = default;
         value(std::string_view src) : value_(std::string(src)) {}
         value(const char* src) : value_(std::string(src)) {}
-        value(char* src) : value_(std::string(src)) {}
+        // explicit value(char* src) : value_(std::string(src)) {}
         value(bool src) : value_(src) {}
         value(null src) : value_(src) {}
         value(const_null src) : value_(src) {}

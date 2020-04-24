@@ -189,7 +189,7 @@ namespace rjson
 
                 value value_move() override
                 {
-                    return parser_.data(begin_, end_);
+                    return value{parser_.data(begin_, end_)};
                 }
 
               private:
