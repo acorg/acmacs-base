@@ -396,7 +396,7 @@ rjson::value acmacs::settings::v2::Settings::getenv(std::string_view key, toplev
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
         std::string orig{rjson::to<std::string_view>(val)}; // orig cannot be std::string_view! due to re-assignment below from the value that will be destroyed at the end of iteration
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-            const auto substituted = environment_.substitute(std::string_view{orig});
+            const rjson::value substituted = environment_.substitute(orig);
             if (substituted.is_string() && orig != rjson::to<std::string_view>(substituted))
                 orig = rjson::to<std::string_view>(substituted);
             else
