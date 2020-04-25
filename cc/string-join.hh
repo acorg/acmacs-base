@@ -2,6 +2,7 @@
 
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/debug.hh"
+#include "acmacs-base/named-type.hh"
 
 // ----------------------------------------------------------------------
 
@@ -16,8 +17,17 @@ namespace acmacs::string
         template <typename Arg> inline std::enable_if_t<!acmacs::sfinae::is_string_v<Arg>, std::string> stringify(const Arg& arg) { return fmt::format("{}", arg); }
     } // namespace detail::join
 
+    using join_sep_t = named_string_view_t<struct join_sep_t_tag>;
+    inline const join_sep_t join_colon{":"};
+    inline const join_sep_t join_comma{","};
+    inline const join_sep_t join_concat{""};
+    inline const join_sep_t join_dash{"-"};
+    inline const join_sep_t join_newline{"\n"};
+    inline const join_sep_t join_slash{"/"};
+    inline const join_sep_t join_space{" "};
+
     template <typename Arg1, typename Arg2, typename... Args>
-    inline std::enable_if_t<!acmacs::sfinae::is_iterator_v<Arg1> || acmacs::sfinae::is_string_v<Arg1>, std::string> join(std::string_view separator, Arg1&& arg1, Arg2&& arg2, Args&&... rest)
+    inline std::enable_if_t<!acmacs::sfinae::is_iterator_v<Arg1> || acmacs::sfinae::is_string_v<Arg1>, std::string> join(join_sep_t separator, Arg1&& arg1, Arg2&& arg2, Args&&... rest)
     {
         if constexpr (sizeof...(rest) == 0) {
             const auto as1{detail::join::stringify(arg1)};
@@ -26,7 +36,7 @@ namespace acmacs::string
                 if (!as2.empty()) {
                     std::string res(as1.size() + as2.size() + separator.size(), '#');
                     std::copy(as1.begin(), as1.end(), res.begin());
-                    std::copy(separator.begin(), separator.end(), std::next(res.begin(), static_cast<ssize_t>(as1.size())));
+                    std::copy(separator->begin(), separator->end(), std::next(res.begin(), static_cast<ssize_t>(as1.size())));
                     std::copy(as2.begin(), as2.end(), std::next(res.begin(), static_cast<ssize_t>(as1.size() + separator.size())));
                     return res;
                 }
@@ -45,7 +55,7 @@ namespace acmacs::string
 
     template <typename Iterator,
               typename = std::enable_if_t<acmacs::sfinae::is_iterator_v<Iterator> && !acmacs::sfinae::is_string_v<Iterator>>> // is_iterator_v<const char*> is true, so we need !is_string_v
-    inline std::string join(std::string_view separator, Iterator first, Iterator last)
+    inline std::string join(join_sep_t separator, Iterator first, Iterator last)
     {
         std::string result;
         if (first != last) {
@@ -56,7 +66,7 @@ namespace acmacs::string
                 for (; first != last; ++first) {
                     if (!first->empty()) {
                         if (!result.empty())
-                            result.append(separator);
+                            result.append(*separator);
                         result.append(*first);
                     }
                 }
@@ -64,7 +74,7 @@ namespace acmacs::string
             else {
                 for (; first != last; ++first) {
                     if (!result.empty())
-                        result.append(separator);
+                        result.append(*separator);
                     result.append(fmt::format("{}", *first));
                 }
             }
@@ -75,7 +85,7 @@ namespace acmacs::string
     // ----------------------------------------------------------------------
 
     template <typename Iterator, typename Converter, typename = std::enable_if_t<acmacs::sfinae::is_iterator_v<Iterator>>>
-    inline std::string join(std::string_view separator, Iterator first, Iterator last, Converter convert)
+    inline std::string join(join_sep_t separator, Iterator first, Iterator last, Converter convert)
     {
         std::string result;
         for (; first != last; ++first) {
@@ -91,11 +101,11 @@ namespace acmacs::string
 
     // ----------------------------------------------------------------------
 
-    template <typename Collection> inline std::string join(std::string_view separator, const Collection& values) { return join(separator, std::begin(values), std::end(values)); }
+    template <typename Collection> inline std::string join(join_sep_t separator, const Collection& values) { return join(separator, std::begin(values), std::end(values)); }
 
     // ----------------------------------------------------------------------
 
-    template <typename... Args> inline std::string concat(Args&&... args) { return join("", std::forward<Args>(args)...); }
+    template <typename... Args> inline std::string concat(Args&&... args) { return join(join_concat, std::forward<Args>(args)...); }
 
 } // namespace acmacs::string
 

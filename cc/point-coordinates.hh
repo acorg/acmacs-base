@@ -215,7 +215,7 @@ namespace acmacs
 
     inline std::string to_string(const PointCoordinates& coord, size_t precision = 32)
     {
-        return '{' + acmacs::string::join(", ", std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
+        return '{' + acmacs::string::join(acmacs::string::join_sep_t{", "}, std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
     }
 
     inline std::ostream& operator<<(std::ostream& out, const PointCoordinates& coord) { return out << to_string(coord); }
