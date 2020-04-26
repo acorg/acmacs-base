@@ -24,28 +24,25 @@ namespace acmacs
         const auto& front() const { return data_.front(); }
         void sort() { std::sort(std::begin(data_), std::end(data_)); }
 
-        auto find(const T& key) const { return std::find(std::begin(data_), std::end(data_), key); }
-        auto find(const T& key) { return std::find(std::begin(data_), std::end(data_), key); }
-        bool exists(const T& key) const { return find(key) != std::end(data_); }
+        template <typename Arg> auto find(Arg&& key) const { return std::find(std::begin(data_), std::end(data_), std::forward<Arg>(key)); }
+        template <typename Arg> auto find(Arg&& key) { return std::find(std::begin(data_), std::end(data_), std::forward<Arg>(key)); }
+
+        template <typename Arg> bool exists(Arg&& key) const { return find(std::forward<Arg>(key)) != std::end(data_); }
 
         template <typename Predicate> void erase_if(Predicate&& pred)
         {
             data_.erase(std::remove_if(std::begin(data_), std::end(data_), std::forward<Predicate>(pred)), std::end(data_));
         }
 
-        void add(const T& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
+        template <typename Arg> void add(Arg&& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
         {
             if (!exists(elt)) {
-                data_.push_back(elt);
-                if (a_sort == flat_set_sort_afterwards::yes)
-                    sort();
-            }
-        }
-
-        void add(T&& elt, flat_set_sort_afterwards a_sort = flat_set_sort_afterwards::no)
-        {
-            if (!exists(elt)) {
-                data_.push_back(std::move(elt));
+                if constexpr (std::is_same_v<std::decay_t<Arg>, T>)
+                    data_.push_back(std::forward<Arg>(elt));
+                else if constexpr (std::is_constructible_v<T, Arg>)
+                    data_.push_back(T{std::forward<Arg>(elt)});
+                else
+                    static_assert(std::is_same_v<T, void>, "flat_set_t::add cannot be called with this type of argument");
                 if (a_sort == flat_set_sort_afterwards::yes)
                     sort();
             }
