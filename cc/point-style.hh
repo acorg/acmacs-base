@@ -72,27 +72,56 @@ namespace acmacs
     class PointStyle
     {
       public:
-        [[nodiscard]] bool operator==(const PointStyle& rhs) const noexcept
-        {
-            return shown == rhs.shown && fill == rhs.fill && outline == rhs.outline && outline_width == rhs.outline_width && size == rhs.size && rotation == rhs.rotation && aspect == rhs.aspect &&
-                   shape == rhs.shape && label == rhs.label && label_text == rhs.label_text;
-        }
-        [[nodiscard]] bool operator!=(const PointStyle& rhs) const noexcept { return !operator==(rhs); }
+        virtual ~PointStyle() = default;
         PointStyle& operator=(const PointStyleModified& src);
 
-        bool shown{true};
-        Color fill{TRANSPARENT};
-        Color outline{BLACK};
-        Pixels outline_width{1.0};
-        Pixels size{5.0};
-        Rotation rotation{NoRotation};
-        Aspect aspect{AspectNormal};
-        PointShape shape;
-        LabelStyle label;
-        std::string label_text;
+        PointStyle& scale(double aScale) noexcept { size(size() * aScale); return *this; }
+        PointStyle& scale_outline(double aScale) noexcept { outline_width(outline_width() * aScale); return *this; }
 
-        PointStyle& scale(double aScale) { size = static_cast<Pixels>(size) * aScale; return *this; }
-        PointStyle& scale_outline(double aScale) { outline_width = static_cast<Pixels>(outline_width) * aScale; return *this; }
+        [[nodiscard]] bool operator==(const PointStyle& rhs) const noexcept
+        {
+            return shown() == rhs.shown() && fill() == rhs.fill() && outline() == rhs.outline() && outline_width() == rhs.outline_width() && size() == rhs.size() && rotation() == rhs.rotation() &&
+                   aspect() == rhs.aspect() && shape() == rhs.shape() && label() == rhs.label() && label_text() == rhs.label_text();
+        }
+        [[nodiscard]] bool operator!=(const PointStyle& rhs) const noexcept { return !operator==(rhs); }
+
+        bool shown() const noexcept { return shown_; }
+        Color fill() const noexcept { return fill_; }
+        Color outline() const noexcept { return outline_; }
+        Pixels outline_width() const noexcept { return outline_width_; }
+        Pixels size() const noexcept { return size_; }
+        Rotation rotation() const noexcept { return rotation_; }
+        Aspect aspect() const noexcept { return aspect_; }
+        PointShape shape() const noexcept { return shape_; }
+        const LabelStyle& label() const noexcept { return label_; }
+        std::string_view label_text() const noexcept { return label_text_; }
+
+        virtual void shown(bool a_shown) noexcept { shown_ = a_shown; }
+        virtual void fill(Color a_fill) noexcept { fill_ = a_fill; }
+        virtual void fill_opacity(double opacity) noexcept { fill_.set_opacity(opacity); }
+        virtual void fill_transparency(double transparency) noexcept { fill_.set_transparency(transparency); }
+        virtual void outline(Color a_outline) noexcept { outline_ = a_outline; }
+        virtual void outline_opacity(double opacity) noexcept { outline_.set_opacity(opacity); }
+        virtual void outline_transparency(double transparency) noexcept { outline_.set_transparency(transparency); }
+        virtual void outline_width(Pixels a_outline_width) noexcept { outline_width_ = a_outline_width; }
+        virtual void size(Pixels a_size) noexcept { size_ = a_size; }
+        virtual void rotation(Rotation a_rotation) noexcept { rotation_ = a_rotation; }
+        virtual void aspect(Aspect a_aspect) noexcept { aspect_ = a_aspect; }
+        virtual void shape(PointShape a_shape) noexcept { shape_ = a_shape; }
+        virtual LabelStyle& label() noexcept { return label_; }
+        virtual void label_text(std::string_view a_label_text) noexcept { label_text_.assign(a_label_text); }
+
+      private:
+        bool shown_{true};
+        Color fill_{TRANSPARENT};
+        Color outline_{BLACK};
+        Pixels outline_width_{1.0};
+        Pixels size_{5.0};
+        Rotation rotation_{NoRotation};
+        Aspect aspect_{AspectNormal};
+        PointShape shape_;
+        LabelStyle label_;
+        std::string label_text_;
 
     }; // class PointStyle
 
@@ -105,47 +134,75 @@ namespace acmacs
         PointStyleModified(PointStyle&& style) : PointStyle(std::move(style)) { all_modified(); }
         PointStyleModified(const PointStyle&& style) : PointStyle(style) { all_modified(); }
 
-        bool modified_shown{false};
-        bool modified_fill{false};
-        bool modified_outline{false};
-        bool modified_outline_width{false};
-        bool modified_size{false};
-        bool modified_rotation{false};
-        bool modified_aspect{false};
-        bool modified_shape{false};
-        bool modified_label{false};
-        bool modified_label_text{false};
+        using PointStyle::shown;
+        using PointStyle::fill;
+        using PointStyle::outline;
+        using PointStyle::outline_width;
+        using PointStyle::size;
+        using PointStyle::rotation;
+        using PointStyle::aspect;
+        using PointStyle::shape;
+        using PointStyle::label;
+        using PointStyle::label_text;
+
+        void shown(bool a_shown) noexcept override { PointStyle::shown(a_shown); modified_shown_ = true; }
+        void fill(Color a_fill) noexcept override { PointStyle::fill(a_fill); modified_fill_ = true; }
+        void fill_opacity(double opacity) noexcept override { PointStyle::fill_opacity(opacity); modified_fill_ = true; }
+        void fill_transparency(double transparency) noexcept override { PointStyle::fill_transparency(transparency); modified_fill_ = true; }
+        void outline(Color a_outline) noexcept override { PointStyle::outline(a_outline); modified_outline_ = true; }
+        void outline_opacity(double opacity) noexcept override { PointStyle::outline_opacity(opacity); modified_outline_ = true; }
+        void outline_transparency(double transparency) noexcept override { PointStyle::outline_transparency(transparency); modified_outline_ = true; }
+        void outline_width(Pixels a_outline_width) noexcept override { PointStyle::outline_width(a_outline_width); modified_outline_width_ = true; }
+        void size(Pixels a_size) noexcept override { PointStyle::size(a_size); modified_size_ = true; }
+        void rotation(Rotation a_rotation) noexcept override { PointStyle::rotation(a_rotation); modified_rotation_ = true; }
+        void aspect(Aspect a_aspect) noexcept override { PointStyle::aspect(a_aspect); modified_aspect_ = true; }
+        void shape(PointShape a_shape) noexcept override { PointStyle::shape(a_shape); modified_shape_ = true; }
+        LabelStyle& label() noexcept override { modified_label_ = true; return PointStyle::label(); }
+        void label_text(std::string_view a_label_text) noexcept override { PointStyle::label_text(a_label_text); modified_label_text_ = true; }
 
       private:
+        bool modified_shown_{false};
+        bool modified_fill_{false};
+        bool modified_outline_{false};
+        bool modified_outline_width_{false};
+        bool modified_size_{false};
+        bool modified_rotation_{false};
+        bool modified_aspect_{false};
+        bool modified_shape_{false};
+        bool modified_label_{false};
+        bool modified_label_text_{false};
+
         void all_modified() noexcept
         {
-            modified_shown = true;
-            modified_fill = true;
-            modified_outline = true;
-            modified_outline_width = true;
-            modified_size = true;
-            modified_rotation = true;
-            modified_aspect = true;
-            modified_shape = true;
-            modified_label = true;
-            modified_label_text = true;
+            modified_shown_ = true;
+            modified_fill_ = true;
+            modified_outline_ = true;
+            modified_outline_width_ = true;
+            modified_size_ = true;
+            modified_rotation_ = true;
+            modified_aspect_ = true;
+            modified_shape_ = true;
+            modified_label_ = true;
+            modified_label_text_ = true;
         }
+
+        friend class PointStyle;
     };
 
     // ----------------------------------------------------------------------
 
     inline PointStyle& PointStyle::operator=(const PointStyleModified& src)
     {
-        if (src.modified_shown) shown = src.shown;
-        if (src.modified_fill) fill = src.fill;
-        if (src.modified_outline) outline = src.outline;
-        if (src.modified_outline_width) outline_width = src.outline_width;
-        if (src.modified_size) size = src.size;
-        if (src.modified_rotation) rotation = src.rotation;
-        if (src.modified_aspect) aspect = src.aspect;
-        if (src.modified_shape) shape = src.shape;
-        if (src.modified_label) label = src.label;
-        if (src.modified_label_text) label_text = src.label_text;
+        if (src.modified_shown_) shown(src.shown());
+        if (src.modified_fill_) fill(src.fill());
+        if (src.modified_outline_) outline(src.outline());
+        if (src.modified_outline_width_) outline_width(src.outline_width());
+        if (src.modified_size_) size(src.size());
+        if (src.modified_rotation_) rotation(src.rotation());
+        if (src.modified_aspect_) aspect(src.aspect());
+        if (src.modified_shape_) shape(src.shape());
+        if (src.modified_label_) label() = src.label();
+        if (src.modified_label_text_) label_text(src.label_text());
         return *this;
     }
 
@@ -196,12 +253,12 @@ template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::f
 };
 
 template <> struct fmt::formatter<acmacs::PointStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const acmacs::PointStyle& style, FormatCtx& ctx) {
+    template <typename FormatCtx> auto format(const acmacs::PointStyle& style, FormatCtx& ctx)
+    {
         return format_to(ctx.out(), R"({{"shape": {}, "shown": {}, "fill": "{}", "outline": "{}", "outline_width": {}, "size": {}, "aspect": {}, "rotation": {}, "label": {}, "label_text": "{}"}})",
-                         style.shape, style.shown, style.fill, style.outline, style.outline_width, style.size, style.aspect, style.rotation, style.label, style.label_text);
+                         style.shape(), style.shown(), style.fill(), style.outline(), style.outline_width(), style.size(), style.aspect(), style.rotation(), style.label(), style.label_text());
     }
 };
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:
