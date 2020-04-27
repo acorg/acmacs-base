@@ -19,8 +19,9 @@
 #include <string_view>
 
 #include "acmacs-base/debug.hh"
-// #include "acmacs-base/float.hh"
+#include "acmacs-base/float.hh"
 #include "acmacs-base/flat-map.hh"
+#include "acmacs-base/string-from-chars.hh"
 
 // ----------------------------------------------------------------------
 
@@ -137,9 +138,21 @@ namespace rjson::v3
           public:
             template <typename Output> Output to() const
             {
-                throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                if constexpr (std::is_floating_point_v<Output>) {
+                    if (const auto val = acmacs::string::from_chars<Output>(_content()); !float_equal(val, std::numeric_limits<Output>::max()))
+                        return val;
+                    else
+                        throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                }
+                else if constexpr (std::is_arithmetic_v<Output> && !std::is_same_v<Output, bool>) {
+                    if (const auto val = acmacs::string::from_chars<Output>(_content()); val != std::numeric_limits<Output>::max())
+                        return val;
+                    else
+                        throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                }
+                else
+                    throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
             }
-
         };
 
         class boolean
@@ -150,7 +163,7 @@ namespace rjson::v3
 
             template <typename Output> Output to() const
             {
-                if constexpr (std::is_constructible_v<Output, bool>)
+                if constexpr (std::is_constructible_v<Output, bool> && !std::is_floating_point_v<Output>)
                     return Output{content_};
                 else
                     throw value_type_mismatch{typeid(Output).name(), fmt::format("boolean{{{}}}", content_)};

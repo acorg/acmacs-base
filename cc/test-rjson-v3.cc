@@ -35,6 +35,20 @@ int main()
             fmt::print(stderr, "> ERROR {}\n", err);
             ++exit_code;
         }
+        try {
+            fmt::print("val.to<int>: {}\n", val.to<int>());
+        }
+        catch (std::exception& err) {
+            fmt::print(stderr, "> ERROR {}\n", err);
+            ++exit_code;
+        }
+        try {
+            fmt::print("val.to<double>: {}\n", val.to<double>());
+        }
+        catch (std::exception& err) {
+            fmt::print(stderr, "> ERROR {}\n", err);
+            ++exit_code;
+        }
     }
     return 0; // exit_code;
 }
