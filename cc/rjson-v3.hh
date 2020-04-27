@@ -32,6 +32,15 @@ namespace rjson::v3
         using std::runtime_error::runtime_error;
     };
 
+    class value_type_mismatch : public error
+    {
+      public:
+        value_type_mismatch(std::string_view requested_type, std::string_view actual_type, std::string_view source_ref={})
+            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type, source_ref)}
+        {
+        }
+    };
+
     class parse_error : public error
     {
       public:
@@ -52,7 +61,10 @@ namespace rjson::v3
         class null
         {
           public:
-
+            template <typename Output> Output to() const
+            {
+                throw value_type_mismatch{typeid(Output).name(), "null"};
+            }
         };
 
         class object
@@ -64,6 +76,11 @@ namespace rjson::v3
             constexpr size_t size() const noexcept { return 0; }
 
             void insert(std::string_view aKey, value&& aValue);
+
+            template <typename Output> Output to() const
+            {
+                throw value_type_mismatch{typeid(Output).name(), "object"};
+            }
 
           private:
             using content_t = acmacs::map_with_unique_keys_t<std::string_view, value>;
@@ -79,6 +96,11 @@ namespace rjson::v3
             constexpr size_t size() const noexcept { return 0; }
 
             void append(value&& aValue);
+
+            template <typename Output> Output to() const
+            {
+                throw value_type_mismatch{typeid(Output).name(), "array"};
+            }
 
           private:
             std::vector<value> content_;
@@ -101,10 +123,23 @@ namespace rjson::v3
             constexpr bool empty() const noexcept { return _content().empty(); }
             constexpr size_t size() const noexcept { return _content().size(); }
 
+            template <typename Output> Output to() const
+            {
+                if constexpr (std::is_constructible_v<Output, decltype(_content())>)
+                    return Output{_content()};
+                else
+                    throw value_type_mismatch{typeid(Output).name(), fmt::format("string{{\"{}\"}}", _content())};
+            }
         };
 
         class number : public simple
         {
+          public:
+            template <typename Output> Output to() const
+            {
+                throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+            }
+
         };
 
         class boolean
@@ -113,10 +148,17 @@ namespace rjson::v3
             constexpr boolean(bool content) : content_{content} {}
             constexpr explicit operator bool() const noexcept { return content_; }
 
+            template <typename Output> Output to() const
+            {
+                if constexpr (std::is_constructible_v<Output, bool>)
+                    return Output{content_};
+                else
+                    throw value_type_mismatch{typeid(Output).name(), fmt::format("boolean{{{}}}", content_)};
+            }
+
           private:
             bool content_;
         };
-
 
     } // namespace detail
 
@@ -147,6 +189,8 @@ namespace rjson::v3
         bool is_bool() const noexcept;
         std::string actual_type() const noexcept;
 
+        template <typename Output> Output to() const; // throws value_type_mismatch
+
         bool empty() const noexcept;
         size_t size() const noexcept; // returns 0 if neither array nor object nor string
 
@@ -167,7 +211,11 @@ namespace rjson::v3
     {
       private:
         value_read(std::string&& buf) : buffer_{std::move(buf)} {}
-        value& operator=(value&& val) { value::operator=(std::move(val)); return *this; } // buffer_ untouched
+        value& operator=(value&& val)
+        {
+            value::operator=(std::move(val));
+            return *this;
+        } // buffer_ untouched
         const std::string buffer_;
 
         friend value_read parse(std::string&& data);
@@ -183,6 +231,11 @@ namespace rjson::v3
     inline std::string value::actual_type() const noexcept
     {
         return std::visit([]<typename Content>(Content&& arg) -> std::string { return typeid(arg).name(); }, value_);
+    }
+
+    template <typename Output> inline Output value::to() const
+    {
+        return std::visit([]<typename Content>(Content&& arg) { return arg.template to<Output>(); }, value_);
     }
 
     inline std::string_view value::_content() const noexcept
@@ -300,15 +353,9 @@ namespace rjson::v3
 
     // ----------------------------------------------------------------------
 
-    inline void detail::object::insert(std::string_view aKey, value&& aValue)
-    {
-        content_.emplace(aKey, std::move(aValue));
-    }
+    inline void detail::object::insert(std::string_view aKey, value&& aValue) { content_.emplace(aKey, std::move(aValue)); }
 
-    inline void detail::array::append(value&& aValue)
-    {
-        content_.push_back(std::move(aValue));
-    }
+    inline void detail::array::append(value&& aValue) { content_.push_back(std::move(aValue)); }
 
 } // namespace rjson::v3
 
