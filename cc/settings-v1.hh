@@ -15,7 +15,7 @@
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/read-file.hh"
-#include "acmacs-base/rjson.hh"
+#include "acmacs-base/rjson-v2.hh"
 #include "acmacs-base/size.hh"
 #include "acmacs-base/color.hh"
 #include "acmacs-base/text-style.hh"

@@ -2,7 +2,7 @@
 #include <utility>
 
 #include "stream.hh"
-#include "rjson.hh"
+#include "rjson-v2.hh"
 #include "timeit.hh"
 #include "read-file.hh"
 

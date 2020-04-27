@@ -5,7 +5,8 @@ TARGETS = \
   $(ACMACS_BASE_LIB) \
   $(DIST)/json-pp \
   $(DIST)/time-series-gen \
-  $(DIST)/test-rjson2 \
+  $(DIST)/test-rjson-v2 \
+  $(DIST)/test-rjson-v3 \
   $(DIST)/test-argv \
   $(DIST)/test-string-split \
   $(DIST)/test-date2 \
@@ -36,12 +37,12 @@ ACMACS_BASE_SOURCES = \
   layout.cc \
   argv.cc argc-argv.cc \
   quicklook.cc timeit.cc gzip.cc \
-  rjson.cc json-importer.cc settings.cc time-series.cc \
+  rjson-v2.cc rjson-v3.cc json-importer.cc settings.cc time-series.cc \
   messages.cc debug.cc
 
-JSON_PP_SOURCES = rjson.cc json-pp.cc
-TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
-TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
+# JSON_PP_SOURCES = rjson.cc json-pp.cc
+# TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
+# TEST_ARGV_SOURCES = argc-argv.cc test-argc-argv.cc
 
 # ----------------------------------------------------------------------
 

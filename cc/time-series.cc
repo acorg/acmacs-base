@@ -1,5 +1,5 @@
 #include "acmacs-base/time-series.hh"
-#include "acmacs-base/rjson.hh"
+#include "acmacs-base/rjson-v2.hh"
 #include "acmacs-base/enumerate.hh"
 
 // ----------------------------------------------------------------------

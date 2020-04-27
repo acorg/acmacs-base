@@ -2,7 +2,7 @@
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/debug.hh"
-#include "acmacs-base/rjson.hh"
+#include "acmacs-base/rjson-v2.hh"
 #include "acmacs-base/flat-map.hh"
 
 // ----------------------------------------------------------------------

@@ -17,8 +17,10 @@ namespace acmacs
             using entry_type = std::pair<Key, Value>;
             using const_iterator = typename std::vector<entry_type>::const_iterator;
 
-            // map_base_t() = default;
+            map_base_t() = default;
+            map_base_t(map_base_t&&) = default;
             virtual ~map_base_t() = default;
+            map_base_t& operator=(map_base_t&&) = default;
 
             bool empty() const noexcept { return data_.empty(); }
             constexpr const auto& data() const noexcept { return data_; }

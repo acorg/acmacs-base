@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "rjson.hh"
+#include "rjson-v2.hh"
 
 int main(int argc, const char* const* argv)
 {
