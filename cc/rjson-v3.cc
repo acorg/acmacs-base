@@ -1,4 +1,4 @@
-#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && defined(__cpp_concepts) && __cpp_concepts >= 201907L
+// #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && defined(__cpp_concepts) && __cpp_concepts >= 201907L
 
 #include <stack>
 #include <memory>
@@ -620,9 +620,9 @@ rjson::v3::value_read rjson::v3::parse_file(std::string_view filename)
 
 // ----------------------------------------------------------------------
 
-#else
-#warning rjson::v3 is not yet supported by the compiler
-#endif
+// #else
+// #warning rjson::v3 is not yet supported by the compiler
+// #endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:

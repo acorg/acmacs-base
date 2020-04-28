@@ -1,4 +1,4 @@
-#if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && defined(__cpp_concepts) && __cpp_concepts >= 201907L
+// #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && defined(__cpp_concepts) && __cpp_concepts >= 201907L
 
 #include <array>
 #include "acmacs-base/rjson-v3.hh"
@@ -49,20 +49,33 @@ int main()
             fmt::print(stderr, "> ERROR {}\n", err);
             ++exit_code;
         }
+
+        if (val.is_array()) {
+            fmt::print("array:");
+            for (const auto& arr_value : val.array())
+                fmt::print(" {}", arr_value.actual_type());
+            fmt::print("\n");
+        }
+        else if (val.is_object()) {
+            fmt::print("object:");
+            for (const auto& [obj_key, obj_value] : val.object())
+                fmt::print(" \"{}\":{}", obj_key, obj_value.actual_type());
+            fmt::print("\n");
+        }
     }
     return 0; // exit_code;
 }
 
-#else
+// #else
 
-#include "acmacs-base/fmt.hh"
+// #include "acmacs-base/fmt.hh"
 
-int main()
-{
-    fmt::print(stderr, "warning: test-rjson-v3 not running, neither starship nor concepts supported by the compiler\n");
-    return 0;
-}
-#endif
+// int main()
+// {
+//     fmt::print(stderr, "warning: test-rjson-v3 not running, neither starship nor concepts supported by the compiler\n");
+//     return 0;
+// }
+// #endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -24,6 +24,8 @@ namespace acmacs
 
             bool empty() const noexcept { return data_.empty(); }
             constexpr const auto& data() const noexcept { return data_; }
+            constexpr auto begin() const { return data_.begin(); }
+            constexpr auto end() const { return data_.end(); }
 
             template <typename Range> void collect(Range&& rng, bool check_result = true)
             {

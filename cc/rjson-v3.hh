@@ -4,13 +4,13 @@
 
 // /usr/local/Cellar/llvm/10.0.0_3/include/c++/v1/__config
 // https://isocpp.org/std/standing-documents/sd-6-sg10-feature-test-recommendations#__cpp_range_based_for
-#if !defined(__cpp_impl_three_way_comparison) || __cpp_impl_three_way_comparison < 201907L
-#error rjson::v3 requires <=> support
-#endif
+// #if !defined(__cpp_impl_three_way_comparison) || __cpp_impl_three_way_comparison < 201907L
+// #error rjson::v3 requires <=> support
+// #endif
 
-#if !defined(__cpp_concepts) || __cpp_concepts < 201907L
-#error rjson::v3 requires concepts support
-#endif
+// #if !defined(__cpp_concepts) || __cpp_concepts < 201907L
+// #error rjson::v3 requires concepts support
+// #endif
 
 // ----------------------------------------------------------------------
 
@@ -75,6 +75,8 @@ namespace rjson::v3
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
+            constexpr auto begin() const noexcept { return content_.begin(); }
+            constexpr auto end() const noexcept { return content_.end(); }
 
             void insert(std::string_view aKey, value&& aValue);
 
@@ -95,6 +97,8 @@ namespace rjson::v3
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
+            constexpr auto begin() const noexcept { return content_.begin(); }
+            constexpr auto end() const noexcept { return content_.end(); }
 
             void append(value&& aValue);
 
@@ -202,6 +206,9 @@ namespace rjson::v3
         bool is_bool() const noexcept;
         std::string actual_type() const noexcept;
 
+        const detail::object& object() const;
+        const detail::array& array() const;
+
         template <typename Output> Output to() const; // throws value_type_mismatch
 
         bool empty() const noexcept;
@@ -249,6 +256,30 @@ namespace rjson::v3
     template <typename Output> inline Output value::to() const
     {
         return std::visit([]<typename Content>(Content&& arg) { return arg.template to<Output>(); }, value_);
+    }
+
+    inline const detail::object& value::object() const
+    {
+        return std::visit(
+            []<typename Content>(Content&& arg) -> const detail::object& {
+                if constexpr (std::is_same_v<std::decay_t<Content>, detail::object>)
+                    return arg;
+                else
+                    throw value_type_mismatch{"object", typeid(Content).name()};
+            },
+            value_);
+    }
+
+    inline const detail::array& value::array() const
+    {
+        return std::visit(
+            []<typename Content>(Content&& arg) -> const detail::array& {
+                if constexpr (std::is_same_v<std::decay_t<Content>, detail::array>)
+                    return arg;
+                else
+                    throw value_type_mismatch{"array", typeid(Content).name()};
+            },
+            value_);
     }
 
     inline std::string_view value::_content() const noexcept
