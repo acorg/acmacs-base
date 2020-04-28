@@ -419,6 +419,13 @@ template <> struct fmt::formatter<rjson::v3::value> : fmt::formatter<acmacs::fmt
     }
 };
 
+template <> struct fmt::formatter<rjson::v3::value_read> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const rjson::v3::value_read& value, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), "{}", rjson::v3::format(value));
+    }
+};
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))

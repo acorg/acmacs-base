@@ -21,8 +21,8 @@ int main()
     int exit_code = 0;
     for (const auto& elt : data) {
         const auto val = rjson::v3::parse_string(elt);
-        // fmt::print("rjson::v3: {}\n", val);
-        fmt::print("rjson::v3: {} <- \"{}\"\n", rjson::v3::format(val), elt);
+        fmt::print("rjson::v3: {}\n", val);
+        // fmt::print("rjson::v3: {} <- \"{}\"\n", rjson::v3::format(val), elt);
 
         // try {
         //     fmt::print("val.to<string>: \"{}\"\n", val.to<std::string>());
