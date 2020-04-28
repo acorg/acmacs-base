@@ -7,7 +7,8 @@
 
 #include "acmacs-base/fmt.hh"
 #include "acmacs-base/sfinae.hh"
-#include "acmacs-base/to-string.hh"
+#include "acmacs-base/format-double.hh"
+// #include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------
 
@@ -62,6 +63,8 @@ namespace to_json
             enum class compact_output { no, yes };
             enum class embed_space { no, yes };
             enum class escape_double_quotes { no, yes };
+
+            json() = default;
 
             std::string compact(embed_space space = embed_space::no) const
             {
@@ -119,7 +122,6 @@ namespace to_json
 
             data_t data_;
 
-            json() = default;
             json(char beg, char end)
             {
                 push_back(beg);
@@ -145,8 +147,10 @@ namespace to_json
                     else
                         push_back(fmt::format("\"{}\"", std::forward<T>(a_val)));
                 }
-                else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer || std::is_floating_point_v<std::decay_t<T>>)
+                else if constexpr (std::numeric_limits<std::decay_t<T>>::is_integer)
                     push_back(fmt::format("{}", std::forward<T>(a_val)));
+                else if constexpr (std::is_floating_point_v<std::decay_t<T>>)
+                    push_back(acmacs::format_double(a_val));
                 else if constexpr (acmacs::sfinae::decay_equiv_v<T, bool>)
                     push_back(a_val ? "true" : "false");
                 else
@@ -294,7 +298,7 @@ namespace to_json
             {
                 object result;
                 for (const auto& [key, val] : src)
-                    result.move_before_end(key_val{acmacs::to_string(key), val});
+                    result.move_before_end(key_val{fmt::format("{}", key), val});
                 return result;
             }
 

@@ -216,6 +216,11 @@ namespace rjson::v3
 
         std::string_view _content() const noexcept;
 
+        template <typename Callback> auto visit(Callback&& callback) const noexcept
+        {
+            return std::visit(std::forward<Callback>(callback), value_);
+        }
+
       private:
         using value_base = std::variant<detail::null, detail::object, detail::array, detail::string, detail::number, detail::boolean>; // null must be the first alternative, it is the default value;
 
@@ -245,6 +250,8 @@ namespace rjson::v3
 
     value_read parse_string(std::string_view data);
     value_read parse_file(std::string_view filename);
+
+    std::string format(const value& val) noexcept;
 
     // ======================================================================
 
@@ -402,6 +409,15 @@ namespace rjson::v3
     inline void detail::array::append(value&& aValue) { content_.push_back(std::move(aValue)); }
 
 } // namespace rjson::v3
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<rjson::v3::value> : fmt::formatter<acmacs::fmt_default_formatter> {
+    template <typename FormatCtx> auto format(const rjson::v3::value& value, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), "{}", rjson::v3::format(value));
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

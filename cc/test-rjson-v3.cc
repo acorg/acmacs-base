@@ -21,47 +21,50 @@ int main()
     int exit_code = 0;
     for (const auto& elt : data) {
         const auto val = rjson::v3::parse_string(elt);
-        try {
-            fmt::print("val.to<string>: \"{}\"\n", val.to<std::string>());
-        }
-        catch (std::exception& err) {
-            fmt::print(stderr, "> ERROR {}\n", err);
-            ++exit_code;
-        }
-        try {
-            fmt::print("val.to<bool>: {}\n", val.to<bool>());
-        }
-        catch (std::exception& err) {
-            fmt::print(stderr, "> ERROR {}\n", err);
-            ++exit_code;
-        }
-        try {
-            fmt::print("val.to<int>: {}\n", val.to<int>());
-        }
-        catch (std::exception& err) {
-            fmt::print(stderr, "> ERROR {}\n", err);
-            ++exit_code;
-        }
-        try {
-            fmt::print("val.to<double>: {}\n", val.to<double>());
-        }
-        catch (std::exception& err) {
-            fmt::print(stderr, "> ERROR {}\n", err);
-            ++exit_code;
-        }
+        // fmt::print("rjson::v3: {}\n", val);
+        fmt::print("rjson::v3: {} <- \"{}\"\n", rjson::v3::format(val), elt);
 
-        if (val.is_array()) {
-            fmt::print("array:");
-            for (const auto& arr_value : val.array())
-                fmt::print(" {}", arr_value.actual_type());
-            fmt::print("\n");
-        }
-        else if (val.is_object()) {
-            fmt::print("object:");
-            for (const auto& [obj_key, obj_value] : val.object())
-                fmt::print(" \"{}\":{}", obj_key, obj_value.actual_type());
-            fmt::print("\n");
-        }
+        // try {
+        //     fmt::print("val.to<string>: \"{}\"\n", val.to<std::string>());
+        // }
+        // catch (std::exception& err) {
+        //     fmt::print(stderr, "> ERROR {}\n", err);
+        //     ++exit_code;
+        // }
+        // try {
+        //     fmt::print("val.to<bool>: {}\n", val.to<bool>());
+        // }
+        // catch (std::exception& err) {
+        //     fmt::print(stderr, "> ERROR {}\n", err);
+        //     ++exit_code;
+        // }
+        // try {
+        //     fmt::print("val.to<int>: {}\n", val.to<int>());
+        // }
+        // catch (std::exception& err) {
+        //     fmt::print(stderr, "> ERROR {}\n", err);
+        //     ++exit_code;
+        // }
+        // try {
+        //     fmt::print("val.to<double>: {}\n", val.to<double>());
+        // }
+        // catch (std::exception& err) {
+        //     fmt::print(stderr, "> ERROR {}\n", err);
+        //     ++exit_code;
+        // }
+
+        // if (val.is_array()) {
+        //     fmt::print("array:");
+        //     for (const auto& arr_value : val.array())
+        //         fmt::print(" {}", arr_value.actual_type());
+        //     fmt::print("\n");
+        // }
+        // else if (val.is_object()) {
+        //     fmt::print("object:");
+        //     for (const auto& [obj_key, obj_value] : val.object())
+        //         fmt::print(" \"{}\":{}", obj_key, obj_value.actual_type());
+        //     fmt::print("\n");
+        // }
     }
     return 0; // exit_code;
 }

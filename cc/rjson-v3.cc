@@ -5,6 +5,7 @@
 
 #include "acmacs-base/rjson-v3.hh"
 #include "acmacs-base/read-file.hh"
+#include "acmacs-base/to-json.hh"
 
 // ----------------------------------------------------------------------
 
@@ -614,6 +615,43 @@ rjson::v3::value_read rjson::v3::parse_file(std::string_view filename)
     return parse(static_cast<std::string>(acmacs::file::read(filename)));
 
 } // rjson::v3::parse_file
+
+// ----------------------------------------------------------------------
+
+std::string rjson::v3::format(const value& val) noexcept
+{
+    using namespace std::string_view_literals;
+    const auto js = val.visit([]<typename Content>(Content&& arg) -> to_json::json {
+        if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>) {
+            return to_json::raw("null"sv);
+        }
+        else if constexpr (std::is_same_v<std::decay_t<Content>, detail::object>) {
+            to_json::object obj;
+            for (const auto& [obj_key, obj_val] : arg)
+                obj << to_json::key_val(obj_key, to_json::raw(format(obj_val)));
+            return std::move(obj);
+        }
+        else if constexpr (std::is_same_v<std::decay_t<Content>, detail::array>) {
+            to_json::array arr;
+            for (const auto& arr_val : arg)
+                arr << to_json::raw(format(arr_val));
+            return std::move(arr);
+        }
+        else if constexpr (std::is_same_v<std::decay_t<Content>, detail::string>) {
+            return to_json::val(arg._content());
+        }
+        else if constexpr (std::is_same_v<std::decay_t<Content>, detail::number>) {
+            return to_json::val(arg.template to<double>());
+        }
+        else if constexpr (std::is_same_v<std::decay_t<Content>, detail::boolean>) {
+            return to_json::val(arg.template to<bool>());
+        }
+        else
+            static_assert(std::is_same_v<Content, void>);
+    });
+    return js.compact(to_json::json::embed_space::yes);
+
+} // rjson::v3::format
 
 // ----------------------------------------------------------------------
 
