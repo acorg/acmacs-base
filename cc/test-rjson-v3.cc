@@ -15,7 +15,7 @@ const std::array data{
     pp{R"(  false)"sv, R"(false)"sv},
     pp{R"(  null)"sv, R"(null)"sv},
     pp{R"( {"array":[ 1   ,   2   ,  true  , false, null, ["log"], { "a" : null}  ], "another":[], "a": "a", "b": 7, "c": null, "d": true, "e": false, "f": "", "g": 3.1415 }  )"sv, R"({"array": [1, 2, true, false, null, ["log"], {"a": null}], "another": [], "a": "a", "b": 7, "c": null, "d": true, "e": false, "f": "", "g": 3.14150000000000018})"sv},
-    pp{R"([38])"sv, R"([38])"sv},
+    pp{R"([38, 39, "40", false, null, {"a": true}])"sv, R"([38, 39, "40", false, null, {"a": true}])"sv},
 };
 
 int main()
@@ -28,52 +28,8 @@ int main()
             AD_ERROR("rjson::v3 parsing/formatting failed: \"{}\" <- \"{}\", expected: \"{}\"", formatted, to_parse, expected);
             ++exit_code;
         }
-
-        // fmt::print("rjson::v3: {} <- \"{}\"\n", rjson::v3::format(val), elt);
-
-        // try {
-        //     fmt::print("val.to<string>: \"{}\"\n", val.to<std::string>());
-        // }
-        // catch (std::exception& err) {
-        //     fmt::print(stderr, "> ERROR {}\n", err);
-        //     ++exit_code;
-        // }
-        // try {
-        //     fmt::print("val.to<bool>: {}\n", val.to<bool>());
-        // }
-        // catch (std::exception& err) {
-        //     fmt::print(stderr, "> ERROR {}\n", err);
-        //     ++exit_code;
-        // }
-        // try {
-        //     fmt::print("val.to<int>: {}\n", val.to<int>());
-        // }
-        // catch (std::exception& err) {
-        //     fmt::print(stderr, "> ERROR {}\n", err);
-        //     ++exit_code;
-        // }
-        // try {
-        //     fmt::print("val.to<double>: {}\n", val.to<double>());
-        // }
-        // catch (std::exception& err) {
-        //     fmt::print(stderr, "> ERROR {}\n", err);
-        //     ++exit_code;
-        // }
-
-        // if (val.is_array()) {
-        //     fmt::print("array:");
-        //     for (const auto& arr_value : val.array())
-        //         fmt::print(" {}", arr_value.actual_type());
-        //     fmt::print("\n");
-        // }
-        // else if (val.is_object()) {
-        //     fmt::print("object:");
-        //     for (const auto& [obj_key, obj_value] : val.object())
-        //         fmt::print(" \"{}\":{}", obj_key, obj_value.actual_type());
-        //     fmt::print("\n");
-        // }
     }
-    return 0; // exit_code;
+    return exit_code;
 }
 
 // #else
