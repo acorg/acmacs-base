@@ -22,7 +22,7 @@ namespace json_writer
 
 template <typename RW, typename T> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, const std::vector<T>&);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, const char*);
-template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, std::string);
+template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, std::string_view);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, double);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, int);
 template <typename RW> json_writer::writer<RW>& operator <<(json_writer::writer<RW>&, size_t);
@@ -57,7 +57,7 @@ namespace json_writer
     {
      public:
         inline key(const char* v) : value(v) {}
-        inline key(std::string v) : value(v) {}
+        inline key(std::string_view v) : value{v} {}
         inline key(char v) : value(1, v) {}
         inline operator const char*() const { return value.c_str(); }
         inline const char* as_char_ptr() const { return value.c_str(); }
@@ -192,7 +192,7 @@ namespace json_writer
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::writer<RW>&) { return aWriter; }
 
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, const char* s) { aWriter.String(s, static_cast<unsigned>(strlen(s))); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, std::string s) { aWriter.String(s.c_str(), static_cast<unsigned>(s.size())); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, std::string_view s) { aWriter.String(s.data(), static_cast<unsigned>(s.size())); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, int value) { aWriter.Int(value); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, size_t value) { aWriter.Uint64(value); return aWriter; }
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, bool value) { aWriter.Bool(value); return aWriter; }

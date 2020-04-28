@@ -1,5 +1,7 @@
 #pragma once
 
+#error Obsolete, use rjson
+
 #include <string>
 #include <vector>
 #include <map>

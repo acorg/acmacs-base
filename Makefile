@@ -37,7 +37,7 @@ ACMACS_BASE_SOURCES = \
   layout.cc \
   argv.cc argc-argv.cc \
   quicklook.cc timeit.cc gzip.cc \
-  rjson-v2.cc rjson-v3.cc json-importer.cc settings.cc time-series.cc \
+  rjson-v2.cc rjson-v3.cc settings.cc time-series.cc \
   messages.cc debug.cc
 
 # JSON_PP_SOURCES = rjson.cc json-pp.cc
