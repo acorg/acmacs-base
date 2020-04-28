@@ -97,8 +97,8 @@ namespace rjson::v3
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
-            constexpr auto begin() const noexcept { return content_.begin(); }
-            constexpr auto end() const noexcept { return content_.end(); }
+            /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
+            /*constexpr*/ auto end() const noexcept { return content_.end(); }
 
             void append(value&& aValue);
 
