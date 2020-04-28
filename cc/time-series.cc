@@ -81,7 +81,7 @@ acmacs::time_series::v2::interval acmacs::time_series::v2::interval_from_string(
 
 // ----------------------------------------------------------------------
 
-acmacs::time_series::v2::parameters& acmacs::time_series::v2::update(const rjson::value& source, parameters& param)
+acmacs::time_series::v2::parameters& acmacs::time_series::v2::update(const rjson::v2::value& source, parameters& param)
 {
     using namespace std::string_view_literals;
     if (const auto& start = source["start"sv]; !start.is_null())
@@ -93,7 +93,7 @@ acmacs::time_series::v2::parameters& acmacs::time_series::v2::update(const rjson
             if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
                 param.intervl = interval_from_string(arg);
             }
-            else if constexpr (std::is_same_v<std::decay_t<T>, rjson::object>) {
+            else if constexpr (std::is_same_v<std::decay_t<T>, rjson::v2::object>) {
                 if (const auto& mon = arg.get("month"sv); !mon.is_null()) {
                     param.intervl = interval::month;
                     param.number_of_intervals = mon.template to<size_t>();
@@ -114,7 +114,7 @@ acmacs::time_series::v2::parameters& acmacs::time_series::v2::update(const rjson
                     fmt::print(stderr, "WARNING: unrecognized interval specification: {}\n", arg);
                 }
             }
-            else if constexpr (!std::is_same_v<std::decay_t<T>, rjson::const_null> && !std::is_same_v<std::decay_t<T>, rjson::null>) {
+            else if constexpr (!std::is_same_v<std::decay_t<T>, rjson::v2::const_null> && !std::is_same_v<std::decay_t<T>, rjson::v2::null>) {
                 fmt::print(stderr, "WARNING: unrecognized interval specification: {}\n", arg);
             }
         },

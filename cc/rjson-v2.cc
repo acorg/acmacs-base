@@ -786,7 +786,7 @@ bool rjson::v2::PrettyHandler::is_simple(const value& val, dive a_dive) const
 
 // ----------------------------------------------------------------------
 
-std::vector<rjson::object::content_t::const_iterator> rjson::v2::PrettyHandler::sorted(const object& val) const
+std::vector<rjson::v2::object::content_t::const_iterator> rjson::v2::PrettyHandler::sorted(const object& val) const
 {
     std::vector<object::content_t::const_iterator> result;
     for (auto iter = val.content_.begin(); iter != val.content_.end(); ++iter) {
