@@ -9,6 +9,8 @@ struct Options : public argv
 {
     Options(int a_argc, const char* const a_argv[], on_error on_err = on_error::exit) : argv() { parse(a_argc, a_argv, on_err); }
 
+    option<bool> verbose{*this, 'v', "verbose"};
+
     argument<str_array> settings_files{*this, arg_name{"settings.json"}};
 };
 
@@ -20,7 +22,8 @@ int main(int argc, const char* argv[])
     try {
         Options opt(argc, argv);
         acmacs::log::register_enabler_acmacs_base();
-        // acmacs::log::enable("settings");
+        if (opt.verbose)
+            acmacs::log::enable("settings");
         if (!opt.settings_files.empty()) {
             acmacs::settings::Settings s1;
             AD_DEBUG("loading {}", opt.settings_files);
@@ -28,10 +31,12 @@ int main(int argc, const char* argv[])
         }
         else {
             {
+                AD_DEBUG("reading {}", "test-settings-v2.1.json");
                 acmacs::settings::Settings s2({"test-settings-v2.1.json"});
                 s2.apply("main"sv);
             }
             {
+                AD_DEBUG("reading {}", "test-settings-v2.2.json");
                 acmacs::settings::Settings s3({"test-settings-v2.2.json", "test-settings-v2.3.json"});
                 s3.apply("main"sv);
             }

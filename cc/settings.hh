@@ -1,9 +1,6 @@
 #pragma once
 
-#include "acmacs-base/fmt.hh"
-#include "acmacs-base/debug.hh"
-#include "acmacs-base/rjson-v2.hh"
-#include "acmacs-base/flat-map.hh"
+#include "acmacs-base/rjson-v3.hh"
 
 // ----------------------------------------------------------------------
 
@@ -33,22 +30,23 @@ namespace acmacs::settings::inline v2
         // if name not found, throw
         virtual void apply(std::string_view name /* = "main" */);
 
-        void setenv_from_string(std::string_view key, std::string_view value);
-        template <typename T> void setenv(std::string_view key, T&& value) { setenv(key, rjson::value{std::forward<T>(value)}); }
-        template <typename T> void setenv_toplevel(std::string_view key, T&& value) { setenv_toplevel(key, rjson::value{std::forward<T>(value)}); }
+        void setenv(std::string_view key, rjson::v3::value&& value) { environment_.add(key, std::move(value)); }
+        void setenv(std::string_view key, std::string_view value) { setenv(key, rjson::v3::parse_string(value)); }
+        void setenv_toplevel(std::string_view key, std::string_view value) { environment_.add_to_toplevel(key, rjson::v3::parse_string(fmt::format("\"{}\"", value))); }
+        void setenv_toplevel(std::string_view key, bool value) { environment_.add_to_toplevel(key, rjson::v3::parse_string(fmt::format("{}", value))); }
 
-        const rjson::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
+        const rjson::v3::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            return environment_.get(environment_.substitute(key).to<std::string>(), a_toplevel_only);
+            return environment_.get(environment_.substitute(key).to<std::string_view>(), a_toplevel_only);
         }
 
         // returns ConstNull if not found
-        rjson::value getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
-        rjson::value substitute(const rjson::value& source) const;
+        const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
+        const rjson::v3::value& substitute(const rjson::v3::value& source) const;
 
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
                 return val.to<std::decay_t<T>>();
             else
                 return std::move(a_default);
@@ -59,26 +57,26 @@ namespace acmacs::settings::inline v2
         template <typename T> void getenv_copy_if_present(std::string_view key, T& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             static_assert(!std::is_same_v<std::decay_t<T>, std::string_view>);
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
                 target = val.to<std::decay_t<T>>();
         }
 
         template <typename T1, typename T2> void getenv_extract_copy_if_present(std::string_view key, T2& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             static_assert(!std::is_same_v<std::decay_t<T2>, std::string_view>);
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_const_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
                 target = T2{val.to<std::decay_t<T1>>()};
         }
 
         void printenv() const { environment_.print(); }
 
       protected:
-        template <typename... Key> const rjson::value& get(Key&&... keys) const
+        template <typename... Key> const rjson::v3::value& get(Key&&... keys) const
         {
             return loaded_data_.get(keys ...);
         }
 
-        void apply(const rjson::value& entry);
+        void apply(const rjson::v3::value& entry);
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
 
         // substitute vars in name, find name in the top of data_ and apply it
@@ -93,15 +91,15 @@ namespace acmacs::settings::inline v2
 
             void load(std::string_view filename);
             void reload(Settings& settings);
-            const rjson::value& get_top(std::string_view name) const { return file_data_.front().get(name); }
+            const rjson::v3::value& get_top(std::string_view name) const { return file_data_.front()[name]; }
 
-            template <typename... Key> const rjson::value& get(Key&&... keys) const
+            template <typename... Key> const rjson::v3::value& get(Key&&... keys) const
             {
                 for (const auto& per_file : file_data_) {
-                    if (const auto& val = per_file.get(std::forward<Key>(keys)...); !val.is_const_null())
+                    if (const auto& val = per_file.get(std::forward<Key>(keys)...); !val.is_null())
                         return val;
                 }
-                return rjson::ConstNull;
+                return rjson::v3::const_null;
             }
 
             void report() const
@@ -112,7 +110,7 @@ namespace acmacs::settings::inline v2
 
           private:
             std::vector<std::string> filenames_;
-            std::vector<rjson::value> file_data_;
+            std::vector<rjson::v3::value_read> file_data_;
         };
 
         class Environment
@@ -120,52 +118,43 @@ namespace acmacs::settings::inline v2
           public:
             Environment() { push(); }
 
-            const rjson::value& get(std::string_view key, toplevel_only a_toplevel_only) const;
+            const rjson::v3::value& get(std::string_view key, toplevel_only a_toplevel_only) const;
             void push() { env_data_.emplace_back(); }
             void pop() { env_data_.erase(std::prev(std::end(env_data_))); }
             size_t size() const { return env_data_.size(); }
-            void add(std::string_view key, const rjson::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
-            void add(std::string_view key, rjson::value&& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, std::move(val)); }
-            void add_to_toplevel(std::string_view key, const rjson::value& val) { env_data_.begin()->emplace_or_replace(std::string{key}, val); }
-            void add_to_toplevel(std::string_view key, rjson::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
+            void add(std::string_view key, const rjson::v3::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
+            void add(std::string_view key, rjson::v3::value&& val) { env_data_.rbegin()->emplace_or_replace(key, std::move(val)); }
+            // void add_to_toplevel(std::string_view key, const rjson::v3::value& val) { env_data_.begin()->emplace_or_replace(std::string{key}, val); }
+            void add_to_toplevel(std::string_view key, rjson::v3::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
             void print() const;
             void print_key_value() const;
 
-            rjson::value substitute(std::string_view source) const;
-            std::string substitute_to_string(std::string_view source) const { return rjson::to<std::string>(substitute(source)); }
+            const rjson::v3::value& substitute(std::string_view source) const; // returns rjson::v3::const_null if not substitued
+            std::string substitute_to_string(std::string_view source) const noexcept;
 
           private:
-            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::value>> env_data_;
+            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>> env_data_;
 
-            rjson::value substitute(const rjson::value& source) const;
+            const rjson::v3::value& substitute(const rjson::v3::value& source) const;
         };
 
         LoadedDataFiles loaded_data_;
         mutable Environment environment_;
         mutable bool warn_if_set_used_{false};
 
-        void push_and_apply(const rjson::object& entry);
+        void push_and_apply(const rjson::v3::detail::object& entry);
         void apply_if();
-        bool eval_condition(const rjson::value& condition) const;
-        bool eval_and(const rjson::value& condition) const;
-        bool eval_or(const rjson::value& condition) const;
-        bool eval_not(const rjson::value& condition) const { return !eval_condition(condition); }
-        bool eval_empty(const rjson::value& condition, bool true_if_empty) const;
-        bool eval_equal(const rjson::value& condition) const;
-        bool eval_not_equal(const rjson::value& condition) const { return !eval_equal(condition); }
+        bool eval_condition(const rjson::v3::value& condition) const;
+        bool eval_and(const rjson::v3::value& condition) const;
+        bool eval_or(const rjson::v3::value& condition) const;
+        bool eval_not(const rjson::v3::value& condition) const { return !eval_condition(condition); }
+        bool eval_empty(const rjson::v3::value& condition, bool true_if_empty) const;
+        bool eval_equal(const rjson::v3::value& condition) const;
+        bool eval_not_equal(const rjson::v3::value& condition) const { return !eval_equal(condition); }
 
         friend class Subenvironment;
+
     }; // class Settings
-} // namespace acmacs::settings::inline v2
-
-// ----------------------------------------------------------------------
-
-namespace acmacs::settings::inline v2
-{
-    template <> inline void Settings::setenv(std::string_view key, const rjson::value& value) { environment_.add(key, value); }
-    template <> inline void Settings::setenv(std::string_view key, rjson::value && value) { environment_.add(key, std::move(value)); }
-    template <> inline void Settings::setenv_toplevel(std::string_view key, const rjson::value& value) { environment_.add_to_toplevel(key, value); }
-    template <> inline void Settings::setenv_toplevel(std::string_view key, rjson::value && value) { environment_.add_to_toplevel(key, std::move(value)); }
 
 } // namespace acmacs::settings::inline v2
 

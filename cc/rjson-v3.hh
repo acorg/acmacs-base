@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <variant>
 #include <string_view>
+#include <typeinfo>
 
 #include "acmacs-base/debug.hh"
 #include "acmacs-base/float.hh"
@@ -38,6 +39,10 @@ namespace rjson::v3
       public:
         value_type_mismatch(std::string_view requested_type, std::string_view actual_type, std::string_view source_ref={})
             : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type, source_ref)}
+        {
+        }
+        value_type_mismatch(std::string_view requested_type, const std::type_info& actual_type, std::string_view source_ref={})
+            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type.name(), source_ref)}
         {
         }
     };
@@ -72,6 +77,10 @@ namespace rjson::v3
         {
           public:
             object() = default;
+            object(const object&) = default;
+            object(object&&) = default;
+            object& operator=(object&&) = default;
+            object& operator=(const object&) = default;
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
@@ -79,6 +88,8 @@ namespace rjson::v3
             constexpr auto end() const noexcept { return content_.end(); }
 
             void insert(std::string_view aKey, value&& aValue);
+            const value& operator[](std::string_view key) const noexcept; // returns null if not found
+            template <typename... Keys> const value& get(std::string_view key, Keys&&... rest) const;
 
             template <typename Output> Output to() const
             {
@@ -86,7 +97,7 @@ namespace rjson::v3
             }
 
           private:
-            using content_t = acmacs::map_with_unique_keys_t<std::string_view, value>;
+            using content_t = acmacs::small_map_with_unique_keys_t<std::string_view, value>; // to avoid sorting which invalidates string_view's
             content_t content_;
         };
 
@@ -94,6 +105,10 @@ namespace rjson::v3
         {
           public:
             array() = default;
+            array(const array&) = default;
+            array(array&&) = default;
+            array& operator=(array&&) = default;
+            array& operator=(const array&) = default;
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
@@ -101,6 +116,7 @@ namespace rjson::v3
             /*constexpr*/ auto end() const noexcept { return content_.end(); }
 
             void append(value&& aValue);
+            const value& operator[](size_t index) const noexcept; // returns null if out of range
 
             template <typename Output> Output to() const
             {
@@ -188,7 +204,9 @@ namespace rjson::v3
       public:
         value() = default;
         value(value&&) = default;
+        value(const value&) = default; // to support Settings and pushing to environament within program
         value& operator=(value&&) = default;
+        value& operator=(const value&) = default;
         constexpr value(detail::string&& src) : value_{std::move(src)} {}
         constexpr value(detail::number&& src) : value_{std::move(src)} {}
         constexpr value(detail::null&& src) : value_{std::move(src)} {}
@@ -198,25 +216,32 @@ namespace rjson::v3
 
         virtual ~value();
 
+        bool operator==(const value& to_compare) const noexcept;
+
+        const value& operator[](std::string_view key) const { return object()[key]; } // throw value_type_mismatch if not object, returns null if not found
+        const value& operator[](size_t index) const { return array()[index]; } // throw value_type_mismatch if not array, returns null if out of range
+        template <typename... Key> const value& get(Key&&... keys) const { return object().get(keys ...); } // throw value_type_mismatch if not object, returns null if not found
+
         bool is_null() const noexcept;
         bool is_object() const noexcept;
         bool is_array() const noexcept;
         bool is_string() const noexcept;
         bool is_number() const noexcept;
         bool is_bool() const noexcept;
-        std::string actual_type() const noexcept;
+        const std::type_info& actual_type() const noexcept;
 
         const detail::object& object() const;
         const detail::array& array() const;
 
         template <typename Output> Output to() const; // throws value_type_mismatch
+        std::string as_string() const noexcept;
 
         bool empty() const noexcept;
         size_t size() const noexcept; // returns 0 if neither array nor object nor string
 
         std::string_view _content() const noexcept;
 
-        template <typename Callback> auto visit(Callback&& callback) const noexcept
+        template <typename Callback> auto visit(Callback&& callback) const noexcept -> decltype(callback(std::declval<detail::null>()))
         {
             return std::visit(std::forward<Callback>(callback), value_);
         }
@@ -234,19 +259,29 @@ namespace rjson::v3
 
     class value_read : public value
     {
+      public:
+        value_read(const value_read& val) = default;
+        value_read(value_read&& val) = default;
+        value_read& operator=(const value_read& val) = default;
+        value_read& operator=(value_read&& val) = default;
+
       private:
         value_read(std::string&& buf) : buffer_{std::move(buf)} {}
-        value& operator=(value&& val)
+
+        value& operator=(value&& val) // buffer_ untouched
         {
             value::operator=(std::move(val));
             return *this;
-        } // buffer_ untouched
-        const std::string buffer_;
+        }
+
+        std::string buffer_;
 
         friend value_read parse(std::string&& data);
     };
 
     // ======================================================================
+
+    extern const value const_null;
 
     value_read parse_string(std::string_view data);
     value_read parse_file(std::string_view filename);
@@ -255,16 +290,40 @@ namespace rjson::v3
 
     std::string format(const value& val, output outp = output::compact_with_spaces, size_t indent = 0) noexcept;
 
+    // ----------------------------------------------------------------------
+
+    template <typename Target> inline void copy_if_not_null(const value& source, Target& target)
+    {
+        // to(source, target, ignore_null::yes);
+        source.visit([&target]<typename Value>(const Value& arg) {
+            if constexpr (!std::is_same_v<Value, detail::null>)
+                target = arg.template to<Target>();
+        });
+    }
+
     // ======================================================================
 
-    inline std::string value::actual_type() const noexcept
+    inline const std::type_info& value::actual_type() const noexcept
     {
-        return std::visit([]<typename Content>(Content&& arg) -> std::string { return typeid(arg).name(); }, value_);
+        return std::visit([]<typename Content>(Content&& arg) -> const std::type_info& { return typeid(arg); }, value_);
+    }
+
+    inline bool value::operator==(const value& to_compare) const noexcept
+    {
+        return actual_type().hash_code() == to_compare.actual_type().hash_code() && format(*this, output::compact) == format(to_compare, output::compact);
     }
 
     template <typename Output> inline Output value::to() const
     {
         return std::visit([]<typename Content>(Content&& arg) { return arg.template to<Output>(); }, value_);
+    }
+
+    inline std::string value::as_string() const noexcept
+    {
+        if (is_string())
+            return std::string{to<std::string_view>()};
+        else
+            return format(*this, output::compact);
     }
 
     inline const detail::object& value::object() const
@@ -406,15 +465,44 @@ namespace rjson::v3
 
     // ----------------------------------------------------------------------
 
-    inline void detail::object::insert(std::string_view aKey, value&& aValue) { content_.emplace(aKey, std::move(aValue)); }
+    inline void detail::object::insert(std::string_view aKey, value&& aValue) { content_.emplace_not_replace(aKey, std::move(aValue)); }
+
+    inline const value& detail::object::operator[](std::string_view key) const noexcept
+    {
+        if (const auto found = content_.find(key); found != content_.end())
+            return found->second;
+        else
+            return const_null;
+    }
+
+    template <typename... Keys> inline const value& detail::object::get(std::string_view key, Keys&&... rest) const
+    {
+
+        if (const auto& r1 = operator[](key); !r1.is_null()) {
+            if constexpr (sizeof...(rest) > 0)
+                return r1.get(rest...);
+            else
+                return r1;
+        }
+        else
+            return r1;
+    }
 
     inline void detail::array::append(value&& aValue) { content_.push_back(std::move(aValue)); }
+
+    inline const value& detail::array::operator[](size_t index) const noexcept
+    {
+        if (index < content_.size())
+            return content_[index];
+        else
+            return const_null;
+    }
 
 } // namespace rjson::v3
 
 // ----------------------------------------------------------------------
 
-// "{}" -> pretty(2)
+// "{}" -> compact with spaces
 // "{:4}" -> pretty(4)
 // "{:0}" -> compact without spaces
 // "{:c}" -> compact with spaces
@@ -447,7 +535,7 @@ template <> struct fmt::formatter<rjson::v3::value>
     template <typename FormatCtx> auto format(const rjson::v3::value& value, FormatCtx& ctx) { return format_to(ctx.out(), "{}", rjson::v3::format(value, output_, indent_)); }
 
   private:
-    rjson::v3::output output_{rjson::v3::output::pretty2};
+    rjson::v3::output output_{rjson::v3::output::compact_with_spaces};
     size_t indent_{0};
 };
 

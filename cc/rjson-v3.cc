@@ -9,6 +9,19 @@
 
 // ----------------------------------------------------------------------
 
+#pragma GCC diagnostic push
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#endif
+
+const rjson::v3::value rjson::v3::const_null;
+
+#pragma GCC diagnostic pop
+
+// ----------------------------------------------------------------------
+
 rjson::v3::value::~value()
 {
 

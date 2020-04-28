@@ -18,9 +18,11 @@ namespace acmacs
             using const_iterator = typename std::vector<entry_type>::const_iterator;
 
             map_base_t() = default;
+            map_base_t(const map_base_t&) = default;
             map_base_t(map_base_t&&) = default;
             virtual ~map_base_t() = default;
             map_base_t& operator=(map_base_t&&) = default;
+            map_base_t& operator=(const map_base_t&) = default;
 
             bool empty() const noexcept { return data_.empty(); }
             constexpr const auto& data() const noexcept { return data_; }
@@ -66,7 +68,7 @@ namespace acmacs
             mutable std::vector<entry_type> data_;
             mutable bool sorted_{false};
 
-        };
+        }; // class map_base_t
     } // namespace detail
 
     // ----------------------------------------------------------------------
@@ -184,6 +186,16 @@ namespace acmacs
             }
             else
                 return data_.emplace_back(Key{key}, Value{value});
+        }
+
+        template <typename K, typename V> auto& emplace_or_replace(const K& key, V&& value)
+        {
+            if (auto found = find(key); found != end()) {
+                found->second = Value{std::move(value)};
+                return *found;
+            }
+            else
+                return data_.emplace_back(Key{key}, Value{std::move(value)});
         }
 
         template <typename K, typename V = Value> auto& emplace_not_replace(const K& key, const V& value = V{})
