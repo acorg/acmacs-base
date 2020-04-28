@@ -414,18 +414,45 @@ namespace rjson::v3
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<rjson::v3::value> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const rjson::v3::value& value, FormatCtx& ctx)
+// "{}" -> pretty(2)
+// "{:4}" -> pretty(4)
+// "{:0}" -> compact without spaces
+// "{:c}" -> compact with spaces
+
+template <> struct fmt::formatter<rjson::v3::value>
+{
+    template <typename ParseContext> auto parse(ParseContext& ctx) -> decltype(ctx.begin())
     {
-        return format_to(ctx.out(), "{}", rjson::v3::format(value));
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == ':')
+            ++it;
+        if (it != ctx.end() && *it != '}') {
+            char* end;
+            indent_ = std::strtoul(&*it, &end, 10);
+            if (&*it > end) {
+                it = std::next(it, end - &*it);
+                if (indent_ == 0)
+                    output_ = rjson::v3::output::compact;
+            }
+        }
+        if (*it == 'c') {
+            output_ = rjson::v3::output::compact_with_spaces;
+            ++it;
+        }
+        while (it != ctx.end() && *it != '}')
+            ++it;
+        return it;
     }
+
+    template <typename FormatCtx> auto format(const rjson::v3::value& value, FormatCtx& ctx) { return format_to(ctx.out(), "{}", rjson::v3::format(value, output_, indent_)); }
+
+  private:
+    rjson::v3::output output_{rjson::v3::output::pretty2};
+    size_t indent_{0};
 };
 
-template <> struct fmt::formatter<rjson::v3::value_read> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const rjson::v3::value_read& value, FormatCtx& ctx)
-    {
-        return format_to(ctx.out(), "{}", static_cast<const rjson::v3::value&>(value));
-    }
+template <> struct fmt::formatter<rjson::v3::value_read> : fmt::formatter<rjson::v3::value>
+{
 };
 
 // ----------------------------------------------------------------------

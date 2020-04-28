@@ -9,11 +9,11 @@ int main(int argc, const char* const* argv)
     if (argc == 2) {
         try {
             Timeit parsing_timer("rjson::v3 parsing: ");
-            auto data = rjson::v3::parse_file(argv[1]);
+            const auto data = rjson::v3::parse_file(argv[1]);
             parsing_timer.report();
 
-            // Timeit printing_timer("rjson::v3 printing: ");
-            // fmt::print("{}\n", rjson::v3::pretty(data));
+            Timeit printing_timer("rjson::v3 printing: ");
+            fmt::print("{}\n", data);
         }
         catch (std::exception& err) {
             fmt::print(stderr, "> ERROR {}\n", err);

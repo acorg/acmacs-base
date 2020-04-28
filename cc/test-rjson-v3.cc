@@ -23,7 +23,7 @@ int main()
     int exit_code = 0;
     for (const auto& [to_parse, expected] : data) {
         const auto val = rjson::v3::parse_string(to_parse);
-        const auto formatted = rjson::v3::format(val);
+        const auto formatted = rjson::v3::format(val, rjson::v3::output::compact_with_spaces);
         if (formatted != expected) {
             AD_ERROR("rjson::v3 parsing/formatting failed: \"{}\" <- \"{}\", expected: \"{}\"", formatted, to_parse, expected);
             ++exit_code;
