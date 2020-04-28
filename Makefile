@@ -3,6 +3,7 @@
 
 TARGETS = \
   $(ACMACS_BASE_LIB) \
+  $(DIST)/json-pp-v2 \
   $(DIST)/json-pp \
   $(DIST)/time-series-gen \
   $(DIST)/test-rjson-v2 \
@@ -69,6 +70,7 @@ install-acmacs-base: $(TARGETS)
 	ln -sf $(abspath cc)/*.{hh,hpp} $(AD_INCLUDE)/acmacs-base
 	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
+	ln -sf $(abspath $(DIST))/json-pp-v2 $(AD_BIN)
 	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
 
 .PHONY: install-acmacs-base test

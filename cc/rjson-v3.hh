@@ -251,7 +251,9 @@ namespace rjson::v3
     value_read parse_string(std::string_view data);
     value_read parse_file(std::string_view filename);
 
-    std::string format(const value& val) noexcept;
+    enum class output { compact, compact_with_spaces, pretty, pretty1, pretty2, pretty4, pretty8 };
+
+    std::string format(const value& val, output outp = output::compact_with_spaces, size_t indent = 0) noexcept;
 
     // ======================================================================
 
@@ -422,7 +424,7 @@ template <> struct fmt::formatter<rjson::v3::value> : fmt::formatter<acmacs::fmt
 template <> struct fmt::formatter<rjson::v3::value_read> : fmt::formatter<acmacs::fmt_default_formatter> {
     template <typename FormatCtx> auto format(const rjson::v3::value_read& value, FormatCtx& ctx)
     {
-        return format_to(ctx.out(), "{}", rjson::v3::format(value));
+        return format_to(ctx.out(), "{}", static_cast<const rjson::v3::value&>(value));
     }
 };
 

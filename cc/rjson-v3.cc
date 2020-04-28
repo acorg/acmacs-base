@@ -651,9 +651,27 @@ inline to_json::json format_to_json(const rjson::v3::value& val) noexcept
     });
 }
 
-std::string rjson::v3::format(const value& val) noexcept
+std::string rjson::v3::format(const value& val, output outp, size_t indent) noexcept
 {
-    return ::format_to_json(val).compact(to_json::json::embed_space::yes);
+    const auto res = ::format_to_json(val);
+    if (indent > 0)
+        return res.pretty(indent);
+    switch (outp) {
+        case output::compact:
+            return res.compact(to_json::json::embed_space::no);
+        case output::compact_with_spaces:
+            return res.compact(to_json::json::embed_space::yes);
+        case output::pretty1:
+            return res.pretty(1);
+        case output::pretty:
+        case output::pretty2:
+            return res.pretty(2);
+        case output::pretty4:
+            return res.pretty(4);
+      case output::pretty8:
+              return res.pretty(8);
+    }
+    return res.compact(to_json::json::embed_space::yes);
 
 } // rjson::v3::format
 
