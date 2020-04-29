@@ -290,7 +290,7 @@ namespace rjson::v3
 
     std::string format(const value& val, output outp = output::compact_with_spaces, size_t indent = 0) noexcept;
 
-    // ----------------------------------------------------------------------
+    // ======================================================================
 
     template <typename Target> inline void copy_if_not_null(const value& source, Target& target)
     {
@@ -299,6 +299,22 @@ namespace rjson::v3
             if constexpr (!std::is_same_v<Value, detail::null>)
                 target = arg.template to<Target>();
         });
+    }
+
+    template <typename T> inline T get_or(const value& source, const T& default_value)
+    {
+        if (source.is_null())
+            return default_value;
+        else
+            return source.to<T>();
+    }
+
+    template <typename T> inline T get_or(const value& source, std::string_view field_name, const T& default_value)
+    {
+        if (source.is_null())
+            return default_value;
+        else
+            return get_or(source[field_name], default_value);
     }
 
     // ======================================================================
