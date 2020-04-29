@@ -447,8 +447,8 @@ const rjson::v3::value& acmacs::settings::v2::Settings::substitute(const rjson::
         using Arg = std::decay_t<ArgX>;
         if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
             return environment_.substitute(arg.template to<std::string_view>());
-        else if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
-            throw error{AD_FORMAT("Settings::substitute: cannot substitute in array: {}", source)}; // return arg.map([this](const auto& val) { return substitute(val); });
+        // else if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
+        //     throw error{AD_FORMAT("Settings::substitute: cannot substitute in array: {}", source)}; // return arg.map([this](const auto& val) { return substitute(val); });
         else
             return source;
     });
