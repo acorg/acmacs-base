@@ -48,7 +48,7 @@ namespace acmacs::settings::inline v2
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             if (const auto& val = getenv(key, a_toplevel_only); !val.is_null()) {
-                // AD_DEBUG("getenv \"{}\" -> {}", key, val);
+                AD_DEBUG("getenv with default \"{}\" -> {}", key, val);
                 return val.to<std::decay_t<T>>();
             }
             else

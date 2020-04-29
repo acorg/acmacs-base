@@ -37,24 +37,34 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 #pragma GCC diagnostic pop
 
+    if (source.empty()) {
+        AD_ERROR("Environment::substitute called with empty string");
+        abort();                // to ease debugging
+    }
+
     AD_LOG(acmacs::log::settings, "substitute in string \"{}\"", source);
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
-        if (const auto& found1 = get(m1.str(1), toplevel_only::no); found1.is_null() && m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) {
-            // entire source matched and no substitution found
-            return rjson::v3::const_empty;
+        const auto whole_source_matched = m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size();
+        if (const auto& found1 = get(m1.str(1), toplevel_only::no); whole_source_matched) {
+            if (found1.is_null())            // entire source matched and no substitution found
+                return rjson::v3::const_empty;
+            else
+                return found1;
         }
-        else {
+        else { // !whole_source_matched
+            // AD_DEBUG("substitution found and not whole string matched: \"{}\" pos:{} len:{} source-len:{} -> {}", source, m1.position(0), m1.length(0), source.size(), found1);
             const auto replace = [](const auto& src, size_t prefix, const rjson::v3::value& infix, size_t suffix) {
-                return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
+                if (infix.is_null())
+                    return fmt::format("{}{}", src.substr(0, prefix), src.substr(suffix));
+                else
+                    return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
 
-            if (const auto& result = substitute(replaced); !result.is_null())
-                return result;
-
-            // const_null -> nothing substituted, look in env or use substitute_to_string()
-            if (const auto& result = get(replaced, toplevel_only::no); !result.is_null())
-                return result;
+            if (const auto& result1 = substitute(replaced); !result1.is_null())
+                return result1;
+            if (const auto& result2 = get(replaced, toplevel_only::no); !result2.is_null()) // const_null -> no substitution request in replaced, look in env or use substitute_to_string()
+                return result2;
 
             throw error{AD_FORMAT("Environment::substitute: use substitute_to_string() for \"{}\" <- \"{}\"", replaced, source)};
         }
@@ -70,9 +80,11 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(std::string_view source) const noexcept
 {
-    AD_DEBUG("substitute_to_string \"{}\"", source);
-    if (const auto& substituted = substitute(source); !substituted.is_null())
+    // AD_DEBUG("substitute_to_string \"{}\"", source);
+    if (const auto& substituted = substitute(source); !substituted.is_null()) {
+        // AD_DEBUG("substitute_to_string \"{}\" -> {}", source, substituted);
         return std::string{substituted.to<std::string_view>()};
+    }
     else
         return std::string{source};
 
@@ -278,10 +290,11 @@ void acmacs::settings::v2::Settings::apply(const rjson::v3::value& entry)
     try {
         AD_LOG(acmacs::log::settings, "apply {}", entry);
         for (const auto& sub_entry : entry.array()) {
+            // AD_DEBUG("apply array element {}", sub_entry);
             sub_entry.visit([this,&sub_entry]<typename T>(const T& sub_entry_val) {
-                if constexpr (std::is_same_v<std::decay_t<T>, rjson::v3::detail::string>)
+                if constexpr (std::is_same_v<T, rjson::v3::detail::string>)
                     this->apply(sub_entry_val.template to<std::string_view>());
-                else if constexpr (std::is_same_v<std::decay_t<T>, rjson::v3::detail::object>)
+                else if constexpr (std::is_same_v<T, rjson::v3::detail::object>)
                     this->push_and_apply(sub_entry_val);
                 else
                     throw error{AD_FORMAT("cannot apply: {}\n", sub_entry)};
@@ -410,14 +423,16 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
 {
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
-        // AD_DEBUG("getenv \"{}\" -> {}", key, val);
-        std::string orig{val.to<std::string_view>()}; // orig cannot be std::string_view! due to re-assignment below from the value that will be destroyed at the end of iteration
+        const rjson::v3::value* orig = &val;
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-            if (const rjson::v3::value& substituted = environment_.substitute(orig); substituted.is_string() && orig != substituted.to<std::string_view>())
-                orig = substituted.to<std::string_view>();
-            else if (substituted.is_null()) {
-                return val;     // not substituted
+            const auto orig_s = orig->to<std::string_view>();
+            if (const rjson::v3::value& substituted = environment_.substitute(orig_s); substituted.is_string() && orig_s != substituted.to<std::string_view>()) {
+                if (substituted.empty())
+                    return substituted;
+                orig = &substituted;
             }
+            else if (substituted.is_null())
+                return *orig;     // not substituted
             else
                 return substituted;
         }
