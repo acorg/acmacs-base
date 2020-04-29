@@ -370,11 +370,10 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
         const rjson::v3::value* orig = &val;
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
             const auto orig_s = orig->to<std::string_view>();
-            if (const rjson::v3::value& substituted = environment_.substitute(orig_s); substituted.is_string() && orig_s != substituted.to<std::string_view>()) {
-                if (substituted.empty())
-                    return substituted;
+            if (orig_s.empty())
+                return *orig;
+            if (const rjson::v3::value& substituted = environment_.substitute(orig_s); substituted.is_string() && orig_s != substituted.to<std::string_view>())
                 orig = &substituted;
-            }
             else if (substituted.is_null())
                 return *orig;     // not substituted
             else

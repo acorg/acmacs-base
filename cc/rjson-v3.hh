@@ -37,12 +37,12 @@ namespace rjson::v3
     class value_type_mismatch : public error
     {
       public:
-        value_type_mismatch(std::string_view requested_type, std::string_view actual_type, std::string_view source_ref={})
-            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type, source_ref)}
-        {
-        }
         value_type_mismatch(std::string_view requested_type, const std::type_info& actual_type, std::string_view source_ref={})
             : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type.name(), source_ref)}
+        {
+        }
+        value_type_mismatch(const std::type_info& requested_type, std::string_view actual_type, std::string_view source_ref={})
+            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type.name(), actual_type, source_ref)}
         {
         }
     };
@@ -69,7 +69,7 @@ namespace rjson::v3
           public:
             template <typename Output> Output to() const
             {
-                throw value_type_mismatch{typeid(Output).name(), "null"};
+                throw value_type_mismatch{typeid(Output), "null"};
             }
         };
 
@@ -93,7 +93,7 @@ namespace rjson::v3
 
             template <typename Output> Output to() const
             {
-                throw value_type_mismatch{typeid(Output).name(), "object"};
+                throw value_type_mismatch{typeid(Output), "object"};
             }
 
           private:
@@ -120,7 +120,7 @@ namespace rjson::v3
 
             template <typename Output> Output to() const
             {
-                throw value_type_mismatch{typeid(Output).name(), "array"};
+                throw value_type_mismatch{typeid(Output), "array"};
             }
 
           private:
@@ -152,10 +152,11 @@ namespace rjson::v3
 
             template <typename Output> Output to() const
             {
+                static_assert(!std::is_convertible_v<Output, const char*>);
                 if constexpr (std::is_constructible_v<Output, decltype(_content())>)
-                    return Output{_content()};
+                                     return Output{_content()};
                 else
-                    throw value_type_mismatch{typeid(Output).name(), fmt::format("string{{\"{}\"}}", _content())};
+                    throw value_type_mismatch{typeid(Output), fmt::format("string{{\"{}\"}}", _content())};
             }
 
           private:
@@ -167,20 +168,35 @@ namespace rjson::v3
           public:
             template <typename Output> Output to() const
             {
-                if constexpr (std::is_floating_point_v<Output>) {
+                if constexpr (std::is_same_v<Output, bool>) {
+                    throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
+                }
+                else if constexpr (std::is_floating_point_v<Output>) { //|| std::is_constructible_v<Output, double>)) {
                     if (const auto val = acmacs::string::from_chars<Output>(_content()); !float_equal(val, std::numeric_limits<Output>::max()))
                         return val;
                     else
-                        throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                        throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
                 }
-                else if constexpr (std::is_arithmetic_v<Output> && !std::is_same_v<Output, bool>) {
+                else if constexpr (std::is_arithmetic_v<Output>) {
                     if (const auto val = acmacs::string::from_chars<Output>(_content()); val != std::numeric_limits<Output>::max())
                         return val;
                     else
-                        throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                        throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
+                }
+                else if constexpr (std::is_constructible_v<Output, double>) {
+                    if (const auto val = acmacs::string::from_chars<double>(_content()); !float_equal(val, std::numeric_limits<double>::max()))
+                        return Output{val};
+                    else
+                        throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
+                }
+                else if constexpr (std::is_constructible_v<Output, long>) {
+                    if (const auto val = acmacs::string::from_chars<long>(_content()); val != std::numeric_limits<long>::max())
+                        return Output{val};
+                    else
+                        throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
                 }
                 else
-                    throw value_type_mismatch{typeid(Output).name(), fmt::format("number{{{}}}", _content())};
+                    throw value_type_mismatch{typeid(Output), fmt::format("number{{{}}}", _content())};
             }
         };
 
@@ -195,7 +211,7 @@ namespace rjson::v3
                 if constexpr (std::is_constructible_v<Output, bool> && !std::is_floating_point_v<Output>)
                     return Output{content_};
                 else
-                    throw value_type_mismatch{typeid(Output).name(), fmt::format("boolean{{{}}}", content_)};
+                    throw value_type_mismatch{typeid(Output), fmt::format("boolean{{{}}}", content_)};
             }
 
           private:
@@ -363,7 +379,7 @@ namespace rjson::v3
                 else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
                     return const_empty_object;
                 else
-                    throw value_type_mismatch{"object", typeid(Content).name()};
+                    throw value_type_mismatch{"rjson::v3::object", typeid(Content)};
             },
             value_);
     }
@@ -377,7 +393,7 @@ namespace rjson::v3
                 else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
                     return const_empty_array;
                 else
-                    throw value_type_mismatch{"array", typeid(Content).name()};
+                    throw value_type_mismatch{"rjson::v3::array", typeid(Content)};
             },
             value_);
     }
