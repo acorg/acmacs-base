@@ -84,8 +84,8 @@ namespace rjson::v3
 
             constexpr bool empty() const noexcept { return true; }
             constexpr size_t size() const noexcept { return 0; }
-            constexpr auto begin() const noexcept { return content_.begin(); }
-            constexpr auto end() const noexcept { return content_.end(); }
+            /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
+            /*constexpr*/ auto end() const noexcept { return content_.end(); }
 
             void insert(std::string_view aKey, value&& aValue);
             const value& operator[](std::string_view key) const noexcept; // returns null if not found
