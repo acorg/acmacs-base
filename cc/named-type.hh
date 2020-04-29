@@ -54,7 +54,7 @@ namespace acmacs
     template <typename Number, typename Tag> class named_number_t : public named_t<Number, Tag>
     {
       public:
-        template <typename TT, typename = std::enable_if_t<std::is_arithmetic_v<std::decay_t<TT>>, char>>
+        template <typename TT, typename = std::enable_if_t<std::is_arithmetic_v<std::decay_t<TT>> && !std::is_same_v<TT, bool>, char>>
             explicit constexpr named_number_t(TT&& value) : named_t<Number, Tag>(static_cast<Number>(std::forward<TT>(value))) {}
 
         constexpr auto& operator++()

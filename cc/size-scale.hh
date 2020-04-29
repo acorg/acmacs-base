@@ -17,6 +17,8 @@ namespace acmacs::detail
      public:
         constexpr explicit SizeScale() : mValue{0} {}
         constexpr explicit SizeScale(double aValue) : mValue{aValue} {}
+        constexpr explicit SizeScale(int aValue) : mValue{static_cast<double>(aValue)} {}
+        SizeScale(bool) = delete;
         constexpr SizeScale(const SizeScale& a) = default;
         constexpr bool operator==(SizeScale<Tag> a) const { return float_equal(mValue, a.mValue); }
         constexpr bool operator!=(SizeScale<Tag> a) const { return !operator==(a); }
