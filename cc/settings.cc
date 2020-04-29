@@ -8,11 +8,11 @@
 // Environment
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(const rjson::v3::value& source) const
+const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(const rjson::v3::value& source, std::string* target) const
 {
-    return source.visit([this, &source]<typename T>(T&& arg) -> const rjson::v3::value& {
+    return source.visit([this, &source, &target]<typename T>(T&& arg) -> const rjson::v3::value& {
         if constexpr (std::is_same_v<std::decay_t<T>, rjson::v3::detail::string>) {
-            if (const auto& res = substitute(arg.template to<std::string_view>()); !res.is_null())
+            if (const auto& res = substitute(arg.template to<std::string_view>(), target); !res.is_null())
                 return res;
             else
                 return source;
@@ -25,7 +25,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(std::string_view source) const
+const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(std::string_view source, std::string* target) const
 {
 #pragma GCC diagnostic push
 #ifdef __clang__
@@ -57,12 +57,19 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
 
-            if (const auto& result1 = substitute(replaced); !result1.is_null())
+            if (const auto& result1 = substitute(replaced, target); !result1.is_null())
                 return result1;
             if (const auto& result2 = get(replaced, toplevel_only::no); !result2.is_null()) // const_null -> no substitution request in replaced, look in env or use substitute_to_string()
                 return result2;
 
-            throw error{AD_FORMAT("Environment::substitute: use substitute_to_string() for \"{}\" <- \"{}\"", replaced, source)};
+            if (target) {
+                target->assign(replaced);
+                return rjson::v3::const_empty_string;
+            }
+
+            AD_ERROR("use substitute_to_string() for \"{}\" <- \"{}\"", replaced, source);
+            abort();
+            // throw error{AD_FORMAT("use substitute_to_string() for \"{}\" <- \"{}\"", replaced, source)};
         }
     }
     else {
@@ -77,12 +84,13 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(std::string_view source) const noexcept
 {
     // AD_DEBUG("substitute_to_string \"{}\"", source);
-    if (const auto& substituted = substitute(source); !substituted.is_null()) {
-        // AD_DEBUG("substitute_to_string \"{}\" -> {}", source, substituted);
-        return std::string{substituted.to<std::string_view>()};
-    }
-    else
+    std::string target;
+    if (const auto& substituted = substitute(source, &target); substituted.is_null())
         return std::string{source};
+    else if (substituted.empty())
+        return target;
+    else
+        return std::string{substituted.to<std::string_view>()};
 
 } // acmacs::settings::v2::Settings::Environment::substitute_to_string
 
@@ -113,7 +121,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
     AD_INFO("Settings::Environment {}", env_data_.size());
     for (auto [level, entries] : acmacs::enumerate(env_data_)) {
         for (const auto& entry : entries)
-            AD_INFO("    {} \"{}\": {}", level, entry.first, substitute(entry.second));
+            AD_INFO("    {} \"{}\": {}", level, entry.first, substitute(entry.second, nullptr));
     }
 
 } // acmacs::settings::v2::Settings::Environment::print
@@ -122,7 +130,7 @@ void acmacs::settings::v2::Settings::Environment::print() const
 
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
-    fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute(get("value", toplevel_only::no)));
+    fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute(get("value", toplevel_only::no), nullptr));
 
 } // acmacs::settings::v2::Settings::Environment::print_value
 

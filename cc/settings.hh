@@ -146,13 +146,13 @@ namespace acmacs::settings::inline v2
 
             // returns rjson::v3::const_empty_string if whole source is substitution request and no substitution found
             // returns rjson::v3::const_null if no substitution request present
-            const rjson::v3::value& substitute(std::string_view source) const;
+            const rjson::v3::value& substitute(std::string_view source, std::string* target = nullptr) const;
             std::string substitute_to_string(std::string_view source) const noexcept;
 
           private:
             std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>> env_data_;
 
-            const rjson::v3::value& substitute(const rjson::v3::value& source) const;
+            const rjson::v3::value& substitute(const rjson::v3::value& source, std::string* target) const;
         };
 
         LoadedDataFiles loaded_data_;
