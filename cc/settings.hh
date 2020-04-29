@@ -1,6 +1,7 @@
 #pragma once
 
 #include "acmacs-base/rjson-v3.hh"
+#include "acmacs-base/to-json.hh"
 
 // ----------------------------------------------------------------------
 
@@ -69,6 +70,21 @@ namespace acmacs::settings::inline v2
         }
 
         void printenv() const { environment_.print(); }
+
+        template <typename... Args> void getenv_to_json(to_json::object& obj, std::string_view key, Args&&... keys)
+        {
+            if (const auto& val = getenv(key); !val.is_null())
+                obj << to_json::key_val(key, rjson::v3::format(val));
+            if constexpr (sizeof...(keys) > 0)
+                getenv_to_json(obj, keys...);
+        }
+
+        template <typename ... Args> std::string getenv_to_json(Args&& ... keys)
+        {
+            to_json::object obj;
+            getenv_to_json(obj, keys...);
+            return obj.compact(to_json::json::embed_space::no);
+        }
 
       protected:
         template <typename... Key> const rjson::v3::value& get(Key&&... keys) const
