@@ -82,8 +82,8 @@ namespace rjson::v3
             object& operator=(object&&) = default;
             object& operator=(const object&) = default;
 
-            constexpr bool empty() const noexcept { return true; }
-            constexpr size_t size() const noexcept { return 0; }
+            constexpr bool empty() const noexcept { return content_.empty(); }
+            constexpr size_t size() const noexcept { return content_.size(); }
             /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
             /*constexpr*/ auto end() const noexcept { return content_.end(); }
 
@@ -110,8 +110,8 @@ namespace rjson::v3
             array& operator=(array&&) = default;
             array& operator=(const array&) = default;
 
-            constexpr bool empty() const noexcept { return true; }
-            constexpr size_t size() const noexcept { return 0; }
+            constexpr bool empty() const noexcept { return content_.empty(); }
+            constexpr size_t size() const noexcept { return content_.size(); }
             /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
             /*constexpr*/ auto end() const noexcept { return content_.end(); }
 

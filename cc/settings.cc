@@ -356,7 +356,7 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 {
     using namespace std::string_view_literals;
     try {
-        return condition.visit([this]<typename Arg>(const Arg& arg) -> bool {
+        return condition.visit([this,&condition]<typename Arg>(const Arg& arg) -> bool {
             if constexpr (std::is_same_v<Arg, rjson::v3::detail::null>)
                 return false;
             else if constexpr (std::is_same_v<Arg, rjson::v3::detail::number>)
@@ -365,7 +365,7 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
                 return arg;
             else if constexpr (std::is_same_v<Arg, rjson::v3::detail::object>) {
                 if (arg.size() != 1)
-                    throw error{AD_FORMAT("object must have exactly one key")};
+                    throw error{AD_FORMAT("object must have exactly one key: {}, object size: {}", condition, arg.size())};
                 if (const auto& and_clause = arg["and"sv]; !and_clause.is_null())
                     return eval_and(and_clause);
                 else if (const auto& empty_clause = arg["empty"sv]; !empty_clause.is_null())
@@ -381,17 +381,17 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
                 else if (const auto& or_clause = arg["or"sv]; !or_clause.is_null())
                     return eval_or(or_clause);
                 else
-                    throw error{AD_FORMAT("unrecognized clause")};
+                    throw error{AD_FORMAT("unrecognized clause: {}", condition)};
             }
             else if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
                 const auto arg_sv = arg.template to<std::string_view>();
                 if (const rjson::v3::value& substituted = environment_.substitute(arg_sv); substituted.is_null() || (substituted.is_string() && substituted.to<std::string_view>() == arg_sv))
-                    throw error{AD_FORMAT("unsupported value type")};
+                    throw error{AD_FORMAT("unsupported value type: {}", condition)};
                 else
                     return eval_condition(substituted);
             }
             else // if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
-                throw error{AD_FORMAT("unsupported value type")};
+                throw error{AD_FORMAT("unsupported value type: {}", condition)};
         });
     }
     catch (std::exception& err) {
