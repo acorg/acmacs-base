@@ -108,17 +108,6 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::get(std::st
 
 // ----------------------------------------------------------------------
 
-// const rjson::v3::value& acmacs::settings::v2::Settings::Environment::get_toplevel(std::string_view key) const
-// {
-//     if (auto found = env_data_.back().find(key); found != env_data_.back().end())
-//         return found->second;
-//     else
-//         return rjson::v3::ConstNull;
-
-// } // acmacs::settings::v2::Settings::Environment::get_toplevel
-
-// ----------------------------------------------------------------------
-
 void acmacs::settings::v2::Settings::Environment::print() const
 {
     AD_INFO("Settings::Environment {}", env_data_.size());
@@ -173,47 +162,6 @@ namespace acmacs::settings::inline v2
 
 // ----------------------------------------------------------------------
 // Settings
-// ----------------------------------------------------------------------
-
-// void acmacs::settings::v2::Settings::setenv_from_string(std::string_view key, std::string_view value)
-// {
-//     if (value == "true") {
-//         setenv(key, true);
-//     }
-//     else if (value == "false") {
-//         setenv(key, true);
-//     }
-//     else if (value.empty() || value == "null") {
-//         setenv(key, rjson::v3::ConstNull);
-//     }
-//     else if (value.front() == '"') {
-//         if (value.back() == '"')
-//             setenv(key, value.substr(1, value.size() - 2));
-//         else
-//             setenv(key, value);
-//     }
-//     else {
-//         size_t processed = 0;
-//         try {
-//             if (const auto val = acmacs::string::from_chars<int>(value, processed); processed == value.size())
-//                 setenv(key, val);
-//         }
-//         catch (std::exception&) {
-//         }
-//         if (processed != value.size()) {
-//             try {
-//                 if (const auto val = acmacs::string::from_chars<double>(value, processed); processed == value.size())
-//                     setenv(key, val);
-//             }
-//             catch (std::exception&) {
-//             }
-//         }
-//         if (processed != value.size())
-//             setenv(key, std::string{value});
-//     }
-
-// } // acmacs::settings::v2::Settings::setenv_from_string
-
 // ----------------------------------------------------------------------
 
 void acmacs::settings::v2::Settings::apply(std::string_view name)

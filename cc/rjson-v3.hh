@@ -130,6 +130,7 @@ namespace rjson::v3
         class simple
         {
           public:
+            constexpr simple() = default;
             constexpr simple(std::string_view content) : content_{content} {}
 
             constexpr std::string_view _content() const noexcept { return content_; }
@@ -141,6 +142,11 @@ namespace rjson::v3
         class string : public simple
         {
           public:
+            using simple::simple;
+            enum with_content_ { with_content };
+            string(with_content_, std::string_view content) : simple{}, scontent_{content} {} // for strings created within program, i.e. not read from bigger json, see settings Environament add_to_toplevel(std::string_view key, std::string_view value)
+
+            constexpr std::string_view _content() const noexcept { if (scontent_.has_value()) return *scontent_; else return simple::_content(); }
             constexpr bool empty() const noexcept { return _content().empty(); }
             constexpr size_t size() const noexcept { return _content().size(); }
 
@@ -151,6 +157,9 @@ namespace rjson::v3
                 else
                     throw value_type_mismatch{typeid(Output).name(), fmt::format("string{{\"{}\"}}", _content())};
             }
+
+          private:
+            std::optional<std::string> scontent_; // see constructor with with_content_ above
         };
 
         class number : public simple

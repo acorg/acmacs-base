@@ -33,8 +33,8 @@ namespace acmacs::settings::inline v2
 
         void setenv(std::string_view key, rjson::v3::value&& value) { environment_.add(key, std::move(value)); }
         void setenv(std::string_view key, std::string_view value) { setenv(key, rjson::v3::parse_string(value)); }
-        void setenv_toplevel(std::string_view key, std::string_view value) { environment_.add_to_toplevel(key, rjson::v3::parse_string(fmt::format("\"{}\"", value))); }
-        void setenv_toplevel(std::string_view key, bool value) { environment_.add_to_toplevel(key, rjson::v3::parse_string(fmt::format("{}", value))); }
+        void setenv_toplevel(std::string_view key, std::string_view value) { environment_.add_to_toplevel(key, value); } // rjson::v3::parse_string(fmt::format("\"{}\"", value))); }
+        void setenv_toplevel(std::string_view key, bool value) { environment_.add_to_toplevel(key, value); } // rjson::v3::parse_string(fmt::format("{}", value))); }
 
         const rjson::v3::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
@@ -47,10 +47,8 @@ namespace acmacs::settings::inline v2
 
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null()) {
-                AD_DEBUG("getenv with default \"{}\" -> {}", key, val);
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
                 return val.to<std::decay_t<T>>();
-            }
             else
                 return std::move(a_default);
         }
@@ -74,7 +72,7 @@ namespace acmacs::settings::inline v2
         template <typename... Args> void getenv_to_json(to_json::object& obj, std::string_view key, Args&&... keys)
         {
             if (const auto& val = getenv(key); !val.is_null())
-                obj << to_json::key_val(key, rjson::v3::format(val));
+                obj << to_json::key_val(key, to_json::raw(rjson::v3::format(val)));
             if constexpr (sizeof...(keys) > 0)
                 getenv_to_json(obj, keys...);
         }
@@ -140,8 +138,9 @@ namespace acmacs::settings::inline v2
             size_t size() const { return env_data_.size(); }
             void add(std::string_view key, const rjson::v3::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
             void add(std::string_view key, rjson::v3::value&& val) { env_data_.rbegin()->emplace_or_replace(key, std::move(val)); }
-            // void add_to_toplevel(std::string_view key, const rjson::v3::value& val) { env_data_.begin()->emplace_or_replace(std::string{key}, val); }
             void add_to_toplevel(std::string_view key, rjson::v3::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
+            void add_to_toplevel(std::string_view key, std::string_view value)  { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::string{rjson::v3::detail::string::with_content, value}); }
+            void add_to_toplevel(std::string_view key, bool value) { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::boolean{value}); }
             void print() const;
             void print_key_value() const;
 
