@@ -37,11 +37,11 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 #pragma GCC diagnostic pop
 
-    AD_LOG(acmacs::log::settings, "substitute in \"{}\"", source);
+    AD_LOG(acmacs::log::settings, "substitute in string \"{}\"", source);
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
-        if (const auto& found1 = get(m1.str(1), toplevel_only::no); found1.is_null() || (m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size())) {
-            // null or entire source matched
-            return found1;
+        if (const auto& found1 = get(m1.str(1), toplevel_only::no); found1.is_null() && m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) {
+            // entire source matched and no substitution found
+            return rjson::v3::const_empty;
         }
         else {
             const auto replace = [](const auto& src, size_t prefix, const rjson::v3::value& infix, size_t suffix) {
@@ -59,8 +59,10 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
             throw error{AD_FORMAT("Environment::substitute: use substitute_to_string() for \"{}\" <- \"{}\"", replaced, source)};
         }
     }
-    else
+    else {
+        // AD_DEBUG("no substitution request in \"{}\"", source);
         return rjson::v3::const_null;
+    }
 
 } // acmacs::settings::v2::Settings::Environment::substitute
 
@@ -68,6 +70,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(std::string_view source) const noexcept
 {
+    AD_DEBUG("substitute_to_string \"{}\"", source);
     if (const auto& substituted = substitute(source); !substituted.is_null())
         return std::string{substituted.to<std::string_view>()};
     else
@@ -407,13 +410,14 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
 {
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
+        // AD_DEBUG("getenv \"{}\" -> {}", key, val);
         std::string orig{val.to<std::string_view>()}; // orig cannot be std::string_view! due to re-assignment below from the value that will be destroyed at the end of iteration
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-            const rjson::v3::value& substituted = environment_.substitute(orig);
-            if (substituted.is_string() && orig != substituted.to<std::string_view>())
+            if (const rjson::v3::value& substituted = environment_.substitute(orig); substituted.is_string() && orig != substituted.to<std::string_view>())
                 orig = substituted.to<std::string_view>();
-            else if (substituted.is_null())
+            else if (substituted.is_null()) {
                 return val;     // not substituted
+            }
             else
                 return substituted;
         }

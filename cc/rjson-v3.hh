@@ -282,6 +282,7 @@ namespace rjson::v3
     // ======================================================================
 
     extern const value const_null;
+    extern const value const_empty;
 
     value_read parse_string(std::string_view data);
     value_read parse_file(std::string_view filename);

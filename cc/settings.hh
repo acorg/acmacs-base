@@ -41,19 +41,19 @@ namespace acmacs::settings::inline v2
             return environment_.get(environment_.substitute(key).to<std::string_view>(), a_toplevel_only);
         }
 
-        // returns ConstNull if not found
+        // returns const_null if not found
         const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         const rjson::v3::value& substitute(const rjson::v3::value& source) const;
 
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
+            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null()) {
+                // AD_DEBUG("getenv \"{}\" -> {}", key, val);
                 return val.to<std::decay_t<T>>();
+            }
             else
                 return std::move(a_default);
         }
-
-        std::string getenv(std::string_view key, const char* a_default, toplevel_only a_toplevel_only = toplevel_only::no) const { return getenv(key, std::string{a_default}, a_toplevel_only); }
 
         template <typename T> void getenv_copy_if_present(std::string_view key, T& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
@@ -145,7 +145,9 @@ namespace acmacs::settings::inline v2
             void print() const;
             void print_key_value() const;
 
-            const rjson::v3::value& substitute(std::string_view source) const; // returns rjson::v3::const_null if not substitued
+            // returns rjson::v3::const_empty if whole source is substitution request and no substitution found
+            // returns rjson::v3::const_null if no substitution request present
+            const rjson::v3::value& substitute(std::string_view source) const;
             std::string substitute_to_string(std::string_view source) const noexcept;
 
           private:
