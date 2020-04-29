@@ -17,7 +17,9 @@
 #endif
 
 const rjson::v3::value rjson::v3::const_null;
-const rjson::v3::value rjson::v3::const_empty{rjson::v3::detail::string{std::string_view{""}}};
+const rjson::v3::value rjson::v3::const_empty_string{rjson::v3::detail::string{std::string_view{""}}};
+const rjson::v3::detail::array rjson::v3::const_empty_array{};
+const rjson::v3::detail::object rjson::v3::const_empty_object{};
 
 #pragma GCC diagnostic pop
 

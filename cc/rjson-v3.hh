@@ -230,8 +230,8 @@ namespace rjson::v3
         bool is_bool() const noexcept;
         const std::type_info& actual_type() const noexcept;
 
-        const detail::object& object() const;
-        const detail::array& array() const;
+        const detail::object& object() const; // returns const_empty_object if null
+        const detail::array& array() const; // returns const_empty_array if null
 
         template <typename Output> Output to() const; // throws value_type_mismatch
         std::string as_string() const noexcept;
@@ -282,7 +282,9 @@ namespace rjson::v3
     // ======================================================================
 
     extern const value const_null;
-    extern const value const_empty;
+    extern const value const_empty_string;
+    extern const detail::array const_empty_array;
+    extern const detail::object const_empty_object;
 
     value_read parse_string(std::string_view data);
     value_read parse_file(std::string_view filename);
@@ -349,6 +351,8 @@ namespace rjson::v3
             []<typename Content>(Content&& arg) -> const detail::object& {
                 if constexpr (std::is_same_v<std::decay_t<Content>, detail::object>)
                     return arg;
+                else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
+                    return const_empty_object;
                 else
                     throw value_type_mismatch{"object", typeid(Content).name()};
             },
@@ -361,6 +365,8 @@ namespace rjson::v3
             []<typename Content>(Content&& arg) -> const detail::array& {
                 if constexpr (std::is_same_v<std::decay_t<Content>, detail::array>)
                     return arg;
+                else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
+                    return const_empty_array;
                 else
                     throw value_type_mismatch{"array", typeid(Content).name()};
             },

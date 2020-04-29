@@ -145,7 +145,7 @@ namespace acmacs::settings::inline v2
             void print() const;
             void print_key_value() const;
 
-            // returns rjson::v3::const_empty if whole source is substitution request and no substitution found
+            // returns rjson::v3::const_empty_string if whole source is substitution request and no substitution found
             // returns rjson::v3::const_null if no substitution request present
             const rjson::v3::value& substitute(std::string_view source) const;
             std::string substitute_to_string(std::string_view source) const noexcept;

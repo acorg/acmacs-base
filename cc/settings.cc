@@ -37,17 +37,13 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute(
 
 #pragma GCC diagnostic pop
 
-    if (source.empty()) {
-        AD_ERROR("Environment::substitute called with empty string");
-        abort();                // to ease debugging
-    }
-
+    AD_ASSERT(!source.empty(), "Environment::substitute called with empty string");
     AD_LOG(acmacs::log::settings, "substitute in string \"{}\"", source);
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
         const auto whole_source_matched = m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size();
         if (const auto& found1 = get(m1.str(1), toplevel_only::no); whole_source_matched) {
             if (found1.is_null())            // entire source matched and no substitution found
-                return rjson::v3::const_empty;
+                return rjson::v3::const_empty_string;
             else
                 return found1;
         }
