@@ -356,9 +356,11 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 {
     using namespace std::string_view_literals;
     try {
-        return condition.visit([this,&condition]<typename Arg>(const Arg& arg) -> bool {
+        return condition.visit([this, &condition]<typename Arg>(const Arg& arg) -> bool {
             if constexpr (std::is_same_v<Arg, rjson::v3::detail::null>)
                 return false;
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::boolean>)
+                return arg.template to<bool>();
             else if constexpr (std::is_same_v<Arg, rjson::v3::detail::number>)
                 return !float_zero(arg.template to<double>());
             else if constexpr (std::is_same_v<Arg, bool>)
