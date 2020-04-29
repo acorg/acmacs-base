@@ -153,8 +153,8 @@ namespace rjson::v3
             template <typename Output> Output to() const
             {
                 static_assert(!std::is_convertible_v<Output, const char*>);
-                if constexpr (std::is_constructible_v<Output, decltype(_content())>)
-                                     return Output{_content()};
+                if constexpr (std::is_constructible_v<Output, std::string_view>)
+                    return Output{_content()};
                 else
                     throw value_type_mismatch{typeid(Output), fmt::format("string{{\"{}\"}}", _content())};
             }

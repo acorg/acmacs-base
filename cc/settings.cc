@@ -400,8 +400,12 @@ const rjson::v3::value& acmacs::settings::v2::Settings::substitute(const rjson::
 {
     return source.visit([this, &source]<typename ArgX>(ArgX&& arg) -> const rjson::v3::value& {
         using Arg = std::decay_t<ArgX>;
-        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
-            return environment_.substitute(arg.template to<std::string_view>());
+        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
+            if (const auto& res = environment_.substitute(arg.template to<std::string_view>()); !res.is_null())
+                return res;
+            else
+                return source;
+        }
         // else if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
         //     throw error{AD_FORMAT("Settings::substitute: cannot substitute in array: {}", source)}; // return arg.map([this](const auto& val) { return substitute(val); });
         else
