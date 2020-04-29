@@ -1,17 +1,8 @@
 #pragma once
 
-#include <vector>
-
-#include <iterator>
-
 #include "acmacs-base/date.hh"
 
 // ----------------------------------------------------------------------
-
-namespace rjson::inline v2
-{
-    class value;
-}
 
 namespace acmacs::time_series::inline v2
 {
@@ -33,9 +24,11 @@ namespace acmacs::time_series::inline v2
         date::year_month_day first{date::invalid_date()}, after_last{date::invalid_date()};
         interval intervl{interval::month};
         size_t number_of_intervals{1};
+
+        void update(std::optional<std::string_view> a_start, std::optional<std::string_view> a_end, std::optional<std::string_view> a_interval, std::optional<size_t> a_number_of_intervals);
     };
 
-    parameters& update(const rjson::value& source, parameters& param);
+    // parameters& update(const rjson::value& source, parameters& param);
 
     series make(const parameters& param);
     inline series make(date::year_month_day first, date::year_month_day after_last) { return make(parameters{first, after_last}); }
