@@ -38,7 +38,7 @@ namespace acmacs::settings::inline v2
 
         const rjson::v3::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            return environment_.get(environment_.substitute(key).to<std::string_view>(), a_toplevel_only);
+            return environment_.get(environment_.substitute_to_value(key).to<std::string_view>(), a_toplevel_only);
         }
 
         // returns const_null if not found
@@ -144,15 +144,18 @@ namespace acmacs::settings::inline v2
             void print() const;
             void print_key_value() const;
 
-            // returns rjson::v3::const_empty_string if whole source is substitution request and no substitution found
-            // returns rjson::v3::const_null if no substitution request present
-            const rjson::v3::value& substitute(std::string_view source, std::string* target = nullptr) const;
             std::string substitute_to_string(std::string_view source) const noexcept;
+            const rjson::v3::value& substitute_to_value(std::string_view source) const noexcept;
+
+            // abort if source is empty
+            // const rjson::v3::value* if substitution requested for the whole source
+            // std::string if no substitution requested (returns source) or part of the source substituted
+            using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
+            substitute_result_t substitute(std::string_view source) const;
 
           private:
             std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>> env_data_;
 
-            const rjson::v3::value& substitute(const rjson::v3::value& source, std::string* target) const;
         };
 
         LoadedDataFiles loaded_data_;
