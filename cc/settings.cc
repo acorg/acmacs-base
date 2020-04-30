@@ -117,8 +117,12 @@ void acmacs::settings::v2::Settings::Environment::print() const
 void acmacs::settings::v2::Settings::Environment::print_key_value() const
 {
     const auto& val = get("value", toplevel_only::no);
-    if (val.is_string())
-        fmt::print("{}: {}\n", get("key", toplevel_only::no), substitute_to_string(val.to<std::string_view>()));
+    if (val.is_string()) {
+        if (const auto& substituted = substitute_to_value(val.to<std::string_view>()); substituted.is_null())
+            fmt::print("{}: \"{}\"\n", get("key", toplevel_only::no), substitute_to_string(val.to<std::string_view>()));
+        else
+            fmt::print("{}: {}\n", get("key", toplevel_only::no), substituted);
+    }
     else
         fmt::print("{}: {}\n", get("key", toplevel_only::no), val);
 
