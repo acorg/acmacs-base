@@ -10,14 +10,14 @@
 
 const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute_to_value(std::string_view source) const noexcept
 {
+    AD_LOG(acmacs::log::settings, "substitute to value \"{}\"", source);
+    AD_LOG_INDENT;
     return std::visit(
         []<typename Cont>(Cont cont) -> const rjson::v3::value& {
             if constexpr (std::is_same_v<Cont, const rjson::v3::value*>)
                 return *cont;
-            else {
-                AD_ERROR("Environment::substitute(std::string_view) returned string while rjson::v3::value was expected");
-                abort();
-            }
+            else
+                return rjson::v3::const_null; // partial or no substitution
         },
         substitute(source));
 
@@ -28,11 +28,15 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::substitute_
 std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(std::string_view source) const noexcept
 {
     return std::visit(
-        []<typename Cont>(Cont cont) -> std::string {
-            if constexpr (std::is_same_v<Cont, const rjson::v3::value*>)
+        [source]<typename Cont>(Cont cont) -> std::string {
+            if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
+                AD_LOG(acmacs::log::settings, "substitute to string \"{}\" -> {}", source, *cont);
                 return std::string{cont->template to<std::string_view>()};
-            else
+            }
+            else {
+                AD_LOG(acmacs::log::settings, "substitute to string \"{}\" -> \"{}\"", source, cont);
                 return cont;
+            }
         },
         substitute(source));
 
@@ -57,7 +61,6 @@ acmacs::settings::v2::Settings::Environment::substitute_result_t acmacs::setting
                 return &found1;
         }
         else { // not whole_source_matched
-            // AD_DEBUG("substitution found and not whole string matched: \"{}\" pos:{} len:{} source-len:{} -> {}", source, m1.position(0), m1.length(0), source.size(), found1);
             const auto replace = [](const auto& src, size_t prefix, const rjson::v3::value& infix, size_t suffix) {
                 if (infix.is_null())
                     return fmt::format("{}{}", src.substr(0, prefix), src.substr(suffix));
@@ -66,11 +69,6 @@ acmacs::settings::v2::Settings::Environment::substitute_result_t acmacs::setting
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
             return substitute(replaced);
-            // if (const auto& result1 = substitute(replaced); !result1.is_null())
-            //     return result1;
-            // if (const auto& result2 = get(replaced, toplevel_only::no); !result2.is_null()) // const_null -> no substitution request in replaced, look in env or use substitute_to_string()
-            //     return result2;
-            // return replaced;
         }
     }
     else   // no substitution requests
@@ -366,16 +364,35 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 
 const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
 {
+    AD_LOG(acmacs::log::settings, "getenv \"{}\"", key);
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
         const rjson::v3::value* orig = &val;
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-            const auto orig_s = orig->to<std::string_view>();
-            if (orig_s.empty())
+            if (orig->empty())
                 return *orig;
-            if (const rjson::v3::value& substituted = environment_.substitute_to_value(orig_s); substituted.is_string() && orig_s != substituted.to<std::string_view>())
+            const rjson::v3::value& substituted = std::visit(
+                [&orig]<typename Cont>(Cont cont) -> const rjson::v3::value& {
+                    if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
+                        if (cont->is_null())
+                            return *orig;
+                        else
+                            return *cont;
+                    }
+                    else { // no subst or partial subst
+                        if (cont != orig->to<std::string_view>()) {
+                            AD_ERROR("getenv: partial subst {} -> \"{}\"", *orig, cont);
+                            abort();
+                        }
+                        else
+                            return rjson::v3::const_null;
+                    }
+                },
+                environment_.substitute(orig->to<std::string_view>()));
+            AD_LOG(acmacs::log::settings, "getenv substituted {} -> {}", *orig, substituted);
+            if (substituted.is_null())
+                return *orig;
+            else if (substituted.is_string())
                 orig = &substituted;
-            else if (substituted.is_null())
-                return *orig;     // not substituted
             else
                 return substituted;
         }
@@ -390,6 +407,8 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
 
 const rjson::v3::value& acmacs::settings::v2::Settings::substitute(const rjson::v3::value& source) const
 {
+    AD_LOG(acmacs::log::settings, "substitute in \"{}\"", source);
+    AD_LOG_INDENT;
     return source.visit([this, &source]<typename ArgX>(ArgX&& arg) -> const rjson::v3::value& {
         using Arg = std::decay_t<ArgX>;
         if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
@@ -473,26 +492,6 @@ bool acmacs::settings::v2::Settings::eval_empty(const rjson::v3::value& conditio
     catch (std::exception& err) {
         throw error(AD_FORMAT("cannot eval condition: {} -- condition: {}\n", err, condition));
     }
-
-    // try {
-    //     return std::visit(
-    //         [this,true_if_empty]<typename T>(T && arg)->bool {
-    //             if constexpr (std::is_same_v<std::decay_t<T>, rjson::v3::null> || std::is_same_v<std::decay_t<T>, rjson::v3::const_null>)
-    //                 return true_if_empty;
-    //             else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
-    //                 if (const rjson::v3::value substituted = environment_.substitute_to_value(std::string_view{arg}); substituted.is_string())
-    //                     return substituted.to<std::string>().empty() == true_if_empty;
-    //                 else
-    //                     throw error{"unsupported value type"};
-    //             }
-    //             else
-    //                 throw error{"unsupported value type"};
-    //         },
-    //         condition.val_());
-    // }
-    // catch (std::exception& err) {
-    //     throw error(fmt::format("cannot eval condition: {} -- condition: {}\n", err, condition));
-    // }
 
 } // acmacs::settings::v2::Settings::eval_empty
 
