@@ -16,6 +16,10 @@
 #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
 #endif
 
+#ifdef __GNUG__
+#pragma GCC diagnostic ignored "-Wdeprecated" // fmt/format.h: implicit capture of ‘this’ via ‘[=]’ is deprecated in C++20
+#endif
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <fmt/chrono.h>
