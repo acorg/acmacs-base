@@ -40,7 +40,7 @@ namespace acmacs
         explicit constexpr operator T&() noexcept { return value_; }
         explicit constexpr operator const T&() const noexcept { return value_; }
 
-      private:
+      protected:
         T value_;
     };
 
@@ -56,6 +56,8 @@ namespace acmacs
       public:
         template <typename TT, typename = std::enable_if_t<std::is_arithmetic_v<std::decay_t<TT>> && !std::is_same_v<TT, bool>, char>>
             explicit constexpr named_number_t(TT&& value) : named_t<Number, Tag>(static_cast<Number>(std::forward<TT>(value))) {}
+
+        constexpr Number value() const noexcept { return this->value_; }
 
         constexpr auto& operator++()
         {
@@ -74,6 +76,7 @@ namespace acmacs
     template <typename Number, typename Tag> constexpr bool operator>(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() > rhs.get(); }
     template <typename Number, typename Tag> constexpr bool operator>=(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return lhs.get() >= rhs.get(); }
 
+    template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator-(named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{-rhs.get()}; }
     template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator+(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() + rhs.get()}; }
     template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator+(named_number_t<Number, Tag> lhs, Number rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() + rhs}; }
     template <typename Number, typename Tag> constexpr named_number_t<Number, Tag> operator-(named_number_t<Number, Tag> lhs, named_number_t<Number, Tag> rhs) noexcept { return named_number_t<Number, Tag>{lhs.get() - rhs.get()}; }
@@ -115,6 +118,8 @@ namespace acmacs
 
     template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
     template <typename Tag> constexpr bool operator!=(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return !float_equal(lhs.get(), rhs.get()); }
+
+    template <typename Tag> constexpr named_double_t<Tag> operator/(named_double_t<Tag> lhs, double rhs) noexcept { return named_double_t<Tag>{lhs.get() / rhs}; }
 
     // ----------------------------------------------------------------------
 

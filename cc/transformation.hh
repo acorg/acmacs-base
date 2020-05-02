@@ -1,12 +1,12 @@
 #pragma once
 
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <array>
-#include <algorithm>
+// #include <iostream>
+// #include <cmath>
+// #include <vector>
+// #include <array>
+// #include <algorithm>
 
-#include "acmacs-base/string.hh"
+// #include "acmacs-base/string.hh"
 #include "acmacs-base/point-coordinates.hh"
 #include "acmacs-base/line.hh"
 #include "acmacs-base/size-scale.hh"
@@ -21,8 +21,10 @@ namespace acmacs
         using TransformationBase = std::array<double, 16>;
         constexpr size_t transformation_size = 4;
         constexpr std::array<size_t, transformation_size> transformation_row_base{0, transformation_size, transformation_size * 2, transformation_size * 3};
+
     } // namespace detail
 
+    // (N+1)xN matrix handling transformation in N-dimensional space. The last row is for translation
     // handles transformation and translation in 2D and 3D
     class Transformation : public detail::TransformationBase
     {
@@ -46,6 +48,9 @@ namespace acmacs
         constexpr double& _x(size_t row, size_t column) { return operator[](detail::transformation_row_base[row] + column); }
         template <typename S> constexpr double& operator()(S row, S column) { return _x(static_cast<size_t>(row), static_cast<size_t>(column)); }
         template <typename S> constexpr double operator()(S row, S column) const { return _x(static_cast<size_t>(row), static_cast<size_t>(column)); }
+
+        template <typename S> constexpr double& translation(S dimension) { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
+        template <typename S> constexpr double translation(S dimension) const { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
 
         std::vector<double> as_vector() const
         {
@@ -115,7 +120,7 @@ namespace acmacs
 
         void rotate(Rotation aAngle)
         {
-            return rotate(aAngle.value());
+            return rotate(*aAngle);
         }
 
         void flip_transformed(double x, double y)
@@ -204,49 +209,24 @@ namespace acmacs
 
     }; // class Transformation
 
-    inline std::string to_string(const Transformation& t)
-    {
-        switch (*t.number_of_dimensions) {
-            case 2:
-                return acmacs::string::concat("[", t.a(), ", ", t.b(), ", ", t.c(), ", ", t.d(), "]");
-            case 3:
-                return acmacs::string::concat("[[", t._x(0, 0), t._x(0, 1), t._x(0, 2), "], [", t._x(1, 0), t._x(1, 1), t._x(1, 2), "], [", t._x(2, 0), t._x(2, 1), t._x(2, 2), "]]");
-        }
-        return "[[*invalid number_of_dimensions*]]";
-    }
-
-    inline std::ostream& operator<<(std::ostream& out, const Transformation& t) { return out << to_string(t); }
-
-    // ----------------------------------------------------------------------
-
-    // (N+1)xN matrix handling transformation in N-dimensional space. The last row is for translation
-    class TransformationTranslation : public Transformation
-    {
-      public:
-        TransformationTranslation(number_of_dimensions_t a_number_of_dimensions) : Transformation(a_number_of_dimensions) {}
-        TransformationTranslation(const TransformationTranslation&) = default;
-
-        template <typename S> constexpr double& translation(S dimension) { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
-        template <typename S> constexpr double translation(S dimension) const { return _x(detail::transformation_size - 1, static_cast<size_t>(dimension)); }
-        constexpr const Transformation& transformation() const { return *this; }
-
-    }; // class TransformationTranslation
-
-    inline std::string to_string(const TransformationTranslation& tt)
-    {
-        std::string result = to_string(tt.transformation()) + " + [";
-        for (size_t dim = 0; dim < *tt.number_of_dimensions; ++dim) {
-            result += to_string(tt.translation(dim));
-            if (dim < (*tt.number_of_dimensions - 1))
-                result += ',';
-        }
-        result += ']';
-        return result;
-    }
-
-    inline std::ostream& operator<<(std::ostream& out, const TransformationTranslation& t) { return out << to_string(t); }
-
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::Transformation> : public fmt::formatter<acmacs::fmt_default_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::Transformation& transformation, FormatContext& ctx)
+    {
+        switch (*transformation.number_of_dimensions) {
+            case 2:
+                return format_to(ctx.out(), "[{}, {}, {}, {}]", transformation.a(), transformation.b(), transformation.c(), transformation.d());
+            case 3:
+                return format_to(ctx.out(), "[[{}, {}, {}], [{}, {}, {}], [{}, {}, {}]]", transformation._x(0, 0), transformation._x(0, 1), transformation._x(0, 2), transformation._x(1, 0),
+                                 transformation._x(1, 1), transformation._x(1, 2), transformation._x(2, 0), transformation._x(2, 1), transformation._x(2, 2));
+        }
+        return ctx.out();
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

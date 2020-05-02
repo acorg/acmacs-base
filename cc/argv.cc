@@ -69,9 +69,9 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
         switch (on_err) {
           case on_error::exit:
               for (const auto& err: errors_)
-                  std::cerr << "ERROR: " << err << '\n';
-              std::cerr << '\n';
-              show_help(std::cerr);
+                  fmt::print(stderr, "> ERROR {}\n", err);
+              fmt::print(stderr, "\n");
+              show_help();
               std::exit(errors_.empty() ? 0 : 1);
           case on_error::raise:
               if (errors_.empty())
@@ -80,7 +80,7 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
                   throw acmacs::argv::v2::errors{};
           case on_error::return_false:
               if (show_help_)
-                  show_help(std::cerr);
+                  show_help();
               return errors_.empty();
         }
     }
@@ -90,44 +90,40 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 
 // ----------------------------------------------------------------------
 
-void acmacs::argv::v2::argv::show_help(std::ostream& out) const
+void acmacs::argv::v2::argv::show_help() const
 {
     const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
-    out << fmt::format("Usage: {} [options]", prog_name_);
+    if (const auto pre = help_pre(); !pre.empty())
+        fmt::print(stderr, "{}\n", pre);
+    fmt::print(stderr, "Usage: {} [options]", prog_name_);
     for (const auto* opt : options_) {
         if (!opt->has_name()) {
-            out << ' ';
-            if (opt->mandatory())
-                out << '<';
-            else
-                out << '[';
-            out << opt->arg_name();
+            fmt::print(stderr, " {}{}", opt->mandatory() ? '<' : '[', opt->arg_name());
             if (const auto dflt = opt->get_default(); !dflt.empty())
-                out << ": " << dflt;
-            if (opt->mandatory())
-                out << '>';
-            else
-                out << ']';
+                fmt::print(stderr, ": {}", dflt);
+            fmt::print(stderr, "{}", opt->mandatory() ? '>' : ']');
             if (opt->multiple_values())
-                out << " ...";
+                fmt::print(stderr, " ...");
         }
     }
-    out << "\n\n";
+    fmt::print(stderr, "\n\n");
     if (!descriptions_.empty()) {
         for (const auto* desc : descriptions_)
-            out << desc->text() << '\n';
+            fmt::print(stderr, "{}\n", desc->text());
     }
-    out << '\n';
+    fmt::print(stderr, "\n");
     for (const auto* opt : options_) {
         if (opt->has_name()) {
-            out << "  " << std::setw(static_cast<int>(name_width)) << std::left << opt->names();
+            fmt::print(stderr, "  {:<{}s}", opt->names(), name_width);
             if (opt->mandatory())
-                out << " (MANDATORY)";
+                fmt::print(stderr, " (MANDATORY)");
             if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
-                out << " (def: " << dflt << ')';
-            out << ' ' << opt->description() << '\n';
+                fmt::print(stderr, " (def: {})", dflt);
+            fmt::print(stderr, " {}\n", opt->description());
         }
     }
+    if (const auto post = help_post(); !post.empty())
+        fmt::print(stderr, "\n{}\n", post);
 
 } // acmacs::argv::v2::argv::show_help
 

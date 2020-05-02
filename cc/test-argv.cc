@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "acmacs-base/argv.hh"
 
 // ----------------------------------------------------------------------
@@ -30,26 +28,11 @@ int main(int argc, const char* const argv[])
 {
     int exit_code = 0;
     try {
-        // const char* const t_argv[] = {argv[0], "-a", "A1-aa", "", "A2-bb", "-", "--", "A3-cc", "--c-enable"}; // "-h", "-d", "D-ARG"
-        //   // const char* const t_argv[] = {"test-1", "-a", "--aa", "-s", "s1", "-s", "s2", "--settings=s3", "--settings", "s4", "aaa", "aaaa"};
-        // Options opt(std::end(t_argv) - std::begin(t_argv), t_argv);
-        // std::cout << opt << '\n';
-
         Options opt(argc, argv);
-        std::cout << "a: " << opt.a << '\n';
-        std::cout << "b: " << opt.b << '\n';
-        std::cout << "c: " << opt.c << '\n';
-        std::cout << "d: " << opt.d << '\n';
-        std::cout << "e: " << opt.e << '\n';
-        std::cout << "m: " << opt.m << '\n';
-        std::cout << "i: " << opt.i << '\n';
-        std::cout << "s: " << opt.s << '\n';
-        std::cout << "f: " << opt.f << '\n';
-        std::cout << "source: " << opt.source << '\n';
-        std::cout << "output: " << opt.output << '\n';
+        fmt::print("a: {}\nb: {}\nc: {}\nd: {}\ne: {}\nm: {}\ni: {}\ns: {}\nf: {}\nsource: {}\noutput: {}\n", opt.a, opt.b, opt.c, opt.d, opt.e, opt.m, opt.i, opt.s, opt.f, opt.source, opt.output);
     }
     catch (std::exception& err) {
-        std::cerr << "ERROR: " << err.what() << '\n';
+        fmt::print(stderr, "> ERROR {}\n", err);
         exit_code = 1;
     }
     return exit_code;

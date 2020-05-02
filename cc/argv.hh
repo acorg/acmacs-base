@@ -151,12 +151,10 @@ namespace acmacs
                 }
             }; // class option<T>
 
-            template <typename T> inline std::ostream& operator << (std::ostream& out, const option<T>& opt) { return out << opt.get(); }
 
             template <> void option<bool>::add(detail::cmd_line_iter& /*arg*/, detail::cmd_line_iter /*last*/) { value_ = true; }
             template <> bool option<bool>::has_arg() const noexcept { return false; }
             template <> constexpr option<bool>::operator const bool&() const { if (value_.has_value()) return *value_; return detail::false_; }
-            template <> inline std::ostream& operator << (std::ostream& out, const option<bool>& opt) { return out << std::boolalpha << static_cast<const bool&>(opt); }
 
             template <> void option<str_array>::add(std::string_view arg) { if (!value_) value_ = str_array{arg}; else value_->push_back(arg); }
             template <> bool option<str_array>::multiple_values() const noexcept { return true; }
@@ -186,11 +184,13 @@ namespace acmacs
                 enum class on_error { exit, raise, return_false };
                   // returns true on success
                 bool parse(int argc, const char* const argv[], on_error on_err = on_error::exit);
+                virtual std::string_view help_pre() const { return {}; }
+                virtual std::string_view help_post() const { return {}; }
 
                 constexpr auto argv0() const { return argv0_; }
                 constexpr auto program_name() const { return prog_name_; }
                 constexpr const errors_t& errors() const { return errors_; }
-                void show_help(std::ostream& out) const;
+                void show_help() const;
 
                 virtual ~argv() = default;
 
@@ -216,7 +216,6 @@ namespace acmacs
 
                 friend class detail::option_base;
                 friend class description;
-                friend std::ostream& operator<<(std::ostream& out, const argv& args);
 
             }; // class argv
 
