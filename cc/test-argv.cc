@@ -7,6 +7,8 @@ using namespace acmacs::argv;
 struct Options : public argv
 {
     Options(int a_argc, const char* const a_argv[], on_error on_err = on_error::exit) : argv() { parse(a_argc, a_argv, on_err); }
+    std::string_view help_pre() const override { return "test-argv PRE"; }
+    std::string_view help_post() const override { return "test-argv POST"; }
 
     option<bool> a{*this, 'a', "a-enable"};
     option<bool> b{*this, 'b'};

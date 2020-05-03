@@ -1,19 +1,15 @@
 #pragma once
 
-#if __has_include(<filesystem>)
 #include <filesystem>
 namespace fs = std::filesystem;
-// #elif __has_include(<experimental/filesystem>)
-// #include <experimental/filesystem>
-// namespace fs = std::experimental::filesystem;
-#else
-#error No std::filesystem
-// #pragma GCC diagnostic push
-// #include "acmacs-base/boost-diagnostics.hh"
-// #include "boost/filesystem.hpp"
-// #pragma GCC diagnostic pop
-// namespace fs = boost::filesystem;
-#endif
+
+#include "acmacs-base/fmt.hh"
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<std::filesystem::path> : fmt::formatter<const char*> {
+    template <typename FormatCtx> auto format(const std::filesystem::path& path, FormatCtx& ctx) { return fmt::formatter<const char*>::format(path.c_str(), ctx); }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

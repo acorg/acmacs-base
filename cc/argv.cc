@@ -69,7 +69,7 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
         switch (on_err) {
           case on_error::exit:
               for (const auto& err: errors_)
-                  fmt::print(stderr, "> ERROR {}\n", err);
+                  AD_ERROR("{}", err);
               fmt::print(stderr, "\n");
               show_help();
               std::exit(errors_.empty() ? 0 : 1);
@@ -123,7 +123,7 @@ void acmacs::argv::v2::argv::show_help() const
         }
     }
     if (const auto post = help_post(); !post.empty())
-        fmt::print(stderr, "\n{}\n", post);
+        fmt::print(stderr, "{}\n", post);
 
 } // acmacs::argv::v2::argv::show_help
 
@@ -195,9 +195,6 @@ acmacs::argv::v2::detail::option_base* acmacs::argv::v2::argv::find(std::string_
         return nullptr;
 
 } // acmacs::argv::v2::argv::find
-
-// ----------------------------------------------------------------------
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:
