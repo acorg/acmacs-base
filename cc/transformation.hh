@@ -1,12 +1,5 @@
 #pragma once
 
-// #include <iostream>
-// #include <cmath>
-// #include <vector>
-// #include <array>
-// #include <algorithm>
-
-// #include "acmacs-base/string.hh"
 #include "acmacs-base/point-coordinates.hh"
 #include "acmacs-base/line.hh"
 #include "acmacs-base/size-scale.hh"
