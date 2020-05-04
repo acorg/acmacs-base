@@ -266,7 +266,7 @@ namespace rjson::v3
 
         std::string_view _content() const noexcept;
 
-        template <typename Callback> auto visit(Callback&& callback) const noexcept -> decltype(callback(std::declval<detail::null>()))
+        template <typename Callback> auto visit(Callback&& callback) const -> decltype(callback(std::declval<detail::null>()))
         {
             return std::visit(std::forward<Callback>(callback), value_);
         }
