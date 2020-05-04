@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "acmacs-base/argv.hh"
+#include "acmacs-base/acmacsd.hh"
 
 // ----------------------------------------------------------------------
 
@@ -119,7 +120,7 @@ void acmacs::argv::v2::argv::show_help() const
                 fmt::print(stderr, " (MANDATORY)");
             if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
                 fmt::print(stderr, " (def: {})", dflt);
-            fmt::print(stderr, " {}\n", opt->description());
+            fmt::print(stderr, " {}\n", fmt::format(opt->description(), fmt::arg("ACMACSD_ROOT", acmacsd_root())));
         }
     }
     if (const auto post = help_post(); !post.empty())
