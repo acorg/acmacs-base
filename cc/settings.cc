@@ -168,21 +168,23 @@ namespace acmacs::settings::inline v2
 
 void acmacs::settings::v2::Settings::apply(std::string_view name)
 {
-    AD_LOG(acmacs::log::settings, "apply \"{}\"", name);
     if (name.empty())
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
+        AD_LOG(acmacs::log::settings, "apply \"{}\"", name);
+        AD_LOG_INDENT;
         const auto substituted_name = environment_.substitute_to_string(name);
+        AD_LOG(acmacs::log::settings, "apply substituted \"{}\"", substituted_name);
         if (const auto& val1 = environment_.get(substituted_name, toplevel_only::no); !val1.is_null()) {
-            // AD_LOG(acmacs::log::settings, "apply val1 {}", val1);
+            AD_LOG(acmacs::log::settings, "apply val1 {}", val1);
             apply(val1);
         }
         else if (const auto& val2 = get(substituted_name); !val2.is_null()) {
-            // AD_LOG(acmacs::log::settings, "apply val2 {}", val1);
+            AD_LOG(acmacs::log::settings, "apply val2 {}", val1);
             apply(val2);
         }
         else if (!apply_built_in(substituted_name)) {
-            loaded_data_.report();
+            // loaded_data_.report();
             throw error{AD_FORMAT("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name)};
         }
     }
@@ -208,6 +210,8 @@ void acmacs::settings::v2::Settings::apply_top(std::string_view name)
 
 bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
 {
+    AD_LOG(acmacs::log::settings, "base::apply_built_in \"{}\"", name);
+    AD_LOG_INDENT;
     try {
         if (name == "if") {
             apply_if();
@@ -259,7 +263,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::v3::detail::obj
 {
     using namespace std::string_view_literals;
     AD_LOG_INDENT;
-    AD_LOG(acmacs::log::settings, "{}", entry);
+    AD_LOG(acmacs::log::settings, "push_and_apply {}", entry);
     try {
         if (const auto& command_v = entry["N"sv]; !command_v.is_null()) {
             const auto command{command_v.to<std::string_view>()};
