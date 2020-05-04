@@ -241,18 +241,23 @@ void acmacs::settings::v2::Settings::apply(const rjson::v3::value& entry)
         AD_LOG(acmacs::log::settings, "apply {}", entry);
         for (const auto& sub_entry : entry.array()) {
             // AD_DEBUG("apply array element {}", sub_entry);
-            sub_entry.visit([this,&sub_entry]<typename T>(const T& sub_entry_val) {
+            sub_entry.visit([this, &sub_entry]<typename T>(const T& sub_entry_val) {
                 if constexpr (std::is_same_v<T, rjson::v3::detail::string>)
                     this->apply(sub_entry_val.template to<std::string_view>());
                 else if constexpr (std::is_same_v<T, rjson::v3::detail::object>)
                     this->push_and_apply(sub_entry_val);
+                else if constexpr (std::is_same_v<T, rjson::v3::detail::null>)
+                    ; // commented out item (using #), do nothing
                 else
                     throw error{AD_FORMAT("cannot apply: {}\n", sub_entry)};
             });
         }
     }
     catch (rjson::v3::value_type_mismatch& err) {
-        throw error(AD_FORMAT("cannot apply: {} : {}\n", err, entry));
+        throw error{AD_FORMAT("cannot apply: {} : {}\n", err, entry)};
+    }
+    catch (std::exception& err) {
+        throw error{fmt::format("{}\n    on applying {}", err.what(), entry)};
     }
 
 } // acmacs::settings::v2::Settings::apply

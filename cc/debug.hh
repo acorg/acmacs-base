@@ -25,7 +25,7 @@
 
 #define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
-#define AD_FORMAT(...) fmt::format("{} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_FORMAT(...) fmt::format("{} @@ {}:{}", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 // ----------------------------------------------------------------------
 
