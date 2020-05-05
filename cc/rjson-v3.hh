@@ -247,6 +247,8 @@ namespace rjson::v3
         const value& operator[](size_t index) const { return array()[index]; } // throw value_type_mismatch if not array, returns null if out of range
         template <typename... Key> const value& get(Key&&... keys) const { return object().get(keys ...); } // throw value_type_mismatch if not object, returns null if not found
 
+        explicit operator bool() const;
+
         bool is_null() const noexcept;
         bool is_object() const noexcept;
         bool is_array() const noexcept;
@@ -355,6 +357,24 @@ namespace rjson::v3
     inline bool value::operator==(const value& to_compare) const noexcept
     {
         return actual_type().hash_code() == to_compare.actual_type().hash_code() && format(*this, output::compact) == format(to_compare, output::compact);
+    }
+
+    inline value::operator bool() const
+    {
+        return std::visit(
+            []<typename Content>(const Content& arg) -> bool {
+                if constexpr (std::is_same_v<Content, detail::boolean>)
+                    return arg.template to<bool>();
+                else if constexpr (std::is_same_v<Content, detail::null>)
+                    return false;
+                else if constexpr (std::is_same_v<Content, detail::string>)
+                    return !arg.empty();
+                else if constexpr (std::is_same_v<Content, detail::number>)
+                    return !float_zero(arg.template to<double>());
+                else
+                    throw value_type_mismatch{"<convertible-to-bool>", typeid(Content)};
+            },
+            value_);
     }
 
     template <typename Output> inline Output value::to() const
