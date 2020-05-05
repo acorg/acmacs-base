@@ -309,6 +309,8 @@ namespace rjson::v3
     // ======================================================================
 
     extern const value const_null;
+    extern const value const_true;
+    extern const value const_false;
     extern const value const_empty_string;
     extern const detail::array const_empty_array;
     extern const detail::object const_empty_object;
