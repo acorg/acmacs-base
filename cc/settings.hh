@@ -12,6 +12,11 @@ namespace acmacs::settings::inline v2
         using std::runtime_error::runtime_error;
     };
 
+    namespace detail
+    {
+        using env_data_t = acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>;
+    }
+
     class Settings
     {
       public:
@@ -44,6 +49,7 @@ namespace acmacs::settings::inline v2
         // returns const_null if not found
         const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         const rjson::v3::value& substitute(const rjson::v3::value& source) const;
+        const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
@@ -146,6 +152,7 @@ namespace acmacs::settings::inline v2
 
             std::string substitute_to_string(std::string_view source) const noexcept;
             const rjson::v3::value& substitute_to_value(std::string_view source) const noexcept;
+            const detail::env_data_t& toplevel() const { return env_data_.back(); }
 
             // abort if source is empty
             // const rjson::v3::value* if substitution requested for the whole source
@@ -154,7 +161,7 @@ namespace acmacs::settings::inline v2
             substitute_result_t substitute(std::string_view source) const;
 
           private:
-            std::vector<acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>> env_data_;
+            std::vector<detail::env_data_t> env_data_;
 
         };
 
