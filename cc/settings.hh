@@ -21,6 +21,7 @@ namespace acmacs::settings::inline v2
     {
       public:
         enum class toplevel_only { no, yes };
+        using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
 
         Settings() = default;
         Settings(const std::vector<std::string_view>& filenames) { load(filenames); }
@@ -48,8 +49,13 @@ namespace acmacs::settings::inline v2
 
         // returns const_null if not found
         const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
-        const rjson::v3::value& substitute(const rjson::v3::value& source) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
+
+        substitute_result_t substitute(const rjson::v3::value& source) const;
+        const rjson::v3::value& substitute_to_value(const rjson::v3::value& source) const;
+        bool substitute_to_bool(const rjson::v3::value& source) const;
+        double substitute_to_double(const rjson::v3::value& source) const;
+        std::string substitute_to_string(const rjson::v3::value& source) const;
 
         template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
@@ -157,7 +163,6 @@ namespace acmacs::settings::inline v2
             // abort if source is empty
             // const rjson::v3::value* if substitution requested for the whole source
             // std::string if no substitution requested (returns source) or part of the source substituted
-            using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
             substitute_result_t substitute(std::string_view source) const;
 
           private:

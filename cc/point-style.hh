@@ -160,6 +160,12 @@ namespace acmacs
         LabelStyle& label() noexcept override { modified_label_ = true; return PointStyle::label(); }
         void label_text(std::string_view a_label_text) noexcept override { PointStyle::label_text(a_label_text); modified_label_text_ = true; }
 
+        constexpr bool modified() const
+        {
+            return modified_shown_ || modified_fill_ || modified_outline_ || modified_outline_width_ || modified_size_ || modified_rotation_ || modified_aspect_ || modified_shape_ ||
+                   modified_label_ || modified_label_text_;
+        }
+
       private:
         bool modified_shown_{false};
         bool modified_fill_{false};

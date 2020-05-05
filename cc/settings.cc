@@ -44,7 +44,7 @@ std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(st
 
 // ----------------------------------------------------------------------
 
-acmacs::settings::v2::Settings::Environment::substitute_result_t acmacs::settings::v2::Settings::Environment::substitute(std::string_view source) const
+acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settings::Environment::substitute(std::string_view source) const
 {
 #include "acmacs-base/global-constructors-push.hh"
     static const std::regex re{"\\{([^\\}]+)\\}"};
@@ -418,25 +418,78 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v2::Settings::substitute(const rjson::v3::value& source) const
+acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settings::substitute(const rjson::v3::value& source) const
 {
     AD_LOG(acmacs::log::settings, "substitute in \"{}\"", source);
     AD_LOG_INDENT;
-    return source.visit([this, &source]<typename ArgX>(ArgX&& arg) -> const rjson::v3::value& {
-        using Arg = std::decay_t<ArgX>;
-        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
-            if (const auto& res = environment_.substitute_to_value(arg.template to<std::string_view>()); !res.is_null())
-                return res;
-            else
-                return source;
-        }
-        // else if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
-        //     throw error{AD_FORMAT("Settings::substitute: cannot substitute in array: {}", source)}; // return arg.map([this](const auto& val) { return substitute(val); });
+    return source.visit([this, &source]<typename Arg>(const Arg& arg) -> acmacs::settings::v2::Settings::substitute_result_t {
+        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
+            return environment_.substitute(arg.template to<std::string_view>());
         else
-            return source;
+            return &source;
     });
 
 } // acmacs::settings::v2::Settings::substitute
+
+// ----------------------------------------------------------------------
+
+const rjson::v3::value& acmacs::settings::v2::Settings::substitute_to_value(const rjson::v3::value& source) const
+{
+    return std::visit(
+        [&source]<typename Res>(const Res& res) -> const rjson::v3::value& {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
+                return *res;
+            else
+                return source;
+        },
+        substitute(source));
+
+} // acmacs::settings::v2::Settings::substitute
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v2::Settings::substitute_to_bool(const rjson::v3::value& source) const
+{
+    return std::visit(
+        [&source]<typename Res>(const Res& res) -> bool {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
+                return static_cast<bool>(*res);
+            else
+                throw error{AD_FORMAT("cannot substitute_to_bool in {}", source)};
+        },
+        substitute(source));
+
+} // acmacs::settings::v2::Settings::substitute_to_bool
+
+// ----------------------------------------------------------------------
+
+double acmacs::settings::v2::Settings::substitute_to_double(const rjson::v3::value& source) const
+{
+    return std::visit(
+        [&source]<typename Res>(const Res& res) -> double {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
+                return res->template to<double>();
+            else
+                throw error{AD_FORMAT("cannot substitute_to_double in {}", source)};
+        },
+        substitute(source));
+
+} // acmacs::settings::v2::Settings::substitute_to_double
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source) const
+{
+    return std::visit(
+        []<typename Res>(const Res& res) -> std::string {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
+                return std::string{res->template to<std::string_view>()};
+            else
+                return res;
+        },
+        substitute(source));
+
+} // acmacs::settings::v2::Settings::substitute_to_string
 
 // ----------------------------------------------------------------------
 
@@ -479,9 +532,9 @@ bool acmacs::settings::v2::Settings::eval_equal(const rjson::v3::value& conditio
         return false;
     }
 
-    const auto& first = substitute(condition[0]);
+    const auto& first = substitute_to_value(condition[0]);
     for (size_t index = 1; index < condition.size(); ++index) {
-        if (!(substitute(condition[index]) == first))
+        if (!(substitute_to_value(condition[index]) == first))
             return false;
     }
     return true;
@@ -493,7 +546,7 @@ bool acmacs::settings::v2::Settings::eval_equal(const rjson::v3::value& conditio
 bool acmacs::settings::v2::Settings::eval_empty(const rjson::v3::value& condition, bool true_if_empty) const
 {
     try {
-        return substitute(condition).visit([true_if_empty]<typename Arg>(const Arg& arg) -> bool {
+        return substitute_to_value(condition).visit([true_if_empty]<typename Arg>(const Arg& arg) -> bool {
             if constexpr (std::is_same_v<Arg, rjson::v3::detail::null>)
                 return true_if_empty;
             else if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
