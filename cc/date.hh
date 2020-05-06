@@ -90,9 +90,10 @@ namespace date
     // returns date for the last day of the year-month stored in this
     inline auto end_of_month(const year_month_day& dt) { return year_month_day(year_month_day_last(dt.year(), month_day_last(dt.month()))); }
 
-    inline auto months_ago(const year_month_day& dt, period_diff_t number_of_months) { return dt - date::months(number_of_months); }
     inline auto years_ago(const year_month_day& dt, period_diff_t number_of_years) { return dt - date::years(number_of_years); }
+    inline auto months_ago(const year_month_day& dt, period_diff_t number_of_months) { return dt - date::months(number_of_months); }
     inline auto weeks_ago(const year_month_day& dt, period_diff_t number_of_weeks) { return static_cast<date::sys_days>(dt) - date::weeks(number_of_weeks); }
+    inline auto days_ago(const year_month_day& dt, period_diff_t number_of_days) { return static_cast<date::sys_days>(dt) - date::days(number_of_days); }
 
     inline auto next_month(const year_month_day& dt) { return dt + date::months(1); }
     inline auto next_year(const year_month_day& dt) { return dt + date::years(1); }
