@@ -28,7 +28,7 @@ void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size
     else
         std::system(fmt::format("/usr/bin/open '{}'", aFilename).data());
 
-    if (const auto* val = std::getenv("XPC_SERVICE_NAME"); val && std::string_view{val}.find("Emacs") != std::string_view::npos)
+    if (const auto* xpc = std::getenv("XPC_SERVICE_NAME"), *inside = std::getenv("INSIDE_EMACS"); (xpc && std::string_view{xpc}.find("Emacs") != std::string_view::npos) || inside)
         // run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 2);
         std::system(fmt::format("( sleep {}; /usr/bin/open -a /Applications/Emacs.app ) &", aDelayBeforeInSeconds + 1).data());
     if (aDelayAfterInSeconds) {
