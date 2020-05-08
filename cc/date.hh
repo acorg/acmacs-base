@@ -106,6 +106,8 @@ namespace date
     inline auto& decrement_year(year_month_day& dt, period_diff_t number_of_years = 1) { dt -= date::years(number_of_years); return dt; }
     inline auto& increment_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) + date::weeks{number_of_weeks}; return dt; }
     inline auto& decrement_week(year_month_day& dt, period_diff_t number_of_weeks = 1) { dt = static_cast<date::sys_days>(dt) - date::weeks{number_of_weeks}; return dt; }
+    inline auto& increment_day(year_month_day& dt, period_diff_t number_of_days = 1) { dt = static_cast<date::sys_days>(dt) + date::days{number_of_days}; return dt; }
+    inline auto& decrement_day(year_month_day& dt, period_diff_t number_of_days = 1) { dt = static_cast<date::sys_days>(dt) - date::days{number_of_days}; return dt; }
 
     inline year_month_day from_string(std::string_view source, const char* fmt)
     {

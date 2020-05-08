@@ -1,6 +1,7 @@
 #pragma once
 
 #include "acmacs-base/date.hh"
+#include "acmacs-base/counter.hh"
 
 // ----------------------------------------------------------------------
 
@@ -23,9 +24,9 @@ namespace acmacs::time_series::inline v2
     {
         date::year_month_day first{date::invalid_date()}, after_last{date::invalid_date()};
         interval intervl{interval::month};
-        size_t number_of_intervals{1};
+        date::period_diff_t number_of_intervals{1};
 
-        void update(std::optional<std::string_view> a_start, std::optional<std::string_view> a_end, std::optional<std::string_view> a_interval, std::optional<size_t> a_number_of_intervals);
+        void update(std::optional<std::string_view> a_start, std::optional<std::string_view> a_end, std::optional<std::string_view> a_interval, std::optional<date::period_diff_t> a_number_of_intervals);
     };
 
     // parameters& update(const rjson::value& source, parameters& param);
@@ -39,6 +40,10 @@ namespace acmacs::time_series::inline v2
 
      // returns slot number or ser.size() if not found
     size_t find(const series& ser, const date::year_month_day& dat);
+
+    using date_stat_t = acmacs::Counter<date::year_month_day>;
+    date_stat_t stat(const parameters& param, const std::vector<std::string_view>& dates);
+    std::pair<date::year_month_day, date::year_month_day> suggest_start_end(const parameters& param, const date_stat_t& stat);
 }
 
 // ----------------------------------------------------------------------

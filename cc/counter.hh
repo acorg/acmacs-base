@@ -50,15 +50,25 @@ namespace acmacs
                 return 0;
         }
 
+        std::string report(std::string_view format) const
+        {
+            fmt::memory_buffer out;
+            for (const auto& entry : counter_)
+                format_entry(out, format, entry);
+            return fmt::to_string(out);
+        }
+
+        std::string report() const { return report("{value}  {counter:6d}\n"); }
+
         std::string report_sorted_max_first(std::string_view format) const
         {
             fmt::memory_buffer out;
             for (const auto& entry : sorted_max_first())
-                fmt::format_to(out, format, fmt::arg("first", entry->first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry->first)), fmt::arg("second", entry->second));
+                format_entry(out, format, *entry);
             return fmt::to_string(out);
         }
 
-        std::string report_sorted_max_first() const { return report_sorted_max_first("{second:6d} {first}\n"); }
+        std::string report_sorted_max_first() const { return report_sorted_max_first("{counter:6d} {value}\n"); }
 
         size_t total() const
         {
@@ -67,6 +77,12 @@ namespace acmacs
 
      private:
         container_type counter_;
+
+        void format_entry(fmt::memory_buffer& out, std::string_view format, const value_type& entry) const
+        {
+                fmt::format_to(out, format, fmt::arg("quoted", fmt::format("\"{}\"", entry.first)), fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
+                               fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+        }
 
     }; // class Counter<Obj>
 
@@ -114,24 +130,38 @@ namespace acmacs
             return res;
         }
 
-        std::vector<std::pair<char, size_t>> sorted_pairs() const
+        enum class sorted { no, yes };
+        std::vector<std::pair<char, size_t>> pairs(enum sorted srt) const
         {
             std::vector<std::pair<char, size_t>> result;
             for (auto it = std::begin(counter_); it != std::end(counter_); ++it) {
                 if (*it > 0)
                     result.emplace_back(static_cast<char>(it - std::begin(counter_)), *it);
             }
-            std::sort(std::begin(result), std::end(result), [](const auto& e1, const auto& e2) { return e1.second > e2.second; });
+            if (srt == sorted::yes)
+                std::sort(std::begin(result), std::end(result), [](const auto& e1, const auto& e2) { return e1.second > e2.second; });
             return result;
         }
+
+        std::string report(std::string_view format) const
+        {
+            fmt::memory_buffer out;
+            for (const auto& entry : pairs(sorted::no))
+                format_entry(out, format, entry);
+            return fmt::to_string(out);
+        }
+
+        std::string report() const { return report_sorted_max_first("{value} {counter:6d}\n"); }
 
         std::string report_sorted_max_first(std::string_view format) const
         {
             fmt::memory_buffer out;
-            for (const auto& [key, val] : sorted_pairs())
-                fmt::format_to(out, format, fmt::arg("first", key), fmt::arg("second", val));
+            for (const auto& entry : pairs(sorted::yes))
+                format_entry(out, format, entry);
             return fmt::to_string(out);
         }
+
+        std::string report_sorted_max_first() const { return report_sorted_max_first("{counter:6d} {value}\n"); }
 
         size_t operator[](char val) const { return counter_[static_cast<size_t>(val)]; }
 
@@ -139,6 +169,13 @@ namespace acmacs
 
       private:
         std::array<size_t, 256> counter_;
+
+        void format_entry(fmt::memory_buffer& out, std::string_view format, const std::pair<char, size_t>& entry) const
+        {
+                fmt::format_to(out, format, fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
+                               fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+        }
+
     };
 
 } // namespace acmacs

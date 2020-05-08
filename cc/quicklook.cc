@@ -5,11 +5,19 @@
 #include <vector>
 
 #include "acmacs-base/quicklook.hh"
-#include "acmacs-base/fmt.hh"
+#include "acmacs-base/debug.hh"
 
 // ----------------------------------------------------------------------
 
 #ifdef __APPLE__
+
+inline bool return_to_emacs()
+{
+    if (const auto* xpc = std::getenv("XPC_SERVICE_NAME"), *inside = std::getenv("INSIDE_EMACS"); (xpc && std::string_view{xpc}.find("Emacs") != std::string_view::npos) || inside)
+        return true;
+    else
+        return false;
+}
 
 void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 {
@@ -23,18 +31,18 @@ void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 
 void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
+    using namespace std::chrono_literals;
+
     if (aDelayBeforeInSeconds)
         run_and_detach({"/usr/bin/open", aFilename.data()}, aDelayBeforeInSeconds); // , "-g"
     else
         std::system(fmt::format("/usr/bin/open '{}'", aFilename).data());
 
-    if (const auto* xpc = std::getenv("XPC_SERVICE_NAME"), *inside = std::getenv("INSIDE_EMACS"); (xpc && std::string_view{xpc}.find("Emacs") != std::string_view::npos) || inside)
-        // run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 2);
-        std::system(fmt::format("( sleep {}; /usr/bin/open -a /Applications/Emacs.app ) &", aDelayBeforeInSeconds + 1).data());
-    if (aDelayAfterInSeconds) {
-        using namespace std::chrono_literals;
+    if (return_to_emacs())
+        run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 1);
+
+    if (aDelayAfterInSeconds)
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
-    }
 
 } // acmacs::quicklook
 

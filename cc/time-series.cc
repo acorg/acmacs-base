@@ -42,9 +42,9 @@ inline date::year_month_day first(const date::year_month_day& current, acmacs::t
 
 acmacs::time_series::v2::series acmacs::time_series::v2::make(const parameters& param)
 {
-    const auto increment = [](const date::year_month_day& cur, interval intervl, size_t count) {
+    const auto increment = [](const date::year_month_day& cur, interval intervl, auto count) {
         auto result = cur;
-        for (size_t i = 0; i < count; ++i)
+        for (decltype(count) i = 0; i < count; ++i)
             result = next(result, intervl);
         return result;
     };
@@ -82,7 +82,7 @@ acmacs::time_series::v2::interval acmacs::time_series::v2::interval_from_string(
 // ----------------------------------------------------------------------
 
 void acmacs::time_series::v2::parameters::update(std::optional<std::string_view> a_start, std::optional<std::string_view> a_end, std::optional<std::string_view> a_interval,
-                                                 std::optional<size_t> a_number_of_intervals)
+                                                 std::optional<date::period_diff_t> a_number_of_intervals)
 {
     if (a_start.has_value())
         first = date::from_string(*a_start, date::allow_incomplete::yes);
@@ -178,6 +178,76 @@ std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
         return date::year_4(a_slot.first);
 
 } // acmacs::time_series::v2::numeric_name
+
+// ----------------------------------------------------------------------
+
+acmacs::time_series::v2::date_stat_t acmacs::time_series::v2::stat(const parameters& param, const std::vector<std::string_view>& dates)
+{
+    date_stat_t counter;
+    for (const auto& dat : dates) {
+        try {
+            // counter.count(date::display(first(date::from_string(dat, date::allow_incomplete::yes), param.intervl)));
+            counter.count(first(date::from_string(dat, date::allow_incomplete::yes), param.intervl));
+        }
+        catch (date::date_parse_error&) {
+        }
+    }
+    return counter;
+
+} // acmacs::time_series::v2::stat
+
+// ----------------------------------------------------------------------
+
+std::pair<date::year_month_day, date::year_month_day> acmacs::time_series::v2::suggest_start_end(const parameters& param, const date_stat_t& stat)
+{
+    if (stat.empty())
+        return {date::invalid_date(), date::invalid_date()};
+
+    const auto distance = [&param](const date::year_month_day& d1, const date::year_month_day& d2) -> date::period_diff_t {
+        switch (param.intervl) {
+            case interval::year:
+                return date::years_between_dates(d1, d2) / param.number_of_intervals;
+            case interval::month:
+                return date::months_between_dates(d1, d2) / param.number_of_intervals;
+            case interval::week:
+                return date::weeks_between_dates(d1, d2) / param.number_of_intervals;
+            case interval::day:
+                return date::days_between_dates(d1, d2) / param.number_of_intervals;
+        }
+        return 1; // hey g++-9
+    };
+
+    const auto next = [&param](date::year_month_day& date) -> date::year_month_day& {
+        switch (param.intervl) {
+            case interval::year:
+                return date::increment_year(date, param.number_of_intervals);
+            case interval::month:
+                return date::increment_month(date, param.number_of_intervals);
+            case interval::week:
+                return date::increment_week(date, param.number_of_intervals);
+            case interval::day:
+                return date::increment_day(date, param.number_of_intervals);
+        }
+        return date; // hey g++-9
+    };
+
+    std::vector<std::pair<date::year_month_day, date::year_month_day>> chunks;
+    auto it = std::begin(stat.counter());
+    auto prev{it->first};
+    auto cur = prev, start = prev;
+    for (++it; it != std::end(stat.counter()); ++it) {
+        cur = it->first;
+        if (distance(prev, cur) > 2) {
+            chunks.emplace_back(start, next(prev));
+            start = cur;
+        }
+        prev = cur;
+    }
+    if (start != prev)
+        chunks.emplace_back(start, next(prev));
+    return *std::max_element(std::begin(chunks), std::end(chunks), [distance](const auto& e1, const auto& e2) { return distance(e1.first, e1.second) < distance(e2.first, e2.second); });
+
+} // acmacs::time_series::v2::suggest_start_end
 
 // ----------------------------------------------------------------------
 /// Local Variables:
