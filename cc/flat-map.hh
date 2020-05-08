@@ -206,6 +206,11 @@ namespace acmacs
                 return data_.emplace_back(Key{key}, Value{value});
         }
 
+        template <typename Order> void sort(Order&& order)
+        {
+            std::sort(std::begin(data_), std::end(data_), std::forward<Order>(order));
+        }
+
       private:
         std::vector<entry_type> data_;
 
