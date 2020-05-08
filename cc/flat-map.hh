@@ -137,6 +137,8 @@ namespace acmacs
         constexpr const auto& data() const noexcept { return data_; }
         auto begin() const noexcept { return data_.begin(); }
         auto end() const noexcept { return data_.end(); }
+        auto begin() noexcept { return data_.begin(); }
+        auto end() noexcept { return data_.end(); }
         auto empty() const noexcept { return data_.empty(); }
         auto size() const noexcept { return data_.size(); }
 
