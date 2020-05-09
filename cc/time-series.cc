@@ -186,7 +186,6 @@ acmacs::time_series::v2::date_stat_t acmacs::time_series::v2::stat(const paramet
     date_stat_t counter;
     for (const auto& dat : dates) {
         try {
-            // counter.count(date::display(first(date::from_string(dat, date::allow_incomplete::yes), param.intervl)));
             counter.count(first(date::from_string(dat, date::allow_incomplete::yes), param.intervl));
         }
         catch (date::date_parse_error&) {

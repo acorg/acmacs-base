@@ -124,6 +124,12 @@ namespace date
 
     inline year_month_day from_string(std::string_view source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
     {
+        if (source.empty()) {
+            if (toe == throw_on_error::yes)
+                throw date_parse_error(fmt::format("cannot parse date from \"{}\"", source));
+            return invalid_date();
+        }
+
         for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
             // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
             if (const auto result = from_string(source, fmt); result.ok())
