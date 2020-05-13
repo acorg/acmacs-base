@@ -383,6 +383,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
         for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
             if (orig->empty())
                 return *orig;
+
             const rjson::v3::value& substituted = std::visit(
                 [&orig]<typename Cont>(Cont cont) -> const rjson::v3::value& {
                     if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
@@ -401,6 +402,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
                     }
                 },
                 environment_.substitute(orig->to<std::string_view>()));
+
             AD_LOG(acmacs::log::settings, "getenv substituted {} -> {}", *orig, substituted);
             if (substituted.is_null())
                 return *orig;
@@ -415,6 +417,64 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
         return val;
 
 } // acmacs::settings::v2::Settings::getenv
+
+// ----------------------------------------------------------------------
+
+const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only) const
+{
+    if (const auto& val = getenv(key1, a_toplevel_only); !val.is_null())
+        return val;
+    else
+        return getenv(key2, a_toplevel_only);
+
+} // acmacs::settings::v2::Settings::getenv
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view key, toplevel_only a_toplevel_only) const
+{
+    AD_LOG(acmacs::log::settings, "getenv_to_string \"{}\"", key);
+    if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
+        const rjson::v3::value* orig = &val;
+        for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
+            if (orig->empty())
+                return std::string{};
+
+            const rjson::v3::value& substituted = std::visit(
+                [&orig]<typename Cont>(Cont cont) -> const rjson::v3::value& {
+                    if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
+                        if (cont->is_null())
+                            return *orig;
+                        else
+                            return *cont;
+                    }
+                    else { // no subst or partial subst
+                        if (cont != orig->to<std::string_view>())
+                            return rjson::v3::const_empty_string; // --> use substitute_to_string
+                        else
+                            return rjson::v3::const_null;
+                    }
+                },
+                environment_.substitute(orig->to<std::string_view>()));
+
+            AD_LOG(acmacs::log::settings, "getenv_to_string substituted {} -> {}", *orig, substituted);
+            if (substituted.is_null())
+                return std::string{orig->to<std::string_view>()};
+            else if (&substituted == &rjson::v3::const_empty_string)
+                return environment_.substitute_to_string(orig->to<std::string_view>());
+            else if (substituted.is_string())
+                orig = &substituted;
+            else
+                throw error(AD_FORMAT("Settings::getenv_to_string: result of substitutions is not a string: {} <- {}", substituted, val));
+        }
+        throw error(AD_FORMAT("Settings::getenv_to_string: too many substitutions in {}", val));
+    }
+    else if (val.is_null())
+        return std::string{};   // key not found in environment
+    else
+        throw error(AD_FORMAT("Settings::getenv_to_string: value is not a string: {}", val));
+
+} // acmacs::settings::v2::Settings::getenv_to_string
 
 // ----------------------------------------------------------------------
 

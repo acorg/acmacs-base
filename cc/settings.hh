@@ -49,6 +49,8 @@ namespace acmacs::settings::inline v2
 
         // returns const_null if not found
         const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
+        const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no) const; // value of key1 or key2
+        std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 
         substitute_result_t substitute(const rjson::v3::value& source) const;
@@ -57,7 +59,7 @@ namespace acmacs::settings::inline v2
         double substitute_to_double(const rjson::v3::value& source) const;
         std::string substitute_to_string(const rjson::v3::value& source) const;
 
-        template <typename T> std::decay_t<T> getenv(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
+        template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
                 return val.to<std::decay_t<T>>();
