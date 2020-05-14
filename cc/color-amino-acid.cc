@@ -4,27 +4,32 @@
 
 using ac = std::pair<char, Color>;
 static constexpr const std::array amino_acid_colors{
-     ac{'A', 0xA30000}, // hydrophobic
-     ac{'C', 0xFFFF29}, // special
-     ac{'D', 0x4CBB17}, // negative
-     ac{'E', 0x1A4F30}, // negative
-     ac{'F', 0x681226}, // hydrophobic
-     ac{'G', 0xF7CF08}, // special
-     ac{'H', 0x7571BC}, // positive
-     ac{'I', 0xFF5A3D}, // hydrophobic
-     ac{'K', 0x440FAE}, // positive
-     ac{'L', 0xC34822}, // hydrophobic
-     ac{'M', 0xEB1919}, // hydrophobic
-     ac{'N', 0x18E0F7}, // polar uncharged
-     ac{'P', 0xCD8D00}, // special
-     ac{'Q', 0x0080FF}, // polar uncharged
-     ac{'R', 0xB2A1FF}, // positive
-     ac{'S', 0x0F52BA}, // polar uncharged
-     ac{'T', 0x000080}, // polar uncharged
-     ac{'V', 0xF9BDED}, // hydrophobic
-     ac{'W', 0xC32290}, // hydrophobic
-     ac{'Y', 0xFF2976}, // hydrophobic
-     ac{'X', 0x808080},
+    ac{'D', 0xF7CF08}, // negative
+    ac{'E', 0xCD8D00},
+
+    ac{'R', 0xB2A1FF}, // positive
+    ac{'H', 0x7571BC},
+    ac{'K', 0x440FAE},
+
+    ac{'N', 0x18E0F7}, // polar uncharged
+    ac{'Q', 0x0080FF},
+    ac{'S', 0x0F52BA},
+    ac{'T', 0x000080},
+
+    ac{'C', 0x00F000}, // special
+    ac{'G', 0x4CBB1 },
+    ac{'P', 0x1A4F30},
+
+    ac{'A', 0xEB1919}, // hydrophobic
+    ac{'I', 0xF93BBB},
+    ac{'L', 0xFF2976},
+    ac{'M', 0xFF5A3D},
+    ac{'F', 0xC34822},
+    ac{'W', 0xA30000},
+    ac{'Y', 0x941651},
+    ac{'V', 0x681226},
+
+    ac{'X', 0x808080},
 };
 
 // // first variant with C being too bright
