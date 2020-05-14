@@ -144,8 +144,10 @@ namespace acmacs::string
     {
         if (source.find(",") != std::string_view::npos)
             return split(source, ",", keep_empty);
-        else
+        else if (source.find(" ") != std::string_view::npos)
             return split(source, " ", keep_empty);
+        else
+            return split(source, "\n", keep_empty);
     }
 
     template <typename T, typename S> inline std::vector<T> split_into_uint(const S& source, std::string_view delim)
