@@ -110,14 +110,15 @@ namespace acmacs
 
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj)]; }
 
+        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](size_t val) { return val == 0; }); }
+        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](size_t val) { return val > 0UL; })); }
+        size_t total() const { return std::accumulate(std::begin(counter_), std::end(counter_), 0UL, [](size_t sum, size_t val) { return sum + val; }); }
+
         std::pair<char, size_t> max() const
         {
             const auto me = std::max_element(counter_.begin(), counter_.end(), [](size_t e1, size_t e2) { return e1 < e2; });
             return {static_cast<char>(me - counter_.begin()), *me};
         }
-
-        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](size_t val) { return val == 0; }); }
-        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](size_t val) { return val > 0UL; })); }
 
         std::vector<char> sorted() const
         {
