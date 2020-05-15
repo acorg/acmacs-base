@@ -34,6 +34,16 @@ namespace acmacs::log::inline v1
 
 // ----------------------------------------------------------------------
 
+std::vector<std::string_view> acmacs::log::v1::registered_enablers()
+{
+    std::vector<std::string_view> registered{enablers.size()};
+    std::transform(std::begin(enablers), std::end(enablers), std::begin(registered), [](const auto& en) -> std::string_view { return en.first; });
+    return registered;
+
+} // acmacs::log::v1::registered_enablers
+
+// ----------------------------------------------------------------------
+
 void acmacs::log::v1::register_enabler_acmacs_base()
 {
     using namespace std::string_view_literals;

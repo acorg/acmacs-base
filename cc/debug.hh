@@ -89,6 +89,7 @@ namespace acmacs
 
         template <typename Enum> bool is_enabled(Enum value) { return detail::is_enabled(detail::to_section_t(value)); }
 
+        std::vector<std::string_view> registered_enablers();
         void register_enabler_acmacs_base();
 
         void enable(std::string_view names);
