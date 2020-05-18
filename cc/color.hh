@@ -50,7 +50,7 @@ class Color
     constexpr void set_transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }
     constexpr void set_opacity(double opacity) noexcept { set_transparency(1.0 - opacity); }
     constexpr double opacity() const noexcept { return alpha(); }
-    Color without_transparency() const noexcept { return {color_ & 0x00FFFFFF}; }
+    constexpr Color without_transparency() const noexcept { return {color_ & 0x00FFFFFF}; }
 
     constexpr bool is_opaque() const noexcept { return (color_ & 0xFF000000) == 0; }
     constexpr bool is_transparent() const noexcept { return !is_opaque(); }
@@ -95,6 +95,8 @@ namespace acmacs::color
     constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
 
     constexpr const Color& get(const Color& color) { return color; } // for compatibility with get(const acmacs::color::Modifier& color)
+
+    constexpr inline Color without_transparency(Color source) { return source.without_transparency(); }
 }
 
 // ----------------------------------------------------------------------

@@ -29,10 +29,18 @@ constexpr inline bool float_equal_or_both_nan(double x, double y, int ulp=1)
 
 // ----------------------------------------------------------------------
 
-template<typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+template <typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
 constexpr inline float_zero(T x, int ulp=1)
 {
     return float_equal(x, T(0), ulp);
+}
+
+// ----------------------------------------------------------------------
+
+template <typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+constexpr inline float_max(T x, int ulp=1)
+{
+    return float_equal(x, std::numeric_limits<T>::max(), ulp);
 }
 
 // ----------------------------------------------------------------------

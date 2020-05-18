@@ -29,7 +29,7 @@ void Color::from_string(std::string_view src)
         }
     }
     catch (std::exception&) {
-        throw std::invalid_argument(fmt::format("cannot read Color from \"{}\"", src));
+        throw acmacs::color::error{fmt::format("cannot read Color from \"{}\"", src)};
     }
 
 } // Color::from_string
@@ -159,7 +159,7 @@ void Color::adjust_brightness(double value)
 void Color::adjust_transparency(double value)
 {
     if (value < 0.0)
-        throw std::invalid_argument(fmt::format("Color::adjust_transparency: attempt to use negative value: {}", value));
+        throw acmacs::color::error{fmt::format("Color::adjust_transparency: attempt to use negative value: {}", value)};
     const auto transparency = (1.0 - alpha()) * value;
     if (transparency >= 1.0)
         set_transparency(1.0);

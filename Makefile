@@ -33,7 +33,7 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-  color.cc color-continent.cc color-distinct.cc color-gradient.cc color-amino-acid.cc \
+  color.cc color-modifier.cc color-continent.cc color-distinct.cc color-gradient.cc color-amino-acid.cc \
   read-file.cc xz.cc \
   layout.cc \
   argv.cc argc-argv.cc \
@@ -62,16 +62,16 @@ test: install-acmacs-base | $(TARGETS)
 
 # ----------------------------------------------------------------------
 
-install-acmacs-base: $(TARGETS)
+install-acmacs-base: make-installation-dirs $(TARGETS)
 	$(call install_lib,$(ACMACS_BASE_LIB))
 	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
 	$(call symbolic_link,$(abspath py)/acmacs_base,$(AD_PY)/acmacs_base)
-	if [ ! -d $(AD_INCLUDE)/acmacs-base ]; then mkdir $(AD_INCLUDE)/acmacs-base; fi
+	$(call make_dir,$(AD_INCLUDE)/acmacs-base)
 	ln -sf $(abspath cc)/*.{hh,hpp} $(AD_INCLUDE)/acmacs-base
-	if [ ! -d $(AD_SHARE) ]; then mkdir $(AD_SHARE); fi
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 	ln -sf $(abspath $(DIST))/json-pp-v2 $(AD_BIN)
 	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
+	$(call symbolic_link_wildcard,$(abspath doc)/*.org,$(AD_DOC))
 
 .PHONY: install-acmacs-base test
 

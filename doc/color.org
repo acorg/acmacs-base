@@ -1,0 +1,47 @@
+# Time-stamp: <2020-05-18 16:44:12 eu>
+
+* Color modifier
+
+Color consists of field joined by :
+
+** Color itself
+
+#RRGGBB
+red, gren, blue, etc.
+#TTRRGGBB - with transparency, 0 - full opaque, FF - fully transparent
+
+** Hue modificator
+
+h<float value>
+[-1..0) - to yellow-red, (0..1] - to magenta-red, -1 and 1 - red, 0 - no change
+
+** Saturation modificator
+
+s<float value>
+[-1..0) - desaturate (pale), (0..1] saturate, -1 - white, 1 - full saturation, 0 - no change
+
+** Brightness modificator
+
+b<float value>
+[-1..0)- darker, (0..1] - lighter, -1 - black, 1 - full bright, 0 - no change
+
+** Transparency modificator
+
+t<float value>
+[-1..0) - more opaque, (0..1] - more transparent, -1 - full opaque, 1 - full transparent, 0 - no change
+
+
+* Color
+
+"#RRGGBB"
+
+* COMMENT local vars ======================================================================
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+#+STARTUP: showall indent
+Local Variables:
+eval: (auto-fill-mode 0)
+eval: (add-hook 'before-save-hook 'time-stamp)
+eval: (set (make-local-variable 'org-confirm-elisp-link-function) nil)
+End:
