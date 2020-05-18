@@ -43,6 +43,11 @@ namespace acmacs::color
         return lhs.applicators() == rhs.applicators();
     }
 
+    inline auto operator!=(const Modifier& lhs, const Modifier& rhs)
+    {
+        return !operator==(lhs, rhs);
+    }
+
     inline auto operator<(const Modifier& lhs, const Modifier& rhs)
     {
         return lhs.applicators() < rhs.applicators();
