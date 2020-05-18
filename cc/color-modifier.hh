@@ -25,7 +25,7 @@ namespace acmacs::color
         Modifier(std::string_view source); // see ~/AD/share/doc/color.org
 
         constexpr const auto& applicators() const { return applicators_; }
-        constexpr bool is_no_change() const { return applicators_.empty(); }
+        /*constexpr*/ bool is_no_change() const { return applicators_.empty(); }
 
         operator Color() const;
 
