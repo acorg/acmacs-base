@@ -17,10 +17,10 @@
 #define AD_LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} @F {}", fmt::format(__VA_ARGS__), __FILE__, __LINE__, __PRETTY_FUNCTION__); })
 #define AD_LOG_INDENT acmacs::log::indent _indent
 
-#define AD_ERROR(...) fmt::print(stderr, "> ERROR {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_WARNING(...) fmt::print(stderr, ">> WARNING {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_INFO(...) fmt::print(stderr, ">>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_DEBUG(...) fmt::print(stderr, ">>>> {} @@ {}:{}\n", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_ERROR(...) acmacs::log::debug_print("> ERROR", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_WARNING(...) acmacs::log::debug_print(">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_INFO(...) acmacs::log::debug_print(">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_DEBUG(...) acmacs::log::debug_print(">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
@@ -49,7 +49,7 @@ namespace acmacs
             vaccines
         };
 
-        namespace detail
+        namespace detail_message
         {
             using section_t = uint32_t;
 
@@ -72,22 +72,22 @@ namespace acmacs
             template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
             {
                 if (is_enabled(section))
-                    fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section_names(section), "", detail::indent, get_message());
+                    fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section_names(section), "", indent, get_message());
             }
 
-        } // namespace detail
+        } // namespace detail_message
 
         template <typename Enum> void register_enabler(std::string_view name, Enum value)
         {
-            detail::register_enabler(name, detail::to_section_t(value));
+            detail_message::register_enabler(name, detail_message::to_section_t(value));
         }
 
         template <typename Enum, typename MesssageGetter> void message(Enum section, MesssageGetter get_message)
         {
-            detail::message(detail::to_section_t(section), get_message);
+            detail_message::message(detail_message::to_section_t(section), get_message);
         }
 
-        template <typename Enum> bool is_enabled(Enum value) { return detail::is_enabled(detail::to_section_t(value)); }
+        template <typename Enum> bool is_enabled(Enum value) { return detail_message::is_enabled(detail_message::to_section_t(value)); }
 
         std::vector<std::string_view> registered_enablers();
         void register_enabler_acmacs_base();
@@ -97,9 +97,22 @@ namespace acmacs
 
         struct indent
         {
-            indent() { detail::indent += detail::indent_size; }
-            ~indent() { detail::indent -= detail::indent_size; }
+            indent() { detail_message::indent += detail_message::indent_size; }
+            ~indent() { detail_message::indent -= detail_message::indent_size; }
         };
+
+        // ----------------------------------------------------------------------
+
+        namespace detail_debug
+        {
+            extern bool enabled;
+        }
+
+        template <typename Filename, typename LineNo> inline void debug_print(std::string_view prefix, std::string_view message, Filename filename, LineNo line_no)
+        {
+            if (detail_debug::enabled)
+                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+        }
 
         template <typename Filename, typename LineNo> inline void debug_if(debug dbg, std::string_view message, Filename filename, LineNo line_no)
         {
