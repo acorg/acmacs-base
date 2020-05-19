@@ -4,6 +4,13 @@
 #include "acmacs-base/enumerate.hh"
 #include "acmacs-base/color-gradient.hh"
 
+namespace acmacs::color
+{
+    using RGB = std::array<uint32_t, 3>;
+    // constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
+    constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
+}
+
 // ----------------------------------------------------------------------
 
 // Copyright (c) 2015, Politiken Journalism <emil.bay@pol.dk>
@@ -90,8 +97,6 @@ std::vector<Color> acmacs::color::bezier_gradient(Color c1, Color c2, Color c3, 
             | ranges::to<std::vector>;
 
 } // acmacs::color::bezier_gradient
-
-// ----------------------------------------------------------------------
 
 // ----------------------------------------------------------------------
 /// Local Variables:

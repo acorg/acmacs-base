@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <array>
 
-// using namespace std::string_view_literals;
+namespace acmacs::color
+{
+    int test_find_color_by_name(); // returns number of errors encountered
+}
 
 using cnp = std::pair<uint32_t, std::string_view>;
 

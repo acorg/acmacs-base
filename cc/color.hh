@@ -44,11 +44,6 @@ class Color
     constexpr void alphaI(uint32_t v) noexcept { color_ = (color_ & 0xFFFFFF) | ((v & 0xFF) << 24); }
     constexpr uint32_t rgbI() const noexcept { return static_cast<uint32_t>(color_ & 0xFFFFFF); }
 
-    // void light(double value);
-    // void adjust_saturation(double value);
-    // void adjust_brightness(double value);
-    // void adjust_transparency(double value);
-
     constexpr void transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }
     constexpr void opacity(double opacity) noexcept { transparency(1.0 - opacity); }
     constexpr Color without_transparency() const noexcept { return {color_ & 0x00FFFFFF}; }
@@ -56,7 +51,7 @@ class Color
     constexpr bool is_opaque() const noexcept { return (color_ & 0xFF000000) == 0; }
     constexpr bool is_transparent() const noexcept { return !is_opaque(); }
 
-    constexpr uint32_t get() const noexcept { return color_; }
+    constexpr uint32_t raw_value() const noexcept { return color_; }
     std::string_view name() const noexcept;
 
   private:
@@ -87,18 +82,16 @@ constexpr const Color YELLOW{0xFFFF00};
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::color
-{
-    int test_find_color_by_name(); // returns number of errors encountered
+// namespace acmacs::color
+// {
+//     int test_find_color_by_name(); // returns number of errors encountered
 
-    using RGB = std::array<uint32_t, 3>;
-    constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
-    constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
+//     // using RGB = std::array<uint32_t, 3>;
+//     // constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
+//     // constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
 
-    // constexpr const Color& get(const Color& color) { return color; } // for compatibility with get(const acmacs::color::Modifier& color)
-
-    constexpr inline Color without_transparency(Color source) { return source.without_transparency(); }
-}
+//     // constexpr inline Color without_transparency(Color source) { return source.without_transparency(); }
+// }
 
 // ----------------------------------------------------------------------
 
@@ -121,24 +114,24 @@ template <> struct fmt::formatter<Color>
         switch (format_code_) {
           case 'X':
           case '#':
-              return format_to(ctx.out(), "#{:06X}", val.get());
+              return format_to(ctx.out(), "#{:06X}", val.raw_value());
           case 'x':
-              return format_to(ctx.out(), "#{:06x}", val.get());
+              return format_to(ctx.out(), "#{:06x}", val.raw_value());
           case 'c':
           case 'n':
               if (const auto name = val.name(); !name.empty())
                   return format_to(ctx.out(), "{}", name);
               else if (val.is_transparent())
                   return format_to(ctx.out(), "rgba({},{},{},{:.3f})", val.redI(), val.greenI(), val.blueI(), val.opacity());
-              return format_to(ctx.out(), "#{:06x}", val.get());
+              return format_to(ctx.out(), "#{:06x}", val.raw_value());
           case 'a':
           case 'r':
               return format_to(ctx.out(), "rgba({},{},{},{:.3f})", val.redI(), val.greenI(), val.blueI(), val.opacity());
           default:
               fmt::print(stderr, "WARNING unrecognized Color format code '{}', 'X' assumed\n", format_code_);
-              return format_to(ctx.out(), "#{:06X}", val.get());
+              return format_to(ctx.out(), "#{:06X}", val.raw_value());
         }
-        return format_to(ctx.out(), "#{:06x}", val.get()); // to avoid compiler warning
+        return format_to(ctx.out(), "#{:06x}", val.raw_value()); // to avoid compiler warning
     }
 
   protected:

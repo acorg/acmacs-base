@@ -1,5 +1,10 @@
 #include "acmacs-base/color.hh"
 
+namespace acmacs::color
+{
+    int test_find_color_by_name(); // returns number of errors encountered
+}
+
 // ----------------------------------------------------------------------
 
 int main(int, const char* const* /*argv*/)
