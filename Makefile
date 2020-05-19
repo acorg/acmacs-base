@@ -33,7 +33,7 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-  color.cc color-modifier.cc color-continent.cc color-distinct.cc color-gradient.cc color-amino-acid.cc \
+  color.cc color-hsv.cc color-modifier.cc color-continent.cc color-distinct.cc color-gradient.cc color-amino-acid.cc \
   read-file.cc xz.cc \
   layout.cc \
   argv.cc argc-argv.cc \

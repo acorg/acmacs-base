@@ -19,7 +19,7 @@ class Color
     constexpr Color(const Color&) noexcept = default;
     template <typename Uint, typename std::enable_if_t<std::is_integral_v<Uint>>* = nullptr> constexpr Color(Uint aColor) noexcept : color_(static_cast<uint32_t>(aColor)) {}
     Color(std::string_view src) { from_string(src); }
-    explicit Color(const char* src) { from_string(src); }
+    explicit Color(const char* src) : Color{std::string_view{src}} {}
 
     constexpr Color& operator=(const Color&) noexcept = default;
     Color& operator=(std::string_view src) { from_string(src); return *this; }
@@ -31,6 +31,8 @@ class Color
     constexpr bool operator < (const Color& aColor) const noexcept { return color_ < aColor.color_; }
 
     constexpr double alpha() const noexcept { return double(0xFF - ((color_ >> 24) & 0xFF)) / 255.0; } // 0.0 - transparent, 1.0 - opaque
+    constexpr double transparency() const noexcept { return double((color_ >> 24) & 0xFF) / 255.0; } // 1.0 - transparent, 0.0 - opaque
+    constexpr double opacity() const noexcept { return alpha(); }
     constexpr double red() const noexcept { return double((color_ >> 16) & 0xFF) / 255.0; }
     constexpr double green() const noexcept { return double((color_ >> 8) & 0xFF) / 255.0; }
     constexpr double blue() const noexcept { return double(color_ & 0xFF) / 255.0; }
@@ -42,14 +44,13 @@ class Color
     constexpr void alphaI(uint32_t v) noexcept { color_ = (color_ & 0xFFFFFF) | ((v & 0xFF) << 24); }
     constexpr uint32_t rgbI() const noexcept { return static_cast<uint32_t>(color_ & 0xFFFFFF); }
 
-    void light(double value);
-    void adjust_saturation(double value);
-    void adjust_brightness(double value);
-    void adjust_transparency(double value);
+    // void light(double value);
+    // void adjust_saturation(double value);
+    // void adjust_brightness(double value);
+    // void adjust_transparency(double value);
 
-    constexpr void set_transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }
-    constexpr void set_opacity(double opacity) noexcept { set_transparency(1.0 - opacity); }
-    constexpr double opacity() const noexcept { return alpha(); }
+    constexpr void transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }
+    constexpr void opacity(double opacity) noexcept { transparency(1.0 - opacity); }
     constexpr Color without_transparency() const noexcept { return {color_ & 0x00FFFFFF}; }
 
     constexpr bool is_opaque() const noexcept { return (color_ & 0xFF000000) == 0; }
@@ -94,7 +95,7 @@ namespace acmacs::color
     constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
     constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
 
-    constexpr const Color& get(const Color& color) { return color; } // for compatibility with get(const acmacs::color::Modifier& color)
+    // constexpr const Color& get(const Color& color) { return color; } // for compatibility with get(const acmacs::color::Modifier& color)
 
     constexpr inline Color without_transparency(Color source) { return source.without_transparency(); }
 }

@@ -1,4 +1,4 @@
-# Time-stamp: <2020-05-18 16:44:12 eu>
+# Time-stamp: <2020-05-19 10:04:20 eu>
 
 * Color modifier
 
@@ -12,24 +12,28 @@ red, gren, blue, etc.
 
 ** Hue modificator
 
-h<float value>
-[-1..0) - to yellow-red, (0..1] - to magenta-red, -1 and 1 - red, 0 - no change
+h=<float: [0.0-1.0)> set hue, 0.0 - red, 0.333 - green, 0.5 - cyan, 0.666 - blue, 1.0 is considered below as red
+h=<integer/float: [1-360]> set hue (in degrees), 1 and 360 - red, 120 - green, 180 - cyan, 240 - blue
+h+<float: (0.0-1.0)> move to hue up, if hue was 180, h+0.5 moves it to 270, h+1.0 moves it to 360 (red)
+h-<float: (0.0-1.0)> move to hue down, if hue was 180, h-0.5 moves it to 90, h-1.0 moves it to 0 (red)
 
 ** Saturation modificator
 
-s<float value>
-[-1..0) - desaturate (pale), (0..1] saturate, -1 - white, 1 - full saturation, 0 - no change
+s=<float: [0.0-1.0]> set saturation, 0.0 - fully desaturated (white), 1.0 - fully saturated
+s+<float: (0.0-1.0]> increase saturation, if saturation was 0.5, s+0.5 sets it to 0.75, i.e. for s+value new saturation is (old_value + (1.0 - old_value) * value)
+s-<float: (0.0-1.0]> desaturate, if saturation was 0.5, s-0.5 sets it to 0.25, i.e. for s-value new saturation is (old_value - old_value * value)
 
 ** Brightness modificator
 
-b<float value>
-[-1..0)- darker, (0..1] - lighter, -1 - black, 1 - full bright, 0 - no change
+b=<float: [0.0-1.0]> set brightness, 0.0 - black, 1.0 - fully bright
+b+<float: (0.0-1.0]> increase brightness, if brightness was 0.5, s+0.5 sets it to 0.75, i.e. for s+value new brightness is (old_value + (1.0 - old_value) * value)
+b-<float: (0.0-1.0]> reduce brightness, if brightness was 0.5, s-0.5 sets it to 0.25, i.e. for s-value new brightness is (old_value - old_value * value)
 
 ** Transparency modificator
 
-t<float value>
-[-1..0) - more opaque, (0..1] - more transparent, -1 - full opaque, 1 - full transparent, 0 - no change
-
+t=<float: [0.0-1.0]> set transparency, 0.0 - opaque, 1.0 - fully transparent
+t+<float: (0.0-1.0]> increase transparency, if transparency was 0.5, s+0.5 sets it to 0.75, i.e. for s+value new transparency is (old_value + (1.0 - old_value) * value)
+t-<float: (0.0-1.0]> reduce transparency, if transparency was 0.5, s-0.5 sets it to 0.25, i.e. for s-value new transparency is (old_value - old_value * value)
 
 * Color
 
