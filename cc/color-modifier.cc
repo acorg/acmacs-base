@@ -115,7 +115,6 @@ acmacs::color::Modifier::applicators_t::const_iterator acmacs::color::Modifier::
 
 acmacs::color::Modifier& acmacs::color::Modifier::add(const Modifier& rhs)
 {
-    AD_DEBUG("color::Modifier::add {} + {}", *this, rhs);
     // if there is Color entry in rhs, remove everything before it and everything in this before adding
     if (const auto last_color_rhs = rhs.find_last_color(); last_color_rhs != rhs.applicators().end()) {
         applicators_.clear();
