@@ -126,33 +126,10 @@ acmacs::color::Modifier& acmacs::color::Modifier::add(const Modifier& rhs)
             applicators_.erase(applicators_.begin(), last_color);
         std::copy(std::begin(rhs.applicators()), std::end(rhs.applicators()), std::back_inserter(applicators_));
     }
+    // AD_DEBUG("color::Modifier::add -> {}", *this);
     return *this;
 
 } // acmacs::color::Modifier::add
-
-// ----------------------------------------------------------------------
-
-acmacs::color::Modifier::operator Color() const
-{
-    try {
-        if (applicators_.size() == 1) {
-            return std::visit(
-                []<typename Col>(const Col& col) -> Color {
-                    if constexpr (std::is_same_v<Col, Color>)
-                        return col;
-                    else
-                        throw std::exception{};
-                },
-                applicators_.front());
-        }
-        else
-            throw std::exception{};
-    }
-    catch (std::exception&) {
-        throw error{fmt::format("cannot convert acmacs::color::Modifier to Color: \"{}\"", *this)};
-    }
-
-} // acmacs::color::Modifier::operator Color
 
 // ----------------------------------------------------------------------
 
@@ -163,7 +140,7 @@ namespace acmacs::color
     {
         HSV target_hsv{target};
         target_hsv.h = *hue;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::hue_adjust hue)
@@ -173,7 +150,7 @@ namespace acmacs::color
             target_hsv.h += target_hsv.h * *hue;
         else
             target_hsv.s += (360.0 - target_hsv.h) * *hue;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     // [-1..0) - desaturate (pale), (0..1] saturate, -1 - white, 1 - full saturation, 0 - no change
@@ -181,7 +158,7 @@ namespace acmacs::color
     {
         HSV target_hsv{target};
         target_hsv.s = *saturation;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::saturation_adjust saturation)
@@ -191,14 +168,14 @@ namespace acmacs::color
             target_hsv.s += target_hsv.s * *saturation;
         else
             target_hsv.s += (1.0 - target_hsv.s) * *saturation;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::brightness_set brightness)
     {
         HSV target_hsv{target};
         target_hsv.v = *brightness;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::brightness_adjust brightness)
@@ -208,7 +185,7 @@ namespace acmacs::color
             target_hsv.v += target_hsv.v * *brightness;
         else
             target_hsv.v += (1.0 - target_hsv.v) * *brightness;
-        target = Color{target_hsv.rgb()};
+        target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::transparency_set transparency)
@@ -236,12 +213,26 @@ Color& acmacs::color::modify(Color& target, const Modifier& modifier)
 {
     for (const auto& app : modifier.applicators())
         std::visit([&target](const auto& app_value) { modify_color(target, app_value); }, app);
+    // AD_DEBUG("acmacs::color::modify {} -> {}", modifier, target);
     return target;
 
 } // acmacs::color::adjust
 
 // ----------------------------------------------------------------------
 
+acmacs::color::Modifier::operator Color() const
+{
+    if (auto app = find_last_color(); app != applicators().end()) {
+        Color result{TRANSPARENT};
+        for (; app != applicators().end(); ++app)
+            std::visit([&result](const auto& app_value) { modify_color(result, app_value); }, *app);
+        // AD_DEBUG("color::Modifier::operator Color -> {}", result);
+        return result;
+    }
+    else
+        throw error{fmt::format("cannot convert acmacs::color::Modifier to Color: \"{}\"", *this)};
+
+} // acmacs::color::Modifier::operator Color
 
 // ----------------------------------------------------------------------
 /// Local Variables:

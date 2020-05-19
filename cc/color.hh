@@ -41,7 +41,7 @@ class Color
     constexpr uint32_t redI() const noexcept { return static_cast<uint32_t>((color_ >> 16) & 0xFF); }
     constexpr uint32_t greenI() const noexcept { return static_cast<uint32_t>((color_ >> 8) & 0xFF); }
     constexpr uint32_t blueI() const noexcept { return static_cast<uint32_t>(color_ & 0xFF); }
-    constexpr void alphaI(uint32_t v) noexcept { color_ = (color_ & 0xFFFFFF) | ((v & 0xFF) << 24); }
+    constexpr Color& alphaI(uint32_t v) noexcept { color_ = (color_ & 0xFFFFFF) | ((v & 0xFF) << 24); return *this; }
     constexpr uint32_t rgbI() const noexcept { return static_cast<uint32_t>(color_ & 0xFFFFFF); }
 
     constexpr void transparency(double transparency) noexcept { color_ = (color_ & 0x00FFFFFF) | ((static_cast<unsigned>(transparency * 255.0) & 0xFF) << 24); }

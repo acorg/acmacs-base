@@ -20,7 +20,8 @@ TARGETS = \
   $(DIST)/test-read-file \
   $(DIST)/test-find-color \
   $(DIST)/test-bezier-gradient \
-  $(DIST)/test-string-join
+  $(DIST)/test-string-join \
+  $(DIST)/test-color-modifier
 
 all: install-acmacs-base
 

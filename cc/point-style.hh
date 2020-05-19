@@ -101,11 +101,6 @@ namespace acmacs
         void outline(Color a_outline) noexcept { outline_ = a_outline; }
         void outline(const acmacs::color::Modifier& a_outline) noexcept { acmacs::color::modify(outline_, a_outline); }
 
-        // virtual void fill_opacity(double opacity) noexcept { fill_.set_opacity(opacity); }
-        // virtual void fill_transparency(double transparency) noexcept { fill_.set_transparency(transparency); }
-        // virtual void outline_opacity(double opacity) noexcept { outline_.set_opacity(opacity); }
-        // virtual void outline_transparency(double transparency) noexcept { outline_.set_transparency(transparency); }
-
         /* virtual */ void shown(bool a_shown) noexcept { shown_ = a_shown; }
         /* virtual */ void outline_width(Pixels a_outline_width) noexcept { outline_width_ = a_outline_width; }
         /* virtual */ void size(Pixels a_size) noexcept { size_ = a_size; }
@@ -139,8 +134,6 @@ namespace acmacs
         PointStyleModified(const PointStyle& style) = delete; // : PointStyle(style) { all_modified(); }
 
         using PointStyle::shown;
-        // using PointStyle::fill;
-        // using PointStyle::outline;
         using PointStyle::outline_width;
         using PointStyle::size;
         using PointStyle::rotation;
@@ -155,12 +148,6 @@ namespace acmacs
         Color fill() const noexcept { auto fl = PointStyle::fill(); return acmacs::color::modify(fl, fill_modifier_); }
         Color outline() const noexcept { auto outl = PointStyle::outline(); return acmacs::color::modify(outl, outline_modifier_); }
 
-        // void fill_transparency(double transparency) noexcept override { PointStyle::fill_transparency(transparency); /* modified_fill_ = true; */ }
-        // void outline_transparency(double transparency) noexcept override { PointStyle::outline_transparency(transparency); /* modified_outline_ = true; */ }
-
-        // void fill_opacity(double opacity) noexcept override { PointStyle::fill_opacity(opacity); modified_fill_ = true; }
-        // void outline_opacity(double opacity) noexcept override { PointStyle::outline_opacity(opacity); modified_outline_ = true; }
-
         void shown(bool a_shown) noexcept /* override */ { PointStyle::shown(a_shown); modified_shown_ = true; }
         void outline_width(Pixels a_outline_width) noexcept /* override */ { PointStyle::outline_width(a_outline_width); modified_outline_width_ = true; }
         void size(Pixels a_size) noexcept /* override */ { PointStyle::size(a_size); modified_size_ = true; }
@@ -172,15 +159,11 @@ namespace acmacs
 
         constexpr bool modified() const
         {
-            return modified_shown_ ||
-                   // modified_fill_ || modified_outline_ ||
-                   modified_outline_width_ || modified_size_ || modified_rotation_ || modified_aspect_ || modified_shape_ || modified_label_ || modified_label_text_;
+            return modified_shown_ || modified_outline_width_ || modified_size_ || modified_rotation_ || modified_aspect_ || modified_shape_ || modified_label_ || modified_label_text_;
         }
 
       private:
         bool modified_shown_{false};
-        // bool modified_fill_{false};
-        // bool modified_outline_{false};
         bool modified_outline_width_{false};
         bool modified_size_{false};
         bool modified_rotation_{false};
@@ -195,8 +178,6 @@ namespace acmacs
         void all_modified() noexcept
         {
             modified_shown_ = true;
-            // modified_fill_ = true;
-            // modified_outline_ = true;
             modified_outline_width_ = true;
             modified_size_ = true;
             modified_rotation_ = true;

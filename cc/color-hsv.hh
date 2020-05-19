@@ -40,6 +40,14 @@ namespace acmacs::color
 
 } // namespace acmacs::color
 
+template <> struct fmt::formatter<acmacs::color::HSV> : fmt::formatter<acmacs::fmt_default_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::color::HSV& hsv, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "hsv({:.0f}, {:.2f}, {:.2f})", hsv.h, hsv.s, hsv.v);
+    }
+};
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
