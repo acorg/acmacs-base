@@ -156,15 +156,29 @@ namespace acmacs::color
     // [-1..0) - desaturate (pale), (0..1] saturate, -1 - white, 1 - full saturation, 0 - no change
     inline static void modify_color(Color& target, Modifier::saturation_set saturation)
     {
+        if (target.alphaI() > 250)
+            return;             // transparent, saturation has no effect
         HSV target_hsv{target};
-        target_hsv.s = *saturation;
+        if (target_hsv.v < 0.05) { // saturated black is grey
+            target_hsv.s = 0.0;
+            target_hsv.v = (1.0 - *saturation);
+        }
+        else
+            target_hsv.s = *saturation;
         target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
 
     inline static void modify_color(Color& target, Modifier::saturation_adjust saturation)
     {
+        if (target.alphaI() > 250)
+            return;             // transparent, saturation has no effect
         HSV target_hsv{target};
-        if (*saturation < 0.0)
+        if (target_hsv.v < 0.05) { // saturated black is grey
+            target_hsv.s = 0.0;
+            if (*saturation < 0.0)
+                target_hsv.v = - *saturation;
+        }
+        else if (*saturation < 0.0)
             target_hsv.s += target_hsv.s * *saturation;
         else
             target_hsv.s += (1.0 - target_hsv.s) * *saturation;
@@ -173,6 +187,8 @@ namespace acmacs::color
 
     inline static void modify_color(Color& target, Modifier::brightness_set brightness)
     {
+        if (target.alphaI() > 250)
+            return;             // transparent, brightness has no effect
         HSV target_hsv{target};
         target_hsv.v = *brightness;
         target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
@@ -180,6 +196,8 @@ namespace acmacs::color
 
     inline static void modify_color(Color& target, Modifier::brightness_adjust brightness)
     {
+        if (target.alphaI() > 250)
+            return;             // transparent, brightness has no effect
         HSV target_hsv{target};
         if (*brightness < 0.0)
             target_hsv.v += target_hsv.v * *brightness;

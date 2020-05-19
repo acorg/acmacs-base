@@ -38,10 +38,15 @@ static const std::array test_data{
     en{0xAB3838, ":t0.1",  0x19AB3838},
 
     en{TRANSPARENT, ":s+0.5", TRANSPARENT},
-    en{TRANSPARENT, ":b+0.5", 0xFF7F7F7F},
+    en{TRANSPARENT, ":b+0.5", TRANSPARENT},
     en{TRANSPARENT, ":t+0.5", TRANSPARENT},
     en{TRANSPARENT, ":t-0.5", 0x7F000000},
     en{0xFF808080,  ":t-0.5", 0x7F808080},
+
+    // special case
+    en{BLACK,  ":s-0.5", 0x7F7F7F},
+    // en{BLACK,  ":t-0.5", 0x7F000000},
+
 };
 
 int main()
