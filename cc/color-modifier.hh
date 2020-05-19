@@ -27,7 +27,7 @@ namespace acmacs::color
         using applicators_t  = std::vector<applicator_t>;
 
         Modifier() = default;
-        template <typename Appl, typename = std::enable_if_t<std::is_constructible_v<applicator_t, Appl>>> Modifier(const Appl& app) : applicators_{applicator_t{app}} {}
+        template <typename Appl, typename = std::enable_if_t<std::is_constructible_v<applicator_t, Appl>>> explicit Modifier(const Appl& app) : applicators_{applicator_t{app}} {}
         Modifier(std::string_view source); // see ~/AD/share/doc/color.org
 
         Modifier& add(const Modifier& rhs);
@@ -115,7 +115,7 @@ template <> struct fmt::formatter<acmacs::color::Modifier> : fmt::formatter<Colo
 {
     template <typename FormatCtx> auto format(const acmacs::color::Modifier& modifier, FormatCtx& ctx)
     {
-        for (const auto& app : modifier.applicators())
+        for (const auto& app : modifier.applicators()) {
             std::visit(
                 [&ctx, this]<typename Col>(const Col& value) {
                     if constexpr (std::is_same_v<Col, Color>)
@@ -124,6 +124,7 @@ template <> struct fmt::formatter<acmacs::color::Modifier> : fmt::formatter<Colo
                         return format_to(ctx.out(), "{}", value);
                 },
                 app);
+        }
         return ctx.out();
     }
 };

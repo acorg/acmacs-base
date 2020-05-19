@@ -13,7 +13,7 @@ acmacs::color::Modifier::Modifier(std::string_view source)
 {
     try {
         for (const auto& field : string::split(source, ":", string::Split::StripRemoveEmpty)) {
-            if (field.size() < 3 || field[0] == '#') {
+            if (field.size() < 2 || field[0] == '#' || !(field[1] == '=' || field[1] == '+' || field[1] == '-' || field[1] == '.' || std::isdigit(field[1]))) {
                 applicators_.push_back(Color{field});
             }
             else {
@@ -80,6 +80,7 @@ acmacs::color::Modifier::Modifier(std::string_view source)
                 }
             }
         }
+        // AD_DEBUG("acmacs::color::Modifier::Modifier -> {}", *this);
     }
     catch (std::exception&) {
         throw acmacs::color::error{fmt::format("cannot read color modifier from \"{}\"", source)};

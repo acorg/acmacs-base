@@ -82,19 +82,6 @@ constexpr const Color YELLOW{0xFFFF00};
 
 // ----------------------------------------------------------------------
 
-// namespace acmacs::color
-// {
-//     int test_find_color_by_name(); // returns number of errors encountered
-
-//     // using RGB = std::array<uint32_t, 3>;
-//     // constexpr inline RGB rgb(Color src) { return RGB{src.redI(), src.greenI(), src.blueI()}; }
-//     // constexpr inline Color from(const RGB& rgb) { return Color{(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}; }
-
-//     // constexpr inline Color without_transparency(Color source) { return source.without_transparency(); }
-// }
-
-// ----------------------------------------------------------------------
-
 template <> struct fmt::formatter<Color>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
