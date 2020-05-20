@@ -29,6 +29,7 @@ namespace acmacs::color
         Modifier() = default;
         template <typename Appl, typename = std::enable_if_t<std::is_constructible_v<applicator_t, Appl>>> explicit Modifier(const Appl& app) : applicators_{applicator_t{app}} {}
         Modifier(std::string_view source); // see ~/AD/share/doc/color.org
+        Modifier& operator=(Color color) { return operator=(Modifier{color}); }
 
         Modifier& add(const Modifier& rhs);
 
