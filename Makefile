@@ -34,13 +34,27 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES = \
-  color.cc color-hsv.cc color-modifier.cc color-continent.cc color-distinct.cc color-gradient.cc color-amino-acid.cc \
-  read-file.cc xz.cc \
-  layout.cc \
-  argv.cc argc-argv.cc \
-  quicklook.cc timeit.cc gzip.cc \
-  rjson-v2.cc rjson-v3.cc settings.cc time-series.cc \
-  messages.cc debug.cc
+  settings.cc         \
+  rjson-v2.cc         \
+  rjson-v3.cc         \
+  time-series.cc      \
+  read-file.cc        \
+  debug.cc            \
+  color.cc            \
+  layout.cc           \
+  color-modifier.cc   \
+  argc-argv.cc        \
+  messages.cc         \
+  color-gradient.cc   \
+  argv.cc             \
+  color-continent.cc  \
+  timeit.cc           \
+  quicklook.cc        \
+  color-distinct.cc   \
+  color-amino-acid.cc \
+  color-hsv.cc        \
+  gzip.cc             \
+  xz.cc
 
 # JSON_PP_SOURCES = rjson.cc json-pp.cc
 # TEST_RJSON_SOURCES = rjson.cc test-rjson.cc
