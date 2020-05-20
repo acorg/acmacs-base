@@ -131,7 +131,7 @@ namespace acmacs
       public:
         using PointStyle::PointStyle;
         PointStyleModified(PointStyle&& style) : PointStyle(std::move(style)) { all_modified(); }
-        PointStyleModified(const PointStyle& style) = delete; // : PointStyle(style) { all_modified(); }
+        PointStyleModified(const PointStyle& style) = delete;
 
         using PointStyle::shown;
         using PointStyle::outline_width;
@@ -142,8 +142,8 @@ namespace acmacs
         using PointStyle::label;
         using PointStyle::label_text;
 
-        void fill(const acmacs::color::Modifier& a_fill) noexcept { fill_modifier_.add(a_fill); /* modified_fill_ = true; */ }
-        void outline(const acmacs::color::Modifier& a_outline) noexcept { outline_modifier_.add(a_outline); /* modified_outline_ = true; */ }
+        void fill(const acmacs::color::Modifier& a_fill) noexcept { fill_modifier_.add(a_fill); }
+        void outline(const acmacs::color::Modifier& a_outline) noexcept { outline_modifier_.add(a_outline); }
 
         Color fill() const noexcept { auto fl = PointStyle::fill(); return acmacs::color::modify(fl, fill_modifier_); }
         Color outline() const noexcept { auto outl = PointStyle::outline(); return acmacs::color::modify(outl, outline_modifier_); }
@@ -194,9 +194,6 @@ namespace acmacs
 
     inline PointStyle& PointStyle::operator=(const PointStyleModified& src)
     {
-        // if (src.modified_fill_) fill(src.fill());
-        // if (src.modified_outline_) outline(src.outline());
-
         if (!src.fill_modifier_.is_no_change()) fill(src.fill_modifier_);
         if (!src.outline_modifier_.is_no_change()) outline(src.outline_modifier_);
 
