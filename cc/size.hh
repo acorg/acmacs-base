@@ -130,7 +130,7 @@ namespace acmacs
 
 // format for Size is format for double of each element, e.g. :.8f
 
-template <> struct fmt::formatter<acmacs::Size> : public fmt::formatter<acmacs::fmt_float_formatter>
+template <> struct fmt::formatter<acmacs::Size> : public fmt::formatter<acmacs::fmt_helper::float_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::Size& size, FormatContext& ctx)
     {

@@ -121,7 +121,7 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::FontSlant> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::FontSlant> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::FontSlant& slant, FormatCtx& ctx)
     {
         switch (slant.get()) {
@@ -134,7 +134,7 @@ template <> struct fmt::formatter<acmacs::FontSlant> : fmt::formatter<acmacs::fm
     }
 };
 
-template <> struct fmt::formatter<acmacs::FontWeight> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::FontWeight> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::FontWeight& weight, FormatCtx& ctx)
     {
         switch (weight.get()) {
@@ -147,13 +147,13 @@ template <> struct fmt::formatter<acmacs::FontWeight> : fmt::formatter<acmacs::f
     }
 };
 
-template <> struct fmt::formatter<acmacs::TextStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::TextStyle> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::TextStyle& style, FormatCtx& ctx) {
         return format_to(ctx.out(), R"({{"slant": {}, "weight": {}, "family": {}}})", style.slant, style.weight, style.font_family);
     }
 };
 
-template <> struct fmt::formatter<acmacs::LabelStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::LabelStyle> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::LabelStyle& style, FormatCtx& ctx)
     {
         return format_to(ctx.out(), R"({{"shown": {}, "offset": {}, "size": {}, "color": {}, "rotation": {}, "interline": {:.2f}, "style": {}}})", style.shown, style.offset, style.size, style.color,

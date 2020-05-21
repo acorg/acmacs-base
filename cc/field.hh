@@ -92,7 +92,7 @@ namespace acmacs::detail
 
 } // namespace acmacs::detail
 
-template <typename T> struct fmt::formatter<acmacs::detail::field_optional_with_default<T>> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <typename T> struct fmt::formatter<acmacs::detail::field_optional_with_default<T>> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::detail::field_optional_with_default<T>& val, FormatCtx& ctx) { return format_to(ctx.out(), "{}", *val); }
 };
 

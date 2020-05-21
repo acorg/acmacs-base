@@ -321,7 +321,7 @@ template <typename T, typename Tag> struct fmt::formatter<acmacs::named_vector_t
     template <typename FormatCtx> auto format(const acmacs::named_vector_t<T, Tag>& vec, FormatCtx& ctx) { return fmt::formatter<std::vector<T>>::format(vec.get(), ctx); }
 };
 
-template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_number_from_string_t<Number, Tag>> : public fmt::formatter<acmacs::fmt_default_formatter>
+template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_number_from_string_t<Number, Tag>> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::named_number_from_string_t<Number, Tag>& num, FormatContext& ctx)
     {

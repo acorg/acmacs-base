@@ -613,32 +613,32 @@ template <> struct fmt::formatter<rjson::v3::value_read> : fmt::formatter<rjson:
 {
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::null> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::null> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::null&, FormatCtx& ctx) { return format_to(ctx.out(), "null"); }
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::object> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::object> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::object& /*value*/, FormatCtx& ctx) { return format_to(ctx.out(), "object"); }
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::array> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::array> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::array& /*value*/, FormatCtx& ctx) { return format_to(ctx.out(), "array"); }
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::string> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::string> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::string& value, FormatCtx& ctx) { return format_to(ctx.out(), "\"{}\"", value._content()); }
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::number> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::number> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::number& value, FormatCtx& ctx) { return format_to(ctx.out(), "{}", value.to<double>()); }
 };
 
-template <> struct fmt::formatter<rjson::v3::detail::boolean> : fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<rjson::v3::detail::boolean> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const rjson::v3::detail::boolean& value, FormatCtx& ctx) { return format_to(ctx.out(), "{}", value.to<bool>()); }
 };

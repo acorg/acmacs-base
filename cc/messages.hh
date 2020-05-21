@@ -87,7 +87,7 @@ namespace acmacs::messages::inline v1
 
 // ----------------------------------------------------------------------
 
-// template <> struct fmt::formatter<acmacs::messages::v1::detail::position_t> : public fmt::formatter<acmacs::fmt_default_formatter>
+// template <> struct fmt::formatter<acmacs::messages::v1::detail::position_t> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 // {
 //     template <typename FormatContext> auto format(const acmacs::messages::v1::detail::position_t& pos, FormatContext& ctx)
 //     {

@@ -193,6 +193,10 @@ namespace acmacs::settings::inline v2
 } // namespace acmacs::settings::inline v2
 
 // ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::settings::v2::detail::env_data_t> : acmacs::fmt_helper::map_formatter<acmacs::settings::v2::detail::env_data_t> {};
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

@@ -183,7 +183,7 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <typename Key> struct fmt::formatter<acmacs::Counter<Key>> : public fmt::formatter<acmacs::fmt_default_formatter>
+template <typename Key> struct fmt::formatter<acmacs::Counter<Key>> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::Counter<Key>& counter, FormatContext& ctx)
     {
@@ -191,7 +191,7 @@ template <typename Key> struct fmt::formatter<acmacs::Counter<Key>> : public fmt
     }
 };
 
-template <> struct fmt::formatter<acmacs::CounterChar> : public fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<acmacs::CounterChar> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::CounterChar& counter, FormatContext& ctx)
     {

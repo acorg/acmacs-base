@@ -235,7 +235,7 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::PointShape& shape, FormatCtx& ctx)
     {
         switch (shape.get()) {
@@ -254,7 +254,7 @@ template <> struct fmt::formatter<acmacs::PointShape> : fmt::formatter<acmacs::f
     }
 };
 
-template <> struct fmt::formatter<acmacs::PointStyle> : fmt::formatter<acmacs::fmt_default_formatter> {
+template <> struct fmt::formatter<acmacs::PointStyle> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::PointStyle& style, FormatCtx& ctx)
     {
         return format_to(ctx.out(), R"({{"shape": {}, "shown": {}, "fill": "{}", "outline": "{}", "outline_width": {}, "size": {}, "aspect": {}, "rotation": {}, "label": {}, "label_text": "{}"}})",

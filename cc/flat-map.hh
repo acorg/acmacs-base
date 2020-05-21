@@ -128,6 +128,7 @@ namespace acmacs
     {
       public:
         using entry_type = std::pair<Key, Value>;
+        using iterator = typename std::vector<entry_type>::iterator;
         using const_iterator = typename std::vector<entry_type>::const_iterator;
 
         small_map_with_unique_keys_t() = default;
@@ -142,12 +143,12 @@ namespace acmacs
         auto empty() const noexcept { return data_.empty(); }
         auto size() const noexcept { return data_.size(); }
 
-        template <typename K> auto find(const K& key) const noexcept
+        template <typename K> const_iterator find(const K& key) const noexcept
         {
             return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; });
         }
 
-        template <typename K> auto find(const K& key) noexcept
+        template <typename K> iterator find(const K& key) noexcept
         {
             return std::find_if(std::begin(data_), std::end(data_), [&key](const auto& en) { return en.first == key; });
         }
@@ -219,6 +220,34 @@ namespace acmacs
     }; // small_map_with_unique_keys_t<Key, Value>
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+namespace acmacs::fmt_helper
+{
+    template <typename Map> struct map_formatter : fmt::formatter<default_formatter>
+    {
+        template <typename FormatCtx> auto format(const Map& map, FormatCtx& ctx)
+        {
+            fmt::format_to(ctx.out(), "{{");
+            bool first{true};
+            for (const auto& [key, value] : map) {
+                if (!first)
+                    fmt::format_to(ctx.out(), ", ");
+                else
+                    first = false;
+                using key_t = std::decay_t<decltype(key)>;
+                if constexpr (std::is_same_v<key_t, std::string_view> || std::is_same_v<key_t, std::string>)
+                    fmt::format_to(ctx.out(), "\"{}\": {}", key, value);
+                else
+                    fmt::format_to(ctx.out(), "{}: {}", key, value);
+            }
+            return fmt::format_to(ctx.out(), "}}");
+        }
+    };
+}
+
+// template <> struct fmt::formatter<acmacs::detail::map_base_t<std::string, std::string>> : acmacs::fmt_helper::map_formatter<acmacs::detail::map_base_t<std::string, std::string>> {};
 
 // ----------------------------------------------------------------------
 /// Local Variables:

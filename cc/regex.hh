@@ -63,7 +63,7 @@ namespace acmacs::regex
 // specialization below follows fmt lib description, but it does not work due to ambiguity with
 // template <typename RangeT, typename Char> struct formatter<RangeT, Char, enable_if_t<fmt::is_range<RangeT, Char>::value>>
 //
-// template <typename Match>  struct fmt::formatter<Match, std::enable_if_t<std::is_same_v<Match, std::smatch> || std::is_same_v<Match, std::cmatch>, char>> : fmt::formatter<acmacs::fmt_default_formatter>
+// template <typename Match>  struct fmt::formatter<Match, std::enable_if_t<std::is_same_v<Match, std::smatch> || std::is_same_v<Match, std::cmatch>, char>> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 
 // ----------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ namespace acmacs
     template <typename Match> struct fmt_regex_match_formatter {};
 }
 
-template <typename Match> struct fmt::formatter<acmacs::fmt_regex_match_formatter<Match>> : fmt::formatter<acmacs::fmt_default_formatter>
+template <typename Match> struct fmt::formatter<acmacs::fmt_regex_match_formatter<Match>> : fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatCtx> auto format(const Match& mr, FormatCtx& ctx) {
         format_to(ctx.out(), "\"{}\" -> ({})[", mr.str(0), mr.size());

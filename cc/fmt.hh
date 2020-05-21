@@ -28,20 +28,20 @@
 
 // ----------------------------------------------------------------------
 
-namespace acmacs
+namespace acmacs::fmt_helper
 {
-    struct fmt_default_formatter
+    struct default_formatter
     {
     };
 
-    struct fmt_float_formatter
+    struct float_formatter
     {
     };
 }
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
     {
@@ -49,7 +49,7 @@ template <> struct fmt::formatter<acmacs::fmt_default_formatter>
     }
 };
 
-template <> struct fmt::formatter<acmacs::fmt_float_formatter>
+template <> struct fmt::formatter<acmacs::fmt_helper::float_formatter>
 {
     template <typename ParseContext> constexpr auto parse(ParseContext& ctx)
     {
@@ -87,7 +87,7 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_
 //     template <typename FormatContext> auto format(const std::exception& err, FormatContext& ctx) { return format_to(ctx.out(), "{}", err.what()); }
 // };
 
-// template <> struct fmt::formatter<###> : fmt::formatter<acmacs::fmt_default_formatter> {
+// template <> struct fmt::formatter<###> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
 //     template <typename FormatCtx> auto format(const ###& value, FormatCtx& ctx)
 //     {
 //         format_to(ctx.out(), "{} {}", );

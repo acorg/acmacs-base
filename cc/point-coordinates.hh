@@ -64,16 +64,12 @@ namespace acmacs
             }
         }
 
-        PointCoordinates(PointCoordinates&& rhs) : PointCoordinates(rhs) {}
-
         PointCoordinates& operator=(const PointCoordinates& rhs)
         {
             assert(number_of_dimensions() == rhs.number_of_dimensions());
             std::copy(rhs.begin(), rhs.end(), begin());
             return *this;
         }
-
-        PointCoordinates& operator=(PointCoordinates&& rhs) { return operator=(rhs); }
 
         PointCoordinates copy() const noexcept { return *this; }
 
@@ -249,7 +245,7 @@ namespace acmacs
 
 // format for PointCoordinates is format for double of each element, e.g. :.8f
 
-template <> struct fmt::formatter<acmacs::PointCoordinates> : public fmt::formatter<acmacs::fmt_float_formatter>
+template <> struct fmt::formatter<acmacs::PointCoordinates> : public fmt::formatter<acmacs::fmt_helper::float_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::PointCoordinates& coord, FormatContext& ctx)
     {

@@ -206,7 +206,7 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-template <> struct fmt::formatter<acmacs::Transformation> : public fmt::formatter<acmacs::fmt_default_formatter>
+template <> struct fmt::formatter<acmacs::Transformation> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::Transformation& transformation, FormatContext& ctx)
     {

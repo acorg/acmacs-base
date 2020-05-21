@@ -304,7 +304,7 @@ namespace acmacs
 
 // format for Area is format for double of each element, e.g. :.8f
 
-template <> struct fmt::formatter<acmacs::Area> : public fmt::formatter<acmacs::fmt_float_formatter>
+template <> struct fmt::formatter<acmacs::Area> : public fmt::formatter<acmacs::fmt_helper::float_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::Area& area, FormatContext& ctx)
     {
@@ -314,7 +314,7 @@ template <> struct fmt::formatter<acmacs::Area> : public fmt::formatter<acmacs::
 
 // format for Layout is format for double of each coordinate, e.g. :.8f
 
-template <> struct fmt::formatter<acmacs::Layout> : public fmt::formatter<acmacs::fmt_float_formatter>
+template <> struct fmt::formatter<acmacs::Layout> : public fmt::formatter<acmacs::fmt_helper::float_formatter>
 {
     template <typename FormatContext> auto format(const acmacs::Layout& layout, FormatContext& ctx)
     {
