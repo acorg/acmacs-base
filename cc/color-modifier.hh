@@ -35,6 +35,7 @@ namespace acmacs::color
 
         constexpr const auto& applicators() const { return applicators_; }
         /*constexpr*/ bool is_no_change() const { return applicators_.empty(); }
+        bool has_color() const { return find_last_color() != applicators_.end(); }
 
         operator Color() const;
 
