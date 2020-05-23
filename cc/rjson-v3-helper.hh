@@ -2,8 +2,9 @@
 
 // helper functions for accessing rjson::v3 values
 
-#include "acmacs-base/rjson-v3.hh"
 #include "acmacs-base/color-modifier.hh"
+#include "acmacs-base/rjson-v3.hh"
+#include "acmacs-base/size-scale.hh"
 
 // ----------------------------------------------------------------------
 
@@ -22,6 +23,13 @@ namespace rjson::v3
 
     } // read_number
 
+    extern template std::optional<size_t  > read_number<size_t  >(const rjson::v3::value&);
+    extern template std::optional<double  > read_number<double  >(const rjson::v3::value&);
+    extern template std::optional<Pixels  > read_number<Pixels  >(const rjson::v3::value&);
+    extern template std::optional<Scaled  > read_number<Scaled  >(const rjson::v3::value&);
+    extern template std::optional<Rotation> read_number<Rotation>(const rjson::v3::value&);
+    extern template std::optional<Aspect  > read_number<Aspect  >(const rjson::v3::value&);
+
     // ----------------------------------------------------------------------
 
     template <typename Target> Target read_number(const rjson::v3::value& source, Target&& dflt)
@@ -37,50 +45,18 @@ namespace rjson::v3
 
     } // read_number
 
-    // ----------------------------------------------------------------------
-
-    inline std::optional<acmacs::color::Modifier> read_color(const rjson::v3::value& source)
-    {
-        return source.visit([]<typename Val>(const Val& value) -> std::optional<acmacs::color::Modifier> {
-            if constexpr (std::is_same_v<Val, rjson::v3::detail::string>)
-                return acmacs::color::Modifier{value.template to<std::string_view>()};
-            else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
-                return std::nullopt;
-            else
-                throw error{fmt::format("unrecognized: {}", value)};
-        });
-
-    } // read_color
+    extern template size_t   read_number<size_t>(const rjson::v3::value&, size_t&&);
+    extern template double   read_number<double>(const rjson::v3::value&, double&&);
+    extern template Pixels   read_number<Pixels>(const rjson::v3::value&, Pixels&&);
+    extern template Scaled   read_number<Scaled>(const rjson::v3::value&, Scaled&&);
+    extern template Rotation read_number<Rotation>(const rjson::v3::value&, Rotation&&);
+    extern template Aspect   read_number<Aspect>(const rjson::v3::value&, Aspect&&);
 
     // ----------------------------------------------------------------------
 
-    inline acmacs::color::Modifier read_color_or_empty(const rjson::v3::value& source)
-    {
-        return source.visit([]<typename Val>(const Val& value) -> acmacs::color::Modifier {
-            if constexpr (std::is_same_v<Val, rjson::v3::detail::string>)
-                return value.template to<std::string_view>();
-            else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
-                return {};
-            else
-                throw error{fmt::format("unrecognized: {}", value)};
-        });
-
-    } // read_color_or_empty
-
-    // ----------------------------------------------------------------------
-
-    inline std::optional<std::string_view> read_from_string(const rjson::v3::value& source)
-    {
-        return source.visit([]<typename Val>(const Val& value) -> std::optional<std::string_view> {
-            if constexpr (std::is_same_v<Val, rjson::v3::detail::string>)
-                return value.template to<std::string_view>();
-            else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
-                return std::nullopt;
-            else
-                throw error{fmt::format("unrecognized: {}", value)};
-        });
-
-    } // read_from_string
+    std::optional<acmacs::color::Modifier> read_color(const rjson::v3::value& source);
+    acmacs::color::Modifier read_color_or_empty(const rjson::v3::value& source);
+    std::optional<std::string_view> read_from_string(const rjson::v3::value& source);
 
 } // namespace rjson::v3
 
