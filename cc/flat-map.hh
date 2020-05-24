@@ -37,10 +37,10 @@ namespace acmacs
                     check();
             }
 
-            template <typename EKey, typename EValue> auto& emplace(EKey&& key, EValue&& value)
+            template <typename EKey, typename ... V> auto& emplace(EKey&& key, V&& ... value)
             {
                 sorted_ = false;
-                return data_.emplace_back(std::forward<EKey>(key), std::forward<EValue>(value));
+                return data_.emplace_back(std::forward<EKey>(key), Value{std::forward<V>(value) ...});
             }
 
             // public to allow forcing sorting in the mutli-threaded app (seqdb3 -> acmacs-api)
@@ -181,32 +181,22 @@ namespace acmacs
                 return dflt;
         }
 
-        template <typename K, typename V> auto& emplace_or_replace(const K& key, const V& value)
+        template <typename K, typename ... V> auto& emplace_or_replace(const K& key, V&& ... value)
         {
             if (auto found = find(key); found != end()) {
-                found->second = Value{value};
+                found->second = Value{std::forward<V>(value) ...};
                 return *found;
             }
             else
-                return data_.emplace_back(Key{key}, Value{value});
+                return data_.emplace_back(Key{key}, Value{std::forward<V>(value) ...});
         }
 
-        template <typename K, typename V> auto& emplace_or_replace(const K& key, V&& value)
-        {
-            if (auto found = find(key); found != end()) {
-                found->second = Value{std::move(value)};
-                return *found;
-            }
-            else
-                return data_.emplace_back(Key{key}, Value{std::move(value)});
-        }
-
-        template <typename K, typename V = Value> auto& emplace_not_replace(const K& key, const V& value = V{})
+        template <typename K, typename ... V> auto& emplace_not_replace(const K& key, V&& ... value)
         {
             if (auto found = find(key); found != end())
                 return *found;
             else
-                return data_.emplace_back(Key{key}, Value{value});
+                return data_.emplace_back(Key{key}, Value{std::forward<V>(value) ...});
         }
 
         template <typename Order> void sort(Order&& order)
