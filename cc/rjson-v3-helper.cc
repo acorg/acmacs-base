@@ -48,7 +48,7 @@ acmacs::color::Modifier rjson::v3::read_color_or_empty(const rjson::v3::value& s
 
 // ----------------------------------------------------------------------
 
-std::optional<std::string_view> rjson::v3::read_from_string(const rjson::v3::value& source)
+std::optional<std::string_view> rjson::v3::read_string(const rjson::v3::value& source)
 {
     return source.visit([]<typename Val>(const Val& value) -> std::optional<std::string_view> {
         if constexpr (std::is_same_v<Val, rjson::v3::detail::string>)
@@ -59,7 +59,7 @@ std::optional<std::string_view> rjson::v3::read_from_string(const rjson::v3::val
             throw error{fmt::format("unrecognized: {}", value)};
     });
 
-} // rjson::v3::read_from_string
+} // rjson::v3::read_string
 
 // ----------------------------------------------------------------------
 /// Local Variables:

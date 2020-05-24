@@ -56,7 +56,7 @@ namespace rjson::v3
 
     std::optional<acmacs::color::Modifier> read_color(const rjson::v3::value& source);
     acmacs::color::Modifier read_color_or_empty(const rjson::v3::value& source);
-    std::optional<std::string_view> read_from_string(const rjson::v3::value& source);
+    std::optional<std::string_view> read_string(const rjson::v3::value& source);
 
 } // namespace rjson::v3
 
