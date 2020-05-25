@@ -44,6 +44,28 @@ acmacs::color::Modifier rjson::v3::read_color_or_empty(const rjson::v3::value& s
 
 // ----------------------------------------------------------------------
 
+acmacs::color::Modifier rjson::v3::read_color(const rjson::v3::value& source, const acmacs::color::Modifier& dflt)
+{
+    if (auto color = read_color(source); color.has_value())
+        return *color;
+    else
+        return dflt;
+
+} // rjson::v3::read_color
+
+// ----------------------------------------------------------------------
+
+acmacs::color::Modifier rjson::v3::read_color(const rjson::v3::value& source, Color dflt)
+{
+    if (auto color = read_color(source); color.has_value())
+        return *color;
+    else
+        return acmacs::color::Modifier{dflt};
+
+} // rjson::v3::read_color
+
+// ----------------------------------------------------------------------
+
 std::optional<std::string_view> rjson::v3::read_string(const rjson::v3::value& source)
 {
     return source.visit([]<typename Val>(const Val& value) -> std::optional<std::string_view> {
