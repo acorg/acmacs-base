@@ -26,7 +26,7 @@ std::optional<acmacs::color::Modifier> rjson::v3::read_color(const rjson::v3::va
         else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
             return std::nullopt;
         else
-            throw error{fmt::format("unrecognized: {}", value)};
+            throw error{fmt::format("unrecognized: {} (expected color)", value)};
     });
 
 } // rjson::v3::read_color
@@ -35,14 +35,10 @@ std::optional<acmacs::color::Modifier> rjson::v3::read_color(const rjson::v3::va
 
 acmacs::color::Modifier rjson::v3::read_color_or_empty(const rjson::v3::value& source)
 {
-    return source.visit([]<typename Val>(const Val& value) -> acmacs::color::Modifier {
-        if constexpr (std::is_same_v<Val, rjson::v3::detail::string>)
-            return value.template to<std::string_view>();
-        else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
-            return {};
-        else
-            throw error{fmt::format("unrecognized: {}", value)};
-    });
+    if (auto color = read_color(source); color.has_value())
+        return *color;
+    else
+        return {};
 
 } // rjson::v3::read_color_or_empty
 
@@ -56,10 +52,36 @@ std::optional<std::string_view> rjson::v3::read_string(const rjson::v3::value& s
         else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
             return std::nullopt;
         else
-            throw error{fmt::format("unrecognized: {}", value)};
+            throw error{fmt::format("unrecognized: {} (expected string)", value)};
     });
 
 } // rjson::v3::read_string
+
+// ----------------------------------------------------------------------
+
+std::string_view rjson::v3::read_string(const rjson::v3::value& source, std::string_view dflt)
+{
+    if (auto str = read_string(source); str.has_value())
+        return *str;
+    else
+        return dflt;
+
+} // rjson::v3::read_string
+
+// ----------------------------------------------------------------------
+
+bool rjson::v3::read_bool(const rjson::v3::value& source, bool dflt)
+{
+    return source.visit([dflt]<typename Val>(const Val& value) -> bool {
+        if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
+            return dflt;
+        else if constexpr (std::is_same_v<Val, rjson::v3::detail::boolean>)
+            return value.template to<bool>();
+        else
+            throw error{fmt::format("unrecognized {} (expected boolean)", value)};
+    });
+
+} // rjson::v3::read_bool
 
 // ----------------------------------------------------------------------
 /// Local Variables:
