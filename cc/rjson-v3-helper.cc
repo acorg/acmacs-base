@@ -84,6 +84,36 @@ bool rjson::v3::read_bool(const rjson::v3::value& source, bool dflt)
 } // rjson::v3::read_bool
 
 // ----------------------------------------------------------------------
+
+std::optional<acmacs::PointCoordinates> rjson::v3::read_point_coordinates(const rjson::v3::value& source)
+{
+    return source.visit([]<typename Val>(const Val& point_coordinates) -> std::optional<acmacs::PointCoordinates> {
+        if constexpr (std::is_same_v<Val, rjson::v3::detail::array>) {
+            if (point_coordinates.size() == 2)
+                return acmacs::PointCoordinates{point_coordinates[0].template to<double>(), point_coordinates[1].template to<double>()};
+            else
+                throw error{fmt::format("unrecognized: {} (expected array of two numbers)", point_coordinates)};
+        }
+        else if constexpr (std::is_same_v<Val, rjson::v3::detail::null>)
+            return std::nullopt;
+        else
+            throw error{fmt::format("unrecognized: {} (expected array of two numbers)", point_coordinates)};
+    });
+
+} // rjson::v3::read_point_coordinates
+
+// ----------------------------------------------------------------------
+
+acmacs::PointCoordinates rjson::v3::read_point_coordinates(const rjson::v3::value& source, const acmacs::PointCoordinates& dflt)
+{
+    if (auto pc = read_point_coordinates(source); pc.has_value())
+        return *pc;
+    else
+        return dflt;
+
+} // rjson::v3::read_point_coordinates
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

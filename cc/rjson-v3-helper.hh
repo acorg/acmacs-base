@@ -5,6 +5,7 @@
 #include "acmacs-base/color-modifier.hh"
 #include "acmacs-base/rjson-v3.hh"
 #include "acmacs-base/size-scale.hh"
+#include "acmacs-base/point-coordinates.hh"
 
 // ----------------------------------------------------------------------
 
@@ -60,6 +61,9 @@ namespace rjson::v3
     std::string_view read_string(const rjson::v3::value& source, std::string_view dflt);
 
     bool read_bool(const rjson::v3::value& source, bool dflt);
+
+    std::optional<acmacs::PointCoordinates> read_point_coordinates(const rjson::v3::value& source);
+    acmacs::PointCoordinates read_point_coordinates(const rjson::v3::value& source, const acmacs::PointCoordinates& dflt);
 
 } // namespace rjson::v3
 
