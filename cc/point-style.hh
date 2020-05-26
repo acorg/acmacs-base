@@ -148,6 +148,9 @@ namespace acmacs
         Color fill() const noexcept { auto fl = PointStyle::fill(); return acmacs::color::modify(fl, fill_modifier_); }
         Color outline() const noexcept { auto outl = PointStyle::outline(); return acmacs::color::modify(outl, outline_modifier_); }
 
+        constexpr const auto& fill_modifier() const { return fill_modifier_; }
+        constexpr const auto& outline_modifier() const { return outline_modifier_; }
+
         void shown(bool a_shown) noexcept /* override */ { PointStyle::shown(a_shown); modified_shown_ = true; }
         void outline_width(Pixels a_outline_width) noexcept /* override */ { PointStyle::outline_width(a_outline_width); modified_outline_width_ = true; }
         void size(Pixels a_size) noexcept /* override */ { PointStyle::size(a_size); modified_size_ = true; }

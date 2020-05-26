@@ -418,6 +418,10 @@ namespace rjson::inline v2
                         target = static_cast<Target>(std::stoul(from));
                     else if constexpr (std::is_floating_point_v<Target> || std::is_assignable_v<Target, double>)
                         target = static_cast<Target>(std::stod(from));
+                    else if constexpr (std::is_constructible_v<Target, double>)
+                        target = Target{std::stod(from)};
+                    else if constexpr (std::is_constructible_v<Target, long>)
+                        target = Target{std::stol(from)};
                     else if constexpr (std::is_constructible_v<Target, Number>)
                         target = Target{from}; // for named_string_t
                     else
