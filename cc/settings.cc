@@ -103,8 +103,12 @@ void acmacs::settings::v2::Settings::Environment::print() const
     AD_INFO("Settings::Environment {}", env_data_.size());
     for (auto [level, entries] : acmacs::enumerate(env_data_)) {
         for (const auto& entry : entries) {
-            if (entry.second.is_string())
-                AD_INFO("    {} \"{}\": {}", level, entry.first, substitute_to_string(entry.second.to<std::string_view>()));
+            if (entry.second.is_string()) {
+                if (entry.second.empty())
+                    AD_INFO("    {} \"{}\": \"\"", level, entry.first);
+                else
+                    AD_INFO("    {} \"{}\": \"{}\"", level, entry.first, substitute_to_string(entry.second.to<std::string_view>()));
+            }
             else
                 AD_INFO("    {} \"{}\": {}", level, entry.first, entry.second);
         }
@@ -634,12 +638,27 @@ void acmacs::settings::v2::Settings::LoadedDataFiles::load(std::string_view file
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v2::Settings::LoadedDataFiles::load_from_string(std::string_view data)
+{
+    file_data_.insert(file_data_.begin(), rjson::v3::parse_string(data));
+    filenames_.insert(filenames_.begin(), std::string{});
+
+} // acmacs::settings::v2::Settings::LoadedDataFiles::load_from_string
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::LoadedDataFiles::reload(Settings& settings)
 {
-    file_data_.clear();
-    for (auto fn  = filenames_.rbegin(); fn != filenames_.rend(); ++fn) {
-        file_data_.insert(file_data_.begin(), rjson::v3::parse_file(*fn));
-        settings.apply_top("init");
+    using namespace std::string_view_literals;
+    if (!filenames_.empty()) {
+        for (auto index{filenames_.size()}; index > 0; --index) {
+            if (!filenames_[index - 1].empty()) {
+                AD_LOG(acmacs::log::settings, "re-loading {}", filenames_[index - 1]);
+                file_data_[index - 1] = rjson::v3::parse_file(filenames_[index - 1]);
+            }
+            if (const auto& val = file_data_[index - 1]["init"sv]; !val.is_null())
+                settings.apply(val);
+        }
     }
 
 } // acmacs::settings::v2::Settings::LoadedDataFiles::reload
@@ -648,9 +667,10 @@ void acmacs::settings::v2::Settings::LoadedDataFiles::reload(Settings& settings)
 
 void acmacs::settings::v2::Settings::load(std::string_view filename)
 {
+    using namespace std::string_view_literals;
     AD_LOG(acmacs::log::settings, "loading {}", filename);
     loaded_data_.load(filename);
-    apply_top("init");
+    apply_top("init"sv);
 
 } // acmacs::settings::v2::Settings::load
 
@@ -665,8 +685,18 @@ void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& f
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v2::Settings::load_from_string(std::string_view data)
+{
+    loaded_data_.load_from_string(data);
+    apply_top("init");
+
+} // acmacs::settings::v2::Settings::load_from_string
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::reload()
 {
+    loaded_data_.reload(*this);
 
 } // acmacs::settings::v2::Settings::reload
 

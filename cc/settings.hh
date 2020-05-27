@@ -30,6 +30,7 @@ namespace acmacs::settings::inline v2
         // read settings from files, upon reading each file apply "init" in it (if found)
         void load(std::string_view filename);
         void load(const std::vector<std::string_view>& filenames);
+        void load_from_string(std::string_view data);
         void reload();          // reset environament, re-load previously loaded files, apply "init" in loaded files
 
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
@@ -40,7 +41,8 @@ namespace acmacs::settings::inline v2
         void setenv(std::string_view key, rjson::v3::value&& value) { environment_.add(key, std::move(value)); }
         void setenv(std::string_view key, std::string_view value) { setenv(key, rjson::v3::parse_string(value)); }
         void setenv_toplevel(std::string_view key, std::string_view value) { environment_.add_to_toplevel(key, value); } // rjson::v3::parse_string(fmt::format("\"{}\"", value))); }
-        void setenv_toplevel(std::string_view key, bool value) { environment_.add_to_toplevel(key, value); } // rjson::v3::parse_string(fmt::format("{}", value))); }
+        void setenv_toplevel(std::string_view key, bool value) { environment_.add_to_toplevel(key, value); }
+        // !!! to add number or temp string values, generate json into a string then call settings.load_from_string()
 
         const rjson::v3::value& getenv_single_substitution(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
@@ -118,6 +120,7 @@ namespace acmacs::settings::inline v2
             LoadedDataFiles() = default;
 
             void load(std::string_view filename);
+            void load_from_string(std::string_view data);
             void reload(Settings& settings);
             const rjson::v3::value& get_top(std::string_view name) const { return file_data_.front()[name]; }
 
@@ -155,6 +158,7 @@ namespace acmacs::settings::inline v2
             void add_to_toplevel(std::string_view key, rjson::v3::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
             void add_to_toplevel(std::string_view key, std::string_view value)  { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::string{rjson::v3::detail::string::with_content, value}); }
             void add_to_toplevel(std::string_view key, bool value) { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::boolean{value}); }
+            // !!! to add number or temp string values, generate json into a string then call settings.load_from_string()
             void print() const;
             void print_key_value() const;
 
