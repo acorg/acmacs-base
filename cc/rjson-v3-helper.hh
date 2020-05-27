@@ -33,7 +33,7 @@ namespace rjson::v3
 
     // ----------------------------------------------------------------------
 
-    template <typename Target> Target read_number(const rjson::v3::value& source, Target&& dflt)
+    template <typename Target> Target read_number(const rjson::v3::value& source, Target dflt)
     {
         return source.visit([&dflt]<typename Val>(const Val& value) -> Target {
             if constexpr (std::is_same_v<Val, rjson::v3::detail::number>)
@@ -46,12 +46,19 @@ namespace rjson::v3
 
     } // read_number
 
-    extern template size_t   read_number<size_t>(const rjson::v3::value&, size_t&&);
-    extern template double   read_number<double>(const rjson::v3::value&, double&&);
-    extern template Pixels   read_number<Pixels>(const rjson::v3::value&, Pixels&&);
-    extern template Scaled   read_number<Scaled>(const rjson::v3::value&, Scaled&&);
-    extern template Rotation read_number<Rotation>(const rjson::v3::value&, Rotation&&);
-    extern template Aspect   read_number<Aspect>(const rjson::v3::value&, Aspect&&);
+    extern template size_t   read_number<size_t>(const rjson::v3::value&, size_t);
+    extern template double   read_number<double>(const rjson::v3::value&, double);
+    extern template Pixels   read_number<Pixels>(const rjson::v3::value&, Pixels);
+    extern template Scaled   read_number<Scaled>(const rjson::v3::value&, Scaled);
+    extern template Aspect   read_number<Aspect>(const rjson::v3::value&, Aspect);
+
+    template <> inline Rotation read_number<Rotation>(const rjson::v3::value& source, Rotation dflt)
+    {
+        if (const auto angle = read_number<double>(source); angle.has_value())
+            return RotationRadiansOrDegrees(*angle);
+        else
+            return dflt;
+    }
 
     // ----------------------------------------------------------------------
 

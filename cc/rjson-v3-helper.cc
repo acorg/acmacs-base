@@ -9,12 +9,11 @@ template std::optional<Scaled  > rjson::v3::read_number<Scaled  >(const rjson::v
 template std::optional<Rotation> rjson::v3::read_number<Rotation>(const rjson::v3::value&);
 template std::optional<Aspect  > rjson::v3::read_number<Aspect  >(const rjson::v3::value&);
 
-template size_t   rjson::v3::read_number<size_t>(const rjson::v3::value&, size_t&&);
-template double   rjson::v3::read_number<double>(const rjson::v3::value&, double&&);
-template Pixels   rjson::v3::read_number<Pixels>(const rjson::v3::value&, Pixels&&);
-template Scaled   rjson::v3::read_number<Scaled>(const rjson::v3::value&, Scaled&&);
-template Rotation rjson::v3::read_number<Rotation>(const rjson::v3::value&, Rotation&&);
-template Aspect   rjson::v3::read_number<Aspect>(const rjson::v3::value&, Aspect&&);
+template size_t rjson::v3::read_number<size_t>(const rjson::v3::value&, size_t);
+template double rjson::v3::read_number<double>(const rjson::v3::value&, double);
+template Pixels rjson::v3::read_number<Pixels>(const rjson::v3::value&, Pixels);
+template Scaled rjson::v3::read_number<Scaled>(const rjson::v3::value&, Scaled);
+template Aspect rjson::v3::read_number<Aspect>(const rjson::v3::value&, Aspect);
 
 // ----------------------------------------------------------------------
 
