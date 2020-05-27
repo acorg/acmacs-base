@@ -56,7 +56,7 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
         if (const auto& found1 = get(m1.str(1), toplevel_only::no); m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) {
             if (found1.is_null())
-                return &rjson::v3::const_empty_string; // entire source matched and no substitution found
+                return &rjson::v3::const_null; // entire source matched and no substitution found, return null (necessary to support clades with "date": "{date-recent}" overriding for mapi
             else
                 return &found1;
         }
