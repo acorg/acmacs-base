@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <cmath>
 
 #include "acmacs-base/point-coordinates.hh"
@@ -50,8 +49,6 @@ namespace acmacs
 
     }; // class LineDefinedByEquation
 
-    inline std::ostream& operator<<(std::ostream& out, const LineDefinedByEquation& line) { return out << "Line(slope:" << line.slope() << ", intercept:" << line.intercept() << ')'; }
-
 // ----------------------------------------------------------------------
 
     class LineSide : public LineDefinedByEquation
@@ -81,6 +78,20 @@ namespace acmacs
     }; // class LineSide
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::LineDefinedByEquation> : public fmt::formatter<acmacs::fmt_helper::float_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::LineDefinedByEquation& line, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "Line(slope:{}, intercept:{})", format_val(line.slope(), ctx), format_val(line.intercept(), ctx));
+    }
+};
+
+template <> struct fmt::formatter<acmacs::LineSide> : public fmt::formatter<acmacs::LineDefinedByEquation>
+{
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
