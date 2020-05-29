@@ -85,7 +85,7 @@ template <> struct fmt::formatter<acmacs::LineDefinedByEquation> : public fmt::f
 {
     template <typename FormatContext> auto format(const acmacs::LineDefinedByEquation& line, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "Line(slope:{}, intercept:{})", format_val(line.slope(), ctx), format_val(line.intercept(), ctx));
+        return format_to(ctx.out(), "Line(slope:{}, intercept:{})", format_val(line.slope()), format_val(line.intercept()));
     }
 };
 
