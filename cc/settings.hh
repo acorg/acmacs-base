@@ -21,6 +21,7 @@ namespace acmacs::settings::inline v2
     {
       public:
         enum class toplevel_only { no, yes };
+        enum class throw_if_partial_substitution { no, yes }; // return original value if no
         using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
 
         Settings() = default;
@@ -50,8 +51,8 @@ namespace acmacs::settings::inline v2
         }
 
         // returns const_null if not found
-        const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
-        const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no) const; // value of key1 or key2
+        const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const;
+        const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const; // value of key1 or key2
         std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 

@@ -379,7 +379,7 @@ bool acmacs::settings::v2::Settings::eval_condition(const rjson::v3::value& cond
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only) const
+const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key, toplevel_only a_toplevel_only, throw_if_partial_substitution tips) const
 {
     AD_LOG(acmacs::log::settings, "getenv \"{}\"", key);
     if (const auto& val = environment_.get(environment_.substitute_to_string(key), a_toplevel_only); val.is_string()) {
@@ -389,7 +389,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
                 return *orig;
 
             const rjson::v3::value& substituted = std::visit(
-                [&orig]<typename Cont>(Cont cont) -> const rjson::v3::value& {
+                [&orig, tips]<typename Cont>(Cont cont) -> const rjson::v3::value& {
                     if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
                         if (cont->is_null())
                             return *orig;
@@ -397,8 +397,8 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
                             return *cont;
                     }
                     else { // no subst or partial subst
-                        if (cont != orig->to<std::string_view>()) {
-                            AD_ERROR("getenv: partial subst {} -> \"{}\"", *orig, cont);
+                        if (cont != orig->to<std::string_view>() && tips == throw_if_partial_substitution::yes) {
+                            AD_ERROR("getenv: partial subst {} -> \"{}\" (aborting!)", *orig, cont);
                             abort();
                         }
                         else
@@ -424,12 +424,12 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only) const
+const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only, throw_if_partial_substitution tips) const
 {
-    if (const auto& val = getenv(key1, a_toplevel_only); !val.is_null())
+    if (const auto& val = getenv(key1, a_toplevel_only, tips); !val.is_null())
         return val;
     else
-        return getenv(key2, a_toplevel_only);
+        return getenv(key2, a_toplevel_only, tips);
 
 } // acmacs::settings::v2::Settings::getenv
 
