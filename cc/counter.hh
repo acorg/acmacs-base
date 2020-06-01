@@ -89,35 +89,37 @@ namespace acmacs
     template <typename Iter, typename F> Counter(Iter first, Iter last, F func) -> Counter<decltype(func(*first))>;
     template <typename Container, typename F> Counter(const Container& cont, F func) -> Counter<decltype(func(*std::begin(cont)))>;
 
-    class CounterChar
+    template <size_t first_char = 0, size_t last_char = 256, typename counter_t_t = uint32_t> class CounterCharSome
     {
       public:
-        CounterChar() { std::fill(std::begin(counter_), std::end(counter_), 0UL); }
-        template <typename Iter, typename F> CounterChar(Iter first, Iter last, F func)
-            : CounterChar()
+        using counter_t = counter_t_t;
+
+        CounterCharSome() { std::fill(std::begin(counter_), std::end(counter_), counter_t{0}); }
+        template <typename Iter, typename F> CounterCharSome(Iter first, Iter last, F func)
+            : CounterCharSome()
         {
             for (; first != last; ++first)
-                ++counter_[func(*first)];
+                ++counter_[func(*first) - first_char];
         }
-        template <typename Iter> CounterChar(Iter first, Iter last)
-            : CounterChar()
+        template <typename Iter> CounterCharSome(Iter first, Iter last)
+            : CounterCharSome()
         {
             for (; first != last; ++first)
-                ++counter_[static_cast<size_t>(*first)];
+                ++counter_[static_cast<size_t>(*first) - first_char];
         }
-        template <typename Container, typename F> CounterChar(const Container& container, F func) : CounterChar(std::begin(container), std::end(container), func) {}
-        template <typename Container> CounterChar(const Container& container) : CounterChar(std::begin(container), std::end(container)) {}
+        template <typename Container, typename F> CounterCharSome(const Container& container, F func) : CounterCharSome(std::begin(container), std::end(container), func) {}
+        template <typename Container> CounterCharSome(const Container& container) : CounterCharSome(std::begin(container), std::end(container)) {}
 
-        void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj)]; }
+        void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj) - first_char]; }
 
-        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](size_t val) { return val == 0; }); }
-        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](size_t val) { return val > 0UL; })); }
-        size_t total() const { return std::accumulate(std::begin(counter_), std::end(counter_), 0UL, [](size_t sum, size_t val) { return sum + val; }); }
+        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](counter_t val) { return val == 0; }); }
+        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](counter_t val) { return val > counter_t{0}; })); }
+        counter_t total() const { return std::accumulate(std::begin(counter_), std::end(counter_), counter_t{0}, [](counter_t sum, counter_t val) { return sum + val; }); }
 
-        std::pair<char, size_t> max() const
+        std::pair<char, counter_t> max() const
         {
-            const auto me = std::max_element(counter_.begin(), counter_.end(), [](size_t e1, size_t e2) { return e1 < e2; });
-            return {static_cast<char>(me - counter_.begin()), *me};
+            const auto me = std::max_element(counter_.begin(), counter_.end(), [](counter_t e1, counter_t e2) { return e1 < e2; });
+            return {static_cast<char>(me - counter_.begin() + static_cast<ssize_t>(first_char)), *me};
         }
 
         std::vector<char> sorted() const
@@ -125,19 +127,19 @@ namespace acmacs
             std::vector<char> res;
             for (auto it = std::begin(counter_); it != std::end(counter_); ++it) {
                 if (*it > 0)
-                    res.push_back(static_cast<char>(it - std::begin(counter_)));
+                    res.push_back(static_cast<char>(it - std::begin(counter_) + static_cast<ssize_t>(first_char)));
             }
-            std::sort(std::begin(res), std::end(res), [this](auto e1, auto e2) { return counter_[static_cast<size_t>(e1)] > counter_[static_cast<size_t>(e2)]; });
+            std::sort(std::begin(res), std::end(res), [this](auto e1, auto e2) { return counter_[static_cast<size_t>(e1) - first_char] > counter_[static_cast<size_t>(e2) - first_char]; });
             return res;
         }
 
         enum class sorted { no, yes };
-        std::vector<std::pair<char, size_t>> pairs(enum sorted srt) const
+        std::vector<std::pair<char, counter_t>> pairs(enum sorted srt) const
         {
-            std::vector<std::pair<char, size_t>> result;
+            std::vector<std::pair<char, counter_t>> result;
             for (auto it = std::begin(counter_); it != std::end(counter_); ++it) {
                 if (*it > 0)
-                    result.emplace_back(static_cast<char>(it - std::begin(counter_)), *it);
+                    result.emplace_back(static_cast<char>(it - std::begin(counter_) + static_cast<ssize_t>(first_char)), *it);
             }
             if (srt == sorted::yes)
                 std::sort(std::begin(result), std::end(result), [](const auto& e1, const auto& e2) { return e1.second > e2.second; });
@@ -164,20 +166,22 @@ namespace acmacs
 
         std::string report_sorted_max_first() const { return report_sorted_max_first("{counter:6d} {value}\n"); }
 
-        size_t operator[](char val) const { return counter_[static_cast<size_t>(val)]; }
+        counter_t operator[](char val) const { return counter_[static_cast<size_t>(val) - first_char]; }
 
         constexpr const auto& counter() const { return counter_; }
 
       private:
-        std::array<size_t, 256> counter_;
+        std::array<counter_t, last_char - first_char> counter_;
 
-        void format_entry(fmt::memory_buffer& out, std::string_view format, const std::pair<char, size_t>& entry) const
+        void format_entry(fmt::memory_buffer& out, std::string_view format, const std::pair<char, counter_t>& entry) const
         {
                 fmt::format_to(out, format, fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
                                fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
         }
 
     };
+
+    using CounterChar = CounterCharSome<0, 256, uint32_t>;
 
 } // namespace acmacs
 
