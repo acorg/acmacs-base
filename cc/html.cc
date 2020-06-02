@@ -7,7 +7,7 @@ constexpr static std::string_view sPattern{R"(<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8" />
-{header}
+{head}
     </head>
     <body>
 {body}
