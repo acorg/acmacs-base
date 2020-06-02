@@ -1,27 +1,35 @@
 #include "acmacs-base/html.hh"
 #include "acmacs-base/string-join.hh"
+#include "acmacs-base/string.hh"
 
 // ----------------------------------------------------------------------
 
 constexpr static std::string_view sPattern{R"(<!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
+ <head>
+  <meta charset="utf-8" />
 {head}
-    </head>
-    <body>
+ </head>
+ <body>
 {body}
-    </body>
+ </body>
 </html>
 )"};
+
+constexpr size_t sIndent{1};
 
 // ----------------------------------------------------------------------
 
 std::string acmacs::html::v1::Generator::generate() const
 {
+    const auto make_content = [](const auto& rows, size_t indent) {
+        const std::string prefix(indent, ' ');
+        return prefix + ::string::replace(acmacs::string::join(acmacs::string::join_newline, std::begin(rows), std::end(rows)), "\n", fmt::format("\n{}", prefix));
+    };
+
     return fmt::format(sPattern,
-                       fmt::arg("head", acmacs::string::join(acmacs::string::join_newline, std::begin(head_fields_), std::end(head_fields_))),
-                       fmt::arg("body", acmacs::string::join(acmacs::string::join_newline, std::begin(body_fields_), std::end(body_fields_)))
+                       fmt::arg("head", make_content(head_fields_, sIndent * 2)),
+                       fmt::arg("body", make_content(body_fields_, sIndent * 2))
                        );
 
 } // acmacs::html::v1::Generator::generate
