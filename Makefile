@@ -5,6 +5,7 @@ TARGETS = \
   $(ACMACS_BASE_LIB) \
   $(DIST)/json-pp-v2 \
   $(DIST)/json-pp \
+  $(DIST)/css-amino-acid-nucleotide-colors \
   $(DIST)/time-series-gen \
   $(DIST)/test-rjson-v2 \
   $(DIST)/test-rjson-v3 \
@@ -86,6 +87,7 @@ install-acmacs-base: make-installation-dirs $(TARGETS)
 	ln -sf $(abspath cc)/*.{hh,hpp} $(AD_INCLUDE)/acmacs-base
 	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
 	ln -sf $(abspath $(DIST))/json-pp-v2 $(AD_BIN)
+	ln -sf $(abspath $(DIST))/css-amino-acid-nucleotide-colors $(AD_BIN)
 	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
 	$(call symbolic_link_wildcard,$(abspath doc)/*.org,$(AD_DOC))
 
