@@ -68,6 +68,19 @@ static constexpr const std::array nucleotide_colors{
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::amino_acid_nucleotide_color_css()
+{
+    fmt::memory_buffer out;
+    for (const auto& en : amino_acid_colors)
+        fmt::format_to(out, ".aa{} {{color: {:#}}}\n", en.first, en.second);
+    for (const auto& en : nucleotide_colors)
+        fmt::format_to(out, ".nuc{} {{color: {:#}}}\n", en.first, en.second);
+    return fmt::to_string(out);
+
+} // acmacs::amino_acid_nucleotide_color_css
+
+// ----------------------------------------------------------------------
+
 Color acmacs::amino_acid_color(char aa)
 {
     if (const auto found = std::find_if(std::begin(amino_acid_colors), std::end(amino_acid_colors), [aa](const auto& en) { return aa == en.first; }); found != std::end(amino_acid_colors))
