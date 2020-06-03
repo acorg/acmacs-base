@@ -24,7 +24,7 @@ std::string acmacs::html::v1::Generator::generate() const
 {
     const auto make_content = [](const auto& rows, size_t indent) {
         const std::string prefix(indent, ' ');
-        return prefix + ::string::replace(acmacs::string::join(acmacs::string::join_newline, std::begin(rows), std::end(rows)), "\n", fmt::format("\n{}", prefix));
+        return prefix + ::string::replace(acmacs::string::join(acmacs::string::join_newline, std::begin(rows), std::end(rows)), "\n", fmt::format("\n{}", prefix), fmt::format("\n{}\n", prefix), "\n\n");
     };
 
     return fmt::format(sPattern,
