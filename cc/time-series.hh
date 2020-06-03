@@ -26,6 +26,13 @@ namespace acmacs::time_series::inline v2
         interval intervl{interval::month};
         date::period_diff_t number_of_intervals{1};
 
+        parameters() = default;
+        parameters(date::year_month_day a_first, date::year_month_day a_after_last) : first{a_first}, after_last{a_after_last} {}
+        parameters(date::year_month_day a_first, date::year_month_day a_after_last, interval a_interval) : first{a_first}, after_last{a_after_last}, intervl{a_interval} {}
+        parameters(date::year_month_day a_first, date::year_month_day a_after_last, interval a_interval, date::period_diff_t num) : first{a_first}, after_last{a_after_last}, intervl{a_interval}, number_of_intervals{num} {}
+        parameters(std::string_view interval_name) : intervl{interval_from_string(interval_name)} {}
+        parameters(std::string_view interval_name, date::period_diff_t num_intervals) : intervl{interval_from_string(interval_name)}, number_of_intervals{num_intervals} {}
+
         void update(std::optional<std::string_view> a_start, std::optional<std::string_view> a_end, std::optional<std::string_view> a_interval, std::optional<date::period_diff_t> a_number_of_intervals);
     };
 
