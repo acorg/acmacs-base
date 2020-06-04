@@ -4,7 +4,7 @@
 
 // ----------------------------------------------------------------------
 
-inline date::year_month_day next(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
+date::year_month_day acmacs::time_series::v2::detail::next(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
 {
     switch (intervl) {
         case acmacs::time_series::v2::interval::year:
@@ -18,11 +18,11 @@ inline date::year_month_day next(const date::year_month_day& current, acmacs::ti
     }
     return date::next_month(current); // to make g++-9 happy
 
-} // next
+} // acmacs::time_series::v2::detail::next
 
 // ----------------------------------------------------------------------
 
-inline date::year_month_day first(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
+date::year_month_day acmacs::time_series::v2::detail::first(const date::year_month_day& current, acmacs::time_series::v2::interval intervl)
 {
     switch (intervl) {
         case acmacs::time_series::v2::interval::year:
@@ -36,7 +36,7 @@ inline date::year_month_day first(const date::year_month_day& current, acmacs::t
     }
     return date::beginning_of_month(current); // to make g++-9 happy
 
-} // next
+} // acmacs::time_series::v2::detail::next
 
 // ----------------------------------------------------------------------
 
@@ -45,12 +45,12 @@ acmacs::time_series::v2::series acmacs::time_series::v2::make(const parameters& 
     const auto increment = [](const date::year_month_day& cur, interval intervl, auto count) {
         auto result = cur;
         for (decltype(count) i = 0; i < count; ++i)
-            result = next(result, intervl);
+            result = detail::next(result, intervl);
         return result;
     };
 
     series result;
-    for (auto current = first(param.first, param.intervl); current < param.after_last; ) {
+    for (auto current = detail::first(param.first, param.intervl); current < param.after_last; ) {
         const auto subsequent = increment(current, param.intervl, param.number_of_intervals);
         result.push_back({current, subsequent});
         current = subsequent;
@@ -178,22 +178,6 @@ std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
         return date::year_4(a_slot.first);
 
 } // acmacs::time_series::v2::numeric_name
-
-// ----------------------------------------------------------------------
-
-acmacs::time_series::v2::date_stat_t acmacs::time_series::v2::stat(const parameters& param, const std::vector<std::string_view>& dates)
-{
-    date_stat_t counter;
-    for (const auto& dat : dates) {
-        try {
-            counter.count(first(date::from_string(dat, date::allow_incomplete::yes), param.intervl));
-        }
-        catch (date::date_parse_error&) {
-        }
-    }
-    return counter;
-
-} // acmacs::time_series::v2::stat
 
 // ----------------------------------------------------------------------
 

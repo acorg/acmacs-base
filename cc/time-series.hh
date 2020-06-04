@@ -49,8 +49,27 @@ namespace acmacs::time_series::inline v2
     size_t find(const series& ser, const date::year_month_day& dat);
 
     using date_stat_t = acmacs::Counter<date::year_month_day>;
-    date_stat_t stat(const parameters& param, const std::vector<std::string_view>& dates);
     std::pair<date::year_month_day, date::year_month_day> suggest_start_end(const parameters& param, const date_stat_t& stat);
+
+    namespace detail
+    {
+        date::year_month_day first(const date::year_month_day& current, interval intervl);
+        date::year_month_day next(const date::year_month_day& current, interval intervl);
+
+    } // namespace detail
+
+    template <typename Dates> date_stat_t stat(const parameters& param, const Dates& dates)
+    {
+        date_stat_t counter;
+        for (const auto& dat : dates) {
+            try {
+                counter.count(detail::first(date::from_string(dat, date::allow_incomplete::yes), param.intervl));
+            }
+            catch (date::date_parse_error&) {
+            }
+        }
+        return counter;
+    }
 }
 
 // ----------------------------------------------------------------------
