@@ -410,7 +410,7 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
             AD_LOG(acmacs::log::settings, "getenv substituted {} -> {}", *orig, substituted);
             if (substituted.is_null())
                 return *orig;
-            else if (substituted.is_string())
+            else if (substituted.is_string() && *orig != substituted)
                 orig = &substituted;
             else
                 return substituted;
