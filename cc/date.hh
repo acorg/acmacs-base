@@ -67,6 +67,7 @@ namespace date
     inline auto year_2(const year_month_day& dt) { return format("%y", dt); }
     inline auto year_4(const year_month_day& dt) { return format("%Y", dt); }
     inline auto month3_year2(const year_month_day& dt) { return format("%b %y", dt); }
+    inline auto monthtext(const year_month_day& dt) { return format("%B", dt); }
     inline auto monthtext_year(const year_month_day& dt) { return format("%B %Y", dt); }
     inline auto year4_month2(const year_month_day& dt) { return format("%Y-%m", dt); }
     inline auto year4_month2_day2(const year_month_day& dt) { return format("%Y-%m-%d", dt); }

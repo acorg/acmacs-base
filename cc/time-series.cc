@@ -159,8 +159,15 @@ std::string acmacs::time_series::v2::text_name(const slot& a_slot)
 {
     if (const auto days = date::days_between_dates(a_slot.first, a_slot.after_last); days < 28)
         return date::display(a_slot.first);
-    else if (days < 360)
+    else if (days < 45)
         return date::monthtext_year(a_slot.first);
+    else if (days < 360) {
+        const auto last{date::days_ago(a_slot.after_last, 1)};
+        if (date::get_year(a_slot.first) == date::get_year(last))
+            return fmt::format("{} - {} {}", date::monthtext(a_slot.first), date::monthtext(last), date::year_4(a_slot.first));
+        else
+            return fmt::format("{} {} - {} {}", date::monthtext(a_slot.first), date::year_4(a_slot.first), date::monthtext(last), date::year_4(last));
+    }
     else
         return date::year_4(a_slot.first);
 
