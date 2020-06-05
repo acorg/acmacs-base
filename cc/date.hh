@@ -39,7 +39,7 @@ namespace date
     inline size_t current_year() { return static_cast<size_t>(static_cast<int>(today().year())); }
 
     inline auto get_year(const year_month_day& dt) { return static_cast<size_t>(static_cast<int>(dt.year())); }
-    inline auto year_ok(const year_month_day& dt) { const auto ye = get_year(dt); return ye >= 1900 && ye < current_year(); }
+    inline auto year_ok(const year_month_day& dt) { const auto ye = get_year(dt); return ye >= 1900 && ye <= current_year(); }
     inline auto get_month(const year_month_day& dt) { return static_cast<unsigned>(dt.month()); }
     inline auto month_ok(const year_month_day& dt) { const auto mont = get_month(dt); return mont > 0 && mont <= 12; }
     inline auto get_day(const year_month_day& dt) { return static_cast<unsigned>(dt.day()); }
