@@ -21,7 +21,9 @@ namespace acmacs::settings::inline v2
     {
       public:
         enum class toplevel_only { no, yes };
+        enum class if_no_substitution_found { leave_as_is, null, empty }; // if key not found in environament: [leave_as_is]: "{key}" -> "{key}" [null]: "{key}" -> null [empty]: "{key}" -> ""
         enum class throw_if_partial_substitution { no, yes }; // return original value if no
+
         using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
 
         Settings() = default;
@@ -51,8 +53,8 @@ namespace acmacs::settings::inline v2
         }
 
         // returns const_null if not found
-        const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const;
-        const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const; // value of key1 or key2
+        const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::leave_as_is, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const;
+        const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::leave_as_is, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const; // value of key1 or key2
         std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 
@@ -64,7 +66,7 @@ namespace acmacs::settings::inline v2
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
+            if (const auto& val = getenv(key, a_toplevel_only, if_no_substitution_found::null); !val.is_null())
                 return val.to<std::decay_t<T>>();
             else
                 return std::move(a_default);
@@ -73,14 +75,14 @@ namespace acmacs::settings::inline v2
         template <typename T> void getenv_copy_if_present(std::string_view key, T& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             static_assert(!std::is_same_v<std::decay_t<T>, std::string_view>);
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
+            if (const auto& val = getenv(key, a_toplevel_only, if_no_substitution_found::null); !val.is_null())
                 target = val.to<std::decay_t<T>>();
         }
 
         template <typename T1, typename T2> void getenv_extract_copy_if_present(std::string_view key, T2& target, toplevel_only a_toplevel_only = toplevel_only::no) const
         {
             static_assert(!std::is_same_v<std::decay_t<T2>, std::string_view>);
-            if (const auto& val = getenv(key, a_toplevel_only); !val.is_null())
+            if (const auto& val = getenv(key, a_toplevel_only, if_no_substitution_found::null); !val.is_null())
                 target = T2{val.to<std::decay_t<T1>>()};
         }
 
