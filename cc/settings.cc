@@ -76,11 +76,18 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
                     return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
-            AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> {} (partial substitution)", source, replaced);
-            return substitute(replaced);
+            AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> \"{}\" (partial substitution)", source, replaced);
+            return std::visit(
+                []<typename Cont>(Cont cont) -> substitute_result_t {
+                    if constexpr (std::is_same_v<Cont, no_substitution_request>)
+                        return *cont; // return string and not no_substitution_request!
+                    else
+                        return cont;
+                },
+                substitute(replaced));
         }
     }
-    else {  // no substitution requests
+    else { // no substitution requests
         AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> \"{}\" (no substitution requests)", source, source);
         return no_substitution_request{source};
     }
