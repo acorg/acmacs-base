@@ -2,6 +2,7 @@
 
 #include "acmacs-base/rjson-v3.hh"
 #include "acmacs-base/to-json.hh"
+#include "acmacs-base/named-type.hh"
 
 // ----------------------------------------------------------------------
 
@@ -24,7 +25,8 @@ namespace acmacs::settings::inline v2
         enum class if_no_substitution_found { leave_as_is, null, empty }; // if key not found in environament: [leave_as_is]: "{key}" -> "{key}" [null]: "{key}" -> null [empty]: "{key}" -> ""
         enum class throw_if_partial_substitution { no, yes }; // return original value if no
 
-        using substitute_result_t = std::variant<const rjson::v3::value*, std::string>;
+        using no_substitution_request = named_string_t<struct no_substitution_request_tag_t>;
+        using substitute_result_t = std::variant<const rjson::v3::value*, std::string, no_substitution_request>; // full substition, partial substitution, no substitution request in string
 
         Settings() = default;
         Settings(const std::vector<std::string_view>& filenames) { load(filenames); }

@@ -33,6 +33,10 @@ std::string acmacs::settings::v2::Settings::Environment::substitute_to_string(st
                 AD_LOG(acmacs::log::settings, "substitute to string \"{}\" -> {}", source, *cont);
                 return std::string{cont->template to<std::string_view>()};
             }
+            else if constexpr (std::is_same_v<Cont, no_substitution_request>) {
+                AD_LOG(acmacs::log::settings, "no substitution request in \"{}\"", source);
+                return std::string{source};
+            }
             else {
                 AD_LOG(acmacs::log::settings, "substitute to string \"{}\" -> \"{}\"", source, cont);
                 return cont;
@@ -55,10 +59,14 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
 
     if (std::cmatch m1; std::regex_search(std::begin(source), std::end(source), m1, re)) {
         if (const auto& found1 = get(m1.str(1), toplevel_only::no); m1.position(0) == 0 && static_cast<size_t>(m1.length(0)) == source.size()) {
-            if (found1.is_null())
+            if (found1.is_null()) {
+                AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> null", source);
                 return &rjson::v3::const_null; // entire source matched and no substitution found, return null (necessary to support clades with "date": "{date-recent}" overriding for mapi
-            else
+            }
+            else {
+                AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> {}", source, found1);
                 return &found1;
+            }
         }
         else { // not whole_source_matched
             const auto replace = [](const auto& src, size_t prefix, const rjson::v3::value& infix, size_t suffix) {
@@ -68,11 +76,14 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
                     return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
+            AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> {} (partial substitution)", source, replaced);
             return substitute(replaced);
         }
     }
-    else   // no substitution requests
-        return std::string{source};
+    else {  // no substitution requests
+        AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> \"{}\" (no substitution requests)", source, source);
+        return no_substitution_request{source};
+    }
 
 } // acmacs::settings::v2::Settings::Environment::substitute
 
@@ -407,6 +418,9 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
                         else
                             return *cont;
                     }
+                    else if constexpr (std::is_same_v<Cont, no_substitution_request>) {
+                        return *orig;
+                    }
                     else { // no subst or partial subst
                         if (cont != orig->to<std::string_view>() && tips == throw_if_partial_substitution::yes) {
                             AD_ERROR("getenv: partial subst {} -> \"{}\" (aborting!)", *orig, cont);
@@ -462,6 +476,9 @@ std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view ke
                             return *orig;
                         else
                             return *cont;
+                    }
+                    else if constexpr (std::is_same_v<Cont, no_substitution_request>) {
+                        return rjson::v3::const_null;
                     }
                     else { // no subst or partial subst
                         if (cont != orig->to<std::string_view>())
@@ -559,6 +576,8 @@ std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3
         []<typename Res>(const Res& res) -> std::string {
             if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
                 return std::string{res->template to<std::string_view>()};
+            else if constexpr (std::is_same_v<Res, no_substitution_request>)
+                return *res;
             else
                 return res;
         },
