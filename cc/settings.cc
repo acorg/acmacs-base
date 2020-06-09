@@ -1,5 +1,7 @@
 #include <regex>
 
+#include "acmacs-base/acmacsd.hh"
+#include "acmacs-base/filesystem.hh"
 #include "acmacs-base/settings.hh"
 #include "acmacs-base/enumerate.hh"
 #include "acmacs-base/string-from-chars.hh"
@@ -740,6 +742,46 @@ void acmacs::settings::v2::Settings::load(const std::vector<std::string_view>& f
         load(filename);
 
 } // acmacs::settings::v2::Settings::load
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::load_from_conf(const std::vector<std::string_view>& filenames) // load from ${ACMACSD_ROOT}/share/conf dir
+{
+    for (const auto& settings_file_name : filenames) {
+        if (const auto filename = fmt::format("{}/share/conf/{}", acmacs::acmacsd_root(), settings_file_name); fs::exists(filename))
+            load(filename);
+        else
+            AD_WARNING("cannot load \"{}\": file not found", filename);
+    }
+
+} // acmacs::settings::v2::Settings::load_from_conf
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::set_defines(const std::vector<std::string_view>& defines)
+{
+    using namespace std::string_view_literals;
+
+    for (const auto& def : defines) {
+        if (const auto pos = def.find('='); pos != std::string_view::npos) {
+            const auto val_s = def.substr(pos + 1);
+            if (val_s == "-") { // parsed as -0
+                setenv(def.substr(0, pos), rjson::v3::parse_string(fmt::format("\"{}\"", val_s)));
+            }
+            else {
+                try {
+                    setenv(def.substr(0, pos), rjson::v3::parse_string(val_s));
+                }
+                catch (std::exception&) {
+                    setenv(def.substr(0, pos), rjson::v3::parse_string(fmt::format("\"{}\"", val_s)));
+                }
+            }
+        }
+        else
+            setenv(def, "true"sv);
+    }
+
+} // acmacs::settings::v2::Settings::set_defines
 
 // ----------------------------------------------------------------------
 

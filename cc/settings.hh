@@ -36,6 +36,8 @@ namespace acmacs::settings::inline v2
         // read settings from files, upon reading each file apply "init" in it (if found)
         void load(std::string_view filename);
         void load(const std::vector<std::string_view>& filenames);
+        void load_from_conf(const std::vector<std::string_view>& filenames); // load from ${ACMACSD_ROOT}/share/conf dir
+        void set_defines(const std::vector<std::string_view>& defines);
         void load_from_string(std::string_view data);
         void reload();          // reset environament, re-load previously loaded files, apply "init" in loaded files
 
