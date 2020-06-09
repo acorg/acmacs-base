@@ -105,12 +105,12 @@ namespace acmacs::settings::inline v2
             return obj.compact(to_json::json::embed_space::no);
         }
 
-      protected:
         template <typename... Key> const rjson::v3::value& get(Key&&... keys) const
         {
             return loaded_data_.get(keys ...);
         }
 
+      protected:
         void apply(const rjson::v3::value& entry);
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
 
