@@ -74,6 +74,32 @@ namespace rjson::v3
     std::optional<acmacs::PointCoordinates> read_point_coordinates(const rjson::v3::value& source);
     acmacs::PointCoordinates read_point_coordinates(const rjson::v3::value& source, const acmacs::PointCoordinates& dflt);
 
+    // ----------------------------------------------------------------------
+
+    template <typename Target, typename Callback> void call_if_not_null(const rjson::v3::value& source, Callback callback)
+    {
+        source.visit([&]<typename Val>(const Val& value) -> void {
+            if constexpr (std::is_same_v<Val, rjson::v3::detail::boolean> && std::is_same_v<Target, bool>)
+                callback(value.template to<Target>());
+            else if constexpr (std::is_same_v<Val, rjson::v3::detail::number> && (std::is_same_v<Target, double> || std::is_same_v<Target, Pixels>))
+                callback(value.template to<Target>());
+            else if constexpr (std::is_same_v<Val, rjson::v3::detail::string> && (std::is_same_v<Target, std::string_view> || std::is_same_v<Target, std::string>))
+                callback(value.template to<Target>());
+            else if constexpr (!std::is_same_v<Val, rjson::v3::detail::null>) {
+                if constexpr (std::is_same_v<Target, acmacs::color::Modifier>) {
+                    if (const auto color = read_color(source); color.has_value())
+                        callback(*color);
+                }
+                else if constexpr (std::is_same_v<Target, acmacs::PointCoordinates>) {
+                    if (const auto coord = read_point_coordinates(source); coord.has_value())
+                        callback(*coord);
+                }
+                else
+                    throw error{fmt::format("rjson::v3::call_if_not_null: cannot call with <> as argument, value: {}: {}", typeid(Target).name(), value)};
+            }
+        });
+    }
+
 } // namespace rjson::v3
 
 // ----------------------------------------------------------------------
