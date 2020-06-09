@@ -215,6 +215,27 @@ void acmacs::settings::v2::Settings::apply(std::string_view name)
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v2::Settings::apply_first(const std::vector<std::string_view>& names, throw_if_nothing_applied tina)
+{
+    bool applied{false};
+    for (const auto& to_apply : names) {
+        if (!get(to_apply).is_null()) {
+            AD_LOG(acmacs::log::settings, "applying {}", to_apply);
+            apply(to_apply);
+            applied = true;
+            break;
+        }
+    }
+    if (!applied) {
+        AD_LOG(acmacs::log::settings, "apply_first: NOT applied {}", names);
+        if (tina == throw_if_nothing_applied::yes)
+            throw std::runtime_error{fmt::format("neither of {} found in settings", names)};
+    }
+
+} // acmacs::settings::v2::Settings::apply_first
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::apply_top(std::string_view name)
 {
     AD_LOG(acmacs::log::settings, "apply_top \"{}\"", name);

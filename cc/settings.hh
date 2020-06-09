@@ -24,6 +24,7 @@ namespace acmacs::settings::inline v2
         enum class toplevel_only { no, yes };
         enum class if_no_substitution_found { leave_as_is, null, empty }; // if key not found in environament: [leave_as_is]: "{key}" -> "{key}" [null]: "{key}" -> null [empty]: "{key}" -> ""
         enum class throw_if_partial_substitution { no, yes }; // return original value if no
+        enum class throw_if_nothing_applied { no, yes };
 
         using no_substitution_request = named_string_t<struct no_substitution_request_tag_t>;
         using substitute_result_t = std::variant<const rjson::v3::value*, std::string, no_substitution_request>; // full substition, partial substitution, no substitution request in string
@@ -41,7 +42,10 @@ namespace acmacs::settings::inline v2
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name /* = "main" */);
+        virtual void apply(std::string_view name);
+
+        // apply just first available name
+        void apply_first(const std::vector<std::string_view>& names, throw_if_nothing_applied tina);
 
         void setenv(std::string_view key, rjson::v3::value&& value) { environment_.add(key, std::move(value)); }
         void setenv(std::string_view key, std::string_view value) { setenv(key, rjson::v3::parse_string(value)); }
