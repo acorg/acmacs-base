@@ -42,7 +42,9 @@ namespace acmacs::time_series::inline v2
     inline series make(date::year_month_day first, date::year_month_day after_last) { return make(parameters{first, after_last}); }
     inline series make(std::string_view first, std::string_view after_last) { return make(parameters{date::from_string(first, date::allow_incomplete::yes), date::from_string(after_last, date::allow_incomplete::yes)}); }
 
+    std::string text_name(const parameters& param, const slot& a_slot);
     std::string text_name(const slot& a_slot);
+    std::string numeric_name(const parameters& param, const slot& a_slot);
     std::string numeric_name(const slot& a_slot);
     std::string range_name(const parameters& param, const series& ser);
 

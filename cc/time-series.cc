@@ -155,6 +155,30 @@ size_t acmacs::time_series::v2::find(const series& ser, const date::year_month_d
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::time_series::v2::text_name(const parameters& param, const slot& a_slot)
+{
+    switch (param.intervl) {
+        case interval::year:
+            return date::year_4(a_slot.first);
+        case interval::month:
+            if (param.number_of_intervals == 1) {
+                return date::monthtext_year(a_slot.first);
+            }
+            else {
+                const auto last{date::days_ago(a_slot.after_last, 1)};
+                if (date::get_year(a_slot.first) == date::get_year(last))
+                    return fmt::format("{} - {} {}", date::monthtext(a_slot.first), date::monthtext(last), date::year_4(a_slot.first));
+                else
+                    return fmt::format("{} {} - {} {}", date::monthtext(a_slot.first), date::year_4(a_slot.first), date::monthtext(last), date::year_4(last));
+            }
+        case interval::week:
+        case interval::day:
+            return date::display(a_slot.first);
+    }
+    return date::display(a_slot.first); // g++9
+
+} // acmacs::time_series::v2::text_name
+
 std::string acmacs::time_series::v2::text_name(const slot& a_slot)
 {
     if (const auto days = date::days_between_dates(a_slot.first, a_slot.after_last); days < 28)
@@ -175,6 +199,25 @@ std::string acmacs::time_series::v2::text_name(const slot& a_slot)
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::time_series::v2::numeric_name(const parameters& param, const slot& a_slot)
+{
+    switch (param.intervl) {
+        case interval::year:
+            return date::year_4(a_slot.first);
+        case interval::month:
+            if (param.number_of_intervals == 1) {
+                return date::year4_month2(a_slot.first);
+            }
+            else
+                return fmt::format("{} - {}", date::year4_month2(a_slot.first), date::year4_month2(date::days_ago(a_slot.after_last, 1)));
+        case interval::week:
+        case interval::day:
+            return date::display(a_slot.first);
+    }
+    return date::display(a_slot.first); // g++9
+
+} // acmacs::time_series::v2::numeric_name
+
 std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
 {
     if (const auto days = date::days_between_dates(a_slot.first, a_slot.after_last); days < 28)
@@ -190,7 +233,7 @@ std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
 
 std::string acmacs::time_series::v2::range_name(const parameters& param, const series& ser)
 {
-    return text_name(ser[0]);
+    return fmt::format("{} - {}", text_name(param, ser.front()), text_name(param, ser.back()));
 
 } // acmacs::time_series::v2::range_name
 
