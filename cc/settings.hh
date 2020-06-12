@@ -168,7 +168,7 @@ namespace acmacs::settings::inline v2
             void add(std::string_view key, const rjson::v3::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
             void add(std::string_view key, rjson::v3::value&& val) { env_data_.rbegin()->emplace_or_replace(key, std::move(val)); }
             void add_to_toplevel(std::string_view key, rjson::v3::value&& val) { env_data_.begin()->emplace_or_replace(std::string{key}, std::move(val)); }
-            void add_to_toplevel(std::string_view key, std::string_view value)  { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::string{rjson::v3::detail::string::with_content, value}); }
+            void add_to_toplevel(std::string_view key, std::string_view value);
             void add_to_toplevel(std::string_view key, bool value) { env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::boolean{value}); }
             // !!! to add number or temp string values, generate json into a string then call settings.load_from_string()
             void print() const;

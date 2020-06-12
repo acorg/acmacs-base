@@ -129,6 +129,15 @@ const rjson::v3::value& acmacs::settings::v2::Settings::Environment::get(std::st
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v2::Settings::Environment::add_to_toplevel(std::string_view key, std::string_view value)
+{
+    AD_LOG(acmacs::log::settings, "environment add to toplevel \"{}\": \"{}\"", key, value);
+    env_data_.begin()->emplace_or_replace(std::string{key}, rjson::v3::detail::string{rjson::v3::detail::string::with_content, value});
+
+} // acmacs::settings::v2::Settings::Environment::add_to_toplevel
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v2::Settings::Environment::print() const
 {
     AD_INFO("Settings::Environment {}", env_data_.size());
