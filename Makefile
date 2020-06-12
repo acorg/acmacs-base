@@ -22,6 +22,7 @@ TARGETS = \
   $(DIST)/test-find-color \
   $(DIST)/test-bezier-gradient \
   $(DIST)/test-string-join \
+  $(DIST)/test-string-substitute \
   $(DIST)/test-color-modifier
 
 all: install-acmacs-base
@@ -34,29 +35,30 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
-ACMACS_BASE_SOURCES = \
-  settings.cc         \
-  rjson-v2.cc         \
-  rjson-v3.cc         \
-  time-series.cc      \
-  read-file.cc        \
-  debug.cc            \
-  color.cc            \
-  layout.cc           \
-  color-modifier.cc   \
-  argc-argv.cc        \
-  messages.cc         \
-  color-gradient.cc   \
-  argv.cc             \
-  color-continent.cc  \
-  timeit.cc           \
-  quicklook.cc        \
-  color-distinct.cc   \
-  color-amino-acid.cc \
-  color-hsv.cc        \
-  rjson-v3-helper.cc  \
-  html.cc             \
-  gzip.cc             \
+ACMACS_BASE_SOURCES =  \
+  settings.cc          \
+  rjson-v2.cc          \
+  rjson-v3.cc          \
+  time-series.cc       \
+  read-file.cc         \
+  debug.cc             \
+  color.cc             \
+  layout.cc            \
+  color-modifier.cc    \
+  argc-argv.cc         \
+  messages.cc          \
+  color-gradient.cc    \
+  argv.cc              \
+  color-continent.cc   \
+  timeit.cc            \
+  quicklook.cc         \
+  color-distinct.cc    \
+  color-amino-acid.cc  \
+  color-hsv.cc         \
+  rjson-v3-helper.cc   \
+  string-substitute.cc \
+  html.cc              \
+  gzip.cc              \
   xz.cc
 
 # JSON_PP_SOURCES = rjson.cc json-pp.cc
