@@ -63,7 +63,7 @@ namespace acmacs::settings::inline v2
         // returns const_null if not found
         const rjson::v3::value& getenv(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::leave_as_is, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const;
         const rjson::v3::value& getenv(std::string_view key1, std::string_view key2, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::leave_as_is, throw_if_partial_substitution tips = throw_if_partial_substitution::yes) const; // value of key1 or key2
-        std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
+        std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::empty) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 
         substitute_result_t substitute(const rjson::v3::value& source) const;
@@ -173,14 +173,14 @@ namespace acmacs::settings::inline v2
             void print() const;
             void print_key_value() const;
 
-            std::string substitute_to_string(std::string_view source) const noexcept;
+            std::string substitute_to_string(std::string_view source, if_no_substitution_found ifnsf) const noexcept;
             const rjson::v3::value& substitute_to_value(std::string_view source) const noexcept;
             const detail::env_data_t& toplevel() const { return env_data_.back(); }
 
             // abort if source is empty
             // const rjson::v3::value* if substitution requested for the whole source
             // std::string if no substitution requested (returns source) or part of the source substituted
-            substitute_result_t substitute(std::string_view source) const;
+            substitute_result_t substitute(std::string_view source, if_no_substitution_found ifnsf) const;
 
           private:
             std::vector<detail::env_data_t> env_data_;
