@@ -188,6 +188,14 @@ std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::time_series::v2::range_name(const parameters& param, const series& ser)
+{
+    return text_name(ser[0]);
+
+} // acmacs::time_series::v2::range_name
+
+// ----------------------------------------------------------------------
+
 std::pair<date::year_month_day, date::year_month_day> acmacs::time_series::v2::suggest_start_end(const parameters& param, const date_stat_t& stat)
 {
     if (stat.empty())

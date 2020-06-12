@@ -44,6 +44,7 @@ namespace acmacs::time_series::inline v2
 
     std::string text_name(const slot& a_slot);
     std::string numeric_name(const slot& a_slot);
+    std::string range_name(const parameters& param, const series& ser);
 
      // returns slot number or ser.size() if not found
     size_t find(const series& ser, const date::year_month_day& dat);
