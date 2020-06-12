@@ -630,6 +630,23 @@ std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::settings::v2::Settings::substitute_to_string(std::string_view source, if_no_substitution_found ifnsf) const
+{
+    return std::visit(
+        []<typename Res>(const Res& res) -> std::string {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
+                return std::string{res->template to<std::string_view>()};
+            else if constexpr (std::is_same_v<Res, no_substitution_request>)
+                return *res;
+            else
+                return res;
+        },
+        environment_.substitute(source, ifnsf));
+
+} // acmacs::settings::v2::Settings::substitute_to_string
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v2::Settings::eval_and(const rjson::v3::value& condition) const
 {
     if (condition.empty()) {
