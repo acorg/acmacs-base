@@ -4,7 +4,7 @@
 
 int main()
 {
-    fmt::print("{}\n", acmacs::string::substitute("{a} {b} {c}", std::pair{"a", "aaa"}, std::pair{"b", 67}, std::pair{"c", 2020.202}));
+    fmt::print("{}\n", acmacs::string::substitute("{a} {b} {{liter}} {no-value} {c}", std::pair{"a", "aaa"}, std::pair{"b", 67}, std::pair{"c", 2020.202}));
     return 0;
 }
 
