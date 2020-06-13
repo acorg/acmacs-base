@@ -8,8 +8,24 @@ static std::vector<std::string_view> split(std::string_view source);
 std::string acmacs::string::substitute_from_store(std::string_view pattern, const fmt::dynamic_format_arg_store<fmt::format_context>& store, if_no_substitution_found insf)
 {
     const auto chunks{::split(pattern)};
-    fmt::print("{}\n", chunks);
-    return std::string{pattern};
+    // fmt::print("{}\n", chunks);
+    std::string result;
+    for (const auto& chunk : chunks) {
+        try {
+            result.append(fmt::vformat(chunk, store));
+        }
+        catch (std::exception&) {
+            switch (insf) {
+              case if_no_substitution_found::leave_as_is:
+                  result.append(chunk);
+                  break;
+              case if_no_substitution_found::empty:
+                  break;
+            }
+        }
+    }
+    // fmt::print("\"{}\"\n", result);
+    return result;
 
 } // acmacs::string::substitute_from_store
 
