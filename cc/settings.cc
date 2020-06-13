@@ -543,7 +543,7 @@ std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view ke
             if (substituted.is_null())
                 return std::string{orig->to<std::string_view>()};
             else if (&substituted == &rjson::v3::const_empty_string) {
-                AD_DEBUG("getenv_to_string {} -> {} -> {}", key, val, *orig);
+                // AD_DEBUG("getenv_to_string {} -> {} -> {}", key, val, *orig);
                 return environment_.substitute_to_string(orig->to<std::string_view>(), ifnsf);
             }
             else if (substituted.is_string())
