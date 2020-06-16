@@ -73,13 +73,10 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
         else { // not whole_source_matched
             const auto replace = [ifnsf](const auto& src, size_t prefix, const rjson::v3::value& infix, size_t suffix) -> std::string {
                 if (infix.is_null()) {
-                    switch (ifnsf) {
-                        case if_no_substitution_found::leave_as_is:
-                            return std::string{src};
-                        case if_no_substitution_found::null:
-                        case if_no_substitution_found::empty:
-                            return fmt::format("{}{}", src.substr(0, prefix), src.substr(suffix));
-                    }
+                    if (ifnsf == if_no_substitution_found::leave_as_is)
+                        return std::string{src};
+                    else
+                        return fmt::format("{}{}", src.substr(0, prefix), src.substr(suffix));
                 }
                 else
                     return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
@@ -456,17 +453,13 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
                             switch (ifnsf) {
                               case if_no_substitution_found::leave_as_is:
                                   return *orig;
-                                  break;
                               case if_no_substitution_found::null:
                                   return rjson::v3::const_null;
-                                  break;
                               case if_no_substitution_found::empty:
                                   return rjson::v3::const_empty_string;
-                                  break;
                             }
                         }
-                        else
-                            return *cont;
+                        return *cont;
                     }
                     else if constexpr (std::is_same_v<Cont, no_substitution_request>) {
                         return *orig;
