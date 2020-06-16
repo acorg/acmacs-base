@@ -582,6 +582,7 @@ template <> struct fmt::formatter<rjson::v3::value>
     template <typename ParseContext> auto parse(ParseContext& ctx) -> decltype(ctx.begin())
     {
         auto it = ctx.begin();
+        if (!it)
         if (it != ctx.end() && *it == ':')
             ++it;
         if (it != ctx.end() && *it != '}') {
@@ -593,7 +594,7 @@ template <> struct fmt::formatter<rjson::v3::value>
                     output_ = rjson::v3::output::compact;
             }
         }
-        if (*it == 'c') {
+        if (it != ctx.end() && *it == 'c') {
             output_ = rjson::v3::output::compact_with_spaces;
             ++it;
         }
