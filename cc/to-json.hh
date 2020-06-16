@@ -366,7 +366,7 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<
             indent_ = std::strtoul(&*it, &end, 10);
             it = std::next(it, end - &*it);
         }
-        if (*it == 'c') {
+        if (it != ctx.end() && *it == 'c') {
             indent_ = 0;        // compact anyway
             ++it;
         }
