@@ -82,6 +82,7 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
                     return fmt::format("{}{}{}", src.substr(0, prefix), infix.as_string(), src.substr(suffix));
             };
             const auto replaced = replace(source, static_cast<size_t>(m1.position(0)), found1, static_cast<size_t>(m1.position(0) + m1.length(0)));
+            AD_LOG(acmacs::log::settings, "    partial substitution \"{}\" -- {} -> \"{}\"", source, found1, replaced);
             if (replaced != source) {
                 AD_LOG(acmacs::log::settings, "substitute in string \"{}\" -> \"{}\" (partial substitution)", source, replaced);
                 return std::visit(
