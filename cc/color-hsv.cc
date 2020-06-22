@@ -1,4 +1,5 @@
 #include "acmacs-base/color-hsv.hh"
+#include "acmacs-base/debug.hh"
 
 // ----------------------------------------------------------------------
 
@@ -39,6 +40,7 @@ acmacs::color::HSV::HSV(Color src)
 
 // ----------------------------------------------------------------------
 
+// https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
 uint32_t acmacs::color::HSV::rgb() const noexcept
 {
     const auto from_rgb = [](double r, double g, double b) -> uint32_t { return (uint32_t(r * 255) << 16) | (uint32_t(g * 255) << 8) | uint32_t(b * 255); };
@@ -47,13 +49,14 @@ uint32_t acmacs::color::HSV::rgb() const noexcept
         return from_rgb(v, v, v);
     }
     else {
-        const double hh = (h > 360.0 ? 0.0 : h) / 60.0;
-        const double ff = hh - std::ceil(hh);
+        const auto hh = (h > 360.0 ? 0.0 : h) / 60.0;
+        const auto hhi = static_cast<long>(hh);
+        const auto ff = hh - static_cast<double>(hhi);
         const double p = v * (1.0 - s);
         const double q = v * (1.0 - (s * ff));
         const double t = v * (1.0 - (s * (1.0 - ff)));
 
-        switch (static_cast<long>(hh)) {
+        switch (hhi) {
             case 0:
                 return from_rgb(v, t, p);
             case 1:
@@ -70,10 +73,6 @@ uint32_t acmacs::color::HSV::rgb() const noexcept
     }
 
 } // acmacs::color::HSV::to_rgb
-
-// ----------------------------------------------------------------------
-
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:

@@ -167,6 +167,7 @@ namespace acmacs::color
     inline static void modify_color(Color& target, Modifier::saturation_set saturation)
     {
         HSV target_hsv{target};
+        // AD_DEBUG("saturation_set {}: {} -> {}", *saturation, target, target_hsv);
         target_hsv.s = *saturation;
         target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
     }
