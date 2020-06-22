@@ -15,6 +15,7 @@ static const std::array test_data{
     en{TRANSPARENT, ":s-0.5", TRANSPARENT},
     en{GREEN, ":s0.5", GREEN},
     en{GREEN, ":s+0.5", GREEN},
+    en{0x6495ED, ":s=0.5", 0x78aaf1},
 
     en{BLUE, ":b-0.5", 0x00007F},
     en{BLUE, ":b-0.9", 0x000019},
