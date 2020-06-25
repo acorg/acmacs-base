@@ -41,7 +41,7 @@ namespace parser_pop
     class Parser
     {
       public:
-        Parser();
+        Parser(std::string_view filename);
 
         rjson::v3::value result_move();
         void parse(std::string_view data);
@@ -49,6 +49,7 @@ namespace parser_pop
         constexpr auto pos() const noexcept { return pos_; }
         constexpr auto line() const noexcept { return line_; }
         constexpr auto column() const noexcept { return column_; }
+        constexpr std::string_view filename() const noexcept { return filename_; }
         constexpr std::string_view data(size_t aBegin, size_t aEnd) const { return {source_.data() + aBegin, aEnd - aBegin}; }
 
         constexpr void back() noexcept
@@ -66,6 +67,7 @@ namespace parser_pop
 
       private:
         std::string_view source_;
+        std::string_view filename_;
         size_t pos_{0}, line_{1}, column_{1};
         std::stack<std::unique_ptr<SymbolHandler>> handlers_;
 
@@ -95,12 +97,12 @@ namespace parser_pop
 
         [[noreturn]] void unexpected(std::string_view::value_type aSymbol, Parser& aParser) const
         {
-            throw rjson::v3::parse_error(aParser.line(), aParser.column(), fmt::format("unexpected symbol: '{0}' (0x{0:02X})", aSymbol));
+            throw rjson::v3::parse_error(aParser.filename(), aParser.line(), aParser.column(), fmt::format("unexpected symbol: '{0}' (0x{0:02X})", aSymbol));
         }
 
-        [[noreturn]] void error(Parser& aParser, std::string_view aMessage) const { throw rjson::v3::parse_error(aParser.line(), aParser.column(), aMessage); }
+        [[noreturn]] void error(Parser& aParser, std::string_view aMessage) const { throw rjson::v3::parse_error(aParser.filename(), aParser.line(), aParser.column(), aMessage); }
 
-        [[noreturn]] void internal_error(Parser& aParser) const { throw rjson::v3::parse_error(aParser.line(), aParser.column(), "internal error"); }
+        [[noreturn]] void internal_error(Parser& aParser) const { throw rjson::v3::parse_error(aParser.filename(), aParser.line(), aParser.column(), "internal error"); }
 
         void newline(Parser& aParser) const { aParser.newline(); }
 
@@ -565,7 +567,7 @@ namespace parser_pop
 
     // --------------------------------------------------
 
-    inline Parser::Parser() { handlers_.emplace(std::make_unique<ToplevelHandler>()); }
+    inline Parser::Parser(std::string_view filename) : filename_{filename} { handlers_.emplace(std::make_unique<ToplevelHandler>()); }
 
     inline rjson::v3::value Parser::result_move() { return handlers_.top()->value_move(); }
 
@@ -604,10 +606,10 @@ namespace parser_pop
 
 namespace rjson::v3
 {
-    value_read parse(std::string&& data)
+    value_read parse(std::string&& data, std::string_view filename)
     {
         value_read result{std::move(data)};
-        parser_pop::Parser parser;
+        parser_pop::Parser parser{filename};
         parser.parse(result.buffer_);
 
         // parser.remove_emacs_indent();
@@ -622,7 +624,7 @@ namespace rjson::v3
 
 rjson::v3::value_read rjson::v3::parse_string(std::string_view data)
 {
-    return parse(std::string{data});
+    return parse(std::string{data}, std::string_view{});
 
 } // rjson::v3::parse_string
 
@@ -630,7 +632,7 @@ rjson::v3::value_read rjson::v3::parse_string(std::string_view data)
 
 rjson::v3::value_read rjson::v3::parse_file(std::string_view filename)
 {
-    return parse(static_cast<std::string>(acmacs::file::read(filename)));
+    return parse(static_cast<std::string>(acmacs::file::read(filename)), filename);
 
 } // rjson::v3::parse_file
 

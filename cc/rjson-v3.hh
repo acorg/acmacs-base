@@ -51,6 +51,7 @@ namespace rjson::v3
     {
       public:
         parse_error(size_t line, size_t column, std::string_view message) : error{""}, message_{fmt::format("{}:{}: {}", line, column, message)} {}
+        parse_error(std::string_view filename, size_t line, size_t column, std::string_view message) : error{""}, message_{fmt::format("{}:{}:{}: {}", filename, line, column, message)} {}
         const char* what() const noexcept override { return message_.data(); }
 
       private:
@@ -278,7 +279,7 @@ namespace rjson::v3
 
         value_base value_;
 
-        friend value_read parse(std::string&& data);
+        friend value_read parse(std::string&& data, std::string_view filename);
 
     }; // class value
 
@@ -303,7 +304,7 @@ namespace rjson::v3
 
         std::string buffer_;
 
-        friend value_read parse(std::string&& data);
+        friend value_read parse(std::string&& data, std::string_view filename);
     };
 
     // ======================================================================
