@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "acmacs-base/filesystem.hh"
 #include "acmacs-base/quicklook.hh"
 #include "acmacs-base/debug.hh"
 
@@ -57,6 +58,30 @@ void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds
 }
 
 #endif
+
+// ----------------------------------------------------------------------
+
+void acmacs::preview(std::string_view aFilename, std::string_view position, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
+{
+    using namespace std::chrono_literals;
+
+    if (const fs::path preview_path{fmt::format("{}/bin/preview", std::getenv("HOME"))}; fs::exists(preview_path)) {
+
+        if (aDelayBeforeInSeconds)
+            run_and_detach({preview_path.c_str(), "-p", position.data(), aFilename.data()}, aDelayBeforeInSeconds); // , "-g"
+        else
+            std::system(fmt::format("{} -p {} '{}'", preview_path, position, aFilename).data());
+
+        if (return_to_emacs())
+            run_and_detach({"/usr/bin/open", "-a", "/Applications/Emacs.app"}, aDelayBeforeInSeconds + 1);
+
+        if (aDelayAfterInSeconds)
+            std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
+    }
+    else
+        open(aFilename, aDelayBeforeInSeconds, aDelayAfterInSeconds);
+
+} // acmacs::preview
 
 // ----------------------------------------------------------------------
 
