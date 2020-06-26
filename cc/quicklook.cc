@@ -30,6 +30,8 @@ void acmacs::quicklook(std::string_view aFilename, size_t aDelayInSeconds)
 
 } // acmacs::quicklook
 
+// ----------------------------------------------------------------------
+
 void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size_t aDelayAfterInSeconds)
 {
     using namespace std::chrono_literals;
@@ -46,18 +48,6 @@ void acmacs::open(std::string_view aFilename, size_t aDelayBeforeInSeconds, size
         std::this_thread::sleep_for(1s * aDelayAfterInSeconds);
 
 } // acmacs::quicklook
-
-#else
-
-void acmacs::quicklook(std::string_view /*aFilename*/, size_t /*aDelayInSeconds*/)
-{
-}
-
-void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
-{
-}
-
-#endif
 
 // ----------------------------------------------------------------------
 
@@ -83,7 +73,25 @@ void acmacs::preview(std::string_view aFilename, std::string_view position, size
 
 } // acmacs::preview
 
-// ----------------------------------------------------------------------
+// ======================================================================
+
+#else
+
+void acmacs::quicklook(std::string_view /*aFilename*/, size_t /*aDelayInSeconds*/)
+{
+}
+
+void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
+{
+}
+
+void acmacs::preview(std::string_view /*aFilename*/, std::string_view /*position*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
+{
+}
+
+#endif
+
+// ======================================================================
 
 void acmacs::run_and_detach(std::initializer_list<const char *> argv, size_t aDelayBeforeInSeconds)
 {
