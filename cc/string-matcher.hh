@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <string_view>
 #include <algorithm>
 
 // ----------------------------------------------------------------------
@@ -8,7 +8,7 @@
 namespace string_match
 {
     namespace _internal {
-        typedef std::string::const_iterator iter_t;
+        typedef std::string_view::const_iterator iter_t;
         typedef decltype(iter_t()-iter_t()) score_t;
 
         inline score_t match_len_at(iter_t master_b, iter_t master_e, iter_t input_b, iter_t input_e)
@@ -43,7 +43,7 @@ namespace string_match
 
     typedef _internal::score_t score_t;
 
-    inline score_t match(std::string master, std::string input)
+    inline score_t match(std::string_view master, std::string_view input)
     {
         return _internal::substring_match(master.begin(), master.end(), input.begin(), input.end(), input.size());
 
