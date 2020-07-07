@@ -13,25 +13,16 @@ namespace acmacs::regex
 {
     constexpr auto icase = std::regex::icase | std::regex::ECMAScript | std::regex::optimize;
 
-    inline bool search(std::string_view search_in, std::cmatch& match, const std::regex& re)
-    {
-        return std::regex_search(std::begin(search_in), std::end(search_in), match, re);
-    }
+    inline bool search(std::string_view search_in, std::cmatch& match, const std::regex& re) { return std::regex_search(std::begin(search_in), std::end(search_in), match, re); }
 
-    inline bool search(std::string_view search_in, const std::regex& re)
-    {
-        return std::regex_search(std::begin(search_in), std::end(search_in), re);
-    }
+    inline bool search(std::string_view search_in, const std::regex& re) { return std::regex_search(std::begin(search_in), std::end(search_in), re); }
 
     inline bool search(std::string_view search_in, ssize_t offset, std::cmatch& match, const std::regex& re)
     {
         return std::regex_search(std::next(std::begin(search_in), offset), std::end(search_in), match, re);
     }
 
-    inline bool search(std::string_view search_in, ssize_t offset, const std::regex& re)
-    {
-        return std::regex_search(std::next(std::begin(search_in), offset), std::end(search_in), re);
-    }
+    inline bool search(std::string_view search_in, ssize_t offset, const std::regex& re) { return std::regex_search(std::next(std::begin(search_in), offset), std::end(search_in), re); }
 
     // ----------------------------------------------------------------------
 
@@ -41,8 +32,9 @@ namespace acmacs::regex
         std::vector<const char*> fmt;
     };
 
-    // returns pair of empty strings if no matches found
-    template <typename Container> std::optional<std::vector<std::string>> scan_replace(std::string_view source, const Container& scan_data)
+    using scan_replace_result_t = std::optional<std::vector<std::string>>;
+
+    template <typename Container> scan_replace_result_t scan_replace(std::string_view source, const Container& scan_data)
     {
         for (const auto& entry : scan_data) {
             if (std::cmatch match; std::regex_search(std::begin(source), std::end(source), match, entry.look_for)) {
@@ -54,7 +46,7 @@ namespace acmacs::regex
         return {};
     }
 
-}
+} // namespace acmacs::regex
 
 // ======================================================================
 // fmt support for std::smatch and std::cmatch
