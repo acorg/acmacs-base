@@ -799,15 +799,17 @@ void acmacs::settings::v2::Settings::set_defines(const std::vector<std::string_v
         if (const auto pos = def.find('='); pos != std::string_view::npos) {
             const auto val_s = def.substr(pos + 1);
             if (val_s == "-") { // parsed as -0
-                setenv(def.substr(0, pos), rjson::v3::parse_string(fmt::format("\"{}\"", val_s)));
+                setenv(def.substr(0, pos), rjson::v3::detail::string{val_s});
             }
             else {
+                // AD_LOG(acmacs::log::settings, "set_defines \"{}\"", def);
                 try {
-                    setenv(def.substr(0, pos), rjson::v3::parse_string(val_s));
+                    setenv(def.substr(0, pos), rjson::v3::parse_string_no_keep(val_s));
                 }
                 catch (std::exception&) {
-                    setenv(def.substr(0, pos), rjson::v3::parse_string(fmt::format("\"{}\"", val_s)));
+                    setenv(def.substr(0, pos), rjson::v3::detail::string{val_s});
                 }
+                AD_LOG(acmacs::log::settings, "set_defines \"{}\" -> {}", def.substr(0, pos), getenv(def.substr(0, pos)));
             }
         }
         else

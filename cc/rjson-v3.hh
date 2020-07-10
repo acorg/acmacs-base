@@ -317,6 +317,7 @@ namespace rjson::v3
     extern const detail::object const_empty_object;
 
     value_read parse_string(std::string_view data);
+    value parse_string_no_keep(std::string_view data); // assume data is kept somewhere, do not copy it
     value_read parse_file(std::string_view filename);
 
     enum class output { compact, compact_with_spaces, pretty, pretty1, pretty2, pretty4, pretty8 };

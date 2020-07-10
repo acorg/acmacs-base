@@ -630,6 +630,16 @@ rjson::v3::value_read rjson::v3::parse_string(std::string_view data)
 
 // ----------------------------------------------------------------------
 
+rjson::v3::value rjson::v3::parse_string_no_keep(std::string_view data) // assume data is kept somewhere, do not copy it
+{
+    parser_pop::Parser parser{std::string_view{}};
+    parser.parse(data);
+    return parser.result_move();
+
+} // rjson::v3::parse_string_no_keep
+
+// ----------------------------------------------------------------------
+
 rjson::v3::value_read rjson::v3::parse_file(std::string_view filename)
 {
     return parse(static_cast<std::string>(acmacs::file::read(filename)), filename);
