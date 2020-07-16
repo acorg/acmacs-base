@@ -24,16 +24,16 @@ static const char* ana_colors[] =
 
 static const char* google_maps_2017_colors[] =
 {
-    "#FF0000",
-    "#4B96F3",
-    "#4DB546",
-    "#FFFF00",
-    "#FF8000",
-    "#15B5C7",
-    "#F98182",
-    "#7B9EB1",
-    "#8F9CE2",
-    "#0FBDFF",
+    "#FF0000",                  // gmap1
+    "#4B96F3",                  // gmap2
+    "#4DB546",                  // gmap3
+    "#FFFF00",                  // gmap4
+    "#FF8000",                  // gmap5
+    "#15B5C7",                  // gmap6
+    "#F98182",                  // gmap7
+    "#7B9EB1",                  // gmap8
+    "#8F9CE2",                  // gmap9
+    "#0FBDFF",                  // gmap10
 };
 
 // ----------------------------------------------------------------------
