@@ -233,7 +233,10 @@ std::string acmacs::time_series::v2::numeric_name(const slot& a_slot)
 
 std::string acmacs::time_series::v2::range_name(const parameters& param, const series& ser, std::string_view separator)
 {
-    return fmt::format("{}{}{}", text_name(param, ser.front()), separator, text_name(param, ser.back()));
+    if (!ser.empty())
+        return fmt::format("{}{}{}", text_name(param, ser.front()), separator, text_name(param, ser.back()));
+    else
+        return {};
 
 } // acmacs::time_series::v2::range_name
 
