@@ -29,7 +29,9 @@ void Color::from_string(std::string_view src)
         }
     }
     catch (std::exception&) {
-        throw acmacs::color::error{fmt::format("cannot read Color from \"{}\"", src)};
+        // throw acmacs::color::error{fmt::format("Color::from_string: cannot read Color from \"{}\"", src)};
+        AD_WARNING("Color::from_string: cannot read Color from \"{}\", PINK is substituted", src);
+        color_ = 0xFFC0CB;
     }
 
 } // Color::from_string
