@@ -166,9 +166,10 @@ namespace acmacs
 
         std::string report_sorted_max_first() const { return report_sorted_max_first("{counter:6d} {value}\n"); }
 
-        counter_t operator[](char val) const { return counter_[static_cast<size_t>(val) - first_char]; }
+        constexpr counter_t operator[](char val) const { return counter_[static_cast<size_t>(val) - first_char]; }
 
         constexpr const auto& counter() const { return counter_; }
+        constexpr auto& counter() { return counter_; }
 
       private:
         std::array<counter_t, last_char - first_char> counter_;
@@ -182,6 +183,14 @@ namespace acmacs
     };
 
     using CounterChar = CounterCharSome<0, 256, uint32_t>;
+
+    template <size_t first_char, size_t last_char, typename counter_t_t> CounterCharSome<first_char, last_char, counter_t_t> merge_CounterCharSome(const CounterCharSome<first_char, last_char, counter_t_t>& lhs, const CounterCharSome<first_char, last_char, counter_t_t>& rhs)
+    {
+        CounterCharSome<first_char, last_char, counter_t_t> result;
+        for (size_t ind{0}; ind < result.counter().size(); ++ind)
+            result.counter()[ind] = lhs.counter()[ind] + rhs.counter()[ind];
+        return result;
+    }
 
 } // namespace acmacs
 
