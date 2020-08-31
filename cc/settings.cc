@@ -561,8 +561,12 @@ acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settin
     AD_LOG(acmacs::log::settings, "substitute in \"{}\"", source);
     AD_LOG_INDENT;
     return source.visit([this, &source]<typename Arg>(const Arg& arg) -> acmacs::settings::v2::Settings::substitute_result_t {
-        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
-            return environment_.substitute(arg.template to<std::string_view>(), if_no_substitution_found::empty);
+        if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
+            if (arg.empty())
+                return &source;
+            else
+                return environment_.substitute(arg.template to<std::string_view>(), if_no_substitution_found::empty);
+        }
         else
             return &source;
     });
