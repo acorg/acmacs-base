@@ -30,11 +30,13 @@ namespace acmacs
 
         const auto& max() const { return *std::max_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.second < e2.second; }); }
 
-        auto sorted_max_first() const
+        auto sorted_max_first(size_t limit = 0) const
             {
                 std::vector<const value_type*> result(counter_.size());
                 std::transform(std::begin(counter_), std::end(counter_), std::begin(result), [](const auto& ee) { return &ee; });
                 std::sort(result.begin(), result.end(), [](const auto& e1, const auto& e2) { return e1->second > e2->second; });
+                if (limit > 0 && limit < result.size())
+                    result.erase(std::next(result.begin(), static_cast<ssize_t>(limit)), result.end());
                 return result;
             }
 
@@ -60,10 +62,10 @@ namespace acmacs
 
         std::string report() const { return report("{value}  {counter:6d}\n"); }
 
-        std::string report_sorted_max_first(std::string_view format) const
+        std::string report_sorted_max_first(std::string_view format, size_t limit = 0) const
         {
             fmt::memory_buffer out;
-            for (const auto& entry : sorted_max_first())
+            for (const auto& entry : sorted_max_first(limit))
                 format_entry(out, format, *entry);
             return fmt::to_string(out);
         }
@@ -80,8 +82,9 @@ namespace acmacs
 
         void format_entry(fmt::memory_buffer& out, std::string_view format, const value_type& entry) const
         {
-                fmt::format_to(out, format, fmt::arg("quoted", fmt::format("\"{}\"", entry.first)), fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
-                               fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+            fmt::format_to(out, format, fmt::arg("quoted", fmt::format("\"{}\"", entry.first)), fmt::arg("value", entry.first), fmt::arg("counter", entry.second), //
+                           fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0),                                  //
+                           fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
         }
 
     }; // class Counter<Obj>
