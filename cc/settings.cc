@@ -507,46 +507,8 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
 std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view key, toplevel_only a_toplevel_only, if_no_substitution_found ifnsf) const
 {
     AD_LOG(acmacs::log::settings, "getenv_to_string \"{}\"", key);
-    if (const auto& val = environment_.get(environment_.substitute_to_string(key, ifnsf), a_toplevel_only); val.is_string()) {
-        const rjson::v3::value* orig = &val;
-        for (size_t num_subst = 0; num_subst < 10; ++num_subst) {
-            if (orig->empty())
-                return std::string{};
-
-            const rjson::v3::value& substituted = std::visit(
-                [&orig]<typename Cont>(Cont cont) -> const rjson::v3::value& {
-                    if constexpr (std::is_same_v<Cont, const rjson::v3::value*>) {
-                        if (cont->is_null())
-                            return *orig;
-                        else
-                            return *cont;
-                    }
-                    else if constexpr (std::is_same_v<Cont, no_substitution_request>) {
-                        return rjson::v3::const_null;
-                    }
-                    else { // no subst or partial subst
-                        if (cont != orig->to<std::string_view>())
-                            return rjson::v3::const_empty_string; // --> use substitute_to_string
-                        else
-                            return rjson::v3::const_null;
-                    }
-                },
-                environment_.substitute(orig->to<std::string_view>(), ifnsf));
-
-            AD_LOG(acmacs::log::settings, "getenv_to_string substituted {} -> {}", *orig, substituted);
-            if (substituted.is_null())
-                return std::string{orig->to<std::string_view>()};
-            else if (&substituted == &rjson::v3::const_empty_string) {
-                // AD_DEBUG("getenv_to_string {} -> {} -> {}", key, val, *orig);
-                return environment_.substitute_to_string(orig->to<std::string_view>(), ifnsf);
-            }
-            else if (substituted.is_string())
-                orig = &substituted;
-            else
-                throw error(AD_FORMAT("Settings::getenv_to_string: result of substitutions is not a string: {} <- {}", substituted, val));
-        }
-        throw error(AD_FORMAT("Settings::getenv_to_string: too many substitutions in {}", val));
-    }
+    if (const auto& val = environment_.get(environment_.substitute_to_string(key, ifnsf), a_toplevel_only); val.is_string())
+        return substitute_to_string(val);
     else if (val.is_null())
         return std::string{};   // key not found in environment
     else
@@ -623,13 +585,22 @@ double acmacs::settings::v2::Settings::substitute_to_double(const rjson::v3::val
 std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source) const
 {
     return std::visit(
-        [this]<typename Res>(const Res& res) -> std::string {
-            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
-                return substitute_to_string(*res); // until no_substitution_request return std::string{res->template to<std::string_view>()};
-            else if constexpr (std::is_same_v<Res, no_substitution_request>)
+        [this, &source]<typename Res>(const Res& res) -> std::string {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>) {
+                AD_DEBUG("  {} --> {} (again)", source, *res);
+                if (!res || res->is_null())
+                    return std::string{source.template to<std::string_view>()}; // entire source matched and no substitution found
+                else
+                    return substitute_to_string(*res); // until no_substitution_request return std::string{res->template to<std::string_view>()};
+            }
+            else if constexpr (std::is_same_v<Res, no_substitution_request>) {
+                // AD_DEBUG("  {} --> {} (no_substitution_request)", source, *res);
                 return *res;
-            else
+            }
+            else {
+                // AD_DEBUG("  {} --> \"{}\" (done)", source, res);
                 return res;
+            }
         },
         substitute(source));
 
@@ -640,9 +611,14 @@ std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3
 std::string acmacs::settings::v2::Settings::substitute_to_string(std::string_view source, if_no_substitution_found ifnsf) const
 {
     return std::visit(
-        []<typename Res>(const Res& res) -> std::string {
-            if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
-                return std::string{res->template to<std::string_view>()};
+        [this, &source]<typename Res>(const Res& res) -> std::string {
+            if constexpr (std::is_same_v<Res, const rjson::v3::value*>) {
+                if (!res || res->is_null())
+                    return std::string{source}; // entire source matched and no substitution found
+                else
+                    return substitute_to_string(*res); // until no_substitution_request
+                // return std::string{res->template to<std::string_view>()};
+            }
             else if constexpr (std::is_same_v<Res, no_substitution_request>)
                 return *res;
             else
