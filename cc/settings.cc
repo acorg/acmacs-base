@@ -623,9 +623,9 @@ double acmacs::settings::v2::Settings::substitute_to_double(const rjson::v3::val
 std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source) const
 {
     return std::visit(
-        []<typename Res>(const Res& res) -> std::string {
+        [this]<typename Res>(const Res& res) -> std::string {
             if constexpr (std::is_same_v<Res, const rjson::v3::value*>)
-                return std::string{res->template to<std::string_view>()};
+                return substitute_to_string(*res); // until no_substitution_request return std::string{res->template to<std::string_view>()};
             else if constexpr (std::is_same_v<Res, no_substitution_request>)
                 return *res;
             else
