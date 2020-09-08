@@ -394,6 +394,7 @@ void acmacs::settings::v2::Settings::apply_for_each()
 {
     using namespace std::string_view_literals;
 
+    raii_true warn_if_set_used{warn_if_set_used_};
     const auto var_name = getenv_or("var"sv, "name"sv);
     const auto& values_clause = getenv("values"sv, toplevel_only::yes);
     if (!values_clause.is_array())
