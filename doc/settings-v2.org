@@ -1,24 +1,39 @@
-# Time-stamp: <2019-12-13 10:53:32 eu>
+# Time-stamp: <2020-09-08 11:50:03 eu>
 
 * Built in commands in settings-v2
 
 ** conditional evaluation
-{"N": "if", "condition": {"and": ["{whocc}", {"not-empty": "{virus-type}"}]}, "then": ["clades-{virus-type}{lineage}"]},
+#+BEGIN_SRC json
+  {"N": "if", "condition": {"and": ["{whocc}", {"not-empty": "{virus-type}"}]}, "then": ["clades-{virus-type}{lineage}"]},
+#+END_SRC
 
 *** conditions
-{"and": [<bool-condition>, ...]}
-{"or": [<bool-condition>, ...]}
-{"not": <bool-condition>}
-{"empty": "<string>"}
-{"not-empty": "<string>"}
-{"equal": [<value>, ...]}
-{"not-equal": [<value>, ...]}
+#+BEGIN_SRC json
+  {"and": [<bool-condition>, ...]}
+  {"or": [<bool-condition>, ...]}
+  {"not": <bool-condition>}
+  {"empty": "<string>"}
+  {"not-empty": "<string>"}
+  {"equal": [<value>, ...]}
+  {"not-equal": [<value>, ...]}
+#+END_SRC
+
+** loop
+#+BEGIN_SRC json
+  {"N": "for-each", "var": "name", "values": ["asia", "russia"], "do": [{"N": ":print-environment-key-value", "key": "continent:{name}"}]}
+#+END_SRC
+
 
 ** prints environment at all levels
-{"N": ":print-all-environment"} 
+#+BEGIN_SRC json
+  {"N": ":print-all-environment"} 
+#+END_SRC
 
 ** prints string at "key" followed by colon followed by substituted "value"
-{"N": ":print-environment-key-value", "key": "continent:russia", "value": "{continent:russia}"}
+#+BEGIN_SRC json
+  {"N": ":print-environment-key-value", "key": "continent:russia", "value": "{continent:russia}"}
+#+END_SRC
+
 
 * COMMENT local vars ======================================================================
 :PROPERTIES:

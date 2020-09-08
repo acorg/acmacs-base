@@ -280,6 +280,10 @@ bool acmacs::settings::v2::Settings::apply_built_in(std::string_view name)
             apply_if();
             return true;
         }
+        else if (name == "for-each") {
+            apply_for_each();
+            return true;
+        }
         else if (name == ":print-all-environment") {
             environment_.print();
             return true;
@@ -346,7 +350,7 @@ void acmacs::settings::v2::Settings::push_and_apply(const rjson::v3::detail::obj
             if (command != "set")
                 apply(command);
             else if (warn_if_set_used_)
-                AD_WARNING("\"set\" command has no effect (used inside \"if\"?): {}", entry);
+                AD_WARNING("\"set\" command has no effect (used inside \"if\" or \"for-each\"?): {}", entry);
         }
         else if (!entry["?N"sv].is_null() || !entry["? N"sv].is_null()) {
             // command is commented out
@@ -383,6 +387,29 @@ void acmacs::settings::v2::Settings::apply_if()
     }
 
 } // acmacs::settings::v2::Settings::apply_if
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v2::Settings::apply_for_each()
+{
+    using namespace std::string_view_literals;
+
+    raii_true warn_if_set_used{warn_if_set_used_};
+    const auto var_name = getenv_or("var"sv, "name"sv);
+    const auto& values_clause = getenv("values"sv, toplevel_only::yes);
+    if (!values_clause.is_array())
+        throw error{AD_FORMAT("\"values\" clause must be array")};
+    const auto& do_clause = getenv("do"sv, toplevel_only::yes);
+    if (!do_clause.is_array())
+        throw error{AD_FORMAT("\"do\" clause must be array")};
+    for (const auto& val : values_clause.array()) {
+        environment_.push();
+        environment_.add(var_name, val);
+        apply(do_clause);
+        environment_.pop();
+    }
+
+} // acmacs::settings::v2::Settings::apply_for_each
 
 // ----------------------------------------------------------------------
 

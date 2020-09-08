@@ -194,6 +194,7 @@ namespace acmacs::settings::inline v2
 
         void push_and_apply(const rjson::v3::detail::object& entry);
         void apply_if();
+        void apply_for_each();
         bool eval_condition(const rjson::v3::value& condition) const;
         bool eval_and(const rjson::v3::value& condition) const;
         bool eval_or(const rjson::v3::value& condition) const;
