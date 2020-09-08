@@ -587,7 +587,7 @@ std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3
     return std::visit(
         [this, &source]<typename Res>(const Res& res) -> std::string {
             if constexpr (std::is_same_v<Res, const rjson::v3::value*>) {
-                AD_DEBUG("  {} --> {} (again)", source, *res);
+                // AD_DEBUG("  {} --> {} (again)", source, *res);
                 if (!res || res->is_null())
                     return std::string{source.template to<std::string_view>()}; // entire source matched and no substitution found
                 else
