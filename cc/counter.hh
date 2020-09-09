@@ -114,6 +114,12 @@ namespace acmacs
         template <typename Container> CounterCharSome(const Container& container) : CounterCharSome(std::begin(container), std::end(container)) {}
 
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj) - first_char]; }
+        void count(char aObj, counter_t num) { counter_[static_cast<unsigned char>(aObj) - first_char] += num; }
+
+        void update(const CounterCharSome& other)
+        {
+            std::transform(counter_.begin(), counter_.end(), other.counter_.begin(), counter_.begin(), [](counter_t e1, counter_t e2) { return e1 + e2; });
+        }
 
         bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](counter_t val) { return val == 0; }); }
         size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](counter_t val) { return val > counter_t{0}; })); }
