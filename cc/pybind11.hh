@@ -8,6 +8,7 @@ namespace py = pybind11;
 
 #pragma GCC diagnostic push
 #ifdef __clang__
+#pragma GCC diagnostic ignored "-Wcast-align"
 #pragma GCC diagnostic ignored "-Wclass-varargs"
 #pragma GCC diagnostic ignored "-Wcovered-switch-default"
 #pragma GCC diagnostic ignored "-Wdeprecated"

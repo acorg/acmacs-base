@@ -21,7 +21,8 @@
 #define AD_WARNING(...) acmacs::log::debug_print(">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_INFO(...) acmacs::log::debug_print(">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG(...) acmacs::log::debug_print(">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+// #define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_DEBUG_IF(dbg, ...) if (dbg == acmacs::debug::yes) acmacs::log::debug(fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
@@ -108,19 +109,24 @@ namespace acmacs
             extern bool enabled;
         }
 
-        template <typename Filename, typename LineNo> inline void debug_print(std::string_view prefix, std::string_view message, Filename filename, LineNo line_no)
+        inline void debug_print(std::string_view prefix, std::string_view message, const char* filename, int line_no)
         {
             if (detail_debug::enabled)
                 fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
         }
 
-        template <typename Filename, typename LineNo> inline void debug_if(debug dbg, std::string_view message, Filename filename, LineNo line_no)
+        // template <typename Filename, typename LineNo> inline void debug_if(debug dbg, std::string_view message, Filename filename, LineNo line_no)
+        // {
+        //     if (dbg == acmacs::debug::yes)
+        //         fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
+        // }
+
+        inline void debug(std::string_view message, const char* filename, int line_no)
         {
-            if (dbg == acmacs::debug::yes)
-                fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
+            fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
         }
 
-        template <typename Filename, typename LineNo> inline void ad_assert(bool condition, std::string_view message, Filename filename, LineNo line_no)
+        inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no)
         {
             if (!(condition)) {
                 fmt::print(stderr, "> ASSERTION FAILED {} @@ {}:{}\n", message, filename, line_no);
