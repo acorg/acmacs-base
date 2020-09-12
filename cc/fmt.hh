@@ -14,6 +14,7 @@
 #pragma GCC diagnostic ignored "-Wshadow-field" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wundef" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor" // fmt/core.h
 #endif
 
 #ifdef __GNUG__
