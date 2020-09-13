@@ -534,8 +534,9 @@ const rjson::v3::value& acmacs::settings::v2::Settings::getenv(std::string_view 
 std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view key, toplevel_only a_toplevel_only, if_no_substitution_found ifnsf) const
 {
     AD_LOG(acmacs::log::settings, "getenv_to_string \"{}\"", key);
-    if (const auto& val = environment_.get(environment_.substitute_to_string(key, ifnsf), a_toplevel_only); val.is_string())
-        return substitute_to_string(val);
+    if (const auto& val = environment_.get(environment_.substitute_to_string(key, ifnsf), a_toplevel_only); val.is_string()) {
+        return substitute_to_string(val, ifnsf);
+    }
     else if (val.is_null())
         return std::string{};   // key not found in environment
     else
@@ -545,16 +546,16 @@ std::string acmacs::settings::v2::Settings::getenv_to_string(std::string_view ke
 
 // ----------------------------------------------------------------------
 
-acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settings::substitute(const rjson::v3::value& source) const
+acmacs::settings::v2::Settings::substitute_result_t acmacs::settings::v2::Settings::substitute(const rjson::v3::value& source, if_no_substitution_found ifnsf) const
 {
     AD_LOG(acmacs::log::settings, "substitute in \"{}\"", source);
     AD_LOG_INDENT;
-    return source.visit([this, &source]<typename Arg>(const Arg& arg) -> acmacs::settings::v2::Settings::substitute_result_t {
+    return source.visit([this, ifnsf, &source]<typename Arg>(const Arg& arg) -> acmacs::settings::v2::Settings::substitute_result_t {
         if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
             if (arg.empty())
                 return &source;
             else
-                return environment_.substitute(arg.template to<std::string_view>(), if_no_substitution_found::empty);
+                return environment_.substitute(arg.template to<std::string_view>(), ifnsf);
         }
         else
             return &source;
@@ -609,7 +610,7 @@ double acmacs::settings::v2::Settings::substitute_to_double(const rjson::v3::val
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source) const
+std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source, if_no_substitution_found ifnsf) const
 {
     return std::visit(
         [this, &source]<typename Res>(const Res& res) -> std::string {
@@ -629,7 +630,7 @@ std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3
                 return res;
             }
         },
-        substitute(source));
+        substitute(source, ifnsf));
 
 } // acmacs::settings::v2::Settings::substitute_to_string
 

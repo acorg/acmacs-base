@@ -66,11 +66,11 @@ namespace acmacs::settings::inline v2
         std::string getenv_to_string(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no, if_no_substitution_found ifnsf = if_no_substitution_found::empty) const;
         const detail::env_data_t& getenv_toplevel() const { return environment_.toplevel(); }
 
-        substitute_result_t substitute(const rjson::v3::value& source) const;
+        substitute_result_t substitute(const rjson::v3::value& source, if_no_substitution_found ifnsf = if_no_substitution_found::empty) const;
         const rjson::v3::value& substitute_to_value(const rjson::v3::value& source) const;
         bool substitute_to_bool(const rjson::v3::value& source) const;
         double substitute_to_double(const rjson::v3::value& source) const;
-        std::string substitute_to_string(const rjson::v3::value& source) const;
+        std::string substitute_to_string(const rjson::v3::value& source, if_no_substitution_found ifnsf = if_no_substitution_found::empty) const;
         std::string substitute_to_string(std::string_view source, if_no_substitution_found ifnsf = if_no_substitution_found::leave_as_is) const;
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
