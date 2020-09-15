@@ -28,7 +28,10 @@ namespace acmacs
         template <typename S> void count(const S& aObj) { ++counter_[Obj{aObj}]; }
         template <typename S> void count_if(bool cond, const S& aObj) { if (cond) ++counter_[Obj{aObj}]; }
 
+        const auto& min() const { return *std::min_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.second < e2.second; }); }
         const auto& max() const { return *std::max_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.second < e2.second; }); }
+        const auto& min_value() const { return *std::min_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.first < e2.first; }); }
+        const auto& max_value() const { return *std::max_element(counter_.begin(), counter_.end(), [](const auto& e1, const auto& e2) { return e1.first < e2.first; }); }
 
         auto sorted_max_first(size_t limit = 0) const
             {
