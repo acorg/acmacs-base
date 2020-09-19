@@ -612,21 +612,23 @@ double acmacs::settings::v2::Settings::substitute_to_double(const rjson::v3::val
 
 std::string acmacs::settings::v2::Settings::substitute_to_string(const rjson::v3::value& source, if_no_substitution_found ifnsf) const
 {
+    AD_LOG(acmacs::log::settings, "substitute_to_string in {}", source);
+    AD_LOG_INDENT;
     return std::visit(
         [this, &source]<typename Res>(const Res& res) -> std::string {
             if constexpr (std::is_same_v<Res, const rjson::v3::value*>) {
-                // AD_DEBUG("  {} --> {} (again)", source, *res);
+                AD_LOG(acmacs::log::settings, "{} --> {} (again)", source, *res);
                 if (!res || res->is_null())
                     return std::string{source.template to<std::string_view>()}; // entire source matched and no substitution found
                 else
                     return substitute_to_string(*res); // until no_substitution_request return std::string{res->template to<std::string_view>()};
             }
             else if constexpr (std::is_same_v<Res, no_substitution_request>) {
-                // AD_DEBUG("  {} --> {} (no_substitution_request)", source, *res);
+                AD_LOG(acmacs::log::settings, "{} --> {} (no_substitution_request)", source, *res);
                 return *res;
             }
             else {
-                // AD_DEBUG("  {} --> \"{}\" (done)", source, res);
+                AD_LOG(acmacs::log::settings, "{} --> \"{}\" (done)", source, res);
                 return res;
             }
         },

@@ -28,6 +28,8 @@
 
 namespace rjson::v3
 {
+    class value;
+
     class error : public std::runtime_error
     {
       public:
@@ -37,6 +39,7 @@ namespace rjson::v3
     class value_type_mismatch : public error
     {
       public:
+        value_type_mismatch(std::string_view requested_type, const value& val, std::string_view source_ref={});
         value_type_mismatch(std::string_view requested_type, const std::type_info& actual_type, std::string_view source_ref={})
             : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type.name(), source_ref)}
         {
@@ -60,8 +63,6 @@ namespace rjson::v3
     }; // class parse_error
 
     // ----------------------------------------------------------------------
-
-    class value;
 
     namespace detail
     {
@@ -366,7 +367,7 @@ namespace rjson::v3
     inline value::operator bool() const
     {
         return std::visit(
-            []<typename Content>(const Content& arg) -> bool {
+            [this]<typename Content>(const Content& arg) -> bool {
                 if constexpr (std::is_same_v<Content, detail::boolean>)
                     return arg.template to<bool>();
                 else if constexpr (std::is_same_v<Content, detail::null>)
@@ -376,7 +377,7 @@ namespace rjson::v3
                 else if constexpr (std::is_same_v<Content, detail::number>)
                     return !float_zero(arg.template to<double>());
                 else
-                    throw value_type_mismatch{"<convertible-to-bool>", typeid(Content)};
+                    throw value_type_mismatch{"<convertible-to-bool>", *this};
             },
             value_);
     }
@@ -397,13 +398,13 @@ namespace rjson::v3
     inline const detail::object& value::object() const
     {
         return std::visit(
-            []<typename Content>(Content&& arg) -> const detail::object& {
+            [this]<typename Content>(Content&& arg) -> const detail::object& {
                 if constexpr (std::is_same_v<std::decay_t<Content>, detail::object>)
                     return arg;
                 else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
                     return const_empty_object;
                 else
-                    throw value_type_mismatch{"rjson::v3::object", typeid(Content)};
+                    throw value_type_mismatch{"rjson::v3::object", *this};
             },
             value_);
     }
@@ -411,13 +412,13 @@ namespace rjson::v3
     inline const detail::array& value::array() const
     {
         return std::visit(
-            []<typename Content>(Content&& arg) -> const detail::array& {
+            [this]<typename Content>(Content&& arg) -> const detail::array& {
                 if constexpr (std::is_same_v<std::decay_t<Content>, detail::array>)
                     return arg;
                 else if constexpr (std::is_same_v<std::decay_t<Content>, detail::null>)
                     return const_empty_array;
                 else
-                    throw value_type_mismatch{"rjson::v3::array", typeid(Content)};
+                    throw value_type_mismatch{"rjson::v3::array", *this};
             },
             value_);
     }
@@ -646,6 +647,16 @@ template <> struct fmt::formatter<rjson::v3::detail::boolean> : fmt::formatter<a
     template <typename FormatCtx> auto format(const rjson::v3::detail::boolean& value, FormatCtx& ctx) { return format_to(ctx.out(), "{}", value.to<bool>()); }
 };
 
+// ----------------------------------------------------------------------
+
+namespace rjson::v3
+{
+    inline value_type_mismatch::value_type_mismatch(std::string_view requested_type, const value& val, std::string_view source_ref)
+        : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, val, source_ref)}
+    {
+    }
+
+} // namespace rjson::v3
 
 // ----------------------------------------------------------------------
 /// Local Variables:
