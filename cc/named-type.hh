@@ -330,6 +330,10 @@ template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_num
     }
 };
 
+template <typename T, typename Tag> struct fmt::formatter<acmacs::named_string_base_t<T, Tag>> {
+    template <typename FormatCtx> auto format(const acmacs::named_string_base_t<T, Tag>& str, FormatCtx& ctx) { return fmt::format_to(ctx.out(), "{}", str.get()); }
+};
+
 // ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
