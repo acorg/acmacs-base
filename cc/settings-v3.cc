@@ -37,7 +37,7 @@ void acmacs::settings::v3::Data::apply(const rjson::v3::value& entry)
                 else if constexpr (std::is_same_v<T, rjson::v3::detail::null>)
                     ; // commented out item (using #), do nothing
                 else
-                    throw error{AD_FORMAT("cannot apply: {}\n", sub_entry)};
+                    throw error{AD_FORMAT("cannot apply: {} (string or object expected)\n", sub_entry)};
             });
         }
     }
@@ -45,7 +45,7 @@ void acmacs::settings::v3::Data::apply(const rjson::v3::value& entry)
         throw error{AD_FORMAT("cannot apply: {} : {}\n", err, entry)};
     }
     catch (std::exception& err) {
-        throw error{fmt::format("{}\n    on applying {}", err.what(), entry)};
+        throw error{fmt::format("{}\n    on applying {}", err, entry)};
     }
 
 } // acmacs::settings::v3::Data::apply
@@ -54,6 +54,53 @@ void acmacs::settings::v3::Data::apply(const rjson::v3::value& entry)
 
 void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object& entry)
 {
+    class Subenvironment
+    {
+      public:
+        Subenvironment(detail::Environment& env, bool push) : env_{env}, push_{push}
+        {
+            if (push_)
+                env_.push();
+        }
+        ~Subenvironment()
+        {
+            if (push_)
+                env_.pop();
+        }
+
+      private:
+        detail::Environment& env_;
+        const bool push_;
+    };
+
+    using namespace std::string_view_literals;
+    AD_LOG_INDENT;
+    AD_LOG(acmacs::log::settings, "push_and_apply {}", entry);
+    try {
+        if (const auto& command_v = entry["N"sv]; !command_v.is_null()) {
+            const auto command{command_v.to<std::string_view>()};
+            AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
+            Subenvironment sub_env(*environment_, command != "set");
+            for (const auto& [key, val] : entry) {
+                if (key != "N"sv) {
+                    // AD_LOG(acmacs::log::settings, "environment_.add key:{} val:{}", key, val);
+                    environment_->add(key, val);
+                }
+            }
+            if (command != "set")
+                apply(command);
+            else if (warn_if_set_used_)
+                AD_WARNING("\"set\" command has no effect (used inside \"if\" or \"for-each\"?): {}", entry);
+        }
+        else if (!entry["?N"sv].is_null() || !entry["? N"sv].is_null()) {
+            // command is commented out
+        }
+        else
+            throw error(AD_FORMAT("cannot apply (no \"N\"): {}\n", entry));
+    }
+    catch (rjson::v3::value_type_mismatch& err) {
+        throw error(AD_FORMAT("cannot apply: {} : {}\n", err, entry));
+    }
 
 } // acmacs::settings::v3::Data::push_and_apply
 
@@ -64,7 +111,7 @@ void acmacs::settings::v3::Data::load(std::string_view filename)
     using namespace std::string_view_literals;
     AD_LOG(acmacs::log::settings, "loading {}", filename);
     loaded_data_->load(filename);
-    // apply_top("init"sv);
+// apply_top("init"sv);
 
 } // acmacs::settings::v3::Data::load
 

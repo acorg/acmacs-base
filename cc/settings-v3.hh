@@ -29,7 +29,7 @@ namespace acmacs::settings::v3
 
     namespace detail
     {
-        class Environament;
+        class Environment;
         class LoadedDataFiles;
 
     } // namespace detail
@@ -54,8 +54,8 @@ namespace acmacs::settings::v3
 
       private:
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
-        std::unique_ptr<detail::Environament> environment_;
-        // mutable bool warn_if_set_used_{false};
+        std::unique_ptr<detail::Environment> environment_;
+        mutable bool warn_if_set_used_{false};
 
         void push_and_apply(const rjson::v3::detail::object& entry);
 

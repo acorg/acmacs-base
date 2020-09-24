@@ -1,6 +1,7 @@
 #pragma once
 
 #include "acmacs-base/rjson-v3.hh"
+#include "acmacs-base/flat-map.hh"
 
 // ----------------------------------------------------------------------
 
@@ -10,9 +11,19 @@ namespace acmacs::settings::v3
 
     namespace detail
     {
-        class Environament
+        using env_data_t = acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>;
+
+        class Environment
         {
           public:
+            Environment() { push(); }
+
+            void push() { env_data_.emplace_back(); }
+            void pop() { env_data_.pop_back(); }
+            void add(std::string_view key, const rjson::v3::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
+
+          private:
+            std::vector<env_data_t> env_data_;
         };
 
         // ----------------------------------------------------------------------
