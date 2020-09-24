@@ -1,6 +1,6 @@
 #include "acmacs-base/argv.hh"
 #include "acmacs-base/debug.hh"
-#include "acmacs-base/settings.hh"
+#include "acmacs-base/settings-v2.hh"
 
 // ----------------------------------------------------------------------
 
@@ -25,19 +25,19 @@ int main(int argc, const char* argv[])
         if (opt.verbose)
             acmacs::log::enable("settings");
         if (!opt.settings_files.empty()) {
-            acmacs::settings::Settings s1;
+            acmacs::settings::v2::Settings s1;
             AD_DEBUG("loading {}", opt.settings_files);
             s1.load(opt.settings_files);
         }
         else {
             {
                 AD_DEBUG("reading {}", "test-settings-v2.1.json");
-                acmacs::settings::Settings s2({"test-settings-v2.1.json"});
+                acmacs::settings::v2::Settings s2({"test-settings-v2.1.json"});
                 s2.apply("main"sv);
             }
             {
                 AD_DEBUG("reading {}", "test-settings-v2.2.json");
-                acmacs::settings::Settings s3({"test-settings-v2.2.json", "test-settings-v2.3.json"});
+                acmacs::settings::v2::Settings s3({"test-settings-v2.2.json", "test-settings-v2.3.json"});
                 s3.apply("main"sv);
             }
         }

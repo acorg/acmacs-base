@@ -6,7 +6,7 @@
 
 // ----------------------------------------------------------------------
 
-namespace acmacs::settings::inline v2
+namespace acmacs::settings::/*inline*/ v2
 {
     class error : public std::runtime_error
     {

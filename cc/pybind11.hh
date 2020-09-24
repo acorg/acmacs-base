@@ -15,7 +15,7 @@ namespace py = pybind11;
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wexit-time-destructors"
-// #pragma GCC diagnostic ignored "-Wextra-semi"
+#pragma GCC diagnostic ignored "-Wextra-semi"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 // #pragma GCC diagnostic ignored "-Wmissing-noreturn"
 #pragma GCC diagnostic ignored "-Wnested-anon-types"

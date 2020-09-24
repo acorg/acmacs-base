@@ -14,7 +14,7 @@ TARGETS = \
   $(DIST)/test-date2 \
   $(DIST)/test-double-to-string \
   $(DIST)/test-settings-v1 \
-  $(DIST)/test-settings \
+  $(DIST)/test-settings-v2 \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
   $(DIST)/test-time-series \
@@ -36,7 +36,7 @@ include $(ACMACSD_ROOT)/share/Makefile.config
 SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES =  \
-  settings.cc          \
+  settings-v2.cc       \
   rjson-v2.cc          \
   rjson-v3.cc          \
   time-series.cc       \

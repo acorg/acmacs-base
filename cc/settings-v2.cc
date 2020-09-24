@@ -2,7 +2,7 @@
 
 #include "acmacs-base/acmacsd.hh"
 #include "acmacs-base/filesystem.hh"
-#include "acmacs-base/settings.hh"
+#include "acmacs-base/settings-v2.hh"
 #include "acmacs-base/enumerate.hh"
 #include "acmacs-base/string-from-chars.hh"
 
@@ -174,7 +174,7 @@ void acmacs::settings::v2::Settings::Environment::print_key_value() const
 // Subenvironment
 // ----------------------------------------------------------------------
 
-namespace acmacs::settings::inline v2
+namespace acmacs::settings::/*inline*/ v2
 {
     class Subenvironment
     {
