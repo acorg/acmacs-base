@@ -846,9 +846,6 @@ void acmacs::settings::v2::Settings::reload()
 } // acmacs::settings::v2::Settings::reload
 
 // ----------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:

@@ -37,6 +37,8 @@ SRC_DIR = $(abspath $(ACMACSD_ROOT)/sources)
 
 ACMACS_BASE_SOURCES =  \
   settings-v2.cc       \
+  settings-v3.cc       \
+  settings-v3-env.cc   \
   rjson-v2.cc          \
   rjson-v3.cc          \
   time-series.cc       \
