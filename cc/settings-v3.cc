@@ -61,6 +61,10 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
 
 void acmacs::settings::v3::Data::load(std::string_view filename)
 {
+    using namespace std::string_view_literals;
+    AD_LOG(acmacs::log::settings, "loading {}", filename);
+    loaded_data_->load(filename);
+    // apply_top("init"sv);
 
 } // acmacs::settings::v3::Data::load
 
