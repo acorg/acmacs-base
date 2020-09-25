@@ -24,15 +24,24 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::stri
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v3::detail::Environment::print() const
+std::string acmacs::settings::v3::detail::Environment::substitute_to_string(std::string_view source) const
 {
-    AD_INFO("Settings::Environment {}", env_data_.size());
+    return std::string { source };
+
+} // acmacs::settings::v3::detail::Environment::substitute_to_string
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v3::detail::Environment::format(std::string_view indent) const
+{
+    fmt::memory_buffer out;
     for (auto [level, entries] : acmacs::enumerate(env_data_)) {
         for (const auto& entry : entries)
-            AD_INFO("    {:2d} \"{}\": {}", level, entry.first, entry.second);
+            fmt::format_to(out, "{}\"{}\": {} <{}>\n", indent, entry.first, entry.second, level);
     }
+    return fmt::to_string(out);
 
-} // acmacs::settings::v3::detail::Environment::print
+} // acmacs::settings::v3::detail::Environment::format
 
 // ----------------------------------------------------------------------
 

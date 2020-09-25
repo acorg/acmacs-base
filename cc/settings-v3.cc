@@ -16,7 +16,7 @@ namespace
 // ----------------------------------------------------------------------
 
 acmacs::settings::v3::Data::Data()
-    : loaded_data_{}, environment_{}
+    : loaded_data_{std::make_unique<detail::LoadedDataFiles>()}, environment_{std::make_unique<detail::Environment>()}
 {
 
 } // acmacs::settings::v3::Data::Data
@@ -34,7 +34,7 @@ void acmacs::settings::v3::Data::apply(std::string_view name)
     if (name.empty())
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = substitute_to_string(name);
+        const auto substituted_name = environment_->substitute_to_string(name);
         AD_LOG(acmacs::log::settings, "apply \"{}\" <-- \"{}\"", substituted_name, name);
         AD_LOG_INDENT;
         if (const auto& val_from_data = get(substituted_name); !val_from_data.is_null()) {
@@ -133,19 +133,20 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
 
 bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // returns true if built-in command with that name found and applied
 {
+    using namespace std::string_view_literals;
     AD_LOG(acmacs::log::settings, "base::apply_built_in \"{}\"", name);
     AD_LOG_INDENT;
     try {
-        if (name == "if") {
+        if (name == "if"sv) {
             apply_if();
             return true;
         }
-        else if (name == "for-each") {
+        else if (name == "for-each"sv) {
             apply_for_each();
             return true;
         }
-        else if (name == "-print-environment") {
-            environment_->print();
+        else if (name == "-print-environment"sv) {
+            AD_INFO("{}:\n{}", name, environment_->format("    "sv));
             return true;
         }
         return false;
@@ -168,6 +169,7 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name) c
 
 std::string acmacs::settings::v3::Data::substitute_to_string(std::string_view source) const
 {
+    return environment_->substitute_to_string(source);
 
 } // acmacs::settings::v3::Data::substitute_to_string
 

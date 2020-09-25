@@ -15,6 +15,7 @@ TARGETS = \
   $(DIST)/test-double-to-string \
   $(DIST)/test-settings-v1 \
   $(DIST)/test-settings-v2 \
+  $(DIST)/test-settings-v3 \
   $(DIST)/test-injson \
   $(DIST)/test-to-json \
   $(DIST)/test-time-series \
