@@ -3,6 +3,18 @@
 
 // ----------------------------------------------------------------------
 
+namespace
+{
+    struct raii_true
+    {
+        constexpr raii_true(bool& val) : val_{val} { val_ = true; }
+        ~raii_true() { val_ = false; }
+        bool& val_;
+    };
+}
+
+// ----------------------------------------------------------------------
+
 acmacs::settings::v3::Data::Data()
     : loaded_data_{}, environment_{}
 {
@@ -19,6 +31,19 @@ acmacs::settings::v3::Data::~Data()
 
 void acmacs::settings::v3::Data::apply(std::string_view name)
 {
+    if (name.empty())
+        throw error{AD_FORMAT("cannot apply command with an empty name")};
+    if (name.front() != '?') { // not commented out
+        const auto substituted_name = substitute_to_string(name);
+        AD_LOG(acmacs::log::settings, "apply \"{}\" <-- \"{}\"", substituted_name, name);
+        AD_LOG_INDENT;
+        if (const auto& val_from_data = get(substituted_name); !val_from_data.is_null()) {
+            apply(val_from_data);
+        }
+        else if (!apply_built_in(substituted_name)) {
+            throw error{AD_FORMAT("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name)};
+        }
+    }
 
 } // acmacs::settings::v3::Data::apply
 
@@ -103,6 +128,96 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
     }
 
 } // acmacs::settings::v3::Data::push_and_apply
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // returns true if built-in command with that name found and applied
+{
+    AD_LOG(acmacs::log::settings, "base::apply_built_in \"{}\"", name);
+    AD_LOG_INDENT;
+    try {
+        if (name == "if") {
+            apply_if();
+            return true;
+        }
+        else if (name == "for-each") {
+            apply_for_each();
+            return true;
+        }
+        else if (name == "-print-environment") {
+            environment_->print();
+            return true;
+        }
+        return false;
+    }
+    catch (std::exception& err) {
+        throw error{AD_FORMAT("cannot apply \"{}\": {}", name, err)};
+    }
+
+} // acmacs::settings::v3::Data::apply_built_in
+
+// ----------------------------------------------------------------------
+
+const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name) const
+{
+    return loaded_data_->get(name);
+
+} // acmacs::settings::v3::Data::get
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v3::Data::substitute_to_string(std::string_view source) const
+{
+
+} // acmacs::settings::v3::Data::substitute_to_string
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v3::Data::apply_if()
+{
+    raii_true warn_if_set_used{warn_if_set_used_};
+///    if (const auto& condition_clause = getenv("condition", toplevel_only::yes); eval_condition(condition_clause)) {
+///        if (const auto& then_clause = getenv("then", toplevel_only::yes); !then_clause.is_null()) {
+///            AD_LOG(acmacs::log::settings, "if then {}", then_clause);
+///            if (!then_clause.is_array())
+///                throw error{AD_FORMAT("\"then\" clause must be array")};
+///            apply(then_clause);
+///        }
+///    }
+///    else {
+///        if (const auto& else_clause = getenv("else", toplevel_only::yes); !else_clause.is_null()) {
+///            AD_LOG(acmacs::log::settings, "if else {}", else_clause);
+///            if (!else_clause.is_array())
+///                throw error{AD_FORMAT("\"else\" clause must be array")};
+///            apply(else_clause);
+///        }
+///    }
+
+} // acmacs::settings::v3::Data::apply_if
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v3::Data::apply_for_each()
+{
+    raii_true warn_if_set_used{warn_if_set_used_};
+
+    using namespace std::string_view_literals;
+
+///    const auto var_name = getenv_or("var"sv, "name"sv);
+///    const auto& values_clause = getenv("values"sv, toplevel_only::yes);
+///    if (!values_clause.is_array())
+///        throw error{AD_FORMAT("\"values\" clause must be array")};
+///    const auto& do_clause = getenv("do"sv, toplevel_only::yes);
+///    if (!do_clause.is_array())
+///        throw error{AD_FORMAT("\"do\" clause must be array")};
+///    for (const auto& val : values_clause.array()) {
+///        environment_.push();
+///        environment_.add(var_name, val);
+///        apply(do_clause);
+///        environment_.pop();
+///    }
+
+} // acmacs::settings::v3::Data::apply_for_each
 
 // ----------------------------------------------------------------------
 

@@ -11,6 +11,8 @@ namespace acmacs::settings::v3
 
     namespace detail
     {
+        enum class toplevel_only { no, yes };
+
         using env_data_t = acmacs::small_map_with_unique_keys_t<std::string, rjson::v3::value>;
 
         class Environment
@@ -18,9 +20,15 @@ namespace acmacs::settings::v3
           public:
             Environment() { push(); }
 
+            const rjson::v3::value& get(std::string_view key, toplevel_only a_toplevel_only) const;
+
+            void add(std::string_view key, const rjson::v3::value& val) { env_data_.back().emplace_or_replace(std::string{key}, val); }
+            void add(std::string_view key, rjson::v3::value&& val) { env_data_.back().emplace_or_replace(key, std::move(val)); }
+
             void push() { env_data_.emplace_back(); }
             void pop() { env_data_.pop_back(); }
-            void add(std::string_view key, const rjson::v3::value& val) { env_data_.rbegin()->emplace_or_replace(std::string{key}, val); }
+
+            void print() const;
 
           private:
             std::vector<env_data_t> env_data_;
