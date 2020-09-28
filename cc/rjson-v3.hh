@@ -336,6 +336,18 @@ namespace rjson::v3
         });
     }
 
+    template <typename Target, typename Callable> inline void set_if_not_null(const value& source, Callable&& callable)
+    {
+        source.visit([&callable]<typename Value>(const Value& arg) {
+            if constexpr (!std::is_same_v<Value, detail::null>) {
+                if constexpr (std::is_invocable_v<Callable, Target>)
+                    callable(arg.template to<std::decay_t<Target>>());
+                else
+                    static_assert(std::is_invocable_v<Callable, Target>);
+            }
+        });
+    }
+
     template <typename T> inline T get_or(const value& source, const T& default_value)
     {
         if (source.is_null())

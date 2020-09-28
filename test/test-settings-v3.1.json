@@ -1,0 +1,19 @@
+{
+  "init": [
+    {"N": "set",
+     "select1": {"clade": "$clade1"},
+     "clade1": "3C.3",
+     "outline": "pink",
+     "fill11": "#FFC0CB"
+    },
+  ],
+  "main": [
+    "do",
+    {"N": "do", "size": 20, "outline": "red"},
+    {"N": "do", "fill12": ":s=0.5"},
+  ],
+
+  "do": [
+    {"N": "test-antigens", "select": "$select1", "fill": "{fill11}{fill12}"},
+    ]
+}
