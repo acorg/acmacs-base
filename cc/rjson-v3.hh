@@ -145,8 +145,11 @@ namespace rjson::v3
         {
           public:
             using simple::simple;
+
+            // for strings created within program, i.e. not read from bigger json, see settings Environment add_to_toplevel(std::string_view key, std::string_view value)
             enum with_content_ { with_content };
-            string(with_content_, std::string_view content) : simple{}, scontent_{content} {} // for strings created within program, i.e. not read from bigger json, see settings Environment add_to_toplevel(std::string_view key, std::string_view value)
+            string(with_content_, std::string_view content) : simple{}, scontent_{content} {}
+            string(with_content_, std::string&& content) : simple{}, scontent_{std::move(content)} {}
 
             constexpr std::string_view _content() const noexcept { if (scontent_.has_value()) return *scontent_; else return simple::_content(); }
             constexpr bool empty() const noexcept { return _content().empty(); }

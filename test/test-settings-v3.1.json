@@ -3,8 +3,9 @@
     {"N": "set",
      "select1": {"clade": "$clade1"},
      "clade1": "3C.3",
-     "outline": "pink",
-     "fill11": "#FFC0CB"
+     "outline": "green",
+     "fill11": "#00FFC0",
+     "fill12": ""
     },
   ],
   "main": [
