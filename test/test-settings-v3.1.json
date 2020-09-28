@@ -8,17 +8,19 @@
      "fill12": "",
      "fill-0": "magenta",
      "fill-1": "cyan",
+     "fill-2": "yellow",
     },
   ],
   "main": [
-    "do",
-    {"N": "do", "size": 20, "outline": "red"},
-    {"N": "do", "fill12": ":s=0.5"},
-    {"N": "do", "fill11": "{fill-{no}}", "no": 0},
-    {"N": "do", "fill11": "{fill-{no}}", "no": 1},
+    "ta",
+    {"N": "ta", "size": 20, "outline": "red"},
+    {"N": "ta", "fill12": ":s=0.5"},
+    {"?N": "ta", "fill11": "{fill-{no}}", "no": 0},
+    {"?N": "ta", "fill11": "{fill-{no}}", "no": 1},
+    {"N": "for-each", "var": "no", "values": [1, 2], "do": [{"N": "ta", "fill11": "{fill-{no}}"}]}
   ],
 
-  "do": [
+  "ta": [
     {"N": "test-antigens", "select": "$select1", "fill": "{fill11}{fill12}"},
     ]
 }

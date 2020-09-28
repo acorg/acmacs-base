@@ -21,6 +21,16 @@ namespace acmacs::settings::v3
             Environment() { push(); }
 
             const rjson::v3::value& get(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
+
+            template <typename T> std::decay_t<T> get_or(std::string_view key, T&& a_default, toplevel_only a_toplevel_only = toplevel_only::no) const
+            {
+                if (const auto& val = get(key, a_toplevel_only); !val.is_null())
+                    return val.to<std::decay_t<T>>();
+                else
+                    return std::move(a_default);
+            }
+
+
             std::string substitute(std::string_view source) const;
             const rjson::v3::value& substitute(const rjson::v3::value& source) const;
 

@@ -174,14 +174,6 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, t
 
 // ----------------------------------------------------------------------
 
-// std::string acmacs::settings::v3::Data::substitute_to_string(std::string_view source) const
-// {
-//     return environment_->substitute_to_string(source);
-
-// } // acmacs::settings::v3::Data::substitute_to_string
-
-// ----------------------------------------------------------------------
-
 void acmacs::settings::v3::Data::apply_if()
 {
     raii_true warn_if_set_used{warn_if_set_used_};
@@ -212,19 +204,19 @@ void acmacs::settings::v3::Data::apply_for_each()
 
     using namespace std::string_view_literals;
 
-///    const auto var_name = getenv_or("var"sv, "name"sv);
-///    const auto& values_clause = getenv("values"sv, toplevel_only::yes);
-///    if (!values_clause.is_array())
-///        throw error{AD_FORMAT("\"values\" clause must be array")};
-///    const auto& do_clause = getenv("do"sv, toplevel_only::yes);
-///    if (!do_clause.is_array())
-///        throw error{AD_FORMAT("\"do\" clause must be array")};
-///    for (const auto& val : values_clause.array()) {
-///        environment_.push();
-///        environment_.add(var_name, val);
-///        apply(do_clause);
-///        environment_.pop();
-///    }
+    const auto var_name = environment().get_or("var"sv, "name"sv);
+   const auto& values_clause = environment().get("values"sv, detail::toplevel_only::yes);
+   if (!values_clause.is_array())
+       throw error{AD_FORMAT("\"values\" clause must be array")};
+   const auto& do_clause = environment().get("do"sv, detail::toplevel_only::yes);
+   if (!do_clause.is_array())
+       throw error{AD_FORMAT("\"do\" clause must be array")};
+   for (const auto& val : values_clause.array()) {
+       environment().push();
+       environment().add(var_name, val);
+       apply(do_clause);
+       environment().pop();
+   }
 
 } // acmacs::settings::v3::Data::apply_for_each
 
