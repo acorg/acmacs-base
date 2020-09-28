@@ -26,4 +26,4 @@ trap failed ERR
 
 cd "${TESTDIR}"
 
-../dist/test-settings-v3 ./test-settings-v3.1.json main
+../dist/test-settings-v3 ./test-settings-v3.1.json main "$@"

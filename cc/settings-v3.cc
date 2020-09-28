@@ -36,7 +36,7 @@ void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
     if (name.empty())
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = environment_->substitute_to_string(name);
+        const auto substituted_name = environment_->substitute(name);
         AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv: ""sv, substituted_name, name);
         AD_LOG_INDENT;
         if (const auto& val_from_data = get(substituted_name, tlo); !val_from_data.is_null()) {
@@ -174,11 +174,11 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, t
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::settings::v3::Data::substitute_to_string(std::string_view source) const
-{
-    return environment_->substitute_to_string(source);
+// std::string acmacs::settings::v3::Data::substitute_to_string(std::string_view source) const
+// {
+//     return environment_->substitute_to_string(source);
 
-} // acmacs::settings::v3::Data::substitute_to_string
+// } // acmacs::settings::v3::Data::substitute_to_string
 
 // ----------------------------------------------------------------------
 

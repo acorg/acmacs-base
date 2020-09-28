@@ -57,7 +57,7 @@ namespace acmacs::settings::v3
       protected:
         const detail::Environment& environment() const { return *environment_; }
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
-        std::string substitute_to_string(std::string_view source) const;
+// std::string substitute_to_string(std::string_view source) const;
         const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
 
       private:

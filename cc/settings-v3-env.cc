@@ -6,7 +6,7 @@
 
 const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
 {
-    const auto final_key = substitute_to_string(key);
+    const auto final_key = substitute(key);
     AD_LOG(acmacs::log::settings, "env get \"{}\" (\"{}\")", final_key, key);
     switch (a_toplevel_only) {
         case toplevel_only::no:
@@ -26,38 +26,46 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::stri
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v3::detail::Environment::substitute(std::string_view text, const rjson::v3::value& source) const
+std::string acmacs::settings::v3::detail::Environment::substitute(std::string_view text) const
 {
-    if (text.size() > 1 && text[0] == '$')
-        return get(text.substr(1));
-
 #include "acmacs-base/global-constructors-push.hh"
     static const std::regex re{"\\{([^\\{}]+)\\}"};
 #include "acmacs-base/diagnostics-pop.hh"
 
     std::string result{text};
     std::smatch m1;
-    bool result_modified{false};
+    AD_LOG(acmacs::log::settings, "env substitute s->s \"{}\"", text);
+    AD_LOG_INDENT;
     for (ssize_t start{0}; static_cast<size_t>(start) < result.size() && std::regex_search(std::next(std::cbegin(result), start), std::cend(result), m1, re);) {
         const auto replacement_start = start + m1.position();
         if (const auto& found1 = get(m1.str(1)); !found1.is_null()) {
             result.erase(static_cast<size_t>(replacement_start), static_cast<size_t>(m1.length()));
             result.insert(static_cast<size_t>(replacement_start), found1.as_string());
-            result_modified = true;
+            AD_LOG(acmacs::log::settings, "env substituted -> \"{}\"", result);
         }
         else // no replacement found, leave as is
             start = replacement_start + m1.length();
     }
-    if (result_modified) {
+    AD_LOG(acmacs::log::settings, "env substituted s->s \"{}\" -> \"{}\"", text, result);
+    return result;
+
+} // acmacs::settings::v3::detail::Environment::substitute_to_string
+
+// ----------------------------------------------------------------------
+
+const rjson::v3::value& acmacs::settings::v3::detail::Environment::substitute(std::string_view text, const rjson::v3::value& source) const
+{
+    if (text.size() > 1 && text[0] == '$')
+        return get(text.substr(1));
+
+    if (std::string result = substitute(text); result != text) {
 #include "acmacs-base/global-constructors-push.hh"
         static thread_local rjson::v3::value substituted;
 #include "acmacs-base/diagnostics-pop.hh"
         substituted = rjson::v3::detail::string(rjson::v3::detail::string::with_content, std::move(result));
-        AD_LOG(acmacs::log::settings, "env substituted \"{}\" -> {}", text, substituted);
         return substituted;
     }
     else {
-        AD_LOG(acmacs::log::settings, "env substituted nothing \"{}\" -> {}", text, source);
         return source;
     }
 
@@ -75,14 +83,6 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::substitute(co
     });
 
 } // acmacs::settings::v3::detail::Environment::substitute
-
-// ----------------------------------------------------------------------
-
-std::string acmacs::settings::v3::detail::Environment::substitute_to_string(std::string_view source) const
-{
-    return std::string { source };
-
-} // acmacs::settings::v3::detail::Environment::substitute_to_string
 
 // ----------------------------------------------------------------------
 

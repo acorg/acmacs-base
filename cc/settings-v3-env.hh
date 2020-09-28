@@ -21,7 +21,7 @@ namespace acmacs::settings::v3
             Environment() { push(); }
 
             const rjson::v3::value& get(std::string_view key, toplevel_only a_toplevel_only = toplevel_only::no) const;
-            std::string substitute_to_string(std::string_view source) const;
+            std::string substitute(std::string_view source) const;
             const rjson::v3::value& substitute(const rjson::v3::value& source) const;
 
             void add(std::string_view key, const rjson::v3::value& val) { env_data_.back().emplace_or_replace(std::string{key}, val); }

@@ -5,13 +5,17 @@
      "clade1": "3C.3",
      "outline": "green",
      "fill11": "#00FFC0",
-     "fill12": ""
+     "fill12": "",
+     "fill-0": "magenta",
+     "fill-1": "cyan",
     },
   ],
   "main": [
     "do",
     {"N": "do", "size": 20, "outline": "red"},
     {"N": "do", "fill12": ":s=0.5"},
+    {"N": "do", "fill11": "{fill-{no}}", "no": 0},
+    {"N": "do", "fill11": "{fill-{no}}", "no": 1},
   ],
 
   "do": [
