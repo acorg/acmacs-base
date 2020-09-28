@@ -99,6 +99,25 @@ std::string acmacs::settings::v3::detail::Environment::format(std::string_view i
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::settings::v3::detail::Environment::format_toplevel() const
+{
+    fmt::memory_buffer out;
+    fmt::format_to(out, "{");
+    bool first { true };
+    for (const auto& entry : env_data_.back()) {
+        if (first)
+            first = false;
+        else
+            fmt::format_to(out, ", ");
+        fmt::format_to(out, "\"{}\": {}", entry.first, entry.second);
+    }
+    fmt::format_to(out, "}");
+    return fmt::to_string(out);
+
+} // acmacs::settings::v3::detail::Environment::format_toplevel
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v3::detail::LoadedDataFiles::load(std::string_view filename)
 {
     file_data_.insert(file_data_.begin(), rjson::v3::parse_file(filename));

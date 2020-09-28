@@ -193,6 +193,22 @@ template std::string_view acmacs::settings::v3::Data::getenv_or(std::string_view
 
 // ----------------------------------------------------------------------
 
+const rjson::v3::value& acmacs::settings::v3::Data::substitute(const rjson::v3::value& source) const
+{
+    return environment().substitute(source);
+
+} // acmacs::settings::v3::Data::substitute
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v3::Data::format_toplevel() const
+{
+    return environment().format_toplevel();
+
+} // acmacs::settings::v3::Data::format_toplevel
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v3::Data::eval_condition(const rjson::v3::value& condition) const
 {
     using namespace std::string_view_literals;

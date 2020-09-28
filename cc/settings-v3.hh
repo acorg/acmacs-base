@@ -54,12 +54,15 @@ namespace acmacs::settings::v3
         virtual void apply(std::string_view name, toplevel_only tlo = toplevel_only::no);
         void apply(const rjson::v3::value& entry);
 
+        const rjson::v3::value& substitute(const rjson::v3::value& source) const;
+
       protected:
         const detail::Environment& environment() const { return *environment_; }
         detail::Environment& environment() { return *environment_; }
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
         const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
         const rjson::v3::value& getenv(std::string_view name) const;
+        std::string format_toplevel() const;
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
 

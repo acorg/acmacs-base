@@ -42,6 +42,7 @@ namespace acmacs::settings::v3
             void pop() { env_data_.pop_back(); }
 
             std::string format(std::string_view indent) const;
+            std::string format_toplevel() const;
 
           private:
             std::vector<env_data_t> env_data_;
