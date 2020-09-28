@@ -176,6 +176,14 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, t
 
 // ----------------------------------------------------------------------
 
+const rjson::v3::value& acmacs::settings::v3::Data::getenv(std::string_view name) const
+{
+    return environment().get(name);
+
+} // acmacs::settings::v3::Data::getenv
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v3::Data::eval_condition(const rjson::v3::value& condition) const
 {
     using namespace std::string_view_literals;
@@ -299,8 +307,9 @@ bool acmacs::settings::v3::Data::eval_equal(const rjson::v3::value& condition) c
 void acmacs::settings::v3::Data::apply_if()
 {
     raii_true warn_if_set_used{warn_if_set_used_};
-    if (const auto& condition_clause = environment().get("condition", detail::toplevel_only::yes); eval_condition(condition_clause)) {
-        if (const auto& then_clause = environment().get("then", detail::toplevel_only::yes); !then_clause.is_null()) {
+    using namespace std::string_view_literals;
+    if (const auto& condition_clause = environment().get("condition"sv, detail::toplevel_only::yes); eval_condition(condition_clause)) {
+        if (const auto& then_clause = environment().get("then"sv, detail::toplevel_only::yes); !then_clause.is_null()) {
             AD_LOG(acmacs::log::settings, "if then {}", then_clause);
             if (!then_clause.is_array())
                 throw error{AD_FORMAT("\"then\" clause must be array")};
@@ -308,7 +317,7 @@ void acmacs::settings::v3::Data::apply_if()
         }
     }
     else {
-        if (const auto& else_clause = environment().get("else", detail::toplevel_only::yes); !else_clause.is_null()) {
+        if (const auto& else_clause = environment().get("else"sv, detail::toplevel_only::yes); !else_clause.is_null()) {
             AD_LOG(acmacs::log::settings, "if else {}", else_clause);
             if (!else_clause.is_array())
                 throw error{AD_FORMAT("\"else\" clause must be array")};
@@ -395,7 +404,7 @@ void acmacs::settings::v3::Data::set_defines(const std::vector<std::string_view>
                 catch (std::exception&) {
                     environment().add(def.substr(0, pos), rjson::v3::detail::string{val_s});
                 }
-                AD_LOG(acmacs::log::settings, "set_defines \"{}\" -> {}", def.substr(0, pos), environment().get(def.substr(0, pos)));
+                AD_LOG(acmacs::log::settings, "set_defines \"{}\" -> {}", def.substr(0, pos), getenv(def.substr(0, pos)));
             }
         }
         else

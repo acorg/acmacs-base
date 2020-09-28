@@ -28,10 +28,11 @@ namespace acmacs::settings::v3
         {
             using namespace std::string_view_literals;
             acmacs::PointStyleModified style;
-            rjson::v3::set_if_not_null<Pixels>(environment().get("size"sv), [&style](Pixels sz) { style.size(sz); });
-            rjson::v3::set_if_not_null<const acmacs::color::Modifier&>(environment().get("fill"sv), [&style](const acmacs::color::Modifier& fill) { style.fill(fill); });
-            rjson::v3::set_if_not_null<const acmacs::color::Modifier&>(environment().get("outline"sv), [&style](const acmacs::color::Modifier& outline) { style.outline(outline); });
-            AD_INFO("apply_test_antigens {}", style);
+            rjson::v3::set_if_not_null<Pixels>(getenv("size"sv), [&style](Pixels sz) { style.size(sz); });
+            rjson::v3::set_if_not_null<const acmacs::color::Modifier&>(getenv("fill"sv), [&style](const acmacs::color::Modifier& fill) { style.fill(fill); });
+            rjson::v3::set_if_not_null<const acmacs::color::Modifier&>(getenv("outline"sv), [&style](const acmacs::color::Modifier& outline) { style.outline(outline); });
+            fmt::print("{}\n", style);
+            fmt::print("{}\n", getenv("select"sv));
         }
     };
 
