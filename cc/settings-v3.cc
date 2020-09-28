@@ -174,25 +174,145 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, t
 
 // ----------------------------------------------------------------------
 
+bool acmacs::settings::v3::Data::eval_condition(const rjson::v3::value& condition) const
+{
+    using namespace std::string_view_literals;
+    try {
+        return condition.visit([this, &condition]<typename Arg>(const Arg& arg) -> bool {
+            if constexpr (std::is_same_v<Arg, rjson::v3::detail::null>)
+                return false;
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::boolean>)
+                return arg.template to<bool>();
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::number>)
+                return !float_zero(arg.template to<double>());
+            else if constexpr (std::is_same_v<Arg, bool>)
+                return arg;
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::object>) {
+                if (arg.size() != 1)
+                    throw error{AD_FORMAT("object must have exactly one key: {}, object size: {}", condition, arg.size())};
+                if (const auto& and_clause = arg["and"sv]; !and_clause.is_null())
+                    return eval_and(and_clause);
+                else if (const auto& empty_clause = arg["empty"sv]; !empty_clause.is_null())
+                    return eval_empty(empty_clause, true);
+                else if (const auto& not_empty_clause = arg["not-empty"sv]; !not_empty_clause.is_null())
+                    return eval_empty(not_empty_clause, false);
+                else if (const auto& equal_clause = arg["equal"sv]; !equal_clause.is_null())
+                    return eval_equal(equal_clause);
+                else if (const auto& not_clause = arg["not"sv]; !not_clause.is_null())
+                    return eval_not(not_clause);
+                else if (const auto& not_equal_clause = arg["not-equal"sv]; !not_equal_clause.is_null())
+                    return eval_not_equal(not_equal_clause);
+                else if (const auto& or_clause = arg["or"sv]; !or_clause.is_null())
+                    return eval_or(or_clause);
+                else
+                    throw error{AD_FORMAT("unrecognized clause: {}", condition)};
+            }
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>) {
+                const auto arg_sv = arg.template to<std::string_view>();
+                if (const rjson::v3::value& substituted = environment().substitute(arg_sv, condition); substituted.is_null() || (substituted.is_string() && substituted.to<std::string_view>() == arg_sv))
+                    throw error{AD_FORMAT("unsupported value type: {}", condition)};
+                else
+                    return eval_condition(substituted);
+            }
+            else // if constexpr (std::is_same_v<Arg, rjson::v3::detail::array>)
+                throw error{AD_FORMAT("unsupported value type: {}", condition)};
+        });
+    }
+    catch (std::exception& err) {
+        throw error(AD_FORMAT("cannot eval condition: {} -- condition: {}\n", err, condition));
+    }
+
+} // acmacs::settings::v3::Data::eval_condition
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v3::Data::eval_and(const rjson::v3::value& condition) const
+{
+    if (condition.empty()) {
+        AD_WARNING("empty and clause evaluates to false");
+        return false;
+    }
+    const auto& arr = condition.array();
+    return std::all_of(std::begin(arr), std::end(arr), [this](const rjson::v3::value& sub_condition) { return eval_condition(sub_condition); });
+
+} // acmacs::settings::v3::Data::eval_and
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v3::Data::eval_or(const rjson::v3::value& condition) const
+{
+    if (condition.empty()) {
+        AD_WARNING("empty or clause evaluates to false");
+        return false;
+    }
+    const auto& arr = condition.array();
+    return std::any_of(std::begin(arr), std::end(arr), [this](const rjson::v3::value& sub_condition) { return eval_condition(sub_condition); });
+
+} // acmacs::settings::v3::Data::eval_or
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v3::Data::eval_empty(const rjson::v3::value& condition, bool true_if_empty) const
+{
+    try {
+        return environment().substitute(condition).visit([true_if_empty]<typename Arg>(const Arg& arg) -> bool {
+            if constexpr (std::is_same_v<Arg, rjson::v3::detail::null>)
+                return true_if_empty;
+            else if constexpr (std::is_same_v<Arg, rjson::v3::detail::string>)
+                return arg.empty() == true_if_empty;
+            else
+                throw error{AD_FORMAT("unsupported value type")};
+        });
+    }
+    catch (std::exception& err) {
+        throw error(AD_FORMAT("cannot eval condition: {} -- condition: {}\n", err, condition));
+    }
+
+} // acmacs::settings::v3::Data::eval_empty
+
+// ----------------------------------------------------------------------
+
+bool acmacs::settings::v3::Data::eval_equal(const rjson::v3::value& condition) const
+{
+    if (condition.empty()) {
+        AD_WARNING("empty equal clause evaluates to false");
+        return false;
+    }
+    if (!condition.is_array() || condition.size() < 2) {
+        AD_WARNING("equal clause condition must be an array with 2 or more elements: {}, evaluates to false", condition);
+        return false;
+    }
+
+    const auto& first = environment().substitute(condition[0]);
+    for (size_t index = 1; index < condition.size(); ++index) {
+        if (!(environment().substitute(condition[index]) == first))
+            return false;
+    }
+    return true;
+
+} // acmacs::settings::v3::Data::eval_equal
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v3::Data::apply_if()
 {
     raii_true warn_if_set_used{warn_if_set_used_};
-///    if (const auto& condition_clause = getenv("condition", toplevel_only::yes); eval_condition(condition_clause)) {
-///        if (const auto& then_clause = getenv("then", toplevel_only::yes); !then_clause.is_null()) {
-///            AD_LOG(acmacs::log::settings, "if then {}", then_clause);
-///            if (!then_clause.is_array())
-///                throw error{AD_FORMAT("\"then\" clause must be array")};
-///            apply(then_clause);
-///        }
-///    }
-///    else {
-///        if (const auto& else_clause = getenv("else", toplevel_only::yes); !else_clause.is_null()) {
-///            AD_LOG(acmacs::log::settings, "if else {}", else_clause);
-///            if (!else_clause.is_array())
-///                throw error{AD_FORMAT("\"else\" clause must be array")};
-///            apply(else_clause);
-///        }
-///    }
+    if (const auto& condition_clause = environment().get("condition", detail::toplevel_only::yes); eval_condition(condition_clause)) {
+        if (const auto& then_clause = environment().get("then", detail::toplevel_only::yes); !then_clause.is_null()) {
+            AD_LOG(acmacs::log::settings, "if then {}", then_clause);
+            if (!then_clause.is_array())
+                throw error{AD_FORMAT("\"then\" clause must be array")};
+            apply(then_clause);
+        }
+    }
+    else {
+        if (const auto& else_clause = environment().get("else", detail::toplevel_only::yes); !else_clause.is_null()) {
+            AD_LOG(acmacs::log::settings, "if else {}", else_clause);
+            if (!else_clause.is_array())
+                throw error{AD_FORMAT("\"else\" clause must be array")};
+            apply(else_clause);
+        }
+    }
 
 } // acmacs::settings::v3::Data::apply_if
 
@@ -205,18 +325,18 @@ void acmacs::settings::v3::Data::apply_for_each()
     using namespace std::string_view_literals;
 
     const auto var_name = environment().get_or("var"sv, "name"sv);
-   const auto& values_clause = environment().get("values"sv, detail::toplevel_only::yes);
-   if (!values_clause.is_array())
-       throw error{AD_FORMAT("\"values\" clause must be array")};
-   const auto& do_clause = environment().get("do"sv, detail::toplevel_only::yes);
-   if (!do_clause.is_array())
-       throw error{AD_FORMAT("\"do\" clause must be array")};
-   for (const auto& val : values_clause.array()) {
-       environment().push();
-       environment().add(var_name, val);
-       apply(do_clause);
-       environment().pop();
-   }
+    const auto& values_clause = environment().get("values"sv, detail::toplevel_only::yes);
+    if (!values_clause.is_array())
+        throw error{AD_FORMAT("\"values\" clause must be array")};
+    const auto& do_clause = environment().get("do"sv, detail::toplevel_only::yes);
+    if (!do_clause.is_array())
+        throw error{AD_FORMAT("\"do\" clause must be array")};
+    for (const auto& val : values_clause.array()) {
+        environment().push();
+        environment().add(var_name, val);
+        apply(do_clause);
+        environment().pop();
+    }
 
 } // acmacs::settings::v3::Data::apply_for_each
 

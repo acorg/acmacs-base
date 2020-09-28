@@ -17,7 +17,8 @@
     {"N": "ta", "fill12": ":s=0.5"},
     {"?N": "ta", "fill11": "{fill-{no}}", "no": 0},
     {"?N": "ta", "fill11": "{fill-{no}}", "no": 1},
-    {"N": "for-each", "var": "no", "values": [1, 2], "do": [{"N": "ta", "fill11": "{fill-{no}}"}]}
+    {"N": "for-each", "var": "no", "values": [1, 2], "do": [{"N": "ta", "fill11": "{fill-{no}}"}]},
+    {"N": "if", "condition": {"empty": "$fill12"}, "then": [{"N": "ta", "fill12": ":p+0.5"}]}
   ],
 
   "ta": [

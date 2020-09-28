@@ -71,6 +71,14 @@ namespace acmacs::settings::v3
         void apply_if();
         void apply_for_each();
 
+        bool eval_condition(const rjson::v3::value& condition) const;
+        bool eval_and(const rjson::v3::value& condition) const;
+        bool eval_or(const rjson::v3::value& condition) const;
+        bool eval_not(const rjson::v3::value& condition) const { return !eval_condition(condition); }
+        bool eval_empty(const rjson::v3::value& condition, bool true_if_empty) const;
+        bool eval_equal(const rjson::v3::value& condition) const;
+        bool eval_not_equal(const rjson::v3::value& condition) const { return !eval_equal(condition); }
+
     };
 
 } // namespace acmacs::settings::v3

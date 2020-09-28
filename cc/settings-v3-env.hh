@@ -32,6 +32,7 @@ namespace acmacs::settings::v3
 
 
             std::string substitute(std::string_view source) const;
+            const rjson::v3::value& substitute(std::string_view text, const rjson::v3::value& source) const;
             const rjson::v3::value& substitute(const rjson::v3::value& source) const;
 
             void add(std::string_view key, const rjson::v3::value& val) { env_data_.back().emplace_or_replace(std::string{key}, val); }
@@ -45,7 +46,6 @@ namespace acmacs::settings::v3
           private:
             std::vector<env_data_t> env_data_;
 
-            const rjson::v3::value& substitute(std::string_view text, const rjson::v3::value& source) const;
         };
 
         // ----------------------------------------------------------------------
