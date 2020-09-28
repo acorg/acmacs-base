@@ -1,5 +1,7 @@
 #include "acmacs-base/settings-v3.hh"
 #include "acmacs-base/settings-v3-env.hh"
+#include "acmacs-base/acmacsd.hh"
+#include "acmacs-base/filesystem.hh"
 
 // ----------------------------------------------------------------------
 
@@ -355,6 +357,8 @@ void acmacs::settings::v3::Data::load(std::string_view filename)
 
 void acmacs::settings::v3::Data::load(const std::vector<std::string_view>& filenames)
 {
+    for (const auto& filename : filenames)
+        load(filename);
 
 } // acmacs::settings::v3::Data::load
 
@@ -362,6 +366,12 @@ void acmacs::settings::v3::Data::load(const std::vector<std::string_view>& filen
 
 void acmacs::settings::v3::Data::load_from_conf(const std::vector<std::string_view>& filenames) // load from ${ACMACSD_ROOT}/share/conf dir
 {
+    for (const auto& settings_file_name : filenames) {
+        if (const auto filename = fmt::format("{}/share/conf/{}", acmacs::acmacsd_root(), settings_file_name); fs::exists(filename))
+            load(filename);
+        else
+            AD_WARNING("cannot load \"{}\": file not found", filename);
+    }
 
 } // acmacs::settings::v3::Data::load_from_conf
 
@@ -376,6 +386,7 @@ void acmacs::settings::v3::Data::set_defines(const std::vector<std::string_view>
 
 void acmacs::settings::v3::Data::reload() // reset environament, re-load previously loaded files, apply "init" in loaded files
 {
+    int unused;
 
 } // acmacs::settings::v3::Data::reload
 
