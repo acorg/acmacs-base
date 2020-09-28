@@ -379,6 +379,28 @@ void acmacs::settings::v3::Data::load_from_conf(const std::vector<std::string_vi
 
 void acmacs::settings::v3::Data::set_defines(const std::vector<std::string_view>& defines)
 {
+    using namespace std::string_view_literals;
+
+    for (const auto& def : defines) {
+        if (const auto pos = def.find('='); pos != std::string_view::npos) {
+            const auto val_s = def.substr(pos + 1);
+            if (val_s == "-") { // parsed as -0
+                environment().add(def.substr(0, pos), rjson::v3::detail::string{val_s});
+            }
+            else {
+                // AD_LOG(acmacs::log::settings, "set_defines \"{}\"", def);
+                try {
+                    environment().add(def.substr(0, pos), rjson::v3::parse_string_no_keep(val_s));
+                }
+                catch (std::exception&) {
+                    environment().add(def.substr(0, pos), rjson::v3::detail::string{val_s});
+                }
+                AD_LOG(acmacs::log::settings, "set_defines \"{}\" -> {}", def.substr(0, pos), environment().get(def.substr(0, pos)));
+            }
+        }
+        else
+            environment().add(def, rjson::v3::parse_string("true"sv));
+    }
 
 } // acmacs::settings::v3::Data::set_defines
 
@@ -386,12 +408,9 @@ void acmacs::settings::v3::Data::set_defines(const std::vector<std::string_view>
 
 void acmacs::settings::v3::Data::reload() // reset environament, re-load previously loaded files, apply "init" in loaded files
 {
-    int unused;
+    loaded_data_->reload(*this);
 
 } // acmacs::settings::v3::Data::reload
-
-// ----------------------------------------------------------------------
-
 
 // ----------------------------------------------------------------------
 /// Local Variables:
