@@ -7,6 +7,7 @@
 const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
 {
     const auto final_key = substitute_to_string(key);
+    AD_LOG(acmacs::log::settings, "env get \"{}\" (\"{}\")", final_key, key);
     switch (a_toplevel_only) {
         case toplevel_only::no:
             for (auto it = env_data_.rbegin(); it != env_data_.rend(); ++it) {
@@ -52,11 +53,11 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::substitute(st
         static thread_local rjson::v3::value substituted;
 #include "acmacs-base/diagnostics-pop.hh"
         substituted = rjson::v3::detail::string(rjson::v3::detail::string::with_content, std::move(result));
-        AD_DEBUG("substituted \"{}\" -> {}", text, substituted);
+        AD_LOG(acmacs::log::settings, "env substituted \"{}\" -> {}", text, substituted);
         return substituted;
     }
     else {
-        AD_DEBUG("nothing substituted \"{}\" -> {}", text, source);
+        AD_LOG(acmacs::log::settings, "env substituted nothing \"{}\" -> {}", text, source);
         return source;
     }
 

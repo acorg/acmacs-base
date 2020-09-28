@@ -29,15 +29,17 @@ acmacs::settings::v3::Data::~Data()
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v3::Data::apply(std::string_view name)
+void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
 {
+    using namespace std::string_view_literals;
+
     if (name.empty())
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
         const auto substituted_name = environment_->substitute_to_string(name);
-        AD_LOG(acmacs::log::settings, "apply \"{}\" <-- \"{}\"", substituted_name, name);
+        AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv: ""sv, substituted_name, name);
         AD_LOG_INDENT;
-        if (const auto& val_from_data = get(substituted_name); !val_from_data.is_null()) {
+        if (const auto& val_from_data = get(substituted_name, tlo); !val_from_data.is_null()) {
             apply(val_from_data);
         }
         else if (!apply_built_in(substituted_name)) {
@@ -159,9 +161,14 @@ bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // return
 
 // ----------------------------------------------------------------------
 
-const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name) const
+const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, toplevel_only tlo) const
 {
-    return loaded_data_->get(name);
+    switch (tlo) {
+        case toplevel_only::yes:
+            return loaded_data_->top(name);
+        case toplevel_only::no:
+            return loaded_data_->get(name);
+    }
 
 } // acmacs::settings::v3::Data::get
 
@@ -228,7 +235,7 @@ void acmacs::settings::v3::Data::load(std::string_view filename)
     using namespace std::string_view_literals;
     AD_LOG(acmacs::log::settings, "loading {}", filename);
     loaded_data_->load(filename);
-// apply_top("init"sv);
+    apply("init"sv, toplevel_only::yes);
 
 } // acmacs::settings::v3::Data::load
 

@@ -34,6 +34,8 @@ namespace acmacs::settings::v3
 
     } // namespace detail
 
+    enum class toplevel_only { no, yes };
+
     class Data
     {
       public:
@@ -49,14 +51,14 @@ namespace acmacs::settings::v3
         // substitute vars in name, find name in environment or in data_ or in built-in and apply it
         // if name starts with ? do nothing
         // if name not found, throw
-        virtual void apply(std::string_view name);
+        virtual void apply(std::string_view name, toplevel_only tlo = toplevel_only::no);
         void apply(const rjson::v3::value& entry);
 
       protected:
         const detail::Environment& environment() const { return *environment_; }
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
         std::string substitute_to_string(std::string_view source) const;
-        const rjson::v3::value& get(std::string_view name) const;
+        const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
 
       private:
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
