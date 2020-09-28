@@ -184,6 +184,15 @@ const rjson::v3::value& acmacs::settings::v3::Data::getenv(std::string_view name
 
 // ----------------------------------------------------------------------
 
+template <typename T> std::decay_t<T> acmacs::settings::v3::Data::getenv_or(std::string_view key, T&& a_default) const
+{
+    return environment().get_or(key, std::forward<T>(a_default));
+}
+
+template std::string_view acmacs::settings::v3::Data::getenv_or(std::string_view, std::string_view&&) const;
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v3::Data::eval_condition(const rjson::v3::value& condition) const
 {
     using namespace std::string_view_literals;

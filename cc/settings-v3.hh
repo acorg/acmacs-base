@@ -61,6 +61,8 @@ namespace acmacs::settings::v3
         const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
         const rjson::v3::value& getenv(std::string_view name) const;
 
+        template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
+
       private:
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
         std::unique_ptr<detail::Environment> environment_;
@@ -81,6 +83,8 @@ namespace acmacs::settings::v3
         bool eval_not_equal(const rjson::v3::value& condition) const { return !eval_equal(condition); }
 
     };
+
+    extern template std::string_view Data::getenv_or(std::string_view, std::string_view&&) const;
 
 } // namespace acmacs::settings::v3
 
