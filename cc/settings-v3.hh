@@ -51,6 +51,7 @@ namespace acmacs::settings::v3
         void apply(const rjson::v3::value& entry);
 
         const rjson::v3::value& substitute(const rjson::v3::value& source) const;
+        std::string substitute(std::string_view source) const;
 
       protected:
         const detail::Environment& environment() const { return *environment_; }
@@ -64,6 +65,17 @@ namespace acmacs::settings::v3
         void setenv(std::string_view key, std::string_view val);
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
+
+        class environment_push
+        {
+          public:
+            environment_push(Data& data, bool push = true);
+            ~environment_push();
+
+          private:
+            Data& data_;
+            const bool push_;
+        };
 
       private:
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
@@ -84,7 +96,7 @@ namespace acmacs::settings::v3
         bool eval_equal(const rjson::v3::value& condition) const;
         bool eval_not_equal(const rjson::v3::value& condition) const { return !eval_equal(condition); }
 
-    };
+    }; // class Data
 
     extern template std::string_view Data::getenv_or(std::string_view, std::string_view&&) const;
 

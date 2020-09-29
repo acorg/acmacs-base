@@ -17,6 +17,21 @@ namespace
 
 // ----------------------------------------------------------------------
 
+acmacs::settings::v3::Data::environment_push::environment_push(Data& data, bool push)
+    : data_{data}, push_{push}
+{
+    if (push_)
+        data_.environment().push();
+}
+
+acmacs::settings::v3::Data::environment_push::~environment_push()
+{
+    if (push_)
+        data_.environment().pop();
+}
+
+// ----------------------------------------------------------------------
+
 acmacs::settings::v3::Data::Data()
     : loaded_data_{std::make_unique<detail::LoadedDataFiles>()}, environment_{std::make_unique<detail::Environment>()}
 {
@@ -38,7 +53,7 @@ void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
     if (name.empty())
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
-        const auto substituted_name = environment_->substitute(name);
+        const auto substituted_name = substitute(name);
         AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv: ""sv, substituted_name, name);
         AD_LOG_INDENT;
         if (const auto& val_from_data = get(substituted_name, tlo); !val_from_data.is_null()) {
@@ -83,25 +98,6 @@ void acmacs::settings::v3::Data::apply(const rjson::v3::value& entry)
 
 void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object& entry)
 {
-    class Subenvironment
-    {
-      public:
-        Subenvironment(detail::Environment& env, bool push) : env_{env}, push_{push}
-        {
-            if (push_)
-                env_.push();
-        }
-        ~Subenvironment()
-        {
-            if (push_)
-                env_.pop();
-        }
-
-      private:
-        detail::Environment& env_;
-        const bool push_;
-    };
-
     using namespace std::string_view_literals;
     AD_LOG_INDENT;
     AD_LOG(acmacs::log::settings, "push_and_apply {}", entry);
@@ -109,7 +105,7 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
         if (const auto& command_v = entry["N"sv]; !command_v.is_null()) {
             const auto command{command_v.to<std::string_view>()};
             AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
-            Subenvironment sub_env(*environment_, command != "set");
+            environment_push sub_env(*this, command != "set");
             for (const auto& [key, val] : entry) {
                 if (key != "N"sv)
                     setenv(key, val);
@@ -192,6 +188,14 @@ template std::string_view acmacs::settings::v3::Data::getenv_or(std::string_view
 // ----------------------------------------------------------------------
 
 const rjson::v3::value& acmacs::settings::v3::Data::substitute(const rjson::v3::value& source) const
+{
+    return environment().substitute(source);
+
+} // acmacs::settings::v3::Data::substitute
+
+// ----------------------------------------------------------------------
+
+std::string acmacs::settings::v3::Data::substitute(std::string_view source) const
 {
     return environment().substitute(source);
 
@@ -390,10 +394,9 @@ void acmacs::settings::v3::Data::apply_for_each()
     if (!do_clause.is_array())
         throw error{AD_FORMAT("\"do\" clause must be array")};
     for (const auto& val : values_clause.array()) {
-        environment().push();
+        environment_push subenv(*this);
         setenv(var_name, val);
         apply(do_clause);
-        environment().pop();
     }
 
 } // acmacs::settings::v3::Data::apply_for_each
