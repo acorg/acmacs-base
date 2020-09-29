@@ -229,7 +229,7 @@ void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&&
 
 void acmacs::settings::v3::Data::setenv(std::string_view key, std::string_view val)
 {
-    setenv(key, rjson::v3::detail::string{val});
+    setenv(key, rjson::v3::detail::string(rjson::v3::detail::string::with_content, val));
 
 } // acmacs::settings::v3::Data::setenv
 

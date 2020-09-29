@@ -8,16 +8,21 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::stri
 {
     const auto final_key = substitute(key);
     AD_LOG(acmacs::log::settings, "env get \"{}\" (\"{}\")", final_key, key);
+    AD_LOG_INDENT;
     switch (a_toplevel_only) {
         case toplevel_only::no:
             for (auto it = env_data_.rbegin(); it != env_data_.rend(); ++it) {
-                if (auto found = it->find(final_key); found != it->end())
+                if (auto found = it->find(final_key); found != it->end()) {
+                    AD_LOG(acmacs::log::settings, "env found \"{}\": {}", found->first, found->second);
                     return substitute(found->second);
+                }
             }
             break;
         case toplevel_only::yes:
-            if (auto found = env_data_.back().find(final_key); found != env_data_.back().end())
+            if (auto found = env_data_.back().find(final_key); found != env_data_.back().end()) {
+                AD_LOG(acmacs::log::settings, "env found (toplevel) \"{}\": {}", found->first, found->second);
                 return substitute(found->second);
+            }
             break;
     }
     return rjson::v3::const_null;
@@ -62,7 +67,9 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::substitute(st
 #include "acmacs-base/global-constructors-push.hh"
         static thread_local rjson::v3::value substituted;
 #include "acmacs-base/diagnostics-pop.hh"
+        AD_LOG(acmacs::log::settings, "env substitute static old: {}", substituted);
         substituted = rjson::v3::detail::string(rjson::v3::detail::string::with_content, std::move(result));
+        AD_LOG(acmacs::log::settings, "env substitute static new: {}", substituted);
         return substituted;
     }
     else {
