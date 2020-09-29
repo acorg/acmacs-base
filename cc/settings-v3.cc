@@ -111,10 +111,8 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
             AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
             Subenvironment sub_env(*environment_, command != "set");
             for (const auto& [key, val] : entry) {
-                if (key != "N"sv) {
-                    // AD_LOG(acmacs::log::settings, "environment_.add key:{} val:{}", key, val);
-                    environment_->add(key, val);
-                }
+                if (key != "N"sv)
+                    setenv(key, val);
             }
             if (command != "set")
                 apply(command);
@@ -206,6 +204,30 @@ std::string acmacs::settings::v3::Data::format_toplevel() const
     return environment().format_toplevel();
 
 } // acmacs::settings::v3::Data::format_toplevel
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v3::Data::setenv(std::string_view key, const rjson::v3::value& val)
+{
+    environment().add(key, val);
+
+} // acmacs::settings::v3::Data::setenv
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&& val)
+{
+    environment().add(key, std::move(val));
+
+} // acmacs::settings::v3::Data::setenv
+
+// ----------------------------------------------------------------------
+
+void acmacs::settings::v3::Data::setenv(std::string_view key, std::string_view val)
+{
+    setenv(key, rjson::v3::detail::string{val});
+
+} // acmacs::settings::v3::Data::setenv
 
 // ----------------------------------------------------------------------
 
@@ -369,7 +391,7 @@ void acmacs::settings::v3::Data::apply_for_each()
         throw error{AD_FORMAT("\"do\" clause must be array")};
     for (const auto& val : values_clause.array()) {
         environment().push();
-        environment().add(var_name, val);
+        setenv(var_name, val);
         apply(do_clause);
         environment().pop();
     }
@@ -419,15 +441,15 @@ void acmacs::settings::v3::Data::set_defines(const std::vector<std::string_view>
         if (const auto pos = def.find('='); pos != std::string_view::npos) {
             const auto val_s = def.substr(pos + 1);
             if (val_s == "-") { // parsed as -0
-                environment().add(def.substr(0, pos), rjson::v3::detail::string{val_s});
+                setenv(def.substr(0, pos), val_s);
             }
             else {
                 // AD_LOG(acmacs::log::settings, "set_defines \"{}\"", def);
                 try {
-                    environment().add(def.substr(0, pos), rjson::v3::parse_string_no_keep(val_s));
+                    setenv(def.substr(0, pos), rjson::v3::parse_string_no_keep(val_s));
                 }
                 catch (std::exception&) {
-                    environment().add(def.substr(0, pos), rjson::v3::detail::string{val_s});
+                    setenv(def.substr(0, pos), rjson::v3::detail::string{val_s});
                 }
                 AD_LOG(acmacs::log::settings, "set_defines \"{}\" -> {}", def.substr(0, pos), getenv(def.substr(0, pos)));
             }

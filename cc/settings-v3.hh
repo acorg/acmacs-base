@@ -5,10 +5,6 @@
 #include <memory>
 #include <stdexcept>
 
-// #include "acmacs-base/rjson-v3.hh"
-// #include "acmacs-base/to-json.hh"
-// #include "acmacs-base/named-type.hh"
-
 // ----------------------------------------------------------------------
 
 namespace rjson::v3
@@ -63,6 +59,9 @@ namespace acmacs::settings::v3
         const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
         const rjson::v3::value& getenv(std::string_view name) const;
         std::string format_toplevel() const;
+        void setenv(std::string_view key, const rjson::v3::value& val);
+        void setenv(std::string_view key, rjson::v3::value&& val);
+        void setenv(std::string_view key, std::string_view val);
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
 
