@@ -96,6 +96,27 @@ void acmacs::settings::v3::Data::apply(const rjson::v3::value& entry)
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v3::Data::apply_first(const std::vector<std::string_view>& names, throw_if_nothing_applied tina)
+{
+    const auto try_apply = [this](std::string_view name) -> bool {
+        if (const auto& to_apply = get(substitute(name), toplevel_only::no); !to_apply.is_null()) {
+            apply(to_apply);
+            return true;
+        }
+        else
+            return false;
+    };
+
+    if (!std::any_of(std::begin(names), std::end(names), try_apply)) {
+        AD_LOG(acmacs::log::settings, "apply_first: NOT applied {}", names);
+        if (tina == throw_if_nothing_applied::yes)
+            throw error{fmt::format("neither of {} found in settings", names)};
+    }
+
+} // acmacs::settings::v3::Data::apply_first
+
+// ----------------------------------------------------------------------
+
 void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object& entry)
 {
     using namespace std::string_view_literals;

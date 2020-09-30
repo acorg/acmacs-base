@@ -31,6 +31,7 @@ namespace acmacs::settings::v3
     } // namespace detail
 
     enum class toplevel_only { no, yes };
+        enum class throw_if_nothing_applied { no, yes };
 
     class Data
     {
@@ -49,22 +50,15 @@ namespace acmacs::settings::v3
         // if name not found, throw
         virtual void apply(std::string_view name, toplevel_only tlo = toplevel_only::no);
         void apply(const rjson::v3::value& entry);
+        // try to apply each in the names, stop upon finding and applying first
+        void apply_first(const std::vector<std::string_view>& names, throw_if_nothing_applied tina);
 
         const rjson::v3::value& substitute(const rjson::v3::value& source) const;
         std::string substitute(std::string_view source) const;
 
-      protected:
-        const detail::Environment& environment() const { return *environment_; }
-        detail::Environment& environment() { return *environment_; }
-        virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
-        const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
-        const rjson::v3::value& getenv(std::string_view name) const;
-        std::string format_toplevel() const;
         void setenv(std::string_view key, const rjson::v3::value& val);
         void setenv(std::string_view key, rjson::v3::value&& val);
         void setenv(std::string_view key, std::string_view val);
-
-        template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
 
         class environment_push
         {
@@ -76,6 +70,16 @@ namespace acmacs::settings::v3
             Data& data_;
             const bool push_;
         };
+
+      protected:
+        const detail::Environment& environment() const { return *environment_; }
+        detail::Environment& environment() { return *environment_; }
+        virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
+        const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
+        const rjson::v3::value& getenv(std::string_view name) const;
+        std::string format_toplevel() const;
+
+        template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;
 
       private:
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
