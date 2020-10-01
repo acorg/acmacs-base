@@ -176,6 +176,10 @@ bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // return
             AD_INFO("{}:\n{}", name, format_environment("    "sv));
             return true;
         }
+        else if (name == "init"sv) {
+            // AD_DEBUG("no \"init\" in source file");
+            return true;
+        }
         return false;
     }
     catch (std::exception& err) {
