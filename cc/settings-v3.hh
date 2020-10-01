@@ -31,7 +31,8 @@ namespace acmacs::settings::v3
     } // namespace detail
 
     enum class toplevel_only { no, yes };
-        enum class throw_if_nothing_applied { no, yes };
+    enum class throw_if_nothing_applied { no, yes };
+    enum class replace { no, yes };
 
     class Data
     {
@@ -57,8 +58,12 @@ namespace acmacs::settings::v3
         std::string substitute(std::string_view source) const;
 
         void setenv(std::string_view key, const rjson::v3::value& val);
-        void setenv(std::string_view key, rjson::v3::value&& val);
-        void setenv(std::string_view key, std::string_view val);
+        void setenv(std::string_view key, rjson::v3::value&& val, replace repl = replace::no);
+        void setenv(std::string_view key, std::string_view val, replace repl = replace::no);
+
+        const rjson::v3::value& getenv(std::string_view name) const;
+
+        std::string format_environment(std::string_view indent) const;
 
         class environment_push
         {
@@ -76,7 +81,6 @@ namespace acmacs::settings::v3
         detail::Environment& environment() { return *environment_; }
         virtual bool apply_built_in(std::string_view name); // returns true if built-in command with that name found and applied
         const rjson::v3::value& get(std::string_view name, toplevel_only tlo) const;
-        const rjson::v3::value& getenv(std::string_view name) const;
         std::string format_toplevel() const;
 
         template <typename T> std::decay_t<T> getenv_or(std::string_view key, T&& a_default) const;

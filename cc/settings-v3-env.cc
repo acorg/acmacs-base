@@ -31,6 +31,21 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::stri
 
 // ----------------------------------------------------------------------
 
+void acmacs::settings::v3::detail::Environment::replace_or_add(std::string_view key, rjson::v3::value&& val)
+{
+    for (auto it = env_data_.rbegin(); it != env_data_.rend(); ++it) {
+        if (auto found = it->find(key); found != it->end()) {
+            found->second = std::move(val);
+            return;
+        }
+    }
+    // not found, add
+    env_data_.back().emplace_or_replace(key, std::move(val));
+
+} // acmacs::settings::v3::detail::Environment::replace_or_add
+
+// ----------------------------------------------------------------------
+
 std::string acmacs::settings::v3::detail::Environment::substitute(std::string_view text) const
 {
 #include "acmacs-base/global-constructors-push.hh"

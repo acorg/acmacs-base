@@ -37,6 +37,7 @@ namespace acmacs::settings::v3
 
             void add(std::string_view key, const rjson::v3::value& val) { env_data_.back().emplace_or_replace(std::string{key}, val); }
             void add(std::string_view key, rjson::v3::value&& val) { env_data_.back().emplace_or_replace(key, std::move(val)); }
+            void replace_or_add(std::string_view key, rjson::v3::value&& val);
 
             void push() { env_data_.emplace_back(); }
             void pop() { env_data_.pop_back(); }

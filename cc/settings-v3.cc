@@ -150,6 +150,14 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
 
 // ----------------------------------------------------------------------
 
+std::string acmacs::settings::v3::Data::format_environment(std::string_view indent) const
+{
+    return environment_->format(indent);
+
+} // acmacs::settings::v3::Data::format_environment
+
+// ----------------------------------------------------------------------
+
 bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // returns true if built-in command with that name found and applied
 {
     using namespace std::string_view_literals;
@@ -165,7 +173,7 @@ bool acmacs::settings::v3::Data::apply_built_in(std::string_view name) // return
             return true;
         }
         else if (name == "-print-environment"sv) {
-            AD_INFO("{}:\n{}", name, environment_->format("    "sv));
+            AD_INFO("{}:\n{}", name, format_environment("    "sv));
             return true;
         }
         return false;
@@ -240,17 +248,20 @@ void acmacs::settings::v3::Data::setenv(std::string_view key, const rjson::v3::v
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&& val)
+void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&& val, replace repl)
 {
-    environment().add(key, std::move(val));
+    if (repl == replace::yes)
+        environment().replace_or_add(key, std::move(val));
+    else
+        environment().add(key, std::move(val));
 
 } // acmacs::settings::v3::Data::setenv
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v3::Data::setenv(std::string_view key, std::string_view val)
+void acmacs::settings::v3::Data::setenv(std::string_view key, std::string_view val, replace repl)
 {
-    setenv(key, rjson::v3::detail::string(rjson::v3::detail::string::with_content, val));
+    setenv(key, rjson::v3::detail::string(rjson::v3::detail::string::with_content, val), repl);
 
 } // acmacs::settings::v3::Data::setenv
 
