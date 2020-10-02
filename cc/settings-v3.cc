@@ -217,6 +217,11 @@ template <typename T> std::decay_t<T> acmacs::settings::v3::Data::getenv_or(std:
 }
 
 template std::string_view acmacs::settings::v3::Data::getenv_or(std::string_view, std::string_view&&) const;
+template std::string_view acmacs::settings::v3::Data::getenv_or(std::string_view, const std::string_view&) const;
+// template std::string acmacs::settings::v3::Data::getenv_or(std::string_view, const std::string&) const;
+template size_t acmacs::settings::v3::Data::getenv_or(std::string_view, size_t&&) const;
+template double acmacs::settings::v3::Data::getenv_or(std::string_view, double&&) const;
+template bool acmacs::settings::v3::Data::getenv_or(std::string_view, bool&&) const;
 
 // ----------------------------------------------------------------------
 
@@ -258,14 +263,6 @@ void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&&
         environment().replace_or_add(key, std::move(val));
     else
         environment().add(key, std::move(val));
-
-} // acmacs::settings::v3::Data::setenv
-
-// ----------------------------------------------------------------------
-
-void acmacs::settings::v3::Data::setenv(std::string_view key, std::string_view val, replace repl)
-{
-    setenv(key, rjson::v3::detail::string(rjson::v3::detail::string::with_content, val), repl);
 
 } // acmacs::settings::v3::Data::setenv
 

@@ -5,6 +5,8 @@
 #include <memory>
 #include <stdexcept>
 
+#include "acmacs-base/rjson-v3.hh"
+
 // ----------------------------------------------------------------------
 
 namespace rjson::v3
@@ -59,9 +61,17 @@ namespace acmacs::settings::v3
 
         void setenv(std::string_view key, const rjson::v3::value& val);
         void setenv(std::string_view key, rjson::v3::value&& val, replace repl = replace::no);
-        void setenv(std::string_view key, std::string_view val, replace repl = replace::no);
+        void setenv(std::string_view key, std::string_view val, replace repl = replace::no) { setenv(key, rjson::v3::detail::string(rjson::v3::detail::string::with_content, val), repl); }
+        void setenv(std::string_view key, bool val, replace repl = replace::no) { setenv(key, rjson::v3::detail::boolean(val), repl); }
 
         const rjson::v3::value& getenv(std::string_view name) const;
+
+        template <typename T> void getenv_copy_if_present(std::string_view key, T& target) const
+        {
+            static_assert(!std::is_same_v<std::decay_t<T>, std::string_view>);
+            if (const auto& val = getenv(key); !val.is_null())
+                target = val.to<std::decay_t<T>>();
+        }
 
         std::string format_environment(std::string_view indent) const;
 
@@ -107,6 +117,11 @@ namespace acmacs::settings::v3
     }; // class Data
 
     extern template std::string_view Data::getenv_or(std::string_view, std::string_view&&) const;
+    extern template std::string_view Data::getenv_or(std::string_view, const std::string_view&) const;
+    // extern template std::string Data::getenv_or(std::string_view, const std::string&) const;
+    extern template size_t Data::getenv_or(std::string_view, size_t&&) const;
+    extern template double Data::getenv_or(std::string_view, double&&) const;
+    extern template bool Data::getenv_or(std::string_view, bool&&) const;
 
 } // namespace acmacs::settings::v3
 
