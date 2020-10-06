@@ -208,11 +208,10 @@ namespace acmacs::argv::inline v2
 
     // ----------------------------------------------------------------------
 
-    class show_help : public std::exception
+    class show_help : public std::runtime_error
     {
-    };
-    class errors : public std::exception
-    {
+      public:
+        using std::runtime_error::runtime_error;
     };
 
     class argv
@@ -228,6 +227,7 @@ namespace acmacs::argv::inline v2
         constexpr auto argv0() const { return argv0_; }
         constexpr auto program_name() const { return prog_name_; }
         constexpr const errors_t& errors() const { return errors_; }
+        std::string format_help() const;
         void show_help() const;
 
         virtual ~argv() = default;
