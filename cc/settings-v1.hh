@@ -447,21 +447,21 @@ namespace acmacs::settings
         {
             if (const auto& rjval = get(); !rjval.is_null())
                 return rjson::v2::find_index_if(rjval, [&func](const rjson::v2::value& val) -> bool { const_array_element<T> elt(val, ""); return func(*elt); });
-            return {};
+            return std::nullopt;
         }
 
         template <typename T> template <typename F> inline std::optional<const_array_element<T>> array<T>::find_if(F func) const
         {
             if (const auto index = find_index_if(func); index)
                 return operator[](*index);
-            return {};
+            return std::nullopt;
         }
 
         template <typename T> template <typename F> inline std::optional<array_element<T>> array<T>::find_if(F func)
         {
             if (const auto index = find_index_if(func); index)
                 return operator[](*index);
-            return {};
+            return std::nullopt;
         }
 
         template <typename T> template <typename F> inline void array<T>::for_each(F func) const
