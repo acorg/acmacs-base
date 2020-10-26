@@ -199,6 +199,8 @@ const rjson::v3::value& acmacs::settings::v3::Data::get(std::string_view name, t
             return loaded_data_->get(name);
     }
 
+    return loaded_data_->get(name); // hey g++10
+
 } // acmacs::settings::v3::Data::get
 
 // ----------------------------------------------------------------------
