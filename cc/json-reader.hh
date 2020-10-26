@@ -28,39 +28,74 @@ namespace json_reader
 
     template <typename Target> class HandlerBase
     {
-     public:
-        inline HandlerBase(Target& aTarget) : mTarget(aTarget), mIgnore(false) {}
+      public:
+        HandlerBase(Target& aTarget) : mTarget(aTarget), mIgnore(false) {}
         virtual ~HandlerBase() {}
 
-        inline virtual HandlerBase* StartObject() { throw Failure(std::string("HandlerBase StartObject ") + typeid(*this).name()); }
-        inline virtual HandlerBase* EndObject() { throw Pop(); }
-        inline virtual HandlerBase* StartArray() { throw Failure(std::string("HandlerBase StartArray ") + typeid(*this).name()); }
-        inline virtual HandlerBase* EndArray() { throw Pop(); }
-        inline virtual HandlerBase* Double(double d) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Double " + std::to_string(d)); }
-        inline virtual HandlerBase* Int(int i) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Int " + std::to_string(i)); }
-        inline virtual HandlerBase* Uint(unsigned u) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Uint " + std::to_string(u)); }
-        inline virtual HandlerBase* Bool(bool b) { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Bool " + std::to_string(b)); }
-        inline virtual HandlerBase* Null() { if (mIgnore) { mIgnore = false; return nullptr; } throw Failure("HandlerBase Null"); }
-
-        inline virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
-            {
-                if ((length == 1 && *str == '_') || (length > 0 && (*str == '?' || str[length - 1] == '?')))
-                    mIgnore = true;
-                else
-                    throw Failure("HandlerBase Key: \"" + std::string(str, length) + "\"");
+        virtual HandlerBase* StartObject() { throw Failure(std::string("HandlerBase StartObject ") + typeid(*this).name()); }
+        virtual HandlerBase* EndObject() { throw Pop(); }
+        virtual HandlerBase* StartArray() { throw Failure(std::string("HandlerBase StartArray ") + typeid(*this).name()); }
+        virtual HandlerBase* EndArray() { throw Pop(); }
+        virtual HandlerBase* Double(double d)
+        {
+            if (mIgnore) {
+                mIgnore = false;
                 return nullptr;
             }
-
-        inline virtual HandlerBase* String(const char* str, rapidjson::SizeType length)
-            {
-                if (mIgnore)
-                    mIgnore = false;
-                else
-                    throw Failure("HandlerBase String: \"" + std::string(str, length) + "\"");
+            throw Failure("HandlerBase Double " + std::to_string(d));
+        }
+        virtual HandlerBase* Int(int i)
+        {
+            if (mIgnore) {
+                mIgnore = false;
                 return nullptr;
             }
+            throw Failure("HandlerBase Int " + std::to_string(i));
+        }
+        virtual HandlerBase* Uint(unsigned u)
+        {
+            if (mIgnore) {
+                mIgnore = false;
+                return nullptr;
+            }
+            throw Failure("HandlerBase Uint " + std::to_string(u));
+        }
+        virtual HandlerBase* Bool(bool b)
+        {
+            if (mIgnore) {
+                mIgnore = false;
+                return nullptr;
+            }
+            throw Failure("HandlerBase Bool " + std::to_string(b));
+        }
+        virtual HandlerBase* Null()
+        {
+            if (mIgnore) {
+                mIgnore = false;
+                return nullptr;
+            }
+            throw Failure("HandlerBase Null");
+        }
 
-     protected:
+        virtual HandlerBase* Key(const char* str, rapidjson::SizeType length)
+        {
+            if ((length == 1 && *str == '_') || (length > 0 && (*str == '?' || str[length - 1] == '?')))
+                mIgnore = true;
+            else
+                throw Failure("HandlerBase Key: \"" + std::string(str, length) + "\"");
+            return nullptr;
+        }
+
+        virtual HandlerBase* String(const char* str, rapidjson::SizeType length)
+        {
+            if (mIgnore)
+                mIgnore = false;
+            else
+                throw Failure("HandlerBase String: \"" + std::string(str, length) + "\"");
+            return nullptr;
+        }
+
+      protected:
         Target& mTarget;
         bool mIgnore;
     };
@@ -69,32 +104,31 @@ namespace json_reader
 
     template <typename Target> class GenericListHandler : public HandlerBase<Target>
     {
-     public:
-        inline GenericListHandler(Target& aTarget, size_t aExpectedSize)
-            : HandlerBase<Target>(aTarget), mStarted(false), mExpectedSize(aExpectedSize) {}
+      public:
+        GenericListHandler(Target& aTarget, size_t aExpectedSize) : HandlerBase<Target>(aTarget), mStarted(false), mExpectedSize(aExpectedSize) {}
 
-        inline virtual HandlerBase<Target>* StartArray()
-            {
-                if (mStarted)
-                    throw Failure{};
-                mStarted = true;
-                return nullptr;
-            }
+        HandlerBase<Target>* StartArray() override
+        {
+            if (mStarted)
+                throw Failure{};
+            mStarted = true;
+            return nullptr;
+        }
 
-        inline virtual HandlerBase<Target>* EndArray()
-            {
-                if (mExpectedSize && size() != mExpectedSize)
-                    throw Failure{"Unexpected resulting list size: " + std::to_string(size()) + " expected: " + std::to_string(mExpectedSize)};
-                throw Pop();
-            }
+        HandlerBase<Target>* EndArray() override
+        {
+            if (mExpectedSize && size() != mExpectedSize)
+                throw Failure{"Unexpected resulting list size: " + std::to_string(size()) + " expected: " + std::to_string(mExpectedSize)};
+            throw Pop();
+        }
 
-        inline virtual HandlerBase<Target>* EndObject() { throw Failure(); }
+        HandlerBase<Target>* EndObject() override { throw Failure(); }
 
-     protected:
-        inline bool started() const { return mStarted; }
+      protected:
+        bool started() const { return mStarted; }
         virtual size_t size() const = 0;
 
-     private:
+      private:
         bool mStarted;
         size_t mExpectedSize;
 
@@ -104,22 +138,21 @@ namespace json_reader
 
     template <typename Target, typename Element, typename ElementHandler> class ListHandler : public GenericListHandler<Target>
     {
-     public:
-        inline ListHandler(Target& aTarget, std::vector<Element>& aList, size_t aExpectedSize = 0)
-            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
+      public:
+        ListHandler(Target& aTarget, std::vector<Element>& aList, size_t aExpectedSize = 0) : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
-        inline virtual HandlerBase<Target>* StartObject()
-            {
-                if (!this->started())
-                    throw Failure{};
-                mList.emplace_back();
-                return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
-            }
+        HandlerBase<Target>* StartObject() override
+        {
+            if (!this->started())
+                throw Failure{};
+            mList.emplace_back();
+            return new ElementHandler(HandlerBase<Target>::mTarget, mList.back());
+        }
 
-     protected:
-        virtual inline size_t size() const { return mList.size(); }
+      protected:
+        size_t size() const override { return mList.size(); }
 
-     private:
+      private:
         std::vector<Element>& mList;
 
     }; // class ListHandler
@@ -128,20 +161,19 @@ namespace json_reader
 
     template <typename Target> class StringListHandler : public GenericListHandler<Target>
     {
-     public:
-        inline StringListHandler(Target& aTarget, std::vector<std::string>& aList, size_t aExpectedSize = 0)
-            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
+      public:
+        StringListHandler(Target& aTarget, std::vector<std::string>& aList, size_t aExpectedSize = 0) : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
-        inline virtual HandlerBase<Target>* String(const char* str, rapidjson::SizeType length)
-            {
-                mList.emplace_back(str, length);
-                return nullptr;
-            }
+        HandlerBase<Target>* String(const char* str, rapidjson::SizeType length) override
+        {
+            mList.emplace_back(str, length);
+            return nullptr;
+        }
 
-     protected:
-        virtual inline size_t size() const { return mList.size(); }
+      protected:
+        size_t size() const override { return mList.size(); }
 
-     private:
+      private:
         std::vector<std::string>& mList;
 
     }; // class StringListHandler
@@ -150,20 +182,19 @@ namespace json_reader
 
     template <typename Target> class UintListHandler : public GenericListHandler<Target>
     {
-     public:
-        inline UintListHandler(Target& aTarget, std::vector<size_t>& aList, size_t aExpectedSize = 0)
-            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
+      public:
+        UintListHandler(Target& aTarget, std::vector<size_t>& aList, size_t aExpectedSize = 0) : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
-        inline virtual HandlerBase<Target>* Uint(unsigned u)
-            {
-                mList.push_back(u);
-                return nullptr;
-            }
+        HandlerBase<Target>* Uint(unsigned u) override
+        {
+            mList.push_back(u);
+            return nullptr;
+        }
 
-     protected:
-        virtual inline size_t size() const { return mList.size(); }
+      protected:
+        size_t size() const override { return mList.size(); }
 
-     private:
+      private:
         std::vector<size_t>& mList;
 
     }; // class UintListHandler
@@ -172,20 +203,19 @@ namespace json_reader
 
     template <typename Target> class DoubleListHandler : public GenericListHandler<Target>
     {
-     public:
-        inline DoubleListHandler(Target& aTarget, std::vector<double>& aList, size_t aExpectedSize = 0)
-            : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
+      public:
+        DoubleListHandler(Target& aTarget, std::vector<double>& aList, size_t aExpectedSize = 0) : GenericListHandler<Target>(aTarget, aExpectedSize), mList(aList) {}
 
-        inline virtual HandlerBase<Target>* Double(double d)
-            {
-                mList.push_back(d);
-                return nullptr;
-            }
+        HandlerBase<Target>* Double(double d) override
+        {
+            mList.push_back(d);
+            return nullptr;
+        }
 
-     protected:
-        virtual inline size_t size() const { return mList.size(); }
+      protected:
+        size_t size() const override { return mList.size(); }
 
-     private:
+      private:
         std::vector<double>& mList;
 
     }; // class DoubleListHandler
@@ -194,26 +224,22 @@ namespace json_reader
 
     template <typename Target> class MapListHandler : public HandlerBase<Target>
     {
-     public:
-        inline MapListHandler(Target& aTarget, std::map<std::string, std::vector<std::string>>& aMap)
-            : HandlerBase<Target>{aTarget}, mMap(aMap), mStarted(false) {}
+      public:
+        MapListHandler(Target& aTarget, std::map<std::string, std::vector<std::string>>& aMap) : HandlerBase<Target>{aTarget}, mMap(aMap), mStarted(false) {}
 
-        inline virtual HandlerBase<Target>* StartObject()
-            {
-                if (mStarted)
-                    throw Failure();
-                mStarted = true;
-                return nullptr;
-            }
+        HandlerBase<Target>* StartObject() override
+        {
+            if (mStarted)
+                throw Failure();
+            mStarted = true;
+            return nullptr;
+        }
 
-        inline virtual HandlerBase<Target>* EndArray() { throw Failure(); }
+        HandlerBase<Target>* EndArray() override { throw Failure(); }
 
-        inline virtual HandlerBase<Target>* Key(const char* str, rapidjson::SizeType length)
-            {
-                return new StringListHandler<Target>(HandlerBase<Target>::mTarget, mMap[{str, length}]);
-            }
+        HandlerBase<Target>* Key(const char* str, rapidjson::SizeType length) override { return new StringListHandler<Target>(HandlerBase<Target>::mTarget, mMap[{str, length}]); }
 
-     private:
+      private:
         std::map<std::string, std::vector<std::string>>& mMap;
         bool mStarted;
 
@@ -223,34 +249,33 @@ namespace json_reader
 
     template <typename Target> class StringMappingHandler : public HandlerBase<Target>
     {
-     public:
-        inline StringMappingHandler(Target& aTarget, std::vector<std::pair<std::string, std::string>>& aMapping)
-            : HandlerBase<Target>{aTarget}, mMapping(aMapping), mStarted(false) {}
+      public:
+        StringMappingHandler(Target& aTarget, std::vector<std::pair<std::string, std::string>>& aMapping) : HandlerBase<Target>{aTarget}, mMapping(aMapping), mStarted(false) {}
 
-        inline virtual HandlerBase<Target>* StartObject()
-            {
-                if (mStarted)
-                    throw json_reader::Failure();
-                mStarted = true;
-                return nullptr;
-            }
+        HandlerBase<Target>* StartObject() override
+        {
+            if (mStarted)
+                throw json_reader::Failure();
+            mStarted = true;
+            return nullptr;
+        }
 
-        inline virtual HandlerBase<Target>* Key(const char* str, rapidjson::SizeType length)
-            {
-                mKey.assign(str, length);
-                return nullptr;
-            }
+        HandlerBase<Target>* Key(const char* str, rapidjson::SizeType length) override
+        {
+            mKey.assign(str, length);
+            return nullptr;
+        }
 
-        inline virtual HandlerBase<Target>* String(const char* str, rapidjson::SizeType length)
-            {
-                if (mKey.empty())
-                    throw json_reader::Failure();
-                mMapping.emplace_back(mKey, std::string(str, length));
-                mKey.erase();
-                return nullptr;
-            }
+        HandlerBase<Target>* String(const char* str, rapidjson::SizeType length) override
+        {
+            if (mKey.empty())
+                throw json_reader::Failure();
+            mMapping.emplace_back(mKey, std::string(str, length));
+            mKey.erase();
+            return nullptr;
+        }
 
-     private:
+      private:
         std::vector<std::pair<std::string, std::string>>& mMapping;
         bool mStarted;
         std::string mKey;
@@ -262,9 +287,9 @@ namespace json_reader
     template <typename Target, typename RootHandler> class DocRootHandler : public HandlerBase<Target>
     {
      public:
-        inline DocRootHandler(Target& aTarget) : HandlerBase<Target>(aTarget) {}
+        DocRootHandler(Target& aTarget) : HandlerBase<Target>(aTarget) {}
 
-        inline virtual HandlerBase<Target>* StartObject() { return new RootHandler(HandlerBase<Target>::mTarget); }
+        HandlerBase<Target>* StartObject() override { return new RootHandler(HandlerBase<Target>::mTarget); }
     };
 
 // ----------------------------------------------------------------------
@@ -272,7 +297,7 @@ namespace json_reader
     template <typename Target, typename RootHandler> class ReaderEventHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, ReaderEventHandler<Target, RootHandler>>
     {
      private:
-        template <typename... Args> inline bool handler(HandlerBase<Target>* (HandlerBase<Target>::*aHandler)(Args... args), Args... args)
+        template <typename... Args> bool handler(HandlerBase<Target>* (HandlerBase<Target>::*aHandler)(Args... args), Args... args)
             {
                 try {
                     auto new_handler = ((*mHandler.top()).*aHandler)(args...);
@@ -293,25 +318,25 @@ namespace json_reader
             }
 
      public:
-        inline ReaderEventHandler(Target& aTarget)
+        ReaderEventHandler(Target& aTarget)
             : mTarget(aTarget)
             {
                 mHandler.emplace(new DocRootHandler<Target, RootHandler>(mTarget));
             }
 
-        inline bool StartObject() { return handler(&HandlerBase<Target>::StartObject); }
-        inline bool EndObject(rapidjson::SizeType /*memberCount*/) { return handler(&HandlerBase<Target>::EndObject); }
-        inline bool StartArray() { return handler(&HandlerBase<Target>::StartArray); }
-        inline bool EndArray(rapidjson::SizeType /*elementCount*/) { return handler(&HandlerBase<Target>::EndArray); }
-        inline bool Key(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&HandlerBase<Target>::Key, str, length); }
-        inline bool String(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&HandlerBase<Target>::String, str, length); }
-        inline bool Int(int i) { return handler(&HandlerBase<Target>::Int, i); }
-        inline bool Uint(unsigned u) { return handler(&HandlerBase<Target>::Uint, u); }
-        inline bool Double(double d) { return handler(&HandlerBase<Target>::Double, d); }
-        inline bool Bool(bool b) { return handler(&HandlerBase<Target>::Bool, b); }
-        inline bool Null() { return handler(&HandlerBase<Target>::Null); }
-        inline bool Int64(int64_t i) { std::cerr << "ReaderEventHandler::Int64(" << i << ")" << std::endl; return false; }
-        inline bool Uint64(uint64_t u) { std::cerr << "ReaderEventHandler::Uint64(" << u << ")" << std::endl; return false; }
+        bool StartObject() { return handler(&HandlerBase<Target>::StartObject); }
+        bool EndObject(rapidjson::SizeType /*memberCount*/) { return handler(&HandlerBase<Target>::EndObject); }
+        bool StartArray() { return handler(&HandlerBase<Target>::StartArray); }
+        bool EndArray(rapidjson::SizeType /*elementCount*/) { return handler(&HandlerBase<Target>::EndArray); }
+        bool Key(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&HandlerBase<Target>::Key, str, length); }
+        bool String(const char* str, rapidjson::SizeType length, bool /*copy*/) { return handler(&HandlerBase<Target>::String, str, length); }
+        bool Int(int i) { return handler(&HandlerBase<Target>::Int, i); }
+        bool Uint(unsigned u) { return handler(&HandlerBase<Target>::Uint, u); }
+        bool Double(double d) { return handler(&HandlerBase<Target>::Double, d); }
+        bool Bool(bool b) { return handler(&HandlerBase<Target>::Bool, b); }
+        bool Null() { return handler(&HandlerBase<Target>::Null); }
+        bool Int64(int64_t i) { std::cerr << "ReaderEventHandler::Int64(" << i << ")" << std::endl; return false; }
+        bool Uint64(uint64_t u) { std::cerr << "ReaderEventHandler::Uint64(" << u << ")" << std::endl; return false; }
 
      private:
         Target& mTarget;

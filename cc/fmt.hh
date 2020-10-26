@@ -15,6 +15,13 @@
 #pragma GCC diagnostic ignored "-Wundef" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor" // fmt/core.h
+
+// clang 11
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wsuggest-destructor-override"
+// #pragma GCC diagnostic ignored ""
+// #pragma GCC diagnostic ignored ""
+// #pragma GCC diagnostic ignored ""
 #endif
 
 #ifdef __GNUG__
