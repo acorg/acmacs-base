@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/to-string.hh"
 
 // ----------------------------------------------------------------------

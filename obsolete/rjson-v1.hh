@@ -12,7 +12,7 @@
 #include <typeinfo>
 #include <optional>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/float.hh"
 #include "acmacs-base/to-string.hh"
 

@@ -1,5 +1,5 @@
 #include "acmacs-base/string-substitute.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 
 static std::vector<std::string_view> split(std::string_view source);
 

@@ -1,5 +1,5 @@
 #include "acmacs-base/color-hsv.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 
 // ----------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 #include "acmacs-base/time-series.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/enumerate.hh"
 
 // ----------------------------------------------------------------------

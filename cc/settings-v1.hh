@@ -12,7 +12,7 @@
 #include <optional>
 #include <functional>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/rjson-v2.hh"

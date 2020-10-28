@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <array>
 
 #include "acmacs-base/fmt.hh"
 
@@ -21,8 +22,8 @@
 #define AD_WARNING(...) acmacs::log::debug_print(">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_INFO(...) acmacs::log::debug_print(">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG(...) acmacs::log::debug_print(">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-// #define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_DEBUG_IF(dbg, ...) if (dbg == acmacs::debug::yes) acmacs::log::debug(fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+
+#define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, [&]() { return fmt::format(__VA_ARGS__); }, __FILE__, __LINE__)
 
 #define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
@@ -44,97 +45,69 @@ namespace acmacs
 
     namespace log::inline v1
     {
-        enum {
-            timer,
-            settings,
-            vaccines
-        };
+        using log_key_t = std::string_view;
 
-        namespace detail_message
+        constexpr log_key_t all{"all"};
+        constexpr log_key_t timer{"timer"};
+        constexpr log_key_t settings{"settings"};
+        constexpr log_key_t vaccines{"vaccines"};
+
+        namespace detail
         {
-            using section_t = uint32_t;
-
-            extern section_t enabled;
+            using enabled_t = std::vector<log_key_t>;
+            extern enabled_t enabled;
             extern size_t indent;
             constexpr size_t indent_size{4};
+            extern bool print_debug_messages; // to disable by acmacs.r
 
-            inline bool is_enabled(section_t section) { return section & enabled; }
+        } // namespace detail
 
-            void register_enabler(std::string_view name, section_t value);
-            std::string section_names(section_t section);
-
-            template <typename Enum> section_t to_section_t(Enum value)
-            {
-                if (static_cast<size_t>(value) > (sizeof(section_t) * 8))
-                    throw std::runtime_error{fmt::format("acmacs::log::register_enabler: enum value is too big: {}", static_cast<size_t>(value))};
-                return section_t{1} << static_cast<size_t>(value);
-            }
-
-            template <typename MesssageGetter> void message(section_t section, MesssageGetter get_message)
-            {
-                if (is_enabled(section))
-                    fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section_names(section), "", indent, get_message());
-            }
-
-        } // namespace detail_message
-
-        template <typename Enum> void register_enabler(std::string_view name, Enum value)
+        inline bool is_enabled(log_key_t section)
         {
-            detail_message::register_enabler(name, detail_message::to_section_t(value));
+            return !detail::enabled.empty() &&
+                   (detail::enabled.front() == all || std::find(std::begin(detail::enabled), std::end(detail::enabled), section) != std::end(detail::enabled));
         }
 
-        template <typename Enum, typename MesssageGetter> void message(Enum section, MesssageGetter get_message)
+        template <typename MesssageGetter> void message(log_key_t section, MesssageGetter get_message)
         {
-            detail_message::message(detail_message::to_section_t(section), get_message);
+            if (is_enabled(section))
+                fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section, "", detail::indent, get_message());
         }
-
-        template <typename Enum> bool is_enabled(Enum value) { return detail_message::is_enabled(detail_message::to_section_t(value)); }
-
-        std::vector<std::string_view> registered_enablers();
-        void register_enabler_acmacs_base();
 
         void enable(std::string_view names);
         void enable(const std::vector<std::string_view>& names);
 
         struct indent
         {
-            indent() { detail_message::indent += detail_message::indent_size; }
-            ~indent() { detail_message::indent -= detail_message::indent_size; }
+            indent() { detail::indent += detail::indent_size; }
+            ~indent() { detail::indent -= detail::indent_size; }
         };
 
         // ----------------------------------------------------------------------
 
-        namespace detail_debug
-        {
-            extern bool enabled;
-        }
-
         inline void debug_print(std::string_view prefix, std::string_view message, const char* filename, int line_no)
         {
-            if (detail_debug::enabled)
+            if (detail::print_debug_messages)
                 fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
         }
 
-        // template <typename Filename, typename LineNo> inline void debug_if(debug dbg, std::string_view message, Filename filename, LineNo line_no)
-        // {
-        //     if (dbg == acmacs::debug::yes)
-        //         fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
-        // }
-
-        inline void debug(std::string_view message, const char* filename, int line_no)
+        template <typename MesssageGetter> void debug_if(debug do_print, MesssageGetter get_message, const char* filename, int line_no)
         {
-            fmt::print(stderr, ">>>> {} @@ {}:{}\n", message, filename, line_no);
+            if (do_print == debug::yes)
+                acmacs::log::debug_print(">>>>", get_message(), filename, line_no);
         }
 
         inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no)
         {
             if (!(condition)) {
-                fmt::print(stderr, "> ASSERTION FAILED {} @@ {}:{}\n", message, filename, line_no);
+                debug_print("> ASSERTION FAILED", message, filename, line_no);
                 std::abort();
             }
         }
 
-    } // namespace log::inlinev1
+        inline void do_not_print_debug_messages() { detail::print_debug_messages = false; }
+
+    } // namespace log::inline v1
 
 } // namespace acmacs
 

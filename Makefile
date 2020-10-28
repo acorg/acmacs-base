@@ -44,7 +44,6 @@ ACMACS_BASE_SOURCES =  \
   rjson-v3.cc          \
   time-series.cc       \
   read-file.cc         \
-  debug.cc             \
   color.cc             \
   layout.cc            \
   color-modifier.cc    \
@@ -62,7 +61,8 @@ ACMACS_BASE_SOURCES =  \
   string-substitute.cc \
   html.cc              \
   gzip.cc              \
-  xz.cc
+  xz.cc                \
+  log.cc
 
 # JSON_PP_SOURCES = rjson.cc json-pp.cc
 # TEST_RJSON_SOURCES = rjson.cc test-rjson.cc

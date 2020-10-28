@@ -1,7 +1,7 @@
 #include <vector>
 #include <string_view>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/date.hh"
 
 // ----------------------------------------------------------------------

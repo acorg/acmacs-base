@@ -6,7 +6,7 @@
 
 #include "acmacs-base/filesystem.hh"
 #include "acmacs-base/quicklook.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 
 // ----------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "acmacs-base/sfinae.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/named-type.hh"
 
 // ----------------------------------------------------------------------

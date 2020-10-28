@@ -1,5 +1,5 @@
 #include "acmacs-base/messages.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/counter.hh"
 
 // ----------------------------------------------------------------------

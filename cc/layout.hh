@@ -5,7 +5,7 @@
 #include <cmath>
 #include <memory>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/number-of-dimensions.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"

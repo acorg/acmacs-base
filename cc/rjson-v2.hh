@@ -23,7 +23,7 @@
 #include <limits>
 
 #include "acmacs-base/sfinae.hh"
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/to-string.hh"
 #include "acmacs-base/enumerate.hh"
 #include "acmacs-base/float.hh"

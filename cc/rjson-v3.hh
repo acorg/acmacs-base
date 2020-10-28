@@ -19,7 +19,7 @@
 #include <string_view>
 #include <typeinfo>
 
-#include "acmacs-base/debug.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/float.hh"
 #include "acmacs-base/flat-map.hh"
 #include "acmacs-base/string-from-chars.hh"

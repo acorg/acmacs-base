@@ -18,10 +18,8 @@ struct Options : public argv
 int main(int argc, char* argv[])
 {
     Options opt(argc, argv);
-
-    acmacs::log::register_enabler_acmacs_base();
     if (opt.verbose)
-        acmacs::log::enable("settings");
+        acmacs::log::enable(acmacs::log::settings);
 
     acmacs::settings::v3::TestData data;
     data.load(opt.filename);
