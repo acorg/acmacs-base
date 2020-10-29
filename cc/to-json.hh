@@ -205,6 +205,8 @@ namespace to_json
             }
         };
 
+        using kv = key_val;
+
         class key_val_if
         {
           public:
