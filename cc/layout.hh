@@ -231,6 +231,12 @@ namespace acmacs
             insert(Vec::begin() + static_cast<difference_type>((before + base) * static_cast<size_t>(number_of_dimensions_)), *number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
         }
 
+        size_t append_point()
+        {
+            insert(Vec::end(), *number_of_dimensions_, std::numeric_limits<double>::quiet_NaN());
+            return number_of_points() - 1;
+        }
+
         std::vector<std::pair<double, double>> minmax() const;
 
         double distance(size_t p1, size_t p2, double no_distance = std::numeric_limits<double>::quiet_NaN()) const
