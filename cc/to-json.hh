@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <optional>
 
-#include "acmacs-base/fmt.hh"
+#include "acmacs-base/log.hh"
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/format-double.hh"
 // #include "acmacs-base/to-string.hh"
@@ -33,7 +33,7 @@ namespace to_json
             };
 
             static constexpr auto comma_before = [](auto iter) -> bool {
-                switch (iter->back()) {
+                switch (iter->front()) {
                     case ']':
                     case '}':
                     case ':':
@@ -86,6 +86,7 @@ namespace to_json
                 fmt::memory_buffer out;
                 size_t current_indent = 0;
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
+                    // AD_DEBUG("{} before:{} after:{}", *chunk, comma_before(chunk), comma_after(chunk, data_.begin()));
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk)) {
                         fmt::format_to(out, ",\n{: >{}s}{}", "", current_indent, *chunk);
                     }
