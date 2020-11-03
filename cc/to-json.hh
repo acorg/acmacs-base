@@ -346,6 +346,13 @@ namespace to_json
             return target;
         }
 
+        template <typename Coll> inline Coll& operator<<(Coll& target, typename Coll::compact_output co)
+        {
+            if (co == Coll::compact_output::yes)
+                target.make_compact();
+            return target;
+        }
+
     } // namespace v2
 
 } // namespace to_json
