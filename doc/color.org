@@ -1,4 +1,4 @@
-# Time-stamp: <2020-05-20 08:53:53 eu>
+# Time-stamp: <2020-11-03 12:11:41 eu>
 
 * Color modifier
 
@@ -9,6 +9,10 @@ Color consists of field joined by :
 #RRGGBB
 red, gren, blue, etc.
 #TTRRGGBB - with transparency, 0 - full opaque, FF - fully transparent
+
+** Heatmap color
+
+heatmap[<color-no>, <total-colors>]
 
 ** Hue modificator
 

@@ -1,7 +1,23 @@
 #include "acmacs-base/log.hh"
+#include "acmacs-base/string-from-chars.hh"
 #include "acmacs-base/color-hsv.hh"
+#include "acmacs-base/color-gradient.hh"
+#include "acmacs-base/regex.hh"
 
 #include "color-names.icc"
+
+// ----------------------------------------------------------------------
+
+#pragma GCC diagnostic push
+
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wglobal-constructors"
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#endif
+
+const std::regex re_heatmap{"heatmap\\[ *([0-9]+) *, *([0-9]+) *\\]", acmacs::regex::icase};
+
+#pragma GCC diagnostic pop
 
 // ----------------------------------------------------------------------
 
@@ -23,6 +39,9 @@ void Color::from_string(std::string_view src)
                 default:
                     throw std::exception{};
             }
+        }
+        else if (std::cmatch m1; std::regex_search(std::begin(src), std::end(src), m1, re_heatmap)) {
+            *this = acmacs::color::perceptually_uniform_heatmap(acmacs::string::from_chars<size_t>(m1.str(2)), acmacs::string::from_chars<size_t>(m1.str(1)));
         }
         else {
             color_ = find_color_by_name(src); // color-names.icc, throws if not found
