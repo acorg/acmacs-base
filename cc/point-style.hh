@@ -230,6 +230,7 @@ namespace acmacs
         virtual size_t number_of_points() const = 0;
         virtual bool empty() const = 0;
         virtual PointStyle style(size_t aPointNo) const = 0;
+        virtual PointStyle& style_ref(size_t /*aPointNo*/) { throw std::runtime_error{"PointStyles::style_ref not supported for this style collection"}; }
         virtual PointStylesCompacted compacted() const = 0;
 
     }; // class PointStyles
