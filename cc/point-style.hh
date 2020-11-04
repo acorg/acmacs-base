@@ -90,6 +90,7 @@ namespace acmacs
         virtual Color outline() const noexcept { return outline_; }
         virtual Pixels outline_width() const noexcept { return outline_width_; }
         virtual Pixels size() const noexcept { return size_; }
+        virtual Scaled diameter() const noexcept { return diameter_; } // drawi: use it if >0
         virtual Rotation rotation() const noexcept { return rotation_; }
         virtual Aspect aspect() const noexcept { return aspect_; }
         virtual PointShape shape() const noexcept { return shape_; }
@@ -104,6 +105,7 @@ namespace acmacs
         virtual void shown(bool a_shown) noexcept { shown_ = a_shown; }
         virtual void outline_width(Pixels a_outline_width) noexcept { outline_width_ = a_outline_width; }
         virtual void size(Pixels a_size) noexcept { size_ = a_size; }
+        virtual void radius(Scaled a_radius) noexcept { diameter_ = a_radius * 2.0; }
         virtual void rotation(Rotation a_rotation) noexcept { rotation_ = a_rotation; }
         virtual void aspect(Aspect a_aspect) noexcept { aspect_ = a_aspect; }
         virtual void shape(PointShape a_shape) noexcept { shape_ = a_shape; }
@@ -116,6 +118,7 @@ namespace acmacs
         Color outline_{BLACK};
         Pixels outline_width_{1.0};
         Pixels size_{5.0};
+        Scaled diameter_{0.0}; // drawi: use it if >0
         Rotation rotation_{NoRotation};
         Aspect aspect_{AspectNormal};
         PointShape shape_;
