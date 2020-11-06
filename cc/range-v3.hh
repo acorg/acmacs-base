@@ -17,6 +17,31 @@
 #pragma GCC diagnostic pop
 
 // https://github.com/JeffGarland/range_by_example
+// https://www.walletfox.com/course/examples_range_v3.php
+
+// ----------------------------------------------------------------------
+
+template <typename T> inline auto range_from_0_to(T end)
+{
+    return ranges::views::iota(T{0}, end);
+}
+
+template <typename T> inline auto range_from_0_to_including(T end)
+{
+    return ranges::views::closed_iota(T{0}, end);
+}
+
+template <typename T> inline auto range_from_1_to_including(T end)
+{
+    return ranges::views::closed_iota(T{1}, end);
+}
+
+// ----------------------------------------------------------------------
+
+template <typename T> inline void sort_unique(T& coll)
+{
+    coll |= ranges::actions::sort | ranges::actions::unique;
+}
 
 // ----------------------------------------------------------------------
 /// Local Variables:
