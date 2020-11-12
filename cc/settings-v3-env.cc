@@ -7,7 +7,7 @@
 const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::string_view key, toplevel_only a_toplevel_only) const
 {
     const auto final_key = substitute(key);
-    AD_LOG(acmacs::log::settings, "env get \"{}\" (\"{}\")", final_key, key);
+    AD_LOG(acmacs::log::settings, "env get \"{}\" (\"{}\") toplevel_only:{}", final_key, key, a_toplevel_only == toplevel_only::yes ? "yes" : "no");
     AD_LOG_INDENT;
     switch (a_toplevel_only) {
         case toplevel_only::no:
@@ -25,24 +25,24 @@ const rjson::v3::value& acmacs::settings::v3::detail::Environment::get(std::stri
             }
             break;
     }
+    AD_LOG(acmacs::log::settings, "not found in env \"{}\" (\"{}\") toplevel_only:{}", final_key, key, a_toplevel_only == toplevel_only::yes ? "yes" : "no");
     return rjson::v3::const_null;
 
 } // acmacs::settings::v3::detail::Environment::get
 
 // ----------------------------------------------------------------------
 
-void acmacs::settings::v3::detail::Environment::replace_or_add(std::string_view key, rjson::v3::value&& val)
+bool acmacs::settings::v3::detail::Environment::replace(std::string_view key, rjson::v3::value&& val) // returns if replaced
 {
     for (auto it = env_data_.rbegin(); it != env_data_.rend(); ++it) {
         if (auto found = it->find(key); found != it->end()) {
             found->second = std::move(val);
-            return;
+            return true;
         }
     }
-    // not found, add
-    env_data_.back().emplace_or_replace(key, std::move(val));
+    return false;
 
-} // acmacs::settings::v3::detail::Environment::replace_or_add
+} // acmacs::settings::v3::detail::Environment::replace
 
 // ----------------------------------------------------------------------
 

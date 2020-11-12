@@ -126,7 +126,7 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
         if (const auto& command_v = entry["N"sv]; !command_v.is_null()) {
             const auto command{command_v.to<std::string_view>()};
             AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
-            environment_push sub_env(*this, command != "set");
+            environment_push sub_env(*this, command != "set"sv && command != "if"sv);
             for (const auto& [key, val] : entry) {
                 if (key != "N"sv)
                     setenv(key, val);
@@ -261,10 +261,20 @@ void acmacs::settings::v3::Data::setenv(std::string_view key, const rjson::v3::v
 
 void acmacs::settings::v3::Data::setenv(std::string_view key, rjson::v3::value&& val, replace repl)
 {
-    if (repl == replace::yes)
-        environment().replace_or_add(key, std::move(val));
-    else
-        environment().add(key, std::move(val));
+    AD_LOG(acmacs::log::settings, "setenv \"{}\" <-- {} (replace: {})", key, val, repl);
+    switch (repl) {
+        case replace::no:
+            environment().add(key, std::move(val));
+            break;
+        case replace::yes:
+            if (!environment().replace(key, std::move(val)))
+                environment().add(key, std::move(val));
+            break;
+        case replace::yes_or_set_at_bottom:
+            if (!environment().replace(key, std::move(val)))
+                environment().add_at_bottom(key, std::move(val));
+            break;
+    }
 
 } // acmacs::settings::v3::Data::setenv
 

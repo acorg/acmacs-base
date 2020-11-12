@@ -34,7 +34,7 @@ namespace acmacs::settings::v3
 
     enum class toplevel_only { no, yes };
     enum class throw_if_nothing_applied { no, yes };
-    enum class replace { no, yes };
+    enum class replace { no, yes, yes_or_set_at_bottom };
 
     class Data
     {
@@ -124,6 +124,27 @@ namespace acmacs::settings::v3
     extern template bool Data::getenv_or(std::string_view, bool&&) const;
 
 } // namespace acmacs::settings::v3
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::settings::v3::replace> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(acmacs::settings::v3::replace value, FormatCtx& ctx)
+    {
+        switch (value) {
+            case acmacs::settings::v3::replace::no:
+                format_to(ctx.out(), "no");
+                break;
+            case acmacs::settings::v3::replace::yes:
+                format_to(ctx.out(), "yes");
+                break;
+            case acmacs::settings::v3::replace::yes_or_set_at_bottom:
+                format_to(ctx.out(), "yes_or_set_at_bottom");
+                break;
+        }
+        return ctx.out();
+    }
+};
+
 
 // ----------------------------------------------------------------------
 /// Local Variables:
