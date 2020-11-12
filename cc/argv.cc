@@ -89,7 +89,7 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 
 void acmacs::argv::v2::argv::show_help() const
 {
-    fmt::print(stderr, format_help());
+    fmt::print(stderr, "{}", format_help());
 
 } // acmacs::argv::v2::argv::show_help
 
@@ -148,7 +148,7 @@ void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg, detail::cmd_line_it
                     if (auto* opt = find(std::string_view(*arg + 2)); opt)
                         opt->add(arg, last);
                     else
-                        errors_.push_back(std::string("unrecognized option: ") + *arg);
+                        errors_.push_back(fmt::format("unrecognized option: {}", *arg));
                 }
                 else
                     args_.push_back(*arg); // just two dashes
@@ -158,7 +158,7 @@ void acmacs::argv::v2::argv::use(detail::cmd_line_iter& arg, detail::cmd_line_it
                     if (auto* opt = find(*short_name); opt)
                         opt->add(arg, last);
                     else
-                        errors_.push_back(std::string("unrecognized option: -") + *short_name);
+                        errors_.push_back(fmt::format("unrecognized option: -{}", *short_name));
                 }
             }
             else
