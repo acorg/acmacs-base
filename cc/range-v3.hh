@@ -21,9 +21,19 @@
 
 // ----------------------------------------------------------------------
 
+template <typename T> inline auto range_from_to(T begin, T end)
+{
+    return ranges::views::iota(begin, end);
+}
+
+template <typename T> inline auto range_from_to(const std::pair<T, T>& rng)
+{
+    return ranges::views::iota(rng.first, rng.second);
+}
+
 template <typename T> inline auto range_from_0_to(T end)
 {
-    return ranges::views::iota(T{0}, end);
+    return range_from_to(T{0}, end);
 }
 
 template <typename T> inline auto range_from_0_to_including(T end)
