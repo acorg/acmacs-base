@@ -105,6 +105,26 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_
 // };
 
 // ----------------------------------------------------------------------
+
+namespace fmt
+{
+    template <typename T> std::string format(const std::vector<T>& collection, std::string_view entry_format, std::string_view entry_separator = "\n  ")
+    {
+        memory_buffer result;
+        bool add_separator{false};
+        for (const auto& en : collection) {
+            if (add_separator)
+                format_to(result, entry_separator);
+            else
+                add_separator = true;
+            format_to(result, entry_format, en);
+        }
+        return to_string(result);
+    }
+
+} // namespace acmacs::fmt
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
