@@ -126,7 +126,8 @@ void acmacs::settings::v3::Data::push_and_apply(const rjson::v3::detail::object&
         if (const auto& command_v = entry["N"sv]; !command_v.is_null()) {
             const auto command{command_v.to<std::string_view>()};
             AD_LOG(acmacs::log::settings, "push_and_apply command {} -> {}", command_v, command);
-            environment_push sub_env(*this, command != "set"sv && command != "if"sv);
+            // "if" has to push env, otherwise "then" and "else" are kept in env and would be dangling in case of settings reload (e.g. by tal -i)
+            environment_push sub_env(*this, command != "set"sv);
             for (const auto& [key, val] : entry) {
                 if (key != "N"sv)
                     setenv(key, val);

@@ -119,7 +119,7 @@ namespace acmacs
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj) - first_char]; }
         void count(char aObj, counter_t num) { counter_[static_cast<unsigned char>(aObj) - first_char] += num; }
 
-        void update(const CounterCharSome& other)
+        void update(const CounterCharSome<first_char, last_char, counter_t_t>& other)
         {
             std::transform(counter_.begin(), counter_.end(), other.counter_.begin(), counter_.begin(), [](counter_t e1, counter_t e2) { return e1 + e2; });
         }
