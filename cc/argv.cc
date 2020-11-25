@@ -63,8 +63,9 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
         if (opt->mandatory() && !opt->has_value())
             errors_.push_back(std::string("mandatory ") + (opt->has_name() ? "switch" : "argument") + " not given: " + opt->names());
     }
-    if (errors_.empty() && !show_help_)
+    if (errors_.empty() && !show_help_) {
         return true;
+    }
     else {
         switch (on_err) {
           case on_error::exit:
@@ -89,7 +90,7 @@ bool acmacs::argv::v2::argv::parse(int argc, const char* const argv[], acmacs::a
 
 void acmacs::argv::v2::argv::show_help() const
 {
-    fmt::print(stderr, "{}", format_help());
+        fmt::print(stderr, "{}", format_help());
 
 } // acmacs::argv::v2::argv::show_help
 
@@ -97,42 +98,49 @@ void acmacs::argv::v2::argv::show_help() const
 
 std::string acmacs::argv::v2::argv::format_help() const
 {
-    fmt::memory_buffer out;
+    try {
+        fmt::memory_buffer out;
 
-    const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
-    if (const auto pre = help_pre(); !pre.empty())
-        fmt::format_to(out, "{}\n", pre);
-    fmt::format_to(out, "Usage: {} [options]", prog_name_);
-    for (const auto* opt : options_) {
-        if (!opt->has_name()) {
-            fmt::format_to(out, " {}{}", opt->mandatory() ? '<' : '[', opt->arg_name());
-            if (const auto dflt = opt->get_default(); !dflt.empty())
-                fmt::format_to(out, ": {}", dflt);
-            fmt::format_to(out, "{}", opt->mandatory() ? '>' : ']');
-            if (opt->multiple_values())
-                fmt::format_to(out, " ...");
+        const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
+        if (const auto pre = help_pre(); !pre.empty())
+            fmt::format_to(out, "{}\n", pre);
+        fmt::format_to(out, "Usage: {} [options]", prog_name_);
+        for (const auto* opt : options_) {
+            if (!opt->has_name()) {
+                fmt::format_to(out, " {}{}", opt->mandatory() ? '<' : '[', opt->arg_name());
+                if (const auto dflt = opt->get_default(); !dflt.empty())
+                    fmt::format_to(out, ": {}", dflt);
+                fmt::format_to(out, "{}", opt->mandatory() ? '>' : ']');
+                if (opt->multiple_values())
+                    fmt::format_to(out, " ...");
+            }
         }
-    }
-    fmt::format_to(out, "\n\n");
-    if (!descriptions_.empty()) {
-        for (const auto* desc : descriptions_)
-            fmt::format_to(out, "{}\n", desc->text());
-    }
-    fmt::format_to(out, "\n");
-    for (const auto* opt : options_) {
-        if (opt->has_name()) {
-            fmt::format_to(out, "  {:<{}s}", opt->names(), name_width);
-            if (opt->mandatory())
-                fmt::format_to(out, " (MANDATORY)");
-            if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
-                fmt::format_to(out, " (def: {})", dflt);
-            fmt::format_to(out, " {}\n", fmt::format(opt->description(), fmt::arg("ACMACSD_ROOT", acmacsd_root())));
+        fmt::format_to(out, "\n\n");
+        if (!descriptions_.empty()) {
+            for (const auto* desc : descriptions_)
+                fmt::format_to(out, "{}\n", desc->text());
         }
-    }
-    if (const auto post = help_post(); !post.empty())
-        fmt::format_to(out, "{}\n", post);
+        fmt::format_to(out, "\n");
+        for (const auto* opt : options_) {
+            if (opt->has_name()) {
+                fmt::format_to(out, "  {:<{}s}", opt->names(), name_width);
+                if (opt->mandatory())
+                    fmt::format_to(out, " (MANDATORY)");
+                if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
+                    fmt::format_to(out, " (def: {})", dflt);
+                // fmt::format_to(out, " {}\n", fmt::format(opt->description(), fmt::arg("ACMACSD_ROOT", acmacsd_root())));
+                fmt::format_to(out, " {}\n", opt->description());
+            }
+        }
+        if (const auto post = help_post(); !post.empty())
+            fmt::format_to(out, "{}\n", post);
 
-    return fmt::to_string(out);
+        return fmt::to_string(out);
+    }
+    catch (std::exception& err) {
+        AD_ERROR("argv: help formatting failed: {}", err);
+        throw;
+    }
 
 } // acmacs::argv::v2::argv::format_help
 
