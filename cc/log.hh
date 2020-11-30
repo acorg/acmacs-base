@@ -20,10 +20,11 @@
 
 #define AD_ERROR(...) acmacs::log::debug_print("> ERROR", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_WARNING(...) acmacs::log::debug_print(">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_WARNING_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_INFO(...) acmacs::log::debug_print(">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
+#define AD_INFO_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 #define AD_DEBUG(...) acmacs::log::debug_print(">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-
-#define AD_DEBUG_IF(dbg, ...) acmacs::log::debug_if(dbg, [&]() { return fmt::format(__VA_ARGS__); }, __FILE__, __LINE__)
+#define AD_DEBUG_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 #define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
@@ -38,7 +39,7 @@ namespace acmacs
 
     template <typename Int> constexpr auto number_of_decimal_digits(Int max_value) { return static_cast<int>(std::log10(max_value)) + 1; }
 
-    constexpr inline debug debug_from(bool verb) { return verb ? debug::yes : debug::no; }
+    // constexpr inline debug debug_from(bool verb) { return verb ? debug::yes : debug::no; }
     constexpr inline verbose verbose_from(bool verb) { return verb ? verbose::yes : verbose::no; }
 
     // ----------------------------------------------------------------------
@@ -91,10 +92,10 @@ namespace acmacs
                 fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
         }
 
-        template <typename MesssageGetter> void debug_if(debug do_print, MesssageGetter get_message, const char* filename, int line_no)
+        inline void debug_print_if(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no)
         {
-            if (do_print == debug::yes)
-                acmacs::log::debug_print(">>>>", get_message(), filename, line_no);
+            if (do_print && detail::print_debug_messages)
+                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
         }
 
         inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no)
