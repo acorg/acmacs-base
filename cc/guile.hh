@@ -25,6 +25,7 @@
 namespace guile
 {
     const inline auto VOID = SCM_UNSPECIFIED;
+    const inline auto UNDEFINED = SCM_UNDEFINED;
 }
 
 #pragma GCC diagnostic pop
