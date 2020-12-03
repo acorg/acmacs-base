@@ -39,24 +39,39 @@ namespace guile
     // };
 
 
-    template <typename Func> constexpr inline auto subr(Func func) { return reinterpret_cast<scm_t_subr>(func); }
+    // ----------------------------------------------------------------------
+    // init
+    // ----------------------------------------------------------------------
 
-    inline void load(std::string_view filename) { scm_c_primitive_load(filename.data()); }
+    inline void load_script(std::string_view filename) { scm_c_primitive_load(filename.data()); }
 
-    inline void load(const std::vector<std::string_view>& filenames)
+    inline void load_script(const std::vector<std::string_view>& filenames)
     {
         for (const auto& filename : filenames)
             scm_c_primitive_load(filename.data());
     }
 
-    inline std::string to_string(SCM src)
+    // initialize guile, call passed functions to define functions or load scripts from files
+    template <typename... Arg> inline void init(Arg&&... arg)
     {
-        // if (!scm_is_string(src))
-        //     throw Error{fmt::format("expected string but passed {}", "?")};
-        std::string result(scm_c_string_length(src), '?');
-        scm_to_locale_stringbuf(src, result.data(), result.size());
-        return result;
+        scm_init_guile();
+
+        const auto process = []<typename Val>(Val&& val) -> void {
+            if constexpr (std::is_invocable_v<Val>)
+                val();
+            else if constexpr (std::is_same_v<std::decay_t<Val>, std::string_view> || std::is_same_v<std::decay_t<Val>, std::vector<std::string_view>>)
+                load_script(val);
+            else
+                static_assert(std::is_same_v<Val, void>);
+        };
+        (process(std::forward<Arg>(arg)), ...);
     }
+
+    // ----------------------------------------------------------------------
+    // define
+    // ----------------------------------------------------------------------
+
+    template <typename Func> constexpr inline auto subr(Func func) { return reinterpret_cast<scm_t_subr>(func); }
 
     // https://devblogs.microsoft.com/oldnewthing/20200713-00/?p=103978
     template <typename F> struct FunctionTraits;
@@ -69,25 +84,6 @@ namespace guile
         // template <std::size_t N> using NthArg = std::tuple_element_t<N, ArgTypes>;
     };
 
-    // template <typename Arg> inline SCM to_scm(Arg arg)
-    // {
-    //     static_assert(std::is_same_v<std::decay<Arg>, int>, "no to_scm specialization defined");
-    //     return scm_from_signed_integer(arg);
-    // }
-
-    inline SCM to_scm(double arg) { return scm_from_double(arg); }
-    inline SCM to_scm(const std::string& arg) { return scm_from_locale_stringn(arg.data(), arg.size()); }
-    inline SCM to_scm() { return VOID; }
-
-    template <typename Value> inline Value from_scm(SCM arg)
-    {
-        static_assert(std::is_same_v<std::decay<Value>, int>, "no from_scm specialization defined");
-        return scm_to_int(arg);
-    }
-
-    template <> inline double from_scm<double>(SCM arg) { return scm_to_double(arg); }
-    template <> inline std::string from_scm<std::string>(SCM arg) { return to_string(arg); }
-
     template <typename Name, typename Func> requires acmacs::sfinae::is_string_v<Name> void define(Name&& name, Func func)
     {
         const char* name_ptr{nullptr};
@@ -98,20 +94,31 @@ namespace guile
         scm_c_define_gsubr(name_ptr, FunctionTraits<Func>::ArgCount, 0, 0, guile::subr(func));
     }
 
-    // initialize guile, call passed functions to define functions or load scripts from files
-    template <typename... Arg> inline void init(Arg&&... arg)
-    {
-        scm_init_guile();
+    // ----------------------------------------------------------------------
+    // convert
+    // ----------------------------------------------------------------------
 
-        const auto process = []<typename Val>(Val&& val) -> void {
-            if constexpr (std::is_invocable_v<Val>)
-                val();
-            else if constexpr (std::is_same_v<std::decay_t<Val>, std::string_view> || std::is_same_v<std::decay_t<Val>, std::vector<std::string_view>>)
-                load(val);
-            else
-                static_assert(std::is_same_v<Val, void>);
-        };
-        (process(std::forward<Arg>(arg)), ...);
+    inline SCM symbol(const char* arg) { return scm_from_utf8_symbol(arg); }
+
+    inline SCM to_scm() { return VOID; }
+    inline SCM to_scm(double arg) { return scm_from_double(arg); }
+    inline SCM to_scm(size_t arg) { return scm_from_size_t(arg); }
+    inline SCM to_scm(ssize_t arg) { return scm_from_ssize_t(arg); }
+    inline SCM to_scm(const std::string& arg) { return scm_from_locale_stringn(arg.data(), arg.size()); }
+
+    template <typename Value> inline Value from_scm(SCM arg)
+    {
+        if constexpr (std::is_same_v<Value, std::string>) {
+            std::string result(scm_c_string_length(arg), '?');
+            scm_to_locale_stringbuf(arg, result.data(), result.size());
+            return result;
+        }
+        else if constexpr (std::is_convertible_v<Value, size_t>)
+            return scm_to_size_t(arg);
+        else if constexpr (std::is_same_v<Value, double>) //  || std::is_same_v<Value, float>)
+            return scm_to_double(arg);
+        else
+            static_assert(std::is_same_v<std::decay<Value>, int>, "no from_scm specialization defined");
     }
 
 } // namespace guile
