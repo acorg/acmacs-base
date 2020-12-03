@@ -69,13 +69,14 @@ namespace guile
         // template <std::size_t N> using NthArg = std::tuple_element_t<N, ArgTypes>;
     };
 
-    template <typename Arg> inline SCM to_scm(Arg arg)
-    {
-        static_assert(std::is_same_v<std::decay<Arg>, int>, "no to_scm specialization defined");
-        return scm_from_signed_integer(arg);
-    }
+    // template <typename Arg> inline SCM to_scm(Arg arg)
+    // {
+    //     static_assert(std::is_same_v<std::decay<Arg>, int>, "no to_scm specialization defined");
+    //     return scm_from_signed_integer(arg);
+    // }
 
-    template <> inline SCM to_scm<double>(double arg) { return scm_from_double(arg); }
+    inline SCM to_scm(double arg) { return scm_from_double(arg); }
+    inline SCM to_scm(const std::string& arg) { return scm_from_locale_stringn(arg.data(), arg.size()); }
     inline SCM to_scm() { return VOID; }
 
     template <typename Value> inline Value from_scm(SCM arg)
