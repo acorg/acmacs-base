@@ -97,31 +97,20 @@ namespace guile
         scm_c_define_gsubr(name_ptr, FunctionTraits<Func>::ArgCount, 0, 0, guile::subr(func));
     }
 
-    // template <typename Func> void define_scm(std::string_view name, Func func)
-    // {
-    //     int num_args{0};
-    //     if constexpr (std::is_invocable_v<Func>)
-    //         num_args = 0;
-    //     if constexpr (std::is_invocable_v<Func, SCM>)
-    //         num_args = 1;
-    //     else if constexpr (std::is_invocable_v<Func, SCM, SCM>)
-    //         num_args = 2;
-    //     else
-    //         static_assert(std::is_invocable_v<Func, void>, "guile::define: unsupported function");
-    //     scm_c_define_gsubr(name.data(), num_args, 0, 0, guile::subr(func));
-    // }
-
-    // initialize guile and call passed function to define functions
-    template <typename Func> inline void init(Func func)
+    // initialize guile, call passed functions to define functions or load scripts from files
+    template <typename... Arg> inline void init(Arg&&... arg)
     {
         scm_init_guile();
-        func();
-    }
 
-    template <typename Func> inline void init(const std::vector<std::string_view>& filenames_to_load, Func func)
-    {
-        init(func);
-        load(filenames_to_load);
+        const auto process = []<typename Val>(Val&& val) -> void {
+            if constexpr (std::is_invocable_v<Val>)
+                val();
+            else if constexpr (std::is_same_v<std::decay_t<Val>, std::string_view> || std::is_same_v<std::decay_t<Val>, std::vector<std::string_view>>)
+                load(val);
+            else
+                static_assert(std::is_same_v<Val, void>);
+        };
+        (process(std::forward<Arg>(arg)), ...);
     }
 
 } // namespace guile
