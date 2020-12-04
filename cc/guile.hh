@@ -100,6 +100,7 @@ namespace guile
     // ----------------------------------------------------------------------
 
     inline SCM symbol(const char* arg) { return scm_from_utf8_symbol(arg); }
+    inline SCM symbol(const std::string& arg) { return scm_from_locale_symboln(arg.data(), arg.size()); }
 
     inline SCM to_scm() { return VOID; }
     inline SCM to_scm(double arg) { return scm_from_double(arg); }
