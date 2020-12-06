@@ -2,49 +2,35 @@
 
 // ----------------------------------------------------------------------
 
-// forward decalration as a workaround for bugs in pybind11 stl_bind.h introduced on 2017-03-14
-namespace pybind11 {}
-namespace py = pybind11;
-
 #pragma GCC diagnostic push
 #ifdef __clang__
-#pragma GCC diagnostic ignored "-Wcast-align"
-#pragma GCC diagnostic ignored "-Wclass-varargs"
-#pragma GCC diagnostic ignored "-Wcovered-switch-default"
-#pragma GCC diagnostic ignored "-Wdeprecated"
-#pragma GCC diagnostic ignored "-Wdocumentation"
-#pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
-#pragma GCC diagnostic ignored "-Wexit-time-destructors"
-#pragma GCC diagnostic ignored "-Wextra-semi"
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-// #pragma GCC diagnostic ignored "-Wmissing-noreturn"
-#pragma GCC diagnostic ignored "-Wnested-anon-types"
+// Python.h 3.9 2020-12-06
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wrange-loop-analysis"
-#pragma GCC diagnostic ignored "-Wreserved-id-macro" // in Python.h
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wshadow-field"
-// #pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wundef"
-#pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma GCC diagnostic ignored "-Wcast-align"
 
-#pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
-
+// pybind11 2.6.1 2020-12-06
+#pragma GCC diagnostic ignored "-Wshadow-field-in-constructor"
+#pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma GCC diagnostic ignored "-Wextra-semi"
+#pragma GCC diagnostic ignored "-Wshadow-uncaptured-local"
+#pragma GCC diagnostic ignored "-Wexit-time-destructors"
+#pragma GCC diagnostic ignored "-Wcovered-switch-default"
+#pragma GCC diagnostic ignored "-Wshadow-field"
+#pragma GCC diagnostic ignored "-Wdocumentation"
+#pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
+#include <pybind11/embed.h>
+
 #pragma GCC diagnostic pop
 
 namespace py = pybind11;
-
-// ----------------------------------------------------------------------
-
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wmissing-prototypes"
-// // #pragma GCC diagnostic ignored "-Wexit-time-destructors"
-#endif
 
 // ----------------------------------------------------------------------
 /// Local Variables:
