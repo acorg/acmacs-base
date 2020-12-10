@@ -1,6 +1,7 @@
 #pragma once
 
 #include "acmacs-base/string.hh"
+#include "acmacs-base/log.hh"
 
 // ----------------------------------------------------------------------
 
@@ -14,25 +15,31 @@ namespace acmacs
 
         CsvWriter& new_row()
         {
+            if (last_field_was_empty_)
+                mData.append(1, ',');
+            last_field_was_empty_ = false;
             mData.append(1, '\n');
             return *this;
         }
 
-        void add_field(std::string aField)
+        void add_field(std::string_view aField)
         {
-            // https://www.ietf.org/rfc/rfc4180.txt
-            if (aField.find(',') != std::string::npos || aField.find('\n') != std::string::npos || aField.find('"') != std::string::npos) {
-                aField = fmt::format("\"{}\"", ::string::replace(aField, "\"", "\"\""));
-            }
-            if (!mData.empty() && mData.back() != '\n')
+            if (last_field_was_empty_ || (!mData.empty() && mData.back() != '\n' && mData.back() != ','))
                 mData.append(1, ',');
-            mData.append(aField);
+            if (aField.find(',') != std::string_view::npos || aField.find('\n') != std::string_view::npos || aField.find('"') != std::string_view::npos) {
+                // https://www.ietf.org/rfc/rfc4180.txt
+                mData.append(fmt::format("\"{}\"", ::string::replace(aField, "\"", "\"\"")));
+            }
+            else
+                mData.append(aField);
+            last_field_was_empty_ = aField.empty();
         }
 
         void add_empty_field()
         {
-            if (!mData.empty() && mData.back() != '\n')
+            if (last_field_was_empty_)
                 mData.append(1, ',');
+            last_field_was_empty_ = true;
         }
 
         CsvWriter& field()
@@ -59,6 +66,7 @@ namespace acmacs
 
       private:
         std::string mData;
+        bool last_field_was_empty_{false};
 
     }; // class CsvWriter
 
