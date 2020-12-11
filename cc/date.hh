@@ -32,6 +32,7 @@ namespace date
 
     enum class throw_on_error { no, yes };
     enum class allow_incomplete { no, yes };
+    enum class month_first { no, yes }; // European vs. US  if parts are separated by slashes
 
     constexpr year_month_day invalid_date() { return year{0} / 0 / 0; }
 
@@ -123,7 +124,7 @@ namespace date
             return result;
     }
 
-    inline year_month_day from_string(std::string_view source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes)
+    inline year_month_day from_string(std::string_view source, allow_incomplete allow = allow_incomplete::no, throw_on_error toe = throw_on_error::yes, month_first mf = month_first::no)
     {
         if (source.empty()) {
             if (toe == throw_on_error::yes)
@@ -131,7 +132,15 @@ namespace date
             return invalid_date();
         }
 
-        for (const char* fmt : {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}) {
+        const auto fmt_order = [mf]() -> std::vector<const char*> {
+            switch (mf) {
+                case month_first::no:
+                    return {"%Y-%m-%d", "%Y%m%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"};
+                case month_first::yes:
+                    return {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"};
+            }
+        };
+        for (const char* fmt : fmt_order()) {
             // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
             if (const auto result = from_string(source, fmt); result.ok())
                 return result;
