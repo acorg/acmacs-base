@@ -87,15 +87,31 @@ namespace acmacs::messages::inline v1
 
 // ----------------------------------------------------------------------
 
-// template <> struct fmt::formatter<acmacs::messages::v1::detail::position_t> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
-// {
-//     template <typename FormatContext> auto format(const acmacs::messages::v1::detail::position_t& pos, FormatContext& ctx)
-//     {
-//         if (!pos.filename.empty())
-//             format_to(ctx.out(), " @@ {}:{}", pos.filename, pos.line_no);
-//         return ctx.out();
-//     }
-// };
+template <> struct fmt::formatter<acmacs::messages::v1::detail::position_t> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::messages::v1::detail::position_t& pos, FormatContext& ctx)
+    {
+        if (!pos.filename.empty())
+            format_to(ctx.out(), " @@ {}:{}", pos.filename, pos.line_no);
+        return ctx.out();
+    }
+};
+
+template <> struct fmt::formatter<acmacs::messages::v1::position_t> : public fmt::formatter<acmacs::messages::v1::detail::position_t>
+{
+};
+
+template <> struct fmt::formatter<acmacs::messages::v1::code_position_t> : public fmt::formatter<acmacs::messages::v1::detail::position_t>
+{
+};
+
+template <> struct fmt::formatter<acmacs::messages::v1::message_t> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
+{
+    template <typename FormatContext> auto format(const acmacs::messages::v1::message_t& msg, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "{}: \"{}\"{}{}", msg.key, msg.value, msg.source, msg.code);
+    }
+};
 
 // ----------------------------------------------------------------------
 
