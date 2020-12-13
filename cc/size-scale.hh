@@ -4,30 +4,12 @@
 
 // ----------------------------------------------------------------------
 
-struct Pixels : public acmacs::named_double_t<struct Pixels_tag>
-{
-    using acmacs::named_double_t<struct Pixels_tag>::named_double_t;
-    Pixels() : acmacs::named_double_t<struct Pixels_tag>{0.0} {}
-};
-
-template <> struct fmt::formatter<Pixels> : public fmt::formatter<acmacs::named_double_t<struct Pixels_tag>> {};
+using Pixels = acmacs::named_double_t<struct Pixels_tag>;
+using Scaled = acmacs::named_double_t<struct Scaled_tag>;
 
 // ----------------------------------------------------------------------
 
-struct Scaled : public acmacs::named_double_t<struct Scaled_tag>
-{
-    using acmacs::named_double_t<struct Scaled_tag>::named_double_t;
-    Scaled() : acmacs::named_double_t<struct Scaled_tag>{0.0} {}
-};
-
-template <> struct fmt::formatter<Scaled> : public fmt::formatter<acmacs::named_double_t<struct Scaled_tag>> {};
-
-// ----------------------------------------------------------------------
-
-struct Rotation : public acmacs::named_double_t<struct Rotation_tag>
-{
-    using acmacs::named_double_t<struct Rotation_tag>::named_double_t;
-};
+using Rotation = acmacs::named_double_t<struct Rotation_tag>;
 
 constexpr inline Rotation RotationDegrees(double aAngle)
 {
@@ -42,24 +24,17 @@ inline Rotation RotationRadiansOrDegrees(double aAngle)
         return RotationDegrees(aAngle);
 }
 
-constexpr const Rotation NoRotation{0.0};
-constexpr const Rotation RotationReassortant{0.5};
-constexpr const Rotation Rotation90DegreesClockwise{RotationDegrees(90)};
-constexpr const Rotation Rotation90DegreesAnticlockwise{RotationDegrees(-90)};
-
-template <> struct fmt::formatter<Rotation> : public fmt::formatter<acmacs::named_double_t<struct Rotation_tag>> {};
+constexpr inline const Rotation NoRotation{0.0};
+constexpr inline const Rotation RotationReassortant{0.5};
+constexpr inline const Rotation Rotation90DegreesClockwise{RotationDegrees(90)};
+constexpr inline const Rotation Rotation90DegreesAnticlockwise{RotationDegrees(-90)};
 
 // ----------------------------------------------------------------------
 
-struct Aspect : public acmacs::named_double_t<struct Aspect_tag>
-{
-    using acmacs::named_double_t<struct Aspect_tag>::named_double_t;
-};
+using Aspect = acmacs::named_double_t<struct Aspect_tag>;
 
-constexpr const Aspect AspectNormal{1.0};
-constexpr const Aspect AspectEgg{0.75};
-
-template <> struct fmt::formatter<Aspect> : public fmt::formatter<acmacs::named_double_t<struct Aspect_tag>> {};
+constexpr inline const Aspect AspectNormal{1.0};
+constexpr inline const Aspect AspectEgg{0.75};
 
 // ----------------------------------------------------------------------
 

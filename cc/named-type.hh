@@ -54,20 +54,37 @@ namespace acmacs
     template <typename Number, typename Tag> class named_number_t : public named_t<Number, Tag>
     {
       public:
+        explicit constexpr named_number_t() : named_t<Number, Tag>(Number{0}) {}
         template <typename TT, typename = std::enable_if_t<std::is_arithmetic_v<std::decay_t<TT>> && !std::is_same_v<TT, bool>, char>>
             explicit constexpr named_number_t(TT&& value) : named_t<Number, Tag>(static_cast<Number>(std::forward<TT>(value))) {}
 
-        constexpr Number value() const noexcept { return this->value_; }
+        constexpr Number value() const noexcept {
+            return this->value_; }
 
         constexpr auto& operator++()
         {
             ++this->get();
             return *this;
         }
+
+        constexpr auto operator++(int)
+        {
+            const auto saved{*this};
+            ++this->get();
+            return saved;
+        }
+
         constexpr auto& operator--()
         {
             --this->get();
             return *this;
+        }
+
+        constexpr auto operator--(int)
+        {
+            const auto saved{*this};
+            --this->get();
+            return saved;
         }
     };
 
@@ -95,12 +112,7 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    template <typename Tag> class named_size_t : public named_number_t<size_t, Tag>
-    {
-      public:
-        using named_number_t<size_t, Tag>::named_number_t;
-        constexpr named_size_t(named_number_t<size_t, Tag> src) : named_number_t<size_t, Tag>{src} {}
-    };
+    template <typename Tag> using named_size_t = named_number_t<size_t, Tag>;
 
     template <typename Tag> range(int, named_size_t<Tag>)->range<named_size_t<Tag>>;
     template <typename Tag> range(size_t, named_size_t<Tag>)->range<named_size_t<Tag>>;
@@ -109,12 +121,7 @@ namespace acmacs
 
     // ----------------------------------------------------------------------
 
-    template <typename Tag> class named_double_t : public named_number_t<double, Tag>
-    {
-      public:
-        using named_number_t<double, Tag>::named_number_t;
-        constexpr named_double_t(named_number_t<double, Tag> src) : named_number_t<double, Tag>{src} {}
-    };
+    template <typename Tag> using named_double_t = named_number_t<double, Tag>;
 
     template <typename Tag> constexpr bool operator==(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return float_equal(lhs.get(), rhs.get()); }
     template <typename Tag> constexpr bool operator!=(const named_double_t<Tag>& lhs, const named_double_t<Tag>& rhs) noexcept { return !float_equal(lhs.get(), rhs.get()); }
