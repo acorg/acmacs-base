@@ -132,14 +132,19 @@ namespace date
             return invalid_date();
         }
 
-        const auto fmt_order = [mf]() -> std::vector<const char*> {
+        using fmt_order_t = std::vector<const char*>;
+        const auto fmt_order = [mf]() -> fmt_order_t {
+            const auto month_first_no = [] { return fmt_order_t{"%Y-%m-%d", "%Y%m%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}; };
+            const auto month_first_yes = [] { return fmt_order_t{"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"}; };
             switch (mf) {
                 case month_first::no:
-                    return {"%Y-%m-%d", "%Y%m%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"};
+                    return month_first_no();
                 case month_first::yes:
-                    return {"%Y-%m-%d", "%Y%m%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d", "%B%n %d%n %Y", "%B %d,%n %Y", "%b%n %d%n %Y", "%b %d,%n %Y"};
+                    return month_first_yes();
             }
+            return month_first_no(); // hey g++-10
         };
+
         for (const char* fmt : fmt_order()) {
             // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
             if (const auto result = from_string(source, fmt); result.ok())
