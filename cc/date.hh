@@ -111,11 +111,17 @@ namespace date
     inline auto& increment_day(year_month_day& dt, period_diff_t number_of_days = 1) { dt = static_cast<date::sys_days>(dt) + date::days{number_of_days}; return dt; }
     inline auto& decrement_day(year_month_day& dt, period_diff_t number_of_days = 1) { dt = static_cast<date::sys_days>(dt) - date::days{number_of_days}; return dt; }
 
-    inline year_month_day from_string(std::string_view source, const char* fmt)
+    inline year_month_day from_string(std::string_view source, const char* fmt, throw_on_error toe = throw_on_error::yes)
     {
             year_month_day result = invalid_date();
             std::istringstream in(std::string{source});
             if (from_stream(in, fmt, result)) {
+                if (static_cast<size_t>(in.tellg()) < source.size()) {
+                    if (toe == throw_on_error::yes)
+                        throw date_parse_error(fmt::format("cannot parse date from \"{}\" (read fewer symbols than available)", source));
+                    else
+                        return invalid_date();
+                }
                 if (result.year() < year{30})
                     result += years(2000);
                 else if (result.year() < year{100})
@@ -147,7 +153,7 @@ namespace date
 
         for (const char* fmt : fmt_order()) {
             // if (const auto result = from_string(std::forward<S>(source), fmt); result.ok())
-            if (const auto result = from_string(source, fmt); result.ok())
+            if (const auto result = from_string(source, fmt, toe); result.ok() /* && year_ok(result) */)
                 return result;
         }
         if (allow == allow_incomplete::yes) {
