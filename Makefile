@@ -88,16 +88,7 @@ test: install-acmacs-base | $(TARGETS)
 
 install-acmacs-base: make-installation-dirs $(TARGETS)
 	$(call install_lib,$(ACMACS_BASE_LIB))
-	#@ln -sf $(SRC_DIR)/acmacs-base/bin/* $(AD_BIN)
-	$(call symbolic_link,$(abspath py)/acmacs_base,$(AD_PY)/acmacs_base)
-	$(call make_dir,$(AD_INCLUDE)/acmacs-base)
-	ln -sf $(abspath cc)/*.{hh,hpp} $(AD_INCLUDE)/acmacs-base
-	ln -sf $(abspath $(DIST))/json-pp $(AD_BIN)
-	ln -sf $(abspath $(DIST))/json-pp-v2 $(AD_BIN)
-	ln -sf $(abspath $(DIST))/css-amino-acid-nucleotide-colors $(AD_BIN)
-	ln -sf $(abspath $(DIST))/cxx-regex-search $(AD_BIN)
-	ln -sf $(abspath dist)/time-series-gen $(AD_BIN)
-	$(call symbolic_link_wildcard,$(abspath doc)/*.org,$(AD_DOC))
+	$(call install_all,$(AD_PACKAGE_NAME))
 
 .PHONY: install-acmacs-base test
 
