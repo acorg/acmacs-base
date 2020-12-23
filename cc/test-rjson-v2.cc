@@ -3,7 +3,6 @@
 #include <cassert>
 
 #include "acmacs-base/rjson-v2.hh"
-#include "acmacs-base/stream.hh"
 
 // ----------------------------------------------------------------------
 
@@ -114,12 +113,12 @@ int main()
                 using T = std::decay_t<decltype(aExpected)>;
                 if constexpr (std::is_same_v<T, const char*>) {
                     if (result != aExpected) {
-                        std::cerr << "ERROR: 1 parsing %" << to_parse_ref << "%\n  -->       %" << result << "%\n  expected: %" << aExpected << "%\n\n";
+                        std::cerr << fmt::format("ERROR: 1 parsing %{}%\n  -->       %{}%\n  expected: %{}%\n\n", to_parse_ref, result, aExpected);
                         exit_code = 1;
                     }
                 }
                 else {
-                    std::cerr << "ERROR: 2 parsing %" << to_parse_ref << "%\n  -->       %" << result << "%\n  expected: %" << aExpected.what() << "%\n\n";
+                    std::cerr << fmt::format("ERROR: 2 parsing %{}%\n  -->       %{}%\n  expected: %{}%\n\n", to_parse_ref, result, aExpected); // "ERROR: 2 parsing %" << to_parse_ref << "%\n  -->       %" << result << "%\n  expected: %" << aExpected.what() << "%\n\n";
                     exit_code = 1;
                 }
             }, expected);
@@ -128,12 +127,12 @@ int main()
             std::visit([&](auto&& aExpected) {
                 using T = std::decay_t<decltype(aExpected)>;
                 if constexpr (std::is_same_v<T, const char*>) {
-                    std::cerr << "ERROR: 3 parsing %" << to_parse_ref << "%\n  --> " << err.what() << "\n  expected: %" << aExpected << "%\n\n";
+                    std::cerr << fmt::format("ERROR: 3 parsing %{}%\n  --> %{}%\n  expected: %{}%\n\n", to_parse_ref, err, aExpected); // "ERROR: 3 parsing %" << to_parse_ref << "%\n  --> " << err.what() << "\n  expected: %" << aExpected << "%\n\n";
                     exit_code = 2;
                 }
                 else {
                     if (std::string{err.what()} != aExpected.what()) {
-                        std::cerr << "ERROR: 4 parsing %" << to_parse_ref << "%\n  --> %" << err.what() << "%\n  expected: %" << aExpected.what() << "%\n\n";
+                        std::cerr << fmt::format("ERROR: 4 parsing %{}%\n  --> %{}%\n  expected: %{}%\n\n", to_parse_ref, err, aExpected); // "ERROR: 4 parsing %" << to_parse_ref << "%\n  --> %" << err.what() << "%\n  expected: %" << aExpected.what() << "%\n\n";
                         exit_code = 2;
                     }
                 }
@@ -145,7 +144,7 @@ int main()
         const auto result = rjson::v2::format(val);
         // std::cerr << "DEBUG: " << result << " == " << expected << '\n';
         if (result != expected) {
-            std::cerr << "ERROR: after initialization %" << result << "%  expected: %" << expected << "%\n";
+            std::cerr << fmt::format("ERROR: after initialization %{}%  expected: %{}%\n", result, expected);
             exit_code = 1;
         }
     }

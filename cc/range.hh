@@ -6,8 +6,6 @@
 #include <functional>
 #include <numeric>
 
-#include "acmacs-base/stream.hh"
-
 // ----------------------------------------------------------------------
 
 namespace acmacs
@@ -227,10 +225,10 @@ namespace acmacs
 
 // ----------------------------------------------------------------------
 
-inline std::ostream& operator << (std::ostream& out, const acmacs::IndexGenerator& aGen)
-{
-    return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
-}
+// inline std::ostream& operator << (std::ostream& out, const acmacs::IndexGenerator& aGen)
+// {
+//     return stream_internal::write_to_stream(out, aGen, "<", ">", ", ");
+// }
 
 // ----------------------------------------------------------------------
 /// Local Variables:

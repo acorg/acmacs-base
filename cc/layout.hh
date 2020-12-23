@@ -9,7 +9,6 @@
 #include "acmacs-base/number-of-dimensions.hh"
 #include "acmacs-base/transformation.hh"
 #include "acmacs-base/size.hh"
-#include "acmacs-base/stream.hh"
 #include "acmacs-base/indexes.hh"
 #include "acmacs-base/range.hh"
 

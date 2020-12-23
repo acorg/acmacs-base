@@ -2,7 +2,6 @@
 #include <cassert>
 #include <cstring>
 
-#include "stream.hh"
 #include "float.hh"
 #include "string-split.hh"
 

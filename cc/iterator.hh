@@ -64,55 +64,55 @@ namespace acmacs
 // #if __cplusplus <= 201500
 
 // clang 8.1 on macOS 10.12
-namespace polyfill
-{
-    template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> class ostream_joiner
-    {
-     public:
-        using char_type = typename Stream::char_type; // _CharT;
-        using traits_type = typename Stream::traits_type; //_Traits;
-        using iterator_category = std::output_iterator_tag;
+// namespace polyfill
+// {
+//     template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> class ostream_joiner
+//     {
+//      public:
+//         using char_type = typename Stream::char_type; // _CharT;
+//         using traits_type = typename Stream::traits_type; //_Traits;
+//         using iterator_category = std::output_iterator_tag;
 
-        using value_type = void;
-        using difference_type = void;
-        using pointer = void;
-        using reference = void;
+//         using value_type = void;
+//         using difference_type = void;
+//         using pointer = void;
+//         using reference = void;
 
-        inline ostream_joiner(Stream& __os, const _DelimT& __delimiter)
-              // noexcept(is_nothrow_copy_constructible_v<_DelimT>)
-            : _M_out(std::addressof(__os)), _M_delim(__delimiter)
-            { }
+//         inline ostream_joiner(Stream& __os, const _DelimT& __delimiter)
+//               // noexcept(is_nothrow_copy_constructible_v<_DelimT>)
+//             : _M_out(std::addressof(__os)), _M_delim(__delimiter)
+//             { }
 
-        inline ostream_joiner(Stream& __os, _DelimT&& __delimiter)
-              // noexcept(is_nothrow_move_constructible_v<_DelimT>)
-            : _M_out(std::addressof(__os)), _M_delim(std::move(__delimiter))
-            { }
+//         inline ostream_joiner(Stream& __os, _DelimT&& __delimiter)
+//               // noexcept(is_nothrow_move_constructible_v<_DelimT>)
+//             : _M_out(std::addressof(__os)), _M_delim(std::move(__delimiter))
+//             { }
 
-        template <typename _Tp> inline ostream_joiner& operator=(const _Tp& __value)
-            {
-                if (!_M_first)
-                    *_M_out << _M_delim;
-                _M_first = false;
-                *_M_out << __value;
-                return *this;
-            }
+//         template <typename _Tp> inline ostream_joiner& operator=(const _Tp& __value)
+//             {
+//                 if (!_M_first)
+//                     *_M_out << _M_delim;
+//                 _M_first = false;
+//                 *_M_out << __value;
+//                 return *this;
+//             }
 
-        ostream_joiner& operator*() noexcept { return *this; }
-        ostream_joiner& operator++() noexcept { return *this; }
-        ostream_joiner& operator++(int) noexcept { return *this; }
+//         ostream_joiner& operator*() noexcept { return *this; }
+//         ostream_joiner& operator++() noexcept { return *this; }
+//         ostream_joiner& operator++(int) noexcept { return *this; }
 
-     private:
-        Stream* _M_out;
-        _DelimT _M_delim;
-        bool _M_first = true;
-    };
+//      private:
+//         Stream* _M_out;
+//         _DelimT _M_delim;
+//         bool _M_first = true;
+//     };
 
-    template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> inline ostream_joiner<Stream, std::decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
-    {
-        return { __os, std::forward<_DelimT>(__delimiter) };
-    }
+//     template <typename Stream, typename _DelimT/* , typename _CharT = char, typename _Traits = char_traits<_CharT> */> inline ostream_joiner<Stream, std::decay_t<_DelimT>> make_ostream_joiner(Stream& __os, _DelimT&& __delimiter)
+//     {
+//         return { __os, std::forward<_DelimT>(__delimiter) };
+//     }
 
-} // namespace polyfill
+// } // namespace polyfill
 
 // #else
 // // gcc 6.2+
@@ -122,6 +122,44 @@ namespace polyfill
 //     template<typename _DelimT> using ostream_joiner = experimental::fundamentals_v2::ostream_joiner<_DelimT>;
 // }
 // #endif
+
+// ======================================================================
+// https://internalpointers.com/post/writing-custom-iterators-modern-cpp
+// ======================================================================
+//
+// #include <iterator>
+// #include <cstddef>
+//
+// class Integers
+// {
+// public:
+//     struct Iterator 
+//     {
+//         using iterator_category = std::forward_iterator_tag;
+//         using difference_type   = std::ptrdiff_t;
+//         using value_type        = int;
+//         using pointer           = int*;
+//         using reference         = int&;
+//
+//         Iterator(pointer ptr) : m_ptr(ptr) {}
+//
+//         reference operator*() const { return *m_ptr; }
+//         pointer operator->() { return m_ptr; }
+//         Iterator& operator++() { m_ptr++; return *this; }  
+//         Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+//         friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
+//         friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };  
+//
+//     private:
+//         pointer m_ptr;
+//     };
+//
+//     Iterator begin() { return Iterator(&m_data[0]); }
+//     Iterator end()   { return Iterator(&m_data[200]); }
+//
+// private:
+//     int m_data[200];
+// };
 
 // ----------------------------------------------------------------------
 /// Local Variables:
