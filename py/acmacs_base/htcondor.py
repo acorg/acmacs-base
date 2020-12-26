@@ -92,7 +92,7 @@ class Job:
 
 # ----------------------------------------------------------------------
 
-def prepare_submission(program, program_args :list, description :str, current_dir :Path, request_memory=None, capture_stdout=False, email=None, notification="Error", machines :list = None, priority :int = 0, request_cpus :int = 1):
+def prepare_submission(program, program_args :list, description :str, current_dir :Path, environment :dict={}, request_memory=None, capture_stdout=False, email=None, notification="Error", machines :list = None, priority :int = 0, request_cpus :int = 1):
     current_dir = Path(current_dir).resolve()
     current_dir.chmod(0o777)        # to allow remote processes runinnig under user nobody to write files
     condor_log = Path(current_dir, "condor.log")
@@ -109,6 +109,7 @@ def prepare_submission(program, program_args :list, description :str, current_di
         ["initialdir", str(current_dir)],
         ["log", str(condor_log)],
         ["description", "{} {}".format(description, current_dir)],
+        ["environment", " ".join(f"{key}='{value}'" for key, value in environment.items())],
         [""],
         ]
     stderr_files = [Path(current_dir, "output", "{:04d}.stderr".format(no)) for no, args in enumerate(program_args)]
