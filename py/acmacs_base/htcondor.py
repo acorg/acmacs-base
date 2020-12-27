@@ -150,6 +150,7 @@ def prepare_submission(program, program_args :list, description :str, current_di
         ["log", str(condor_log)],
         ["description", "{} {}".format(description, current_dir)],
         ["environment", " ".join(f"{key}='{value}'" for key, value in environment.items())],
+        ["coresize", "-1"],
         [""],
         ]
     stderr_files = [Path(current_dir, "output", "{:04d}.stderr".format(no)) for no, args in enumerate(program_args)]
