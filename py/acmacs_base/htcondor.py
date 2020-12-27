@@ -57,7 +57,7 @@ class Job:
         elif (len(jobs["failed"]) + len(jobs["completed"])) == len(jobs["submitted"]):
             jobs["FAILED"] = True
         jobs["PERCENT"] = int((len(jobs["failed"]) + len(jobs["completed"])) / len(jobs["submitted"]) * 100.0)
-        module_logger.debug(f"{pprint.pformat(jobs)}")
+        # module_logger.debug(f"{pprint.pformat(jobs)}")
         return jobs
 
     def status(self):
