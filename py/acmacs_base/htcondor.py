@@ -25,7 +25,8 @@ class Job:
 
     # https://htcondor.readthedocs.io/en/latest/codes-other-values/job-event-log-codes.html
     sReLogEvent = re.compile(r"^(\d\d\d)\s+\(([\d\.]+)\)")
-    sReExitStatus = re.compile(r"^\s+\(1\)\s+Normal\s+termination\s+\(return\s+value\s+(\d+)\)", re.I)
+    sReExitStatus = re.compile(r"^\s+\(\d+\)\s+Normal\s+termination\s+\(return\s+value\s+(\d+)\)", re.I)
+    sReExitStatus11 = re.compile(r"^\s+\(\d+\)\s+Abnormal\s+termination\s+", re.I)
     def state(self):
         jobs = {"submitted": [], "running": [], "failed": [], "completed": [], "unrecognized": [], "FAILED": False, "DONE": False, "PERCENT": 0}
         event_to_job = {"000": "submitted", "001": "running", "002": "failed", "005": "completed", "006": "ignore", "009": "failed"}
@@ -38,8 +39,10 @@ class Job:
                         jobs["completed"].append(cluster)
                     else:
                         jobs["failed"].append(cluster)
+                elif self.sReExitStatus11.match(line):
+                    jobs["failed"].append(cluster)
                 else:
-                    module_logger.error(f"No exit status found for josb 005 code in {line.strip()!r}")
+                    module_logger.error(f"No exit status found for job {cluster} in {line.strip()!r}")
                 job_terminated = False
             else:
                 event_title_match = self.sReLogEvent.match(line)
