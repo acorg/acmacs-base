@@ -25,22 +25,39 @@ class Job:
 
     # https://htcondor.readthedocs.io/en/latest/codes-other-values/job-event-log-codes.html
     sReLogEvent = re.compile(r"^(\d\d\d)\s+\(([\d\.]+)\)")
+    sReExitStatus = re.compile(r"^\s+\(1\)\s+Normal\s+termination\s+\(return\s+value\s+(\d+)\)", re.I)
     def state(self):
         jobs = {"submitted": [], "running": [], "failed": [], "completed": [], "unrecognized": [], "FAILED": False, "DONE": False, "PERCENT": 0}
         event_to_job = {"000": "submitted", "001": "running", "002": "failed", "005": "completed", "006": "ignore", "009": "failed"}
+        job_terminated = False
         for line in Path(self.condor_log).open():
-            event_title_match = self.sReLogEvent.match(line)
-            if event_title_match:
-                event, cluster = event_title_match.groups()
-                try:
-                    jobs[event_to_job[event]].append(cluster)
-                except KeyError:
-                    jobs["unrecognized"].append(line.strip())
-        if jobs["failed"]:
-            jobs["FAILED"] = True
-        elif len(jobs["completed"]) == len(jobs["submitted"]):
+            if job_terminated:  # check exit status
+                exit_status_match = self.sReExitStatus.match(line)
+                if exit_status_match:
+                    if exit_status_match.group(1) == "0":
+                        jobs["completed"].append(cluster)
+                    else:
+                        jobs["failed"].append(cluster)
+                else:
+                    module_logger.error(f"No exit status found for josb 005 code in {line.strip()!r}")
+                job_terminated = False
+            else:
+                event_title_match = self.sReLogEvent.match(line)
+                if event_title_match:
+                    event, cluster = event_title_match.groups()
+                    if event == "005": # terminated
+                        job_terminated = True # check next line for exit status
+                    else:
+                        try:
+                            jobs[event_to_job[event]].append(cluster)
+                        except KeyError:
+                            jobs["unrecognized"].append(line.strip())
+        if len(jobs["completed"]) == len(jobs["submitted"]):
             jobs["DONE"] = True
-        jobs["PERCENT"] = int(len(jobs["completed"]) / len(jobs["submitted"]) * 100.0)
+        elif (len(jobs["failed"]) + len(jobs["completed"])) == len(jobs["submitted"]):
+            jobs["FAILED"] = True
+        jobs["PERCENT"] = int((len(jobs["failed"]) + len(jobs["completed"])) / len(jobs["submitted"]) * 100.0)
+        module_logger.debug(f"{pprint.pformat(jobs)}")
         return jobs
 
     def status(self):
