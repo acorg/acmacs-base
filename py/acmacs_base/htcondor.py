@@ -23,6 +23,26 @@ class Job:
     def __str__(self):
         return str(self.clusters)
 
+    # https://htcondor.readthedocs.io/en/latest/codes-other-values/job-event-log-codes.html
+    sReLogEvent = re.compile(r"^(\d\d\d)\s+\(([\d\.]+)\)")
+    def state(self):
+        jobs = {"submitted": [], "running": [], "failed": [], "completed": [], "unrecognized": [], "FAILED": False, "DONE": False, "PERCENT": 0}
+        event_to_job = {"000": "submitted", "001": "running", "002": "failed", "005": "completed", "006": "ignore", "009": "failed"}
+        for line in Path(self.condor_log).open():
+            event_title_match = self.sReLogEvent.match(line)
+            if event_title_match:
+                event, cluster = event_title_match.groups()
+                try:
+                    jobs[event_to_job[event]].append(cluster)
+                except KeyError:
+                    jobs["unrecognized"].append(line.strip())
+        if jobs["failed"]:
+            jobs["FAILED"] = True
+        elif len(jobs["completed"]) == len(jobs["submitted"]):
+            jobs["DONE"] = True
+        jobs["PERCENT"] = int(len(jobs["completed"]) / len(jobs["submitted"]) * 100.0)
+        return jobs
+
     def status(self):
         # in reality needs to look into history file to check for failed jobs but it is slow
         still_running = collections.defaultdict(int)
