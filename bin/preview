@@ -1,0 +1,82 @@
+#! /usr/bin/env python3
+
+""
+
+import argparse, subprocess, time
+from pathlib import Path
+
+# ----------------------------------------------------------------------
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('-p', '--pos', dest='pos', default=None, metavar='X.Y or X.Y.W.H')
+parser.add_argument('-b', dest='before', default=0, type=int, help="delay before")
+parser.add_argument('-a', dest='after', default=0, type=int, help="delay after")
+parser.add_argument('-e', dest='emacs', default=False, action="store_const", const=True, help="return to emacs")
+parser.add_argument('filename', nargs='+', action='store')
+args = parser.parse_args()
+if args.pos:
+    if "," in args.pos:
+        position_fields = [int(n) for n in args.pos.split(",")]
+    elif "." in args.pos:
+        position_fields = [int(n) for n in args.pos.split(".")]
+    else:
+        raise RuntimeError("invalid position specification, X.Y or X.Y.W.H expected")
+else:
+    position_fields = []
+
+# ----------------------------------------------------------------------
+
+FRONTMOST_APPLICATION = """\
+tell application "System Events"
+    set app_path to POSIX path of (path to frontmost application)
+    log app_path
+end tell
+"""
+
+MOVE_WINDOW = """\
+tell application "System Events"
+    set position of first window of application process "Preview" to {%(x)d, %(y)d}
+end tell
+"""
+
+MOVE_RESIZE_WINDOW = """\
+tell application "Preview"
+    set (bounds of the front window) to {%(x1)d, %(y1)d, %(x2)d, %(y2)d}
+end tell
+"""
+
+WAIT_FOR_WINDOW = """\
+tell application "Preview"
+    set nnn to name of front window
+end tell
+"""
+
+# ----------------------------------------------------------------------
+
+def osascript(text):
+    return subprocess.check_output(["/usr/bin/osascript", *(ee2 for ee1 in (("-e", field) for field in text.strip().split("\n")) for ee2 in ee1)], stderr=subprocess.STDOUT).decode("utf-8").strip()
+
+def open_file(filename):
+    subprocess.check_call(["/usr/bin/open", filename])
+
+# ----------------------------------------------------------------------
+
+if args.before > 0:
+    time.sleep(args.before)
+
+frontmost_application = osascript(FRONTMOST_APPLICATION)
+# print(f"\"{frontmost_application}\" {'Emacs.app' in frontmost_application}")
+for filename in (str(Path(fn).resolve()) for fn in args.filename):
+    open_file(filename)
+    if len(position_fields) == 2:
+        print(osascript(MOVE_WINDOW % {"x": position_fields[0], "y": position_fields[1]}))
+    elif len(position_fields) == 4:
+        osascript(MOVE_RESIZE_WINDOW % {"x1": position_fields[0], "y1": position_fields[1], "x2": position_fields[0] + position_fields[2], "y2": position_fields[1] + position_fields[3]})
+    else:
+        osascript(WAIT_FOR_WINDOW)         # let preview open window
+
+if args.after > 0:
+    time.sleep(args.after)
+
+if args.emacs and "Emacs.app" in frontmost_application:
+    open_file(frontmost_application)

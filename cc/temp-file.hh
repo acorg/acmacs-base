@@ -10,8 +10,8 @@ namespace acmacs::file
     class temp
     {
      public:
-        temp(std::string prefix, std::string suffix);
-        temp(std::string suffix);
+        temp(std::string prefix, std::string suffix, bool autoremove = true);
+        temp(std::string suffix, bool autoremove = true);
         ~temp();
 
         temp& operator = (temp&& aFrom) noexcept { name = std::move(aFrom.name); fd = aFrom.fd; aFrom.name.clear(); return *this; }
@@ -21,6 +21,7 @@ namespace acmacs::file
 
      private:
         std::string name;
+        bool autoremove_;
         int fd;
 
         std::string make_template(std::string prefix);

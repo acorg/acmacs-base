@@ -1,0 +1,74 @@
+#! /bin/bash
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 [-b <delay before>] [-a <delay-after>] [-r <remove after delay>] [-e (return to emacs)] [-q (quicklook)] <filename>" >&2
+    exit 1
+fi
+
+BEFORE=0
+AFTER=0
+QUICKLOOK=""
+REMOVE=""
+EMACS=""
+FILENAME=""
+
+while [[ -n "$1" && -z "${FILENAME}" ]]; do
+    case "$1" in
+        -b)
+            shift
+            BEFORE="$1"
+            ;;
+        -a)
+            shift
+            AFTER="$1"
+            ;;
+        -r)
+            shift
+            REMOVE="$1"
+            ;;
+        -e)
+            EMACS=1
+            ;;
+        -q)
+            QUICKLOOK=1
+            ;;
+        -*)
+            echo "> ERROR: unrecognized switch: $1" >&2
+            exit 2
+            ;;
+        *)
+            FILENAME="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "${FILENAME}" ]]; then
+    echo "> ERROR: no filename in the command line" >&2
+    exit 3
+fi
+
+# echo ">>> $0 $FILENAME" >&2
+
+if [[ ${BEFORE} -gt 0 ]]; then
+    sleep ${BEFORE}
+fi
+
+if [[ -n "${QUICKLOOK}" && -x /usr/bin/qlmanage ]]; then
+    /usr/bin/qlmanage -p "${FILENAME}"
+else
+    /usr/bin/open "${FILENAME}"
+fi
+
+if [[ -n ${EMACS} && ( -n "${INSIDE_EMACS}" || "${XPC_SERVICE_NAME}" == *Emacs* ) ]]; then
+    if [[ ${AFTER} -gt 0 ]]; then
+        sleep ${AFTER}
+    fi
+    /usr/bin/open -a /Applications/Emacs.app
+fi
+
+if [[ -n "${REMOVE}" ]]; then
+    if [[ ${REMOVE} -gt 0 ]]; then
+        sleep ${REMOVE}
+    fi
+    rm -f "${FILENAME}"
+fi
