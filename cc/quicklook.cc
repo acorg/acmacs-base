@@ -114,11 +114,11 @@ void acmacs::preview(std::string_view aFilename, std::string_view position, size
 
 #else
 
-void acmacs::quicklook(std::string_view /*aFilename*/, size_t /*aDelayInSeconds*/)
+void acmacs::quicklook(std::string_view /*aFilename*/, size_t /*aDelayInSeconds*/, std::optional<size_t> /*aRemoveAfterDelay*/)
 {
 }
 
-void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/)
+void acmacs::open(std::string_view /*aFilename*/, size_t /*aDelayBeforeInSeconds*/, size_t /*aDelayAfterInSeconds*/, std::optional<size_t> /*aRemoveAfterDelay*/)
 {
 }
 
