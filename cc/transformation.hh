@@ -171,6 +171,17 @@ namespace acmacs
             return {d() / deter, -b() / deter, -c() / deter, a() / deter};
         }
 
+        double difference(const Transformation& another) const
+            {
+                if (number_of_dimensions != another.number_of_dimensions)
+                    throw std::runtime_error("cannot compare transformations with different number_of_dimensions");
+                double sum{0.0};
+                for (number_of_dimensions_t i1{0}; i1 < number_of_dimensions; ++i1)
+                    for (number_of_dimensions_t i2{0}; i2 < number_of_dimensions; ++i2)
+                        sum += sqr(_x(*i1, *i2) - another._x(*i1, *i2));
+                return sum;
+            }
+
         // 2D and 3D --------------------------------------------------
 
         PointCoordinates transform(const PointCoordinates& source) const
