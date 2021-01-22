@@ -6,7 +6,7 @@
 
 namespace acmacs
 {
-    template <typename Parent, typename Reference> class iterator
+    template <typename Parent, typename Reference, typename Index = size_t> class iterator
     {
       public:
         using reference = Reference;
@@ -39,17 +39,17 @@ namespace acmacs
         constexpr bool operator==(const iterator& other) const { return &mParent == &other.mParent && mIndex == other.mIndex; }
         constexpr bool operator!=(const iterator& other) const { return &mParent != &other.mParent || mIndex != other.mIndex; }
         constexpr reference operator*() { return mParent[mIndex]; }
-        constexpr size_t index() const { return mIndex; }
+        constexpr Index index() const { return mIndex; }
         constexpr bool operator<(const iterator& rhs) const { return mIndex < rhs.mIndex; }
         constexpr bool operator<=(const iterator& rhs) const { return mIndex <= rhs.mIndex; }
         constexpr bool operator>(const iterator& rhs) const { return mIndex > rhs.mIndex; }
         constexpr bool operator>=(const iterator& rhs) const { return mIndex >= rhs.mIndex; }
 
       private:
-        iterator(const Parent& aParent, size_t aIndex) : mParent{aParent}, mIndex{aIndex} {}
+        iterator(const Parent& aParent, Index aIndex) : mParent{aParent}, mIndex{aIndex} {}
 
         const Parent& mParent;
-        size_t mIndex;
+        Index mIndex;
 
         friend Parent;
     };
@@ -133,7 +133,7 @@ namespace acmacs
 // class Integers
 // {
 // public:
-//     struct Iterator 
+//     struct Iterator
 //     {
 //         using iterator_category = std::forward_iterator_tag;
 //         using difference_type   = std::ptrdiff_t;
@@ -145,10 +145,10 @@ namespace acmacs
 //
 //         reference operator*() const { return *m_ptr; }
 //         pointer operator->() { return m_ptr; }
-//         Iterator& operator++() { m_ptr++; return *this; }  
+//         Iterator& operator++() { m_ptr++; return *this; }
 //         Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
 //         friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
-//         friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };  
+//         friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };
 //
 //     private:
 //         pointer m_ptr;
