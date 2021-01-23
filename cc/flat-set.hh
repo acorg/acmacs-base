@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <algorithm>
+#include "acmacs-base/fmt.hh"
 
 // ----------------------------------------------------------------------
 
@@ -61,6 +62,25 @@ namespace acmacs
     };
 
 } // namespace acmacs
+
+// ----------------------------------------------------------------------
+
+template <typename Elt> struct fmt::formatter<acmacs::flat_set_t<Elt>> : fmt::formatter<acmacs::fmt_helper::default_formatter>
+{
+    template <typename FormatCtx> auto format(const acmacs::flat_set_t<Elt>& value, FormatCtx& ctx)
+    {
+        fmt::format_to(ctx.out(), "{{");
+        bool first{true};
+        for (const auto& val : value) {
+            if (!first)
+                fmt::format_to(ctx.out(), ", ");
+            else
+                first = false;
+            fmt::format_to(ctx.out(), "{}", val);
+        }
+        return fmt::format_to(ctx.out(), "}}");
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
