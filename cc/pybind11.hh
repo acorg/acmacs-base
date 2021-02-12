@@ -1,5 +1,7 @@
 #pragma once
 
+#include "acmacs-base/fmt.hh"
+
 // ----------------------------------------------------------------------
 
 #pragma GCC diagnostic push
@@ -31,6 +33,15 @@
 #pragma GCC diagnostic pop
 
 namespace py = pybind11;
+
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<py::object> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(const py::object& value, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), "{}", py::repr(value).cast<std::string>());
+    }
+};
 
 // ----------------------------------------------------------------------
 /// Local Variables:
