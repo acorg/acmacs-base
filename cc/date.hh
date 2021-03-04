@@ -45,7 +45,7 @@ namespace date
     inline auto month_ok(const year_month_day& dt) { const auto mont = get_month(dt); return mont > 0 && mont <= 12; }
     inline auto get_day(const year_month_day& dt) { return static_cast<unsigned>(dt.day()); }
 
-    inline std::string display(const year_month_day& dt, const char* fmt = "%Y-%m-%d") { return dt.ok() ? format(fmt, dt) : std::string{"*invalid-date*"}; }
+    inline std::string display(const year_month_day& dt, const char* fmt = "%Y-%m-%d") { return dt.ok() ? format(fmt, dt) : std::string{"invalid-date"}; }
 
     inline std::string display(const year_month_day& dt, allow_incomplete allow)
     {
