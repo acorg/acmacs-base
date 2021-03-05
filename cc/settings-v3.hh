@@ -99,6 +99,7 @@ namespace acmacs::settings::v3
         std::unique_ptr<detail::LoadedDataFiles> loaded_data_;
         std::unique_ptr<detail::Environment> environment_;
         mutable bool warn_if_set_used_{false};
+        std::vector<std::string> applying_; // to prevent from infinite recursion of applying
 
         // pushes values of object into environment, then calls apply(entry["N"]) unless entry["N"] == "set"
         void push_and_apply(const rjson::v3::detail::object& entry);

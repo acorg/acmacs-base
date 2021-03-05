@@ -46,6 +46,13 @@ acmacs::settings::v3::Data::~Data()
 
 // ----------------------------------------------------------------------
 
+struct ApplyingPusher
+{
+    ApplyingPusher(std::vector<std::string>& applying, const std::string& to_push) : applying_{applying} { applying_.push_back(to_push); }
+    ~ApplyingPusher() { applying_.pop_back(); }
+    std::vector<std::string>& applying_;
+};
+
 void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
 {
     using namespace std::string_view_literals;
@@ -54,7 +61,10 @@ void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
         const auto substituted_name = substitute(name);
-        AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv: ""sv, substituted_name, name);
+        if (std::find(std::begin(applying_), std::end(applying_), substituted_name) != std::end(applying_))
+            throw error{AD_FORMAT("[settings] attempt of recursively applying \"{}\" (not substituted: \"{}\")   applying stack: {}", substituted_name, name, applying_)};
+        ApplyingPusher _pusher(applying_, substituted_name);
+        AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv : ""sv, substituted_name, name);
         AD_LOG_INDENT;
         if (const auto& val_from_data = get(substituted_name, tlo); !val_from_data.is_null()) {
             apply(val_from_data);
