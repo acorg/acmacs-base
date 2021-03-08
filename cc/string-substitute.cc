@@ -1,16 +1,12 @@
 #include "acmacs-base/string-substitute.hh"
 #include "acmacs-base/log.hh"
 
-static std::vector<std::string_view> split(std::string_view source);
-
 // ----------------------------------------------------------------------
 
 std::string acmacs::string::substitute_from_store(std::string_view pattern, const fmt::dynamic_format_arg_store<fmt::format_context>& store, if_no_substitution_found insf)
 {
-    const auto chunks{::split(pattern)};
-    // fmt::print("{}\n", chunks);
     std::string result;
-    for (const auto& chunk : chunks) {
+    for (const auto& chunk : split_for_formatting(pattern)) {
         try {
             result.append(fmt::vformat(chunk, store));
         }
@@ -31,7 +27,7 @@ std::string acmacs::string::substitute_from_store(std::string_view pattern, cons
 
 // ----------------------------------------------------------------------
 
-std::vector<std::string_view> split(std::string_view source)
+std::vector<std::string_view> acmacs::string::split_for_formatting(std::string_view source)
 {
     std::vector<std::string_view> result;
     size_t beg{0};
@@ -55,10 +51,7 @@ std::vector<std::string_view> split(std::string_view source)
         result.push_back(source.substr(beg));
     return result;
 
-} // split
-
-// ----------------------------------------------------------------------
-
+} // acmacs::string::split_for_formatting
 
 // ----------------------------------------------------------------------
 /// Local Variables:

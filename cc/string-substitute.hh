@@ -16,6 +16,9 @@ namespace acmacs::string
         (store.push_back(fmt::arg(args.first, args.second)), ...);
         return substitute_from_store(pattern, store, if_no_substitution_found::leave_as_is);
     }
+
+    std::vector<std::string_view> split_for_formatting(std::string_view source);
+
 }
 
 // ----------------------------------------------------------------------
