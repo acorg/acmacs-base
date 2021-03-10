@@ -59,7 +59,7 @@ ACMACS_BASE_SOURCES =  \
   color-amino-acid.cc  \
   color-hsv.cc         \
   rjson-v3-helper.cc   \
-  string-substitute.cc \
+  fmt.cc               \
   html.cc              \
   gzip.cc              \
   xz.cc                \

@@ -110,19 +110,81 @@ namespace fmt
 {
     template <typename T> std::string format(const std::vector<T>& collection, std::string_view entry_format, std::string_view entry_separator = "\n  ")
     {
-        memory_buffer result;
-        bool add_separator{false};
-        for (const auto& en : collection) {
-            if (add_separator)
-                format_to(result, entry_separator);
-            else
-                add_separator = true;
-            format_to(result, entry_format, en);
-        }
-        return to_string(result);
+        return fmt::format(entry_format, fmt::join(collection, entry_separator));
+        // memory_buffer result;
+        // bool add_separator{false};
+        // for (const auto& en : collection) {
+        //     if (add_separator)
+        //         format_to(result, entry_separator);
+        //     else
+        //         add_separator = true;
+        //     format_to(result, entry_format, en);
+        // }
+        // return to_string(result);
     }
 
-} // namespace acmacs::fmt
+} // namespace fmt
+
+// ----------------------------------------------------------------------
+
+namespace fmt
+{
+    enum class if_no_substitution_found { leave_as_is, empty };
+
+    std::vector<std::pair<std::string_view, std::string_view>> split_for_formatting(std::string_view source); // pair{key, format}: {"key", "{key:03d}"} {"", "between-format"}
+
+    template <typename FormatMatched, typename FormatNoPattern, typename... Args>
+    void substitute_to(FormatMatched&& format_matched, FormatNoPattern&& format_no_pattern, std::string_view pattern, if_no_substitution_found insf, Args&&... args)
+    {
+        const auto match_and_format = [&format_matched](std::string_view look_for, std::string_view pattern_arg, const auto& en) {
+            if (look_for == en.first) {
+                format_matched(pattern_arg, en.first, en.second);
+                return true;
+            }
+            else
+                return false;
+        };
+
+        for (const auto& [key, pattern_arg] : split_for_formatting(pattern)) {
+            if (!key.empty()) {
+                if (!(match_and_format(key, pattern_arg, args) || ...)) {
+                    // not matched
+                    switch (insf) {
+                        case if_no_substitution_found::leave_as_is:
+                            format_no_pattern(pattern_arg);
+                            break;
+                        case if_no_substitution_found::empty:
+                            break;
+                    }
+                }
+            }
+            else
+                format_no_pattern(pattern_arg);
+        }
+    }
+
+    template <typename... Args> void substitute_to(memory_buffer& output, std::string_view pattern, if_no_substitution_found insf, Args&&... args)
+    {
+        const auto format_matched = [&output](std::string_view pattern_arg, std::string_view key, const auto& value) {
+            if constexpr (std::is_invocable_v<decltype(value)>)
+                format_to(output, pattern_arg, arg(key.data(), std::invoke(value)));
+            else
+                format_to(output, pattern_arg, arg(key.data(), value));
+        };
+        const auto format_no_pattern = [&output](std::string_view no_pattern) { output.append(no_pattern); };
+        substitute_to(format_matched, format_no_pattern, pattern, insf, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args> std::string substitute(std::string_view pattern, if_no_substitution_found insf, Args&&... args)
+    {
+        memory_buffer output;
+        substitute_to(output, pattern, insf, std::forward<Args>(args)...);
+        return to_string(output);
+    }
+
+    template <typename... Args> std::string substitute(std::string_view pattern, Args&&... args) { return substitute(pattern, if_no_substitution_found::leave_as_is, std::forward<Args>(args)...); }
+
+} // namespace fmt
 
 // ----------------------------------------------------------------------
 /// Local Variables:
