@@ -1,6 +1,8 @@
 #pragma once
 
 #include <optional>
+#include <tuple>
+#include <utility>
 
 #pragma GCC diagnostic push
 #ifdef __clang__
@@ -111,16 +113,6 @@ namespace fmt
     template <typename T> std::string format(const std::vector<T>& collection, std::string_view entry_format, std::string_view entry_separator = "\n  ")
     {
         return fmt::format(entry_format, fmt::join(collection, entry_separator));
-        // memory_buffer result;
-        // bool add_separator{false};
-        // for (const auto& en : collection) {
-        //     if (add_separator)
-        //         format_to(result, entry_separator);
-        //     else
-        //         add_separator = true;
-        //     format_to(result, entry_format, en);
-        // }
-        // return to_string(result);
     }
 
 } // namespace fmt
@@ -137,8 +129,8 @@ namespace fmt
     void substitute_to(FormatMatched&& format_matched, FormatNoPattern&& format_no_pattern, std::string_view pattern, if_no_substitution_found insf, Args&&... args)
     {
         const auto match_and_format = [&format_matched](std::string_view look_for, std::string_view pattern_arg, const auto& en) {
-            if (look_for == en.first) {
-                format_matched(pattern_arg, en.first, en.second);
+            if (look_for == std::get<0>(en)) {
+                format_matched(pattern_arg, en);
                 return true;
             }
             else
@@ -165,15 +157,27 @@ namespace fmt
 
     template <typename... Args> void substitute_to(memory_buffer& output, std::string_view pattern, if_no_substitution_found insf, Args&&... args)
     {
-        const auto format_matched = [&output](std::string_view pattern_arg, std::string_view key, const auto& value) {
-            if constexpr (std::is_invocable_v<decltype(value)>)
-                format_to(output, pattern_arg, arg(key.data(), std::invoke(value)));
+        const auto format_matched = [&output](std::string_view pattern_arg, const auto& key_value) {
+            static_assert(std::is_same_v<std::decay_t<decltype(std::get<0>(key_value))>, const char*>);
+            if constexpr (std::tuple_size<std::decay_t<decltype(key_value)>>::value == 2) {
+                if constexpr (std::is_invocable_v<decltype(std::get<1>(key_value))>)
+                    format_to(output, pattern_arg, arg(std::get<0>(key_value), std::invoke(std::get<1>(key_value))));
+                else
+                    format_to(output, pattern_arg, arg(std::get<0>(key_value), std::get<1>(key_value)));
+            }
+            else if constexpr (std::tuple_size<std::decay_t<decltype(key_value)>>::value == 4) {
+                format_to(output, pattern_arg, arg(std::get<0>(key_value), std::get<1>(key_value)), arg(std::get<2>(key_value), std::get<3>(key_value)));
+            }
             else
-                format_to(output, pattern_arg, arg(key.data(), value));
+                static_assert(
+                    std::tuple_size<std::decay_t<decltype(key_value)>>::value == 0,
+                    "fmt::substitute arg can be used in the following forms: std::pair<const char*, value>, std::pair<const char*, lambda>, std::tuple<const char*, value, const char*, value>");
         };
         const auto format_no_pattern = [&output](std::string_view no_pattern) { output.append(no_pattern); };
         substitute_to(format_matched, format_no_pattern, pattern, insf, std::forward<Args>(args)...);
     }
+
+    // see acmacs-chart-2/cc/name-format.cc for usage example
 
     template <typename... Args> std::string substitute(std::string_view pattern, if_no_substitution_found insf, Args&&... args)
     {
