@@ -1,34 +1,6 @@
 #pragma once
 
-#include <cmath>
-#include <cstdlib>
-#include <array>
-
 #include "acmacs-base/fmt.hh"
-
-// ----------------------------------------------------------------------
-
-#define AD_DEBUG_FILE_LINE fmt::format(" @@ {}:{}", __FILE__, __LINE__)
-
-// Unclear support for __PRETTY_FUNCTION__ by g++9
-// #define AD_DEBUG_FILE_LINE_FUNC_S fmt::format("{}:{}: {}", __FILE__, __LINE__, __PRETTY_FUNCTION__)
-// #define AD_DEBUG_FILE_LINE_FUNC fmt::format(" [{}]", AD_DEBUG_FILE_LINE_FUNC_S)
-
-#define AD_LOG(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{}", fmt::format(__VA_ARGS__), __FILE__, __LINE__); })
-#define AD_LOGF(section, ...) acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} @F {}", fmt::format(__VA_ARGS__), __FILE__, __LINE__, __PRETTY_FUNCTION__); })
-#define AD_LOG_INDENT acmacs::log::indent _indent
-
-#define AD_ERROR(...) acmacs::log::debug_print("> ERROR", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_WARNING(...) acmacs::log::debug_print(">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_WARNING_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">> WARNING", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_INFO(...) acmacs::log::debug_print(">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_INFO_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_DEBUG(...) acmacs::log::debug_print(">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-#define AD_DEBUG_IF(do_print, ...) acmacs::log::debug_print_if(do_print, ">>>>", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-
-#define AD_ASSERT(condition, ...) acmacs::log::ad_assert(condition, fmt::format(__VA_ARGS__), __FILE__, __LINE__)
-
-#define AD_FORMAT(...) fmt::format("{} @@ {}:{}", fmt::format(__VA_ARGS__), __FILE__, __LINE__)
 
 // ----------------------------------------------------------------------
 
@@ -46,7 +18,12 @@ namespace acmacs
 
     namespace log::inline v1
     {
-        using log_key_t = std::string_view;
+        struct log_key_t
+        {
+            explicit constexpr log_key_t(std::string_view kk) : key{kk} {}
+            constexpr bool operator==(const log_key_t& rhs) const { return key == rhs.key; }
+            std::string_view key;
+        };
 
         constexpr log_key_t all{"all"};
         constexpr log_key_t timer{"timer"};
@@ -72,7 +49,7 @@ namespace acmacs
         template <typename MesssageGetter> void message(log_key_t section, MesssageGetter get_message)
         {
             if (is_enabled(section))
-                fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section, "", detail::indent, get_message());
+                fmt::print(stderr, ">>>> [{}]: {:{}s}{}\n", section.key, "", detail::indent, get_message());
         }
 
         void enable(std::string_view names);
@@ -86,22 +63,22 @@ namespace acmacs
 
         // ----------------------------------------------------------------------
 
-        inline void debug_print(std::string_view prefix, std::string_view message, const char* filename, int line_no)
+        inline void debug_print(std::string_view prefix, std::string_view message, const char* filename, int line_no, const char* function)
         {
             if (detail::print_debug_messages)
-                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+                fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
         }
 
-        inline void debug_print_if(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no)
+        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no)
         {
             if (do_print && detail::print_debug_messages)
                 fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
         }
 
-        inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no)
+        inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
         {
             if (!(condition)) {
-                debug_print("> ASSERTION FAILED", message, filename, line_no);
+                debug_print("> ASSERTION FAILED", message, filename, line_no, function);
                 std::abort();
             }
         }
@@ -111,6 +88,109 @@ namespace acmacs
     } // namespace log::inline v1
 
 } // namespace acmacs
+
+// ======================================================================
+
+// https://www.cppstories.com/2021/non-terminal-variadic-args/
+// https://clang.llvm.org/docs/LanguageExtensions.html#source-location-builtins
+
+template <typename Fmt, typename... Ts> struct AD_ERROR
+{
+    AD_ERROR(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print("> ERROR", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_ERROR(Fmt, Ts&&...) -> AD_ERROR<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_WARNING
+{
+    AD_WARNING(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+    AD_WARNING(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(do_print, ">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_WARNING(Fmt, Ts&&...) -> AD_WARNING<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_INFO
+{
+    AD_INFO(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+    AD_INFO(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(do_print, ">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_INFO(Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_DEBUG
+{
+    AD_DEBUG(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+    AD_DEBUG(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::debug_print(do_print, ">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_DEBUG(Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_ASSERT
+{
+    AD_ASSERT(bool condition, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::ad_assert(condition, fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_ASSERT(Fmt, Ts&&...) -> AD_ASSERT<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_FORMAT
+{
+    AD_FORMAT(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+        : text{fmt::format("{} @@ {}:{} {}", fmt::format(format, std::forward<Ts>(ts)...), file, line, function)}
+    {
+    }
+    operator std::string() const { return text; }
+    std::string text;
+};
+
+template <typename Fmt, typename... Ts> AD_FORMAT(Fmt, Ts&&...) -> AD_FORMAT<Fmt, Ts...>;
+
+// ----------------------------------------------------------------------
+
+template <typename Fmt, typename... Ts> struct AD_LOG
+{
+    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    {
+        acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} {}", fmt::format(format, std::forward<Ts>(ts)...), file, line, function); });
+    }
+};
+
+template <typename Fmt, typename... Ts> AD_LOG(acmacs::log::log_key_t, Fmt, Ts&&...) -> AD_LOG<Fmt, Ts...>;
+
+#define AD_LOG_INDENT acmacs::log::indent _indent
 
 // ----------------------------------------------------------------------
 /// Local Variables:

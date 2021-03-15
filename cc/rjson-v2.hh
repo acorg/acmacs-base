@@ -54,8 +54,9 @@ namespace rjson::inline v2
     class value_type_mismatch : public error
     {
       public:
-        value_type_mismatch(std::string_view requested_type, std::string_view actual_type, std::string_view source_ref)
-            : error{fmt::format("value type mismatch, requested: {}, stored: {}{}", requested_type, actual_type, source_ref)}
+        value_type_mismatch(std::string_view requested_type, std::string_view actual_type, const char* file = __builtin_FILE(), int line = __builtin_LINE(),
+                            const char* function = __builtin_FUNCTION())
+            : error{fmt::format("value type mismatch, requested: {}, stored: {} @@ {}:{}: {}", requested_type, actual_type, file, line, function)}
         {
         }
     };
@@ -349,7 +350,7 @@ namespace rjson::inline v2
         if constexpr (std::is_assignable_v<Target, const char*>)
             target = "null";
         else
-            throw value_type_mismatch(typeid(Target).name(), "rjson::null", AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), "rjson::null");
     }
 
     template <typename Target> constexpr void to(const_null, Target& target)
@@ -357,7 +358,7 @@ namespace rjson::inline v2
         if constexpr (std::is_assignable_v<Target, const char*>)
             target = "*ConstNull";
         else
-            throw value_type_mismatch(typeid(Target).name(), "rjson::const_null", AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), "rjson::const_null");
     }
 
     std::string format(const object& val, show_empty_values a_show_empty_values = show_empty_values::yes);
@@ -367,7 +368,7 @@ namespace rjson::inline v2
         if constexpr (std::is_assignable_v<Target, std::string>)
             target = format(source, show_empty_values::yes);
         else
-            throw value_type_mismatch(typeid(Target).name(), "rjson::object", AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), "rjson::object");
     }
 
     std::string format(const array& val, show_empty_values a_show_empty_values = show_empty_values::yes);
@@ -379,7 +380,7 @@ namespace rjson::inline v2
         else if constexpr (acmacs::sfinae::container_has_iterator_v<Target>)
             source.copy_to(target);
         else
-            throw value_type_mismatch(typeid(Target).name(), "rjson::array", AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), "rjson::array");
     }
 
     template <typename Target> void to(const std::string& source, Target& target)
@@ -390,7 +391,7 @@ namespace rjson::inline v2
         if constexpr (std::is_assignable_v<Target, std::string>)
             target = source; // fmt::format("\"{}\"", source);
         else
-            throw value_type_mismatch(typeid(Target).name(), "rjson::string", AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), "rjson::string");
     }
 
 #pragma GCC diagnostic push
@@ -410,7 +411,7 @@ namespace rjson::inline v2
                         target = fmt::format("{}", from);
                 }
                 else if constexpr (std::is_same_v<Target, std::string_view>)
-                    throw value_type_mismatch("std::string_view", "rjson::number", AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("std::string_view", "rjson::number");
                 else if constexpr (std::is_assignable_v<Target, Number> || std::is_convertible_v<Number, Target>)
                     target = static_cast<Target>(from);
                 else if constexpr (std::is_same_v<Number, std::string>) {
@@ -425,10 +426,10 @@ namespace rjson::inline v2
                     else if constexpr (std::is_constructible_v<Target, Number>)
                         target = Target{from}; // for named_string_t
                     else
-                        throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number<std::string>({})", from), AD_DEBUG_FILE_LINE);
+                        throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number<std::string>({})", from));
                 }
                 else
-                    throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source));
             },
             source);
     }
@@ -441,7 +442,7 @@ namespace rjson::inline v2
         else if constexpr (std::is_assignable_v<Target, std::string>)
             target = fmt::format("{}", source);
         else
-            throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::bool({})", source), AD_DEBUG_FILE_LINE);
+            throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::bool({})", source));
     }
 
     template <typename Target> void to(const value& source, Target& target, ignore_null ign = ignore_null::no)
@@ -667,7 +668,7 @@ namespace rjson::inline v2
     //             if constexpr (std::is_same_v<std::decay_t<T>, number>)
     //                 return to_double(arg);
     //             else
-    //                 throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("number", actual_type());
     //         },
     //         value_);
     // }
@@ -679,7 +680,7 @@ namespace rjson::inline v2
     //             if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
     //                 return arg;
     //             else
-    //                 throw value_type_mismatch("std::string", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("std::string", actual_type());
     //         },
     //         value_);
     // }
@@ -691,7 +692,7 @@ namespace rjson::inline v2
     //             if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
     //                 return std::string_view{arg};
     //             else
-    //                 throw value_type_mismatch("std::string_view", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("std::string_view", actual_type());
     //         },
     //         value_);
     // }
@@ -703,7 +704,7 @@ namespace rjson::inline v2
     //             if constexpr (std::is_same_v<std::decay_t<TT>, number>)
     //                 return rjson::to_integer<T>(arg);
     //             else
-    //                 throw value_type_mismatch("number", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("number", actual_type());
     //         },
     //         value_);
     // }
@@ -724,11 +725,11 @@ namespace rjson::inline v2
     //             else if constexpr (std::is_same_v<std::decay_t<T>, number>) {
     //                 const auto val = rjson::to_integer<int>(arg);
     //                 if (val != 0 && val != 1)
-    //                     fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg), AD_DEBUG_FILE_LINE);
+    //                     fmt::print(stderr, "WARNING: requested bool, stored number: {} {}\n", to_string(arg));
     //                 return val;
     //             }
     //             else
-    //                 throw value_type_mismatch("bool", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("bool", actual_type());
     //         },
     //         value_);
     // }
@@ -744,11 +745,11 @@ namespace rjson::inline v2
     //                     return result;
     //                 }
     //                 catch (std::exception& /*err*/) {
-    //                     throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE);
+    //                     throw value_type_mismatch("array of strings", actual_type());
     //                 }
     //             }
     //             else
-    //                 throw value_type_mismatch("array of strings", actual_type(), AD_DEBUG_FILE_LINE);
+    //                 throw value_type_mismatch("array of strings", actual_type());
     //         },
     //         value_);
     // }
@@ -998,7 +999,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     arg.remove(field_name);
                 else
-                    throw value_type_mismatch("object", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object", actual_type());
             },
             value_);
     }
@@ -1011,7 +1012,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<std::decay_t<T>, array>)
                     arg.remove(index);
                 else
-                    throw value_type_mismatch("array", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", actual_type());
             },
             value_);
     }
@@ -1026,7 +1027,7 @@ namespace rjson::inline v2
                 else if constexpr (std::is_same_v<std::decay_t<T>, null>)
                     ;
                 else
-                    throw value_type_mismatch("array or object", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array or object", actual_type());
             },
             value_);
     }
@@ -1039,7 +1040,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<std::decay_t<T>, object>)
                     return arg[field_name];
                 else
-                    throw value_type_mismatch("object", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object", actual_type());
             },
             value_);
     }
@@ -1078,7 +1079,7 @@ namespace rjson::inline v2
             if (r1.is_null())
                 r1 = object{};
             else if (!r1.is_object())
-                throw value_type_mismatch("object", actual_type(), AD_DEBUG_FILE_LINE);
+                throw value_type_mismatch("object", actual_type());
             return r1.set(args...);
         }
         else {
@@ -1111,7 +1112,7 @@ namespace rjson::inline v2
                 else if constexpr (std::is_same_v<T, object>)
                     return arg[std::to_string(index)];
                 else
-                    throw value_type_mismatch("array or object", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array or object", actual_type());
             },
             value_);
     }
@@ -1123,7 +1124,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<std::decay_t<T>, array>)
                     return arg.append(std::move(aValue));
                 else
-                    throw value_type_mismatch("array", actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", actual_type());
             },
             value_);
     }
@@ -1188,7 +1189,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<T, object> || std::is_same_v<T, array>)
                     return arg.max_index();
                 else
-                    throw value_type_mismatch("object or array", this->actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object or array", this->actual_type());
             },
             value_);
     }
@@ -1206,11 +1207,11 @@ namespace rjson::inline v2
             [&target, &source](auto&& arg) {
                 using TT = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<TT, object>)
-                    throw value_type_mismatch("array", source.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", source.actual_type());
                 else if constexpr (std::is_same_v<TT, array>)
                     arg.copy_to(std::forward<T>(target));
                 else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>)
-                    throw value_type_mismatch("object or array", source.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object or array", source.actual_type());
             },
             source.val_());
     }
@@ -1230,7 +1231,7 @@ namespace rjson::inline v2
 //                    if constexpr (std::is_same_v<Target, std::string>)
 //                        target = to_string(arg);
 //                    else if constexpr (std::is_same_v<Target, bool>)
-//                        throw value_type_mismatch("bool", source.actual_type(), AD_DEBUG_FILE_LINE);
+//                        throw value_type_mismatch("bool", source.actual_type());
 //                    else if constexpr (std::is_integral_v<Target>)
 //                        target = Target{to_integer<Target>(arg)};
 //                    else if constexpr (std::is_floating_point_v<Target>)
@@ -1240,7 +1241,7 @@ namespace rjson::inline v2
 //                    else if constexpr (std::is_constructible_v<Target, long> || std::is_constructible_v<Target, unsigned long>)
 //                        target = Target{to_integer<Target>(arg)};
 //                    else
-//                        throw value_type_mismatch("unknown", source.actual_type(), AD_DEBUG_FILE_LINE);
+//                        throw value_type_mismatch("unknown", source.actual_type());
 //                }
 //                else if constexpr (std::is_same_v<TT, std::string> && std::is_constructible_v<Target, TT>) {
 //                    target = Target{arg};
@@ -1252,14 +1253,14 @@ namespace rjson::inline v2
 //                    }
 //                    else if constexpr (std::is_same_v<Target, std::array<double, 2>> || std::is_same_v<Target, std::array<double, 3>> || std::is_same_v<Target, std::array<double, 4>>) {
 //                        if (arg.size() != target.size())
-//                            throw value_type_mismatch(fmt::format("array<double, {}>", target.size()), source.actual_type(), AD_DEBUG_FILE_LINE);
+//                            throw value_type_mismatch(fmt::format("array<double, {}>", target.size()), source.actual_type());
 //                        arg.transform_to(std::begin(target), [](const auto& val) { return val.template to<double>(); });
 //                    }
 //                    else
-//                        throw value_type_mismatch("array/vector", source.actual_type(), AD_DEBUG_FILE_LINE);
+//                        throw value_type_mismatch("array/vector", source.actual_type());
 //                }
 //                else
-//                    throw value_type_mismatch("scalar", source.actual_type(), AD_DEBUG_FILE_LINE);
+//                    throw value_type_mismatch("scalar", source.actual_type());
 //            },
 //            source.val_());
 //    }
@@ -1286,12 +1287,12 @@ namespace rjson::inline v2
                     else if constexpr (std::is_invocable_v<F, const std::string_view, const value&>)
                         arg.transform_to(std::forward<T>(target), [&transformer](const key_value_t& kv) { return transformer(kv.first, kv.second); });
                     else
-                        throw value_type_mismatch("object and corresponding transformer", source.actual_type(), AD_DEBUG_FILE_LINE);
+                        throw value_type_mismatch("object and corresponding transformer", source.actual_type());
                 }
                 else if constexpr (std::is_same_v<TT, array> && (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, const value&, size_t>))
                     arg.transform_to(std::forward<T>(target), std::forward<F>(transformer));
                 else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
-                    throw value_type_mismatch("object or array and corresponding transformer", source.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object or array and corresponding transformer", source.actual_type());
             },
             source.val_());
     }
@@ -1314,7 +1315,7 @@ namespace rjson::inline v2
                                    (std::is_invocable_v<F, const value&> || std::is_invocable_v<F, value&> || std::is_invocable_v<F, const value&, size_t> || std::is_invocable_v<F, value&, size_t>))
                     arg.for_each(func);
                 else if constexpr (!std::is_same_v<TT, null> && !std::is_same_v<TT, const_null>) // do not remove, essential!
-                    throw value_type_mismatch("object or array and corresponding callback", val.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("object or array and corresponding callback", val.actual_type());
             },
             val.val_());
     }
@@ -1327,7 +1328,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<T, array>)
                     return arg.find_if(std::forward<Func>(func));
                 else
-                    throw value_type_mismatch("array", val.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", val.actual_type());
             },
             val.val_());
     }
@@ -1340,7 +1341,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<T, array>)
                     return arg.find_if(std::forward<Func>(func));
                 else
-                    throw value_type_mismatch("array", val.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", val.actual_type());
             },
             val.val_());
     }
@@ -1353,7 +1354,7 @@ namespace rjson::inline v2
                 if constexpr (std::is_same_v<T, array>)
                     return arg.find_index_if(std::forward<Func>(func));
                 else
-                    throw value_type_mismatch("array", val.actual_type(), AD_DEBUG_FILE_LINE);
+                    throw value_type_mismatch("array", val.actual_type());
             },
             val.val_());
     }
