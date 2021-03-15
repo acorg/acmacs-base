@@ -53,6 +53,7 @@ namespace acmacs
         }
 
         void enable(std::string_view names);
+        inline void enable(log_key_t name) { return enable(name.key); }
         void enable(const std::vector<std::string_view>& names);
 
         struct indent
