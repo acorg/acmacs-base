@@ -26,10 +26,10 @@ void acmacs::log::v1::enable(std::string_view names)
     for (const auto& name : string::split(names, ","sv, string::Split::RemoveEmpty)) {
         if (name == all) {
             if (detail::enabled.empty() || detail::enabled.front() != name)
-                detail::enabled.insert(detail::enabled.begin(), name);
+                detail::enabled.insert(detail::enabled.begin(), log_key_t{name});
         }
         else if (std::find(std::begin(detail::enabled), std::end(detail::enabled), name) == std::end(detail::enabled))
-            detail::enabled.push_back(name);
+            detail::enabled.push_back(log_key_t{name});
     }
 
 } // acmacs::log::v1::enable
