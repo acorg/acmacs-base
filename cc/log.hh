@@ -120,6 +120,7 @@ template <typename Fmt, typename... Ts> struct AD_WARNING
 };
 
 template <typename Fmt, typename... Ts> AD_WARNING(Fmt, Ts&&...) -> AD_WARNING<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_WARNING(bool, Fmt, Ts&&...) -> AD_WARNING<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
@@ -136,6 +137,7 @@ template <typename Fmt, typename... Ts> struct AD_INFO
 };
 
 template <typename Fmt, typename... Ts> AD_INFO(Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_INFO(bool, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
@@ -152,6 +154,7 @@ template <typename Fmt, typename... Ts> struct AD_DEBUG
 };
 
 template <typename Fmt, typename... Ts> AD_DEBUG(Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_DEBUG(bool, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
@@ -163,7 +166,7 @@ template <typename Fmt, typename... Ts> struct AD_ASSERT
     }
 };
 
-template <typename Fmt, typename... Ts> AD_ASSERT(Fmt, Ts&&...) -> AD_ASSERT<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_ASSERT(bool, Fmt, Ts&&...) -> AD_ASSERT<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
