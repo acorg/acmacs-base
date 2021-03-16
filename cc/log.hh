@@ -66,22 +66,16 @@ namespace acmacs
 
         // ----------------------------------------------------------------------
 
-        inline void debug_print(std::string_view prefix, std::string_view message, const char* filename, int line_no, const char* function)
-        {
-            if (detail::print_debug_messages)
-                fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
-        }
-
-        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no)
+        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, const char* function)
         {
             if (do_print && detail::print_debug_messages)
-                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+                fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
         }
 
         inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
         {
             if (!(condition)) {
-                debug_print("> ASSERTION FAILED", message, filename, line_no, function);
+                debug_print(true, "> ASSERTION FAILED", message, filename, line_no, function);
                 std::abort();
             }
         }
@@ -101,7 +95,7 @@ template <typename Fmt, typename... Ts> struct AD_ERROR
 {
     AD_ERROR(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
-        acmacs::log::debug_print("> ERROR", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::debug_print(true, "> ERROR", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
     }
 };
 
@@ -113,7 +107,7 @@ template <typename Fmt, typename... Ts> struct AD_WARNING
 {
     AD_WARNING(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
-        acmacs::log::debug_print(">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::debug_print(true, ">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
     }
     AD_WARNING(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
@@ -130,7 +124,7 @@ template <typename Fmt, typename... Ts> struct AD_INFO
 {
     AD_INFO(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
-        acmacs::log::debug_print(">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::debug_print(true, ">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
     }
     AD_INFO(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
@@ -147,7 +141,7 @@ template <typename Fmt, typename... Ts> struct AD_DEBUG
 {
     AD_DEBUG(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
-        acmacs::log::debug_print(">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::debug_print(true, ">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
     }
     AD_DEBUG(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
     {
