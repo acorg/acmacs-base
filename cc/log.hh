@@ -22,6 +22,8 @@ namespace acmacs
         {
             explicit constexpr log_key_t(std::string_view kk) : key{kk} {}
             constexpr bool operator==(const log_key_t& rhs) const { return key == rhs.key; }
+            constexpr bool operator==(std::string_view rhs) const { return key == rhs; }
+            operator std::string_view() const { return key; }
             std::string_view key;
         };
 
