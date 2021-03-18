@@ -20,17 +20,16 @@ namespace acmacs
     {
         struct log_key_t
         {
-            explicit constexpr log_key_t(std::string_view kk) : key{kk} {}
-            constexpr bool operator==(const log_key_t& rhs) const { return key == rhs.key; }
+            explicit log_key_t(std::string_view kk) : key{kk} {}
+            explicit log_key_t(const char* kk) : key{kk} {}
+            bool operator==(const log_key_t& rhs) const { return key == rhs.key; }
             constexpr bool operator==(std::string_view rhs) const { return key == rhs; }
             operator std::string_view() const { return key; }
-            std::string_view key;
+            operator const std::string&() const { return key; }
+            std::string key;
         };
 
-        constexpr log_key_t all{"all"};
-        constexpr log_key_t timer{"timer"};
-        constexpr log_key_t settings{"settings"};
-        constexpr log_key_t vaccines{"vaccines"};
+        extern const log_key_t all, timer, settings, vaccines;
 
         namespace detail
         {
@@ -57,6 +56,7 @@ namespace acmacs
         void enable(std::string_view names);
         inline void enable(log_key_t name) { return enable(name.key); }
         void enable(const std::vector<std::string_view>& names);
+        std::string report_enabled();
 
         struct indent
         {
@@ -66,10 +66,12 @@ namespace acmacs
 
         // ----------------------------------------------------------------------
 
-        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, const char* function)
+        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, [[maybe_unused]] const char* function)
         {
-            if (do_print && detail::print_debug_messages)
-                fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
+            if (do_print && detail::print_debug_messages) {
+                // fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
+                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+            }
         }
 
         inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
@@ -182,9 +184,9 @@ template <typename Fmt, typename... Ts> AD_FORMAT(Fmt, Ts&&...) -> AD_FORMAT<Fmt
 
 template <typename Fmt, typename... Ts> struct AD_LOG
 {
-    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE() /*, const char* function = __builtin_FUNCTION()*/)
     {
-        acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{} {}", fmt::format(format, std::forward<Ts>(ts)...), file, line, function); });
+        acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{}", fmt::format(format, std::forward<Ts>(ts)...), file, line); });
     }
 };
 
