@@ -182,6 +182,19 @@ template <typename Fmt, typename... Ts> AD_FORMAT(Fmt, Ts&&...) -> AD_FORMAT<Fmt
 
 // ----------------------------------------------------------------------
 
+template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt format, Ts&&... ts)
+{
+    if (do_print)
+        fmt::print(stderr, format, std::forward<Ts>(ts)...);
+}
+
+template <typename Fmt, typename... Ts> inline void AD_PRINT(Fmt format, Ts&&... ts)
+{
+    AD_PRINT(true, format, std::forward<Ts>(ts)...);
+}
+
+// ----------------------------------------------------------------------
+
 template <typename Fmt, typename... Ts> struct AD_LOG
 {
     AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE() /*, const char* function = __builtin_FUNCTION()*/)
