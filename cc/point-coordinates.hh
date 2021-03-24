@@ -22,10 +22,13 @@ namespace acmacs
     class PointCoordinates
     {
       public:
+        constexpr static const double nan = std::numeric_limits<double>::quiet_NaN();
         enum zero2D { zero2D };
         enum zero3D { zero3D };
+        enum nan2D { nan2D };
+        enum nan3D { nan3D };
 
-        explicit PointCoordinates(number_of_dimensions_t number_of_dimensions, double init = std::numeric_limits<double>::quiet_NaN())
+        explicit PointCoordinates(number_of_dimensions_t number_of_dimensions, double init = nan)
         {
             switch (*number_of_dimensions) {
               case 2:
@@ -44,6 +47,8 @@ namespace acmacs
         constexpr PointCoordinates(double x, double y, double z) : data_(Store3D{x, y, z}) {}
         constexpr PointCoordinates(enum zero2D) : PointCoordinates(0.0, 0.0) {}
         constexpr PointCoordinates(enum zero3D) : PointCoordinates(0.0, 0.0, 0.0) {}
+        constexpr PointCoordinates(enum nan2D) : PointCoordinates(nan, nan) {}
+        constexpr PointCoordinates(enum nan3D) : PointCoordinates(nan, nan, nan) {}
         PointCoordinates(const double* first, const double* last) : data_(ConstRef{first, static_cast<size_t>(last - first)}) {}
         PointCoordinates(double* first, double* last) : data_(Ref{first, static_cast<size_t>(last - first)}) {}
         PointCoordinates(std::vector<double>::const_iterator first, std::vector<double>::const_iterator last) : PointCoordinates(&*first, &*last) {}
