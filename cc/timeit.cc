@@ -1,31 +1,29 @@
-#include <sstream>
-
 #include "acmacs-base/timeit.hh"
 
 // ----------------------------------------------------------------------
 
-std::string acmacs::format(acmacs::duration_t duration)
+std::string acmacs::format_duration(acmacs::duration_t duration)
 {
-    std::stringstream result;
+    fmt::memory_buffer out;
+    bool written{false};
+    const auto format_val = [&out, &written](auto val, const char* terminator, bool write_zero = false) {
+        if (val || write_zero || written) {
+            fmt::format_to(out, "{:02d}{}", val, terminator);
+            written = true;
+        }
+    };
     auto hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
     if (hours > 24) {
-        result << (hours / 24) << "d:";
+        format_val(hours / 24, "d:");
         hours %= 24;
     }
-    auto format_val = [](auto& target, auto val, char terminator) {
-                          if (val || target.tellg())
-                              target << std::setw(2) << std::setfill('0') << val << terminator;
-                      };
-    format_val(result, hours, ':');
-    const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration % std::chrono::hours(1)).count();
-    format_val(result, minutes, ':');
-    const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration % std::chrono::minutes(1)).count();
-    result << std::setw(2) << std::setfill('0') << seconds << '.';
-    const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(duration % std::chrono::seconds(1)).count();
-    result << std::setw(6) << std::setfill('0') << microseconds;
-    return result.str();
+    format_val(hours, ":");
+    format_val(std::chrono::duration_cast<std::chrono::minutes>(duration % std::chrono::hours(1)).count(), ":");
+    format_val(std::chrono::duration_cast<std::chrono::seconds>(duration % std::chrono::minutes(1)).count(), ".", true);
+    format_val(std::chrono::duration_cast<std::chrono::microseconds>(duration % std::chrono::seconds(1)).count(), "");
+    return fmt::to_string(out);
 
-} // acmacs::format
+} // acmacs::format_duration
 
 // ----------------------------------------------------------------------
 /// Local Variables:
