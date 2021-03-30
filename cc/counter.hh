@@ -99,15 +99,13 @@ namespace acmacs
       public:
         using counter_t = counter_t_t;
 
-        CounterCharSome() { std::fill(std::begin(counter_), std::end(counter_), counter_t{0}); }
-        template <typename Iter, typename F> CounterCharSome(Iter first, Iter last, F func)
-            : CounterCharSome()
+        CounterCharSome() { counter_.fill(counter_t{0}); } // std::fill(std::begin(counter_), std::end(counter_), counter_t{0});
+        template <typename Iter, typename F> CounterCharSome(Iter first, Iter last, F func) : CounterCharSome()
         {
             for (; first != last; ++first)
                 ++counter_[func(*first) - first_char];
         }
-        template <typename Iter> CounterCharSome(Iter first, Iter last)
-            : CounterCharSome()
+        template <typename Iter> CounterCharSome(Iter first, Iter last) : CounterCharSome()
         {
             for (; first != last; ++first)
                 ++counter_[static_cast<size_t>(*first) - first_char];
@@ -123,9 +121,18 @@ namespace acmacs
             std::transform(counter_.begin(), counter_.end(), other.counter_.begin(), counter_.begin(), [](counter_t e1, counter_t e2) { return e1 + e2; });
         }
 
-        bool empty() const { return std::all_of(std::begin(counter_), std::end(counter_), [](counter_t val) { return val == 0; }); }
-        size_t size() const { return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](counter_t val) { return val > counter_t{0}; })); }
-        counter_t total() const { return std::accumulate(std::begin(counter_), std::end(counter_), counter_t{0}, [](counter_t sum, counter_t val) { return sum + val; }); }
+        bool empty() const
+        {
+            return std::all_of(std::begin(counter_), std::end(counter_), [](counter_t val) { return val == 0; });
+        }
+        size_t size() const
+        {
+            return static_cast<size_t>(std::count_if(std::begin(counter_), std::end(counter_), [](counter_t val) { return val > counter_t{0}; }));
+        }
+        counter_t total() const
+        {
+            return std::accumulate(std::begin(counter_), std::end(counter_), counter_t{0}, [](counter_t sum, counter_t val) { return sum + val; });
+        }
 
         std::pair<char, counter_t> max() const
         {
@@ -187,11 +194,10 @@ namespace acmacs
 
         void format_entry(fmt::memory_buffer& out, std::string_view format, const std::pair<char, counter_t>& entry) const
         {
-                fmt::format_to(out, format, fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
-                               fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0),
-                               fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+            fmt::format_to(out, format, fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
+                           fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0), fmt::arg("first", entry.first),
+                           fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
         }
-
     };
 
     using CounterChar = CounterCharSome<0, 256, uint32_t>;
