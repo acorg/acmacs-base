@@ -29,29 +29,26 @@ constexpr report_time do_report_time(bool do_report) { return do_report ? report
 
 class Timeit
 {
- public:
-   Timeit(std::string_view msg, report_time aReport = report_time::yes, const char* file = __builtin_FILE(), int line = __builtin_LINE())
-       : message_{msg}, report_(aReport), start_{acmacs::timestamp()}, file_{file}, line_{line}
-   {
-   }
+  public:
+    Timeit(std::string_view msg, report_time aReport = report_time::yes, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+        : message_{msg}, report_(aReport), start_{acmacs::timestamp()}, sl_{sl}
+    {
+    }
     ~Timeit() { report(); }
 
     void report() const
-        {
-            if (report_ == report_time::yes) {
-                report_ = report_time::no;
-                AD_PRINT(">>>> {}: {} @@ {}:{}\n", message_, acmacs::format_duration(acmacs::elapsed(start_)), file_, line_);
-            }
-        }
+    {
+        acmacs::log::print(sl_, report_ == report_time::yes, acmacs::log::prefix::info, "{}: {}", message_, acmacs::format_duration(acmacs::elapsed(start_)));
+        report_ = report_time::no;
+    }
 
     void message_append(const std::string& to_append) { message_ += to_append; }
 
- private:
+  private:
     std::string message_;
     mutable report_time report_;
     acmacs::timestamp_t start_;
-    const char* const file_;
-    const int line_;
+    const acmacs::log::source_location sl_;
 };
 
 // ----------------------------------------------------------------------

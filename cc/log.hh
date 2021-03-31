@@ -18,6 +18,14 @@ namespace acmacs
 
     namespace log::inline v1
     {
+        // https://clang.llvm.org/docs/LanguageExtensions.html#source-location-builtins
+        struct source_location
+        {
+            const char* file{__builtin_FILE()};
+            int line{__builtin_LINE()};
+            const char* function{__builtin_FUNCTION()};
+        };
+
         struct log_key_t
         {
             explicit log_key_t(std::string_view kk) : key{kk} {}
@@ -43,8 +51,7 @@ namespace acmacs
 
         inline bool is_enabled(log_key_t section)
         {
-            return !detail::enabled.empty() &&
-                   (detail::enabled.front() == all || std::find(std::begin(detail::enabled), std::end(detail::enabled), section) != std::end(detail::enabled));
+            return !detail::enabled.empty() && (detail::enabled.front() == all || std::find(std::begin(detail::enabled), std::end(detail::enabled), section) != std::end(detail::enabled));
         }
 
         template <typename MesssageGetter> void message(log_key_t section, MesssageGetter get_message)
@@ -66,38 +73,103 @@ namespace acmacs
 
         // ----------------------------------------------------------------------
 
-        inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, [[maybe_unused]] const char* function)
+        namespace prefix
         {
-            if (do_print && detail::print_debug_messages) {
-                // fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
-                fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+            constexpr const std::string_view error{"> ERROR"};
+            constexpr const std::string_view warning{">> WARNING"};
+            constexpr const std::string_view info{">>>"};
+            constexpr const std::string_view debug{">>>"};
+
+        } // namespace prefix
+
+        // ----------------------------------------------------------------------
+
+        template <typename Fmt, typename... Ts> inline std::string format(const source_location& sl, Fmt format, Ts&&... ts)
+        {
+            try {
+                return fmt::format(format, std::forward<Ts>(ts)...);
+            }
+            catch (fmt::format_error& err) {
+                fmt::print(stderr, "> fmt::format_error ({}) format: \"{}\" {}", err, format, sl);
+                throw;
             }
         }
 
-        inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
+        template <typename Fmt, typename... Ts> inline void print(const source_location& sl, bool do_print, std::string_view prefix, Fmt format, Ts&&... ts)
         {
-            if (!(condition)) {
-                debug_print(true, "> ASSERTION FAILED", message, filename, line_no, function);
+            if (do_print && detail::print_debug_messages)
+                fmt::print(stderr, "{} {} {}\n", prefix, acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl);
+        }
+
+        template <typename Fmt, typename... Ts> inline void ad_assert(bool condition, const source_location& sl, Fmt format, Ts&&... ts)
+        {
+            if (!condition) {
+                print(sl, true, "> ASSERTION FAILED", format, std::forward<Ts>(ts)...);
                 std::abort();
             }
         }
 
+        // ----------------------------------------------------------------------
+
         inline void do_not_print_debug_messages() { detail::print_debug_messages = false; }
+
+        // ----------------------------------------------------------------------
+
+        // inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, [[maybe_unused]] const char* function)
+        // {
+        //     if (do_print && detail::print_debug_messages) {
+        //         // fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
+        //         fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
+        //     }
+        // }
+
+        // inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const source_location& sl)
+        // {
+        //     if (do_print && detail::print_debug_messages)
+        //         fmt::print(stderr, "{} {} {}\n", prefix, message, sl);
+        // }
+
+        // inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
+        // {
+        //     if (!(condition)) {
+        //         debug_print(true, "> ASSERTION FAILED", message, filename, line_no, function);
+        //         std::abort();
+        //     }
+        // }
+
+        // template <typename Fmt, typename... Ts> inline std::string try_format(const source_location& sl, Fmt format, Ts&&... ts)
+        // {
+        //     try {
+        //         return fmt::format(format, std::forward<Ts>(ts)...);
+        //     }
+        //     catch (fmt::format_error& err) {
+        //         acmacs::log::debug_print(true, ">", fmt::format("fmt::format_error ({}) format: \"{}\"", err, format), sl);
+        //         throw;
+        //     }
+        // }
 
     } // namespace log::inline v1
 
 } // namespace acmacs
 
+// ----------------------------------------------------------------------
+
+template <> struct fmt::formatter<acmacs::log::source_location> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::log::source_location& sl, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), "@@ {}:{}", sl.file, sl.line);
+    }
+};
+
 // ======================================================================
 
 // https://www.cppstories.com/2021/non-terminal-variadic-args/
-// https://clang.llvm.org/docs/LanguageExtensions.html#source-location-builtins
 
 template <typename Fmt, typename... Ts> struct AD_ERROR
 {
-    AD_ERROR(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_ERROR(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(true, "> ERROR", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, true, acmacs::log::prefix::error, format, std::forward<Ts>(ts)...);
     }
 };
 
@@ -107,13 +179,13 @@ template <typename Fmt, typename... Ts> AD_ERROR(Fmt, Ts&&...) -> AD_ERROR<Fmt, 
 
 template <typename Fmt, typename... Ts> struct AD_WARNING
 {
-    AD_WARNING(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_WARNING(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(true, ">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, true, acmacs::log::prefix::warning, format, std::forward<Ts>(ts)...);
     }
-    AD_WARNING(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_WARNING(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(do_print, ">> WARNING", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, do_print, acmacs::log::prefix::warning, format, std::forward<Ts>(ts)...);
     }
 };
 
@@ -124,13 +196,13 @@ template <typename Fmt, typename... Ts> AD_WARNING(bool, Fmt, Ts&&...) -> AD_WAR
 
 template <typename Fmt, typename... Ts> struct AD_INFO
 {
-    AD_INFO(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_INFO(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(true, ">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, true, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
-    AD_INFO(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_INFO(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(do_print, ">>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, do_print, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
 };
 
@@ -141,13 +213,13 @@ template <typename Fmt, typename... Ts> AD_INFO(bool, Fmt, Ts&&...) -> AD_INFO<F
 
 template <typename Fmt, typename... Ts> struct AD_DEBUG
 {
-    AD_DEBUG(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_DEBUG(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(true, ">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, true, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
-    AD_DEBUG(bool do_print, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_DEBUG(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::debug_print(do_print, ">>>>", fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::print(sl, do_print, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
 };
 
@@ -158,9 +230,9 @@ template <typename Fmt, typename... Ts> AD_DEBUG(bool, Fmt, Ts&&...) -> AD_DEBUG
 
 template <typename Fmt, typename... Ts> struct AD_ASSERT
 {
-    AD_ASSERT(bool condition, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
+    AD_ASSERT(bool condition, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::ad_assert(condition, fmt::format(format, std::forward<Ts>(ts)...), file, line, function);
+        acmacs::log::ad_assert(condition, sl, format, std::forward<Ts>(ts)...);
     }
 };
 
@@ -170,8 +242,8 @@ template <typename Fmt, typename... Ts> AD_ASSERT(bool, Fmt, Ts&&...) -> AD_ASSE
 
 template <typename Fmt, typename... Ts> struct AD_FORMAT
 {
-    AD_FORMAT(Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE(), const char* function = __builtin_FUNCTION())
-        : text{fmt::format("{} @@ {}:{} {}", fmt::format(format, std::forward<Ts>(ts)...), file, line, function)}
+    AD_FORMAT(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+        : text{fmt::format("{} {}", acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl)}
     {
     }
     operator std::string() const { return text; }
@@ -190,16 +262,16 @@ template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt 
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(Fmt format, Ts&&... ts)
 {
-    AD_PRINT(true, format, std::forward<Ts>(ts)...);
+    fmt::print(stderr, format, std::forward<Ts>(ts)...);
 }
 
 // ----------------------------------------------------------------------
 
 template <typename Fmt, typename... Ts> struct AD_LOG
 {
-    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const char* file = __builtin_FILE(), int line = __builtin_LINE() /*, const char* function = __builtin_FUNCTION()*/)
+    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
-        acmacs::log::message(section, [&]() { return fmt::format("{} @@ {}:{}", fmt::format(format, std::forward<Ts>(ts)...), file, line); });
+        acmacs::log::message(section, [&]() { return acmacs::log::format(sl, format, std::forward<Ts>(ts)...); });
     }
 };
 

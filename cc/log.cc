@@ -13,7 +13,7 @@ bool acmacs::log::v1::detail::print_debug_messages{true}; // to disable by acmac
 #pragma GCC diagnostic ignored "-Wglobal-constructors"
 #endif
 
-namespace acmacs::log::v1
+namespace acmacs::log::inline v1
 {
     detail::enabled_t detail::enabled{};
 
