@@ -78,7 +78,7 @@ namespace acmacs
             constexpr const std::string_view error{"> ERROR"};
             constexpr const std::string_view warning{">> WARNING"};
             constexpr const std::string_view info{">>>"};
-            constexpr const std::string_view debug{">>>"};
+            constexpr const std::string_view debug{">>>>"};
 
         } // namespace prefix
 
@@ -221,10 +221,15 @@ template <typename Fmt, typename... Ts> struct AD_DEBUG
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
+    AD_DEBUG(acmacs::debug dbg, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    {
+        acmacs::log::print(sl, dbg == acmacs::debug::yes, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
+    }
 };
 
 template <typename Fmt, typename... Ts> AD_DEBUG(Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 template <typename Fmt, typename... Ts> AD_DEBUG(bool, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_DEBUG(acmacs::debug, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
@@ -258,6 +263,11 @@ template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt 
 {
     if (do_print)
         fmt::print(stderr, format, std::forward<Ts>(ts)...);
+}
+
+template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::debug dbg, Fmt format, Ts&&... ts)
+{
+    AD_PRINT(dbg == acmacs::debug::yes, format, std::forward<Ts>(ts)...);
 }
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(Fmt format, Ts&&... ts)
