@@ -99,7 +99,8 @@ namespace acmacs
       public:
         using counter_t = counter_t_t;
 
-        CounterCharSome() { counter_.fill(counter_t{0}); } // std::fill(std::begin(counter_), std::end(counter_), counter_t{0});
+        CounterCharSome() { counter_.fill(counter_t{0}); }
+
         template <typename Iter, typename F> CounterCharSome(Iter first, Iter last, F func) : CounterCharSome()
         {
             for (; first != last; ++first)
@@ -202,11 +203,12 @@ namespace acmacs
 
     using CounterChar = CounterCharSome<0, 256, uint32_t>;
 
-    template <size_t first_char, size_t last_char, typename counter_t_t> CounterCharSome<first_char, last_char, counter_t_t> merge_CounterCharSome(const CounterCharSome<first_char, last_char, counter_t_t>& lhs, const CounterCharSome<first_char, last_char, counter_t_t>& rhs)
+    template <size_t first_char, size_t last_char, typename counter_t_t>
+    CounterCharSome<first_char, last_char, counter_t_t> merge_CounterCharSome(const CounterCharSome<first_char, last_char, counter_t_t>& lhs,
+                                                                              const CounterCharSome<first_char, last_char, counter_t_t>& rhs)
     {
         CounterCharSome<first_char, last_char, counter_t_t> result;
-        for (size_t ind{0}; ind < result.counter().size(); ++ind)
-            result.counter()[ind] = lhs.counter()[ind] + rhs.counter()[ind];
+        std::transform(std::begin(lhs.counter()), std::end(lhs.counter()), std::begin(rhs.counter()), std::begin(result.counter()), [](auto c1, auto c2) { return c1 + c2; });
         return result;
     }
 
