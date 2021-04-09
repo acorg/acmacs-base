@@ -257,6 +257,14 @@ template <typename Fmt, typename... Ts> struct AD_FORMAT
 
 template <typename Fmt, typename... Ts> AD_FORMAT(Fmt, Ts&&...) -> AD_FORMAT<Fmt, Ts...>;
 
+template <typename Fmt, typename... Ts> struct fmt::formatter<AD_FORMAT<Fmt, Ts...>> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(const AD_FORMAT<Fmt, Ts...>& value, FormatCtx& ctx)
+    {
+        return format_to(ctx.out(), "{}", value.text);
+    }
+};
+
+
 // ----------------------------------------------------------------------
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt format, Ts&&... ts)
