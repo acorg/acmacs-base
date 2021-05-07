@@ -52,6 +52,34 @@ class Timeit
 };
 
 // ----------------------------------------------------------------------
+
+template <typename Func> auto timeit(std::string_view msg, Func&& func, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    requires std::is_invocable_v<Func>
+{
+    const auto start{acmacs::timestamp()};
+    const auto print = [&sl, msg, start]() { acmacs::log::print(sl, true, acmacs::log::prefix::info, "{}: {}", msg, acmacs::format_duration(acmacs::elapsed(start))); };
+
+    if constexpr (std::is_same_v<std::invoke_result_t<Func>, void>) {
+        func();
+        print();
+    }
+    else {
+        const std::invoke_result_t<Func> result = func();
+        print();
+        return result;
+    }
+}
+
+// ----------------------------------------------------------------------
+
+template <typename Func> auto timeit(std::string_view pre, std::string_view after, Func&& func, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    requires std::is_invocable_v<Func>
+{
+    acmacs::log::print(sl, true, acmacs::log::prefix::info, "{}", pre);
+    return timeit(after, std::forward<Func>(func), sl);
+}
+
+// ----------------------------------------------------------------------
 /// Local Variables:
 /// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
 /// End:
