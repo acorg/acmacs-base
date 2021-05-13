@@ -159,6 +159,14 @@ namespace acmacs
                 callback(en->second);
         }
 
+        template <typename K, typename CallbackThen, typename CallbackElse> void find_then_else(const K& key, CallbackThen callback_then, CallbackElse callback_else) noexcept
+        {
+            if (const auto& en = find(key); en != std::end(data_))
+                callback_then(en->second);
+            else
+                callback_else(*this);
+        }
+
         template <typename K> Value& get(const K& key)
         {
             if (const auto found = find(key); found != std::end(data_))
