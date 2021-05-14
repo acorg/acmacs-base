@@ -5,6 +5,7 @@
 
 #include "acmacs-base/size-scale.hh"
 #include "acmacs-base/transformation.hh"
+#include "acmacs-base/log.hh"
 
 // ----------------------------------------------------------------------
 
@@ -25,19 +26,17 @@ namespace acmacs
         double width = 0, height = 0;
 
         Size() = default;
-        Size(double aWidth, double aHeight) : width(aWidth), height(aHeight)
+        Size(double aWidth, double aHeight, const log::source_location& sl = {}) : width(aWidth), height(aHeight)
         {
-            assert(width >= 0);
-            assert(height >= 0);
+            log::ad_assert(width >= 0 && height >= 0, sl, "Size{{{}, {}}} with negative width or/and height", width, height);
         }
         Size(const PointCoordinates& loc) : Size(loc.x(), loc.y()) {}
         Size(const PointCoordinates& a, const PointCoordinates& b) : Size(std::abs(a.x() - b.x()), std::abs(a.y() - b.y())) {}
-        void set(double aWidth, double aHeight)
+        void set(double aWidth, double aHeight, const log::source_location& sl = {})
         {
             width = aWidth;
             height = aHeight;
-            assert(width >= 0);
-            assert(height >= 0);
+            log::ad_assert(width >= 0 && height >= 0, sl, "Size{{{}, {}}} with negative width or/and height", width, height);
         }
         constexpr double aspect() const noexcept { return width / height; }
         constexpr bool empty() const noexcept { return float_zero(width) && float_zero(height); }
