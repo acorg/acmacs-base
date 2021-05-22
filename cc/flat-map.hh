@@ -52,6 +52,8 @@ namespace acmacs
                 }
             }
 
+            virtual void check() const {}
+
           protected:
             constexpr auto& data() noexcept { return data_; }
             // constexpr bool sorted() const noexcept { return sorted_; }
@@ -61,8 +63,6 @@ namespace acmacs
                 sort();
                 return std::lower_bound(std::begin(data_), std::end(data_), key, [](const auto& e1, const auto& k2) { return e1.first < k2; });
             }
-
-            virtual void check() const {}
 
           private:
             mutable std::vector<entry_type> data_;
@@ -110,7 +110,6 @@ namespace acmacs
                 return nullptr;
         }
 
-      protected:
         void check() const override
         {
             this->sort();
