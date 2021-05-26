@@ -204,10 +204,20 @@ template <typename Fmt, typename... Ts> struct AD_INFO
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
+    AD_INFO(acmacs::verbose do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    {
+        acmacs::log::print(sl, do_print == acmacs::verbose::yes, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
+    }
+    AD_INFO(acmacs::debug do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    {
+        acmacs::log::print(sl, do_print == acmacs::debug::yes, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
+    }
 };
 
 template <typename Fmt, typename... Ts> AD_INFO(Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
 template <typename Fmt, typename... Ts> AD_INFO(bool, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_INFO(acmacs::verbose, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_INFO(acmacs::debug, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
 
@@ -221,6 +231,10 @@ template <typename Fmt, typename... Ts> struct AD_DEBUG
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
+    AD_DEBUG(acmacs::verbose dbg, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    {
+        acmacs::log::print(sl, dbg == acmacs::verbose::yes, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
+    }
     AD_DEBUG(acmacs::debug dbg, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, dbg == acmacs::debug::yes, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
@@ -229,6 +243,7 @@ template <typename Fmt, typename... Ts> struct AD_DEBUG
 
 template <typename Fmt, typename... Ts> AD_DEBUG(Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 template <typename Fmt, typename... Ts> AD_DEBUG(bool, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
+template <typename Fmt, typename... Ts> AD_DEBUG(acmacs::verbose, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 template <typename Fmt, typename... Ts> AD_DEBUG(acmacs::debug, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
 
 // ----------------------------------------------------------------------
