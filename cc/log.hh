@@ -26,6 +26,8 @@ namespace acmacs
             const char* function{__builtin_FUNCTION()};
         };
 
+        constexpr const source_location no_source_location { .file = nullptr, .line = 0, .function = nullptr };
+
         struct log_key_t
         {
             explicit log_key_t(std::string_view kk) : key{kk} {}
@@ -79,6 +81,7 @@ namespace acmacs
             constexpr const std::string_view warning{">> WARNING"};
             constexpr const std::string_view info{">>>"};
             constexpr const std::string_view debug{">>>>"};
+            constexpr const std::string_view none{};
 
         } // namespace prefix
 
@@ -157,7 +160,10 @@ namespace acmacs
 template <> struct fmt::formatter<acmacs::log::source_location> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const acmacs::log::source_location& sl, FormatCtx& ctx)
     {
-        return format_to(ctx.out(), "@@ {}:{}", sl.file, sl.line);
+        if (sl.file)
+            return format_to(ctx.out(), "@@ {}:{}", sl.file, sl.line);
+        else
+            return ctx.out();
     }
 };
 
@@ -284,18 +290,22 @@ template <typename Fmt, typename... Ts> struct fmt::formatter<AD_FORMAT<Fmt, Ts.
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt format, Ts&&... ts)
 {
-    if (do_print)
-        fmt::print(stderr, format, std::forward<Ts>(ts)...);
+    acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
+}
+
+template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::verbose verb, Fmt format, Ts&&... ts)
+{
+    acmacs::log::print(acmacs::log::no_source_location, verb == acmacs::verbose::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::debug dbg, Fmt format, Ts&&... ts)
 {
-    AD_PRINT(dbg == acmacs::debug::yes, format, std::forward<Ts>(ts)...);
+    acmacs::log::print(acmacs::log::no_source_location, dbg == acmacs::debug::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(Fmt format, Ts&&... ts)
 {
-    fmt::print(stderr, format, std::forward<Ts>(ts)...);
+    acmacs::log::print(acmacs::log::no_source_location, true, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
 // ----------------------------------------------------------------------
