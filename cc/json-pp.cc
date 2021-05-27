@@ -13,7 +13,7 @@ int main(int argc, const char* const* argv)
             parsing_timer.report();
 
             Timeit printing_timer("rjson::v3 printing: ");
-            fmt::print("{}\n", data);
+            fmt::print("{:2}\n", data);
         }
         catch (std::exception& err) {
             fmt::print(stderr, "> ERROR {}\n", err);
