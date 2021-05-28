@@ -77,10 +77,10 @@ namespace acmacs
 
         namespace prefix
         {
-            constexpr const std::string_view error{"> ERROR"};
-            constexpr const std::string_view warning{">> WARNING"};
-            constexpr const std::string_view info{">>>"};
-            constexpr const std::string_view debug{">>>>"};
+            constexpr const std::string_view error{"> ERROR "};
+            constexpr const std::string_view warning{">> WARNING "};
+            constexpr const std::string_view info{">>> "};
+            constexpr const std::string_view debug{">>>> "};
             constexpr const std::string_view none{};
 
         } // namespace prefix
@@ -93,7 +93,7 @@ namespace acmacs
                 return fmt::format(format, std::forward<Ts>(ts)...);
             }
             catch (fmt::format_error& err) {
-                fmt::print(stderr, "> fmt::format_error ({}) format: \"{}\" {}", err, format, sl);
+                fmt::print(stderr, "> fmt::format_error ({}) format: \"{}\"{}", err, format, sl);
                 throw;
             }
         }
@@ -101,7 +101,7 @@ namespace acmacs
         template <typename Fmt, typename... Ts> inline void print(const source_location& sl, bool do_print, std::string_view prefix, Fmt format, Ts&&... ts)
         {
             if (do_print && detail::print_debug_messages)
-                fmt::print(stderr, "{} {} {}\n", prefix, acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl);
+                fmt::print(stderr, "{}{}{}\n", prefix, acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl);
         }
 
         template <typename Fmt, typename... Ts> inline void ad_assert(bool condition, const source_location& sl, Fmt format, Ts&&... ts)
@@ -161,7 +161,7 @@ template <> struct fmt::formatter<acmacs::log::source_location> : fmt::formatter
     template <typename FormatCtx> auto format(const acmacs::log::source_location& sl, FormatCtx& ctx)
     {
         if (sl.file)
-            return format_to(ctx.out(), "@@ {}:{}", sl.file, sl.line);
+            return format_to(ctx.out(), " @@ {}:{}", sl.file, sl.line);
         else
             return ctx.out();
     }
