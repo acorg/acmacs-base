@@ -104,6 +104,12 @@ namespace acmacs
                 fmt::print(stderr, "{}{}{}\n", prefix, acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl);
         }
 
+        template <typename MesssageGetter> requires std::is_invocable_v<MesssageGetter> inline void print(const source_location& sl, bool do_print, std::string_view prefix, MesssageGetter get_message)
+        {
+            if (do_print && detail::print_debug_messages)
+                fmt::print(stderr, "{}{}{}\n", prefix, get_message(), sl);
+        }
+
         template <typename Fmt, typename... Ts> inline void ad_assert(bool condition, const source_location& sl, Fmt format, Ts&&... ts)
         {
             if (!condition) {
@@ -291,6 +297,11 @@ template <typename Fmt, typename... Ts> struct fmt::formatter<AD_FORMAT<Fmt, Ts.
 template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
+}
+
+template <typename MesssageGetter> requires std::is_invocable_v<MesssageGetter> inline void AD_PRINT_L(bool do_print, MesssageGetter get_message)
+{
+    acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, get_message);
 }
 
 template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::verbose verb, Fmt format, Ts&&... ts)
