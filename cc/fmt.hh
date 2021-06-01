@@ -155,6 +155,10 @@ namespace fmt
         }
     }
 
+    // substitute_to args:
+    // std::pair{"name", value}                                     -- {name}, {name:3d}
+    // std::pair{"name", []() -> decltype(value) { return value; }} -- {name}, {name:3d}
+    // std::tuple{"name1", val1, "name2", val2}                     -- {name1:{name2}d}
     template <typename... Args> void substitute_to(memory_buffer& output, std::string_view pattern, if_no_substitution_found insf, Args&&... args)
     {
         const auto format_matched = [&output](std::string_view pattern_arg, const auto& key_value) {
