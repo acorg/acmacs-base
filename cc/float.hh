@@ -9,9 +9,17 @@
 
 // ----------------------------------------------------------------------
 
+// #include <concept>
+namespace std
+{
+    template <class T> concept floating_point = std::is_floating_point_v<T>;
+}
+
+// ----------------------------------------------------------------------
+
+
 // http://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
-template<typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-constexpr inline float_equal(T x, T y, int ulp=1)
+template <std::floating_point T> constexpr inline bool float_equal(T x, T y, int ulp=1)
 {
     // the machine epsilon has to be scaled to the magnitude of the values used
     // and multiplied by the desired precision in ULPs (units in the last place)
@@ -22,25 +30,30 @@ constexpr inline float_equal(T x, T y, int ulp=1)
 
 // ----------------------------------------------------------------------
 
-constexpr inline bool float_equal_or_both_nan(double x, double y, int ulp=1)
+template <std::floating_point T> constexpr inline bool float_equal_or_both_nan(T x, T y, int ulp=1)
 {
     return float_equal(x, y, ulp) || (std::isnan(x) && std::isnan(y));
 }
 
 // ----------------------------------------------------------------------
 
-template <typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-constexpr inline float_zero(T x, int ulp=1)
+template <std::floating_point T> constexpr inline bool float_zero(T x, int ulp=1)
 {
     return float_equal(x, T(0), ulp);
 }
 
 // ----------------------------------------------------------------------
 
-template <typename T> typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-constexpr inline float_max(T x, int ulp=1)
+template <std::floating_point T> constexpr inline bool float_max(T x, int ulp=1)
 {
     return float_equal(x, std::numeric_limits<T>::max(), ulp);
+}
+
+// ----------------------------------------------------------------------
+
+template <std::floating_point T> constexpr inline T square(T v)
+{
+    return v * v;
 }
 
 // ----------------------------------------------------------------------

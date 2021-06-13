@@ -1,7 +1,8 @@
 #pragma once
 
 #include <numeric>
-#include <cmath>
+
+#include "acmacs-base/float.hh"
 
 // ----------------------------------------------------------------------
 
@@ -9,8 +10,7 @@ namespace acmacs::vector_math
 {
     template <typename Iterator> inline double distance(Iterator first_1, Iterator last_1, Iterator first_2)
     {
-        constexpr auto square = [](double v) { return v * v; };
-        return std::sqrt(std::accumulate(first_1, last_1, 0.0, [first_2,square](double dist, double to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
+        return std::sqrt(std::accumulate(first_1, last_1, 0.0, [first_2](double dist, double to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
 
         // double dist = 0;
         // // #pragma clang loop vectorize(enable) interleave(enable)
@@ -23,7 +23,6 @@ namespace acmacs::vector_math
     // {
     //     static inline Float distance(Iterator first_1, Iterator first_2)
     //         {
-    //             auto square = [](Float v) { return v * v; };
     //             return std::sqrt(std::accumulate(first_1, first_1 + NDim, Float{0}, [first_2,square](Float dist, Float to_add_1) mutable { return dist + square(to_add_1 - *first_2++); }));
     //         }
     // };
@@ -48,7 +47,6 @@ namespace acmacs::vector_math
     // {
     //     static inline Float distance(Iterator first_1, Iterator first_2)
     //         {
-    //             auto square = [](Float v) { return v * v; };
     //             Float sum{0};
     //             for (size_t i = 0; i < 2; ++i, ++first_1, ++first_2)
     //                 sum += square(*first_1 - *first_2);
