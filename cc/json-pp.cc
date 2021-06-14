@@ -8,15 +8,15 @@ int main(int argc, const char* const* argv)
     int exit_code = 0;
     if (argc == 2) {
         try {
-            Timeit parsing_timer("rjson::v3 parsing: ");
+            // Timeit parsing_timer("rjson::v3 parsing: ");
             const auto data = rjson::v3::parse_file(argv[1]);
-            parsing_timer.report();
+            // parsing_timer.report();
 
-            Timeit printing_timer("rjson::v3 printing: ");
+            // Timeit printing_timer("rjson::v3 printing: ");
             fmt::print("{:2}\n", data);
         }
         catch (std::exception& err) {
-            fmt::print(stderr, "> ERROR {}\n", err);
+            AD_ERROR("{}", err);
             exit_code = 2;
         }
     }
