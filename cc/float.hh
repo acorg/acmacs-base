@@ -9,11 +9,13 @@
 
 // ----------------------------------------------------------------------
 
+#if defined(__clang_major__) && __clang_major__ < 13
 // #include <concept>
 namespace std
 {
     template <class T> concept floating_point = std::is_floating_point_v<T>;
 }
+#endif
 
 // ----------------------------------------------------------------------
 

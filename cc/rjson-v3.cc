@@ -659,13 +659,13 @@ inline to_json::json format_to_json(const rjson::v3::value& val) noexcept
             to_json::object obj;
             for (const auto& [obj_key, obj_val] : arg)
                 obj << to_json::key_val(obj_key, format_to_json(obj_val));
-            return std::move(obj);
+            return obj;
         }
         else if constexpr (std::is_same_v<std::decay_t<Content>, rjson::v3::detail::array>) {
             to_json::array arr;
             for (const auto& arr_val : arg)
                 arr << format_to_json(arr_val);
-            return std::move(arr);
+            return arr;
         }
         else if constexpr (std::is_same_v<std::decay_t<Content>, rjson::v3::detail::string>) {
             return to_json::val(arg._content());
