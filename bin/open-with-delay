@@ -63,7 +63,10 @@ if [[ -n ${EMACS} && ( -n "${INSIDE_EMACS}" || "${XPC_SERVICE_NAME}" == *Emacs* 
     if [[ ${AFTER} -gt 0 ]]; then
         sleep ${AFTER}
     fi
-    /usr/bin/osascript -e "tell application \"System Events\" to set frontmost of the first process whose unix id is \"$(/usr/bin/pgrep -i emacs)\" to true"
+    if [[ -z ${EMACS_PID} ]]; then
+        EMACS_PID=$(/usr/bin/pgrep -f Emacs.app)
+    fi
+    /usr/bin/osascript -e "tell application \"System Events\" to set frontmost of the first process whose unix id is \"${EMACS_PID}\" to true"
     # /usr/bin/open -a /Applications/Emacs.app
 fi
 
