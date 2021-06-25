@@ -61,7 +61,7 @@ void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
         throw error{AD_FORMAT("cannot apply command with an empty name")};
     if (name.front() != '?') { // not commented out
         const auto substituted_name = substitute(name);
-        if (std::find(std::begin(applying_), std::end(applying_), substituted_name) != std::end(applying_))
+        if (substituted_name != "if" && std::find(std::begin(applying_), std::end(applying_), substituted_name) != std::end(applying_))
             throw error{AD_FORMAT("[settings] attempt of recursively applying \"{}\" (not substituted: \"{}\")   applying stack: {}", substituted_name, name, applying_)};
         ApplyingPusher _pusher(applying_, substituted_name);
         AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv : ""sv, substituted_name, name);
