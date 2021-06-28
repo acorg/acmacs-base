@@ -283,6 +283,10 @@ namespace acmacs
 
         // set like
         bool exists(const T& val) const { return std::find(begin(), end(), val) != end(); }
+        bool exists_any_of(const std::vector<T>& vals) const
+        {
+            return std::any_of(std::begin(vals), std::end(vals), [this](const T& val) { return exists(val); });
+        }
         void insert_if_not_present(const T& val)
         {
             if (!exists(val))
