@@ -63,6 +63,7 @@ ACMACS_BASE_SOURCES =  \
   html.cc              \
   gzip.cc              \
   xz.cc                \
+  coredump.cc          \
   log.cc
 
 # JSON_PP_SOURCES = rjson.cc json-pp.cc
