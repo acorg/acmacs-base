@@ -87,10 +87,10 @@ namespace acmacs
 
         // ----------------------------------------------------------------------
 
-        template <typename Fmt, typename... Ts> inline std::string format(const source_location& sl, Fmt format, Ts&&... ts)
+        template <typename... Ts> inline std::string format(const source_location& sl, fmt::format_string<Ts...> format, Ts&&... ts)
         {
             try {
-                return fmt::format(fmt::runtime(format), std::forward<Ts>(ts)...);
+                return fmt::format(format, std::forward<Ts>(ts)...);
             }
             catch (fmt::format_error& err) {
                 fmt::print(stderr, "> fmt::format_error ({}) format: \"{}\"{}", err, format, sl);
@@ -98,7 +98,7 @@ namespace acmacs
             }
         }
 
-        template <typename Fmt, typename... Ts> inline void print(const source_location& sl, bool do_print, std::string_view prefix, Fmt format, Ts&&... ts)
+        template <typename... Ts> inline void print(const source_location& sl, bool do_print, std::string_view prefix, fmt::format_string<Ts...> format, Ts&&... ts)
         {
             if (do_print && detail::print_debug_messages)
                 fmt::print(stderr, "{}{}{}\n", prefix, acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl);
@@ -110,7 +110,7 @@ namespace acmacs
                 fmt::print(stderr, "{}{}{}\n", prefix, get_message(), sl);
         }
 
-        template <typename Fmt, typename... Ts> inline void ad_assert(bool condition, const source_location& sl, Fmt format, Ts&&... ts)
+        template <typename... Ts> inline void ad_assert(bool condition, const source_location& sl, fmt::format_string<Ts...> format, Ts&&... ts)
         {
             if (!condition) {
                 print(sl, true, "> ASSERTION FAILED", format, std::forward<Ts>(ts)...);
@@ -121,41 +121,6 @@ namespace acmacs
         // ----------------------------------------------------------------------
 
         inline void do_not_print_debug_messages() { detail::print_debug_messages = false; }
-
-        // ----------------------------------------------------------------------
-
-        // inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const char* filename, int line_no, [[maybe_unused]] const char* function)
-        // {
-        //     if (do_print && detail::print_debug_messages) {
-        //         // fmt::print(stderr, "{} {} @@ {}:{} {}\n", prefix, message, filename, line_no, function);
-        //         fmt::print(stderr, "{} {} @@ {}:{}\n", prefix, message, filename, line_no);
-        //     }
-        // }
-
-        // inline void debug_print(bool do_print, std::string_view prefix, std::string_view message, const source_location& sl)
-        // {
-        //     if (do_print && detail::print_debug_messages)
-        //         fmt::print(stderr, "{} {} {}\n", prefix, message, sl);
-        // }
-
-        // inline void ad_assert(bool condition, std::string_view message, const char* filename, int line_no, const char* function)
-        // {
-        //     if (!(condition)) {
-        //         debug_print(true, "> ASSERTION FAILED", message, filename, line_no, function);
-        //         std::abort();
-        //     }
-        // }
-
-        // template <typename Fmt, typename... Ts> inline std::string try_format(const source_location& sl, Fmt format, Ts&&... ts)
-        // {
-        //     try {
-        //         return fmt::format(format, std::forward<Ts>(ts)...);
-        //     }
-        //     catch (fmt::format_error& err) {
-        //         acmacs::log::debug_print(true, ">", fmt::format("fmt::format_error ({}) format: \"{}\"", err, format), sl);
-        //         throw;
-        //     }
-        // }
 
     } // namespace log::inline v1
 
@@ -177,104 +142,107 @@ template <> struct fmt::formatter<acmacs::log::source_location> : fmt::formatter
 
 // https://www.cppstories.com/2021/non-terminal-variadic-args/
 
-template <typename Fmt, typename... Ts> struct AD_ERROR
+template <typename... Ts> struct AD_ERROR
 {
-    AD_ERROR(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_ERROR(fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, true, acmacs::log::prefix::error, format, std::forward<Ts>(ts)...);
     }
 };
 
-template <typename Fmt, typename... Ts> AD_ERROR(Fmt, Ts&&...) -> AD_ERROR<Fmt, Ts...>;
+template <typename... Ts> AD_ERROR(fmt::format_string<Ts...>, Ts&&...) -> AD_ERROR<Ts...>;
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_WARNING
+template <typename... Ts> struct AD_WARNING
 {
-    AD_WARNING(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_WARNING(fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, true, acmacs::log::prefix::warning, format, std::forward<Ts>(ts)...);
     }
-    AD_WARNING(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_WARNING(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::warning, format, std::forward<Ts>(ts)...);
     }
 };
 
-template <typename Fmt, typename... Ts> AD_WARNING(Fmt, Ts&&...) -> AD_WARNING<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_WARNING(bool, Fmt, Ts&&...) -> AD_WARNING<Fmt, Ts...>;
+template <typename... Ts> AD_WARNING(const char*, Ts&&...) -> AD_WARNING<Ts...>;
+template <typename... Ts> AD_WARNING(fmt::format_string<Ts...>, Ts&&...) -> AD_WARNING<Ts...>;
+template <typename... Ts> AD_WARNING(bool, fmt::format_string<Ts...>, Ts&&...) -> AD_WARNING<Ts...>;
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_INFO
+template <typename... Ts> struct AD_INFO
 {
-    AD_INFO(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_INFO(fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, true, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
-    AD_INFO(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_INFO(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
-    AD_INFO(acmacs::verbose do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_INFO(acmacs::verbose do_print, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, do_print == acmacs::verbose::yes, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
-    AD_INFO(acmacs::debug do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_INFO(acmacs::debug do_print, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, do_print == acmacs::debug::yes, acmacs::log::prefix::info, format, std::forward<Ts>(ts)...);
     }
 };
 
-template <typename Fmt, typename... Ts> AD_INFO(Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_INFO(bool, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_INFO(acmacs::verbose, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_INFO(acmacs::debug, Fmt, Ts&&...) -> AD_INFO<Fmt, Ts...>;
+template <typename... Ts> AD_INFO(const char*, Ts&&...) -> AD_INFO<Ts...>;
+template <typename... Ts> AD_INFO(fmt::format_string<Ts...>, Ts&&...) -> AD_INFO<Ts...>;
+template <typename... Ts> AD_INFO(bool, fmt::format_string<Ts...>, Ts&&...) -> AD_INFO<Ts...>;
+template <typename... Ts> AD_INFO(acmacs::verbose, fmt::format_string<Ts...>, Ts&&...) -> AD_INFO<Ts...>;
+template <typename... Ts> AD_INFO(acmacs::debug, fmt::format_string<Ts...>, Ts&&...) -> AD_INFO<Ts...>;
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_DEBUG
+template <typename... Ts> struct AD_DEBUG
 {
-    AD_DEBUG(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_DEBUG(fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, true, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
-    AD_DEBUG(bool do_print, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_DEBUG(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, do_print, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
-    AD_DEBUG(acmacs::verbose dbg, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_DEBUG(acmacs::verbose dbg, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, dbg == acmacs::verbose::yes, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
-    AD_DEBUG(acmacs::debug dbg, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_DEBUG(acmacs::debug dbg, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::print(sl, dbg == acmacs::debug::yes, acmacs::log::prefix::debug, format, std::forward<Ts>(ts)...);
     }
 };
 
-template <typename Fmt, typename... Ts> AD_DEBUG(Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_DEBUG(bool, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_DEBUG(acmacs::verbose, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
-template <typename Fmt, typename... Ts> AD_DEBUG(acmacs::debug, Fmt, Ts&&...) -> AD_DEBUG<Fmt, Ts...>;
+template <typename... Ts> AD_DEBUG(const char*, Ts&&...) -> AD_DEBUG<Ts...>;
+template <typename... Ts> AD_DEBUG(fmt::format_string<Ts...>, Ts&&...) -> AD_DEBUG<Ts...>;
+template <typename... Ts> AD_DEBUG(bool, fmt::format_string<Ts...>, Ts&&...) -> AD_DEBUG<Ts...>;
+template <typename... Ts> AD_DEBUG(acmacs::verbose, fmt::format_string<Ts...>, Ts&&...) -> AD_DEBUG<Ts...>;
+template <typename... Ts> AD_DEBUG(acmacs::debug, fmt::format_string<Ts...>, Ts&&...) -> AD_DEBUG<Ts...>;
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_ASSERT
+template <typename... Ts> struct AD_ASSERT
 {
-    AD_ASSERT(bool condition, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_ASSERT(bool condition, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::ad_assert(condition, sl, format, std::forward<Ts>(ts)...);
     }
 };
 
-template <typename Fmt, typename... Ts> AD_ASSERT(bool, Fmt, Ts&&...) -> AD_ASSERT<Fmt, Ts...>;
+template <typename... Ts> AD_ASSERT(bool, fmt::format_string<Ts...>, Ts&&...) -> AD_ASSERT<Ts...>;
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_FORMAT
+template <typename... Ts> struct AD_FORMAT
 {
-    AD_FORMAT(Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_FORMAT(fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
         : text{fmt::format("{} {}", acmacs::log::format(sl, format, std::forward<Ts>(ts)...), sl)}
     {
     }
@@ -282,10 +250,10 @@ template <typename Fmt, typename... Ts> struct AD_FORMAT
     std::string text;
 };
 
-template <typename Fmt, typename... Ts> AD_FORMAT(Fmt, Ts&&...) -> AD_FORMAT<Fmt, Ts...>;
+template <typename... Ts> AD_FORMAT(fmt::format_string<Ts...>, Ts&&...) -> AD_FORMAT<Ts...>;
 
-template <typename Fmt, typename... Ts> struct fmt::formatter<AD_FORMAT<Fmt, Ts...>> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
-    template <typename FormatCtx> auto format(const AD_FORMAT<Fmt, Ts...>& value, FormatCtx& ctx)
+template <typename... Ts> struct fmt::formatter<AD_FORMAT<Ts...>> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(const AD_FORMAT<Ts...>& value, FormatCtx& ctx) const
     {
         return format_to(ctx.out(), "{}", value.text);
     }
@@ -294,7 +262,7 @@ template <typename Fmt, typename... Ts> struct fmt::formatter<AD_FORMAT<Fmt, Ts.
 
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> inline void AD_PRINT(bool do_print, Fmt format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
@@ -304,32 +272,37 @@ template <typename MesssageGetter> requires std::is_invocable_v<MesssageGetter> 
     acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, get_message);
 }
 
-template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::verbose verb, Fmt format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT(acmacs::verbose verb, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, verb == acmacs::verbose::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
-template <typename Fmt, typename... Ts> inline void AD_PRINT(acmacs::debug dbg, Fmt format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT(acmacs::debug dbg, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, dbg == acmacs::debug::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
-template <typename Fmt, typename... Ts> inline void AD_PRINT(Fmt format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT(fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, true, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
+inline void AD_PRINT_NEWLINE()
+{
+    acmacs::log::print(acmacs::log::no_source_location, true, acmacs::log::prefix::none, "{}", '\n');
+}
+
 // ----------------------------------------------------------------------
 
-template <typename Fmt, typename... Ts> struct AD_LOG
+template <typename... Ts> struct AD_LOG
 {
-    AD_LOG(acmacs::log::log_key_t section, Fmt format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
+    AD_LOG(acmacs::log::log_key_t section, fmt::format_string<Ts...> format, Ts&&... ts, const acmacs::log::source_location& sl = acmacs::log::source_location{})
     {
         acmacs::log::message(section, [&]() { return acmacs::log::format(sl, format, std::forward<Ts>(ts)...); });
     }
 };
 
-template <typename Fmt, typename... Ts> AD_LOG(acmacs::log::log_key_t, Fmt, Ts&&...) -> AD_LOG<Fmt, Ts...>;
+template <typename... Ts> AD_LOG(acmacs::log::log_key_t, fmt::format_string<Ts...>, Ts&&...) -> AD_LOG<Ts...>;
 
 #define AD_LOG_INDENT acmacs::log::indent _indent
 

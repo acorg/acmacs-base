@@ -38,6 +38,25 @@ namespace acmacs::string
         return std::numeric_limits<T>::max();
     }
 
+    // https://stackoverflow.com/questions/25195176/how-do-i-convert-a-c-string-to-a-int-at-compile-time
+    template <typename T> constexpr T from_chars_to_i(const char* source, const char** end)
+    {
+        std::function<T(const char*, T)> impl;
+        impl = [end, &impl](const char* src, T value) -> T {
+            constexpr const auto isdigit = [](char cc) { return cc <= '9' && cc >= '0'; };
+            if (isdigit(*src)) {
+                return impl(src + 1, static_cast<T>(*src - '0') + value * T{10});
+            }
+            else {
+                if (end)
+                    *end = src;
+                return value;
+            }
+        };
+
+        return impl(source, T{0});
+    }
+
 } // namespace acmacs::string
 
 // ----------------------------------------------------------------------

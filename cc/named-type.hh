@@ -321,28 +321,28 @@ namespace acmacs
 // ----------------------------------------------------------------------
 
 template <typename Tag> struct fmt::formatter<acmacs::named_size_t<Tag>> : fmt::formatter<size_t> {
-    template <typename FormatCtx> auto format(const acmacs::named_size_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<size_t>::format(nt.get(), ctx); }
+    template <typename FormatCtx> auto format(const acmacs::named_size_t<Tag>& nt, FormatCtx& ctx) const { return fmt::formatter<size_t>::format(nt.get(), ctx); }
 };
 
 template <typename Tag> struct fmt::formatter<acmacs::named_double_t<Tag>> : fmt::formatter<double> {
-    template <typename FormatCtx> auto format(const acmacs::named_double_t<Tag>& nt, FormatCtx& ctx) { return fmt::formatter<double>::format(nt.get(), ctx); }
+    template <typename FormatCtx> auto format(const acmacs::named_double_t<Tag>& nt, FormatCtx& ctx) const { return fmt::formatter<double>::format(nt.get(), ctx); }
 };
 
 template <typename T, typename Tag> struct fmt::formatter<acmacs::named_vector_t<T, Tag>> : fmt::formatter<std::vector<T>> {
-    template <typename FormatCtx> auto format(const acmacs::named_vector_t<T, Tag>& vec, FormatCtx& ctx) { return fmt::formatter<std::vector<T>>::format(vec.get(), ctx); }
+    template <typename FormatCtx> auto format(const acmacs::named_vector_t<T, Tag>& vec, FormatCtx& ctx) const { return fmt::formatter<std::vector<T>>::format(vec.get(), ctx); }
 };
 
 template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_number_from_string_t<Number, Tag>> : public fmt::formatter<acmacs::fmt_helper::default_formatter>
 {
-    template <typename FormatContext> auto format(const acmacs::named_number_from_string_t<Number, Tag>& num, FormatContext& ctx)
+    template <typename FormatContext> auto format(const acmacs::named_number_from_string_t<Number, Tag>& num, FormatContext& ctx) const
     {
         return std::visit(
             [&ctx]<typename Repr>(Repr content) { return format_to(ctx.out(), "{}", content); }, num.get());
     }
 };
 
-template <typename T, typename Tag> struct fmt::formatter<acmacs::named_string_base_t<T, Tag>> {
-    template <typename FormatCtx> auto format(const acmacs::named_string_base_t<T, Tag>& str, FormatCtx& ctx) { return fmt::format_to(ctx.out(), "{}", str.get()); }
+template <typename T, typename Tag> struct fmt::formatter<acmacs::named_string_base_t<T, Tag>>  : public fmt::formatter<acmacs::fmt_helper::default_formatter> {
+    template <typename FormatCtx> auto format(const acmacs::named_string_base_t<T, Tag>& str, FormatCtx& ctx) const { return fmt::format_to(ctx.out(), "{}", str.get()); }
 };
 
 // ----------------------------------------------------------------------
