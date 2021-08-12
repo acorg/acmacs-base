@@ -38,23 +38,27 @@ namespace acmacs::string
         return std::numeric_limits<T>::max();
     }
 
-    // https://stackoverflow.com/questions/25195176/how-do-i-convert-a-c-string-to-a-int-at-compile-time
-    template <typename T> constexpr T from_chars_to_i(const char* source, const char** end)
+    namespace detail
     {
-        std::function<T(const char*, T)> impl;
-        impl = [end, &impl](const char* src, T value) -> T {
+        template <typename T> constexpr T from_chars_to_unsigned_impl(const char* source, const char** end, T value)
+        {
             constexpr const auto isdigit = [](char cc) { return cc <= '9' && cc >= '0'; };
-            if (isdigit(*src)) {
-                return impl(src + 1, static_cast<T>(*src - '0') + value * T{10});
+            if (isdigit(*source)) {
+                return from_chars_to_unsigned_impl(source + 1, end, static_cast<T>(*source - '0') + value * T{10});
             }
             else {
                 if (end)
-                    *end = src;
+                    *end = source;
                 return value;
             }
-        };
+        }
 
-        return impl(source, T{0});
+    } // namespace detail
+
+    // https://stackoverflow.com/questions/25195176/how-do-i-convert-a-c-string-to-a-int-at-compile-time
+    template <typename T> constexpr T from_chars_to_unsigned(const char* source, const char** end)
+    {
+        return detail::from_chars_to_unsigned_impl(source, end, T{0});
     }
 
 } // namespace acmacs::string
