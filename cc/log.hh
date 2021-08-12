@@ -90,7 +90,7 @@ namespace acmacs
         template <typename Fmt, typename... Ts> inline std::string format(const source_location& sl, Fmt format, Ts&&... ts)
         {
             try {
-                return fmt::format(format, std::forward<Ts>(ts)...);
+                return fmt::format(fmt::runtime(format), std::forward<Ts>(ts)...);
             }
             catch (fmt::format_error& err) {
                 fmt::print(stderr, "> fmt::format_error ({}) format: \"{}\"{}", err, format, sl);

@@ -84,9 +84,9 @@ namespace acmacs
 
         void format_entry(fmt::memory_buffer& out, std::string_view format, const value_type& entry) const
         {
-            fmt::format_to(out, format, fmt::arg("quoted", fmt::format("\"{}\"", entry.first)), fmt::arg("value", entry.first), fmt::arg("counter", entry.second), //
-                           fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0),                                  //
-                           fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+            fmt::format_to_mb(out, fmt::runtime(format), fmt::arg("quoted", fmt::format("\"{}\"", entry.first)), fmt::arg("value", entry.first), fmt::arg("counter", entry.second), //
+                              fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0),                                                //
+                              fmt::arg("first", entry.first), fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
         }
 
     }; // class Counter<Obj>
@@ -195,9 +195,9 @@ namespace acmacs
 
         void format_entry(fmt::memory_buffer& out, std::string_view format, const std::pair<char, counter_t>& entry) const
         {
-            fmt::format_to(out, format, fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
-                           fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0), fmt::arg("first", entry.first),
-                           fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
+            fmt::format_to_mb(out, fmt::runtime(format), fmt::arg("value", entry.first), fmt::arg("counter", entry.second),
+                              fmt::arg("counter_percent", static_cast<double>(entry.second) / static_cast<double>(total()) * 100.0), fmt::arg("first", entry.first),
+                              fmt::arg("quoted_first", fmt::format("\"{}\"", entry.first)), fmt::arg("second", entry.second));
         }
     };
 

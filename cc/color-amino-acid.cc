@@ -72,9 +72,9 @@ std::string acmacs::amino_acid_nucleotide_color_css()
 {
     fmt::memory_buffer out;
     for (const auto& en : amino_acid_colors)
-        fmt::format_to(out, ".aa{} {{color: {:#}}}\n", en.first, en.second);
+        fmt::format_to_mb(out, ".aa{} {{color: {:#}}}\n", en.first, en.second);
     for (const auto& en : nucleotide_colors)
-        fmt::format_to(out, ".nuc{} {{color: {:#}}}\n", en.first, en.second);
+        fmt::format_to_mb(out, ".nuc{} {{color: {:#}}}\n", en.first, en.second);
     return fmt::to_string(out);
 
 } // acmacs::amino_acid_nucleotide_color_css

@@ -57,9 +57,9 @@ void acmacs::log::v1::enable(const std::vector<std::string_view>& names)
 std::string acmacs::log::v1::report_enabled()
 {
     fmt::memory_buffer out;
-    fmt::format_to(out, "log messages enabled for ({}):", detail::enabled.size());
+    fmt::format_to_mb(out, "log messages enabled for ({}):", detail::enabled.size());
     for (const auto& key : detail::enabled)
-        fmt::format_to(out, " \"{}\"", static_cast<std::string_view>(key));
+        fmt::format_to_mb(out, " \"{}\"", static_cast<std::string_view>(key));
     return fmt::to_string(out);
 
 } // acmacs::log::v1::report_enabled

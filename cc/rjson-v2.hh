@@ -429,7 +429,7 @@ namespace rjson::inline v2
                         throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number<std::string>({})", from));
                 }
                 else
-                    throw value_type_mismatch(typeid(Target).name(), fmt::format("rjson::number({})", source));
+                    throw value_type_mismatch(typeid(Target).name(), fmt::format(fmt::runtime("rjson::number({})"), source));
             },
             source);
     }
@@ -501,13 +501,13 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<
                                                    || std::is_base_of_v<rjson::number, T>
                                                    || std::is_base_of_v<bool, T>
                                                    , char>> : fmt::formatter<std::string> {
-    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::to<std::string>(val), ctx); }
+    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) const { return fmt::formatter<std::string>::format(rjson::to<std::string>(val), ctx); }
 };
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_same_v<rjson::value, T>, char>> : fmt::formatter<std::string>
 // template <typename T> requires std::is_same_v<rjson::value, T> struct fmt::formatter<T> : fmt::formatter<std::string>
 {
-    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) { return fmt::formatter<std::string>::format(rjson::format(val), ctx); }
+    template <typename FormatCtx> auto format(const T& val, FormatCtx& ctx) const { return fmt::formatter<std::string>::format(rjson::format(val), ctx); }
 };
 
 // ======================================================================

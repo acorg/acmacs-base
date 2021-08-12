@@ -7,7 +7,7 @@ int main()
     {
         auto js = to_json::v2::object();
         js << to_json::v2::key_val("S1", "A") << to_json::v2::key_val("N1", 7.3);
-        fmt::print("{:6}\n{:4c}\n\n", js, js);
+        fmt::print(fmt::runtime("{:6}\n{:4c}\n\n"), js, js);
     }
 
     {

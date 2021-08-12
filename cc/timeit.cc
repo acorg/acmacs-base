@@ -8,7 +8,7 @@ std::string acmacs::format_duration(acmacs::duration_t duration)
     bool written{false};
     const auto format_val = [&out, &written](auto val, const char* terminator, bool write_zero = false) {
         if (val || write_zero || written) {
-            fmt::format_to(out, "{:02d}{}", val, terminator);
+            fmt::format_to_mb(out, "{:02d}{}", val, terminator);
             written = true;
         }
     };

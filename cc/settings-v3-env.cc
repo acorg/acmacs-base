@@ -113,7 +113,7 @@ std::string acmacs::settings::v3::detail::Environment::format(std::string_view i
     fmt::memory_buffer out;
     for (auto [level, entries] : acmacs::enumerate(env_data_)) {
         for (const auto& entry : entries)
-            fmt::format_to(out, "{}\"{}\": {} <{}>\n", indent, entry.first, entry.second, level);
+            fmt::format_to_mb(out, "{}\"{}\": {} <{}>\n", indent, entry.first, entry.second, level);
     }
     return fmt::to_string(out);
 
@@ -124,16 +124,16 @@ std::string acmacs::settings::v3::detail::Environment::format(std::string_view i
 std::string acmacs::settings::v3::detail::Environment::format_toplevel() const
 {
     fmt::memory_buffer out;
-    fmt::format_to(out, "{");
+    fmt::format_to_mb(out, "{{");
     bool first { true };
     for (const auto& entry : env_data_.back()) {
         if (first)
             first = false;
         else
-            fmt::format_to(out, ", ");
-        fmt::format_to(out, "\"{}\": {}", entry.first, entry.second);
+            fmt::format_to_mb(out, ", ");
+        fmt::format_to_mb(out, "\"{}\": {}", entry.first, entry.second);
     }
-    fmt::format_to(out, "}");
+    fmt::format_to_mb(out, "}}");
     return fmt::to_string(out);
 
 } // acmacs::settings::v3::detail::Environment::format_toplevel

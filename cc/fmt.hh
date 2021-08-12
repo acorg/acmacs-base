@@ -2,25 +2,31 @@
 
 #include <optional>
 #include <tuple>
+#include <vector>
 #include <utility>
 
 #pragma GCC diagnostic push
 #ifdef __clang__
+// 8.0.1
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
-#pragma GCC diagnostic ignored "-Wextra-semi-stmt" // fmt/format.h:1242
-#pragma GCC diagnostic ignored "-Wundefined-func-template"
-#pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
-#pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
 #pragma GCC diagnostic ignored "-Wsigned-enum-bitfield" // fmt/format.h
-#pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
-#pragma GCC diagnostic ignored "-Wshadow-field" // fmt/core.h
-#pragma GCC diagnostic ignored "-Wundef" // fmt/core.h
-#pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor" // fmt/core.h
+#pragma GCC diagnostic ignored "-Wmissing-noreturn" // fmt/core.h
+#pragma GCC diagnostic ignored "-Wundefined-func-template" // fmt/chrono.h:1182
+
+// #pragma GCC diagnostic ignored "-Wextra-semi-stmt" // fmt/format.h:1242
+// #pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
+// #pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
+// #pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
+// #pragma GCC diagnostic ignored "-Wshadow-field" // fmt/core.h
+// #pragma GCC diagnostic ignored "-Wundef" // fmt/core.h
+// #pragma GCC diagnostic ignored "-Wunused-template" // fmt/chrono.h
+// #pragma GCC diagnostic ignored "-Wnon-virtual-dtor" // fmt/core.h
+
 
 // clang 11
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#pragma GCC diagnostic ignored "-Wsuggest-destructor-override"
+// #pragma GCC diagnostic ignored "-Wsuggest-override"
+// #pragma GCC diagnostic ignored "-Wsuggest-destructor-override"
+
 // #pragma GCC diagnostic ignored ""
 // #pragma GCC diagnostic ignored ""
 // #pragma GCC diagnostic ignored ""
@@ -67,18 +73,18 @@ template <> struct fmt::formatter<acmacs::fmt_helper::float_formatter>
         if (it != ctx.end() && *it == ':')
             ++it;
         const auto end = std::find(it, ctx.end(), '}');
-        format_ = fmt::format("{{:{}}}", std::string(it, end));
+        format_ = fmt::format("{{:{}}}", std::string_view(it, static_cast<size_t>(end - it)));
         return end;
     }
 
-    template <typename Val> std::string format_val(Val&& val)
+    template <typename Val> std::string format_val(Val&& val) const
     {
-        return fmt::format(format_, std::forward<Val>(val));
+        return fmt::format(fmt::runtime(format_), std::forward<Val>(val));
     }
 
-    template <typename Val, typename FormatContext> auto format_val(Val&& val, FormatContext& ctx)
+    template <typename Val, typename FormatContext> auto format_val(Val&& val, FormatContext& ctx) const
     {
-        return format_to(ctx.out(), format_, std::forward<Val>(val));
+        return format_to(ctx.out(), fmt::runtime(format_), std::forward<Val>(val));
     }
 
   private:
@@ -88,7 +94,7 @@ template <> struct fmt::formatter<acmacs::fmt_helper::float_formatter>
 // ----------------------------------------------------------------------
 
 template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_v<std::exception, T>, char>> : fmt::formatter<const char*> {
-    template <typename FormatCtx> auto format(const std::exception& err, FormatCtx& ctx) { return fmt::formatter<const char*>::format(err.what(), ctx); }
+    template <typename FormatCtx> auto format(const std::exception& err, FormatCtx& ctx) const { return fmt::formatter<const char*>::format(err.what(), ctx); }
 };
 
 // template <> struct fmt::formatter<std::exception>
@@ -117,6 +123,22 @@ namespace fmt
 
 } // namespace fmt
 
+// ----------------------------------------------------------------------
+// memory_buffer unexpected problem
+// in 8.0 format_to(memory_buffer,...) is deprecated without clearly stating in docs
+// https://www.gitmemory.com/issue/fmtlib/fmt/2420/877703767
+// ----------------------------------------------------------------------
+
+namespace fmt
+{
+    template <typename BUF, typename... T> inline void format_to_mb(BUF& buf, format_string<T...> fmt, T&&... args)
+    {
+        detail::vformat_to(buf, string_view(fmt), fmt::make_format_args(args...));
+    }
+}
+
+// ----------------------------------------------------------------------
+// substitute
 // ----------------------------------------------------------------------
 
 namespace fmt
@@ -165,12 +187,12 @@ namespace fmt
             static_assert(std::is_same_v<std::decay_t<decltype(std::get<0>(key_value))>, const char*>);
             if constexpr (std::tuple_size<std::decay_t<decltype(key_value)>>::value == 2) {
                 if constexpr (std::is_invocable_v<decltype(std::get<1>(key_value))>)
-                    format_to(output, pattern_arg, arg(std::get<0>(key_value), std::invoke(std::get<1>(key_value))));
+                    format_to_mb(output, fmt::runtime(pattern_arg), arg(std::get<0>(key_value), std::invoke(std::get<1>(key_value))));
                 else
-                    format_to(output, pattern_arg, arg(std::get<0>(key_value), std::get<1>(key_value)));
+                    format_to_mb(output, fmt::runtime(pattern_arg), arg(std::get<0>(key_value), std::get<1>(key_value)));
             }
             else if constexpr (std::tuple_size<std::decay_t<decltype(key_value)>>::value == 4) {
-                format_to(output, pattern_arg, arg(std::get<0>(key_value), std::get<1>(key_value)), arg(std::get<2>(key_value), std::get<3>(key_value)));
+                format_to_mb(output, fmt::runtime(pattern_arg), arg(std::get<0>(key_value), std::get<1>(key_value)), arg(std::get<2>(key_value), std::get<3>(key_value)));
             }
             else
                 static_assert(

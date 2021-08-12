@@ -72,11 +72,11 @@ namespace to_json
                 fmt::memory_buffer out;
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk))
-                        fmt::format_to(out, "{}{}", comma, *chunk);
+                        fmt::format_to_mb(out, "{}{}", comma, *chunk);
                     else if (space == embed_space::yes && chunk != data_.begin() && std::prev(chunk)->back() == ':')
-                        fmt::format_to(out, " {}", *chunk);
+                        fmt::format_to_mb(out, " {}", *chunk);
                     else
-                        fmt::format_to(out, "{}", *chunk);
+                        fmt::format_to_mb(out, "{}", *chunk);
                 }
                 return fmt::to_string(out);
             }
@@ -88,23 +88,23 @@ namespace to_json
                 for (auto chunk = data_.begin(); chunk != data_.end(); ++chunk) {
                     // AD_DEBUG("{} before:{} after:{}", *chunk, comma_before(chunk), comma_after(chunk, data_.begin()));
                     if (comma_after(chunk, data_.begin()) && comma_before(chunk)) {
-                        fmt::format_to(out, ",\n{: >{}s}{}", "", current_indent, *chunk);
+                        fmt::format_to_mb(out, ",\n{: >{}s}{}", "", current_indent, *chunk);
                     }
                     else {
                         if (const auto ia = indent_after(chunk, data_.begin()), ub = unindent_before(chunk); ia && !ub) {
                             current_indent += indent;
-                            fmt::format_to(out, "\n{: >{}s}{}", "", current_indent, *chunk);
+                            fmt::format_to_mb(out, "\n{: >{}s}{}", "", current_indent, *chunk);
                         }
                         else if (!ia && ub) {
                             current_indent -= indent;
-                            fmt::format_to(out, "\n{: >{}s}{}", "", current_indent, *chunk);
+                            fmt::format_to_mb(out, "\n{: >{}s}{}", "", current_indent, *chunk);
                         }
                         else if ((ia && ub) || chunk == data_.begin())
-                            fmt::format_to(out, "{}", *chunk);
+                            fmt::format_to_mb(out, "{}", *chunk);
                         else if (chunk->front() == ':')
-                            fmt::format_to(out, "{}", *chunk);
+                            fmt::format_to_mb(out, "{}", *chunk);
                         else
-                            fmt::format_to(out, " {}", *chunk);
+                            fmt::format_to_mb(out, " {}", *chunk);
                     }
                 }
                 return fmt::to_string(out);

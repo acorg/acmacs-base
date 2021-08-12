@@ -103,37 +103,37 @@ std::string acmacs::argv::v2::argv::format_help() const
 
         const size_t name_width = std::accumulate(options_.begin(), options_.end(), 0UL, [](size_t width, const auto* opt) { return std::max(width, opt->names().size()); });
         if (const auto pre = help_pre(); !pre.empty())
-            fmt::format_to(out, "{}\n", pre);
-        fmt::format_to(out, "Usage: {} [options]", prog_name_);
+            fmt::format_to_mb(out, "{}\n", pre);
+        fmt::format_to_mb(out, "Usage: {} [options]", prog_name_);
         for (const auto* opt : options_) {
             if (!opt->has_name()) {
-                fmt::format_to(out, " {}{}", opt->mandatory() ? '<' : '[', opt->arg_name());
+                fmt::format_to_mb(out, " {}{}", opt->mandatory() ? '<' : '[', opt->arg_name());
                 if (const auto dflt = opt->get_default(); !dflt.empty())
-                    fmt::format_to(out, ": {}", dflt);
-                fmt::format_to(out, "{}", opt->mandatory() ? '>' : ']');
+                    fmt::format_to_mb(out, ": {}", dflt);
+                fmt::format_to_mb(out, "{}", opt->mandatory() ? '>' : ']');
                 if (opt->multiple_values())
-                    fmt::format_to(out, " ...");
+                    fmt::format_to_mb(out, " ...");
             }
         }
-        fmt::format_to(out, "\n\n");
+        fmt::format_to_mb(out, "\n\n");
         if (!descriptions_.empty()) {
             for (const auto* desc : descriptions_)
-                fmt::format_to(out, "{}\n", desc->text());
+                fmt::format_to_mb(out, "{}\n", desc->text());
         }
-        fmt::format_to(out, "\n");
+        fmt::format_to_mb(out, "\n");
         for (const auto* opt : options_) {
             if (opt->has_name()) {
-                fmt::format_to(out, "  {:<{}s}", opt->names(), name_width);
+                fmt::format_to_mb(out, "  {:<{}s}", opt->names(), name_width);
                 if (opt->mandatory())
-                    fmt::format_to(out, " (MANDATORY)");
+                    fmt::format_to_mb(out, " (MANDATORY)");
                 if (const auto dflt = opt->get_default(); !opt->is_bool() && !dflt.empty())
-                    fmt::format_to(out, " (def: {})", dflt);
-                // fmt::format_to(out, " {}\n", fmt::format(opt->description(), fmt::arg("ACMACSD_ROOT", acmacsd_root())));
-                fmt::format_to(out, " {}\n", opt->description());
+                    fmt::format_to_mb(out, " (def: {})", dflt);
+                // fmt::format_to_mb(out, " {}\n", fmt::format(opt->description(), fmt::arg("ACMACSD_ROOT", acmacsd_root())));
+                fmt::format_to_mb(out, " {}\n", opt->description());
             }
         }
         if (const auto post = help_post(); !post.empty())
-            fmt::format_to(out, "{}\n", post);
+            fmt::format_to_mb(out, "{}\n", post);
 
         return fmt::to_string(out);
     }
