@@ -262,7 +262,7 @@ template <typename... Ts> struct fmt::formatter<AD_FORMAT<Ts...>> : fmt::formatt
 
 // ----------------------------------------------------------------------
 
-template <typename... Ts> inline void AD_PRINT(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT_IF(bool do_print, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
@@ -272,12 +272,12 @@ template <typename MesssageGetter> requires std::is_invocable_v<MesssageGetter> 
     acmacs::log::print(acmacs::log::no_source_location, do_print, acmacs::log::prefix::none, get_message);
 }
 
-template <typename... Ts> inline void AD_PRINT(acmacs::verbose verb, fmt::format_string<Ts...> format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT_IF(acmacs::verbose verb, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, verb == acmacs::verbose::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
 
-template <typename... Ts> inline void AD_PRINT(acmacs::debug dbg, fmt::format_string<Ts...> format, Ts&&... ts)
+template <typename... Ts> inline void AD_PRINT_IF(acmacs::debug dbg, fmt::format_string<Ts...> format, Ts&&... ts)
 {
     acmacs::log::print(acmacs::log::no_source_location, dbg == acmacs::debug::yes, acmacs::log::prefix::none, format, std::forward<Ts>(ts)...);
 }
