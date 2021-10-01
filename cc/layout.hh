@@ -92,6 +92,9 @@ namespace acmacs
 
     }; // struct Area
 
+    // in case of no intersection returned Area has min and max points at {0, 0} and therefore its area is 0
+    Area intersection(const Area& a1, const Area& a2);
+
       // ----------------------------------------------------------------------
 
     class Layout;

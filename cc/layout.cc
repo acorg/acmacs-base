@@ -2,6 +2,19 @@
 
 // ----------------------------------------------------------------------
 
+acmacs::Area acmacs::intersection(const Area& a1, const Area& a2)
+{
+    const PointCoordinates new_min{std::max(a1.min.x(), a2.min.x()), std::max(a1.min.y(), a2.min.y())};
+    const PointCoordinates new_max{std::min(a1.max.x(), a2.max.x()), std::min(a1.max.y(), a2.max.y())};
+    if (new_min.x() > new_max.x() || new_min.y() > new_max.y())
+        return {{0.0, 0.0}}; // no intersection
+    else
+        return {new_min, new_max};
+
+} // acmacs::intersection
+
+// ----------------------------------------------------------------------
+
 std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_point_indexes() const
 {
     const auto num_dim = number_of_dimensions();
