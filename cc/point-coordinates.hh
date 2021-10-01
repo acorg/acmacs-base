@@ -44,6 +44,7 @@ namespace acmacs
             }
         }
         constexpr PointCoordinates(double x, double y) : data_(Store2D{x, y}) {}
+        constexpr PointCoordinates(const std::pair<double, double>& xy) : data_(Store2D{xy.first, xy.second}) {}
         constexpr PointCoordinates(double x, double y, double z) : data_(Store3D{x, y, z}) {}
         constexpr PointCoordinates(enum zero2D) : PointCoordinates(0.0, 0.0) {}
         constexpr PointCoordinates(enum zero3D) : PointCoordinates(0.0, 0.0, 0.0) {}
@@ -203,23 +204,21 @@ namespace acmacs
         bool empty() const { return std::any_of(begin(), end(), [](auto val) { return std::isnan(val); }); }
         bool exists() const { return !empty(); }
 
+        std::vector<double> as_vector() const { return {begin(), end()}; }
+
       private:
         using Store2D = std::array<double, 2>;
         using Store3D = std::array<double, 3>;
         using StoreXD = std::vector<double>;
-        struct Ref { double* begin; size_t size; };
+        struct Ref
+        {
+            double* begin;
+            size_t size; };
         struct ConstRef { const double* const begin; size_t size; };
 
         std::variant<Store2D, Store3D, StoreXD, Ref, ConstRef> data_;
 
     }; // class PointCoordinates
-
-    inline std::string to_string(const PointCoordinates& coord, size_t precision = 32)
-    {
-        return '{' + acmacs::string::join(acmacs::string::join_sep_t{", "}, std::begin(coord), std::end(coord), [precision](double val) { return acmacs::to_string(val, precision); }) + '}';
-    }
-
-    inline std::ostream& operator<<(std::ostream& out, const PointCoordinates& coord) { return out << to_string(coord); }
 
     inline double distance2(const PointCoordinates& p1, const PointCoordinates& p2)
     {

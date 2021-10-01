@@ -92,10 +92,6 @@ namespace acmacs
 
     }; // struct Area
 
-    inline std::string to_string(const Area& area, size_t precision = 32) { return acmacs::to_string(area.min, precision) + ' ' + acmacs::to_string(area.max, precision); }
-
-    // inline std::ostream& operator<<(std::ostream& s, const Area& area) { return s << to_string(area, 4); }
-
       // ----------------------------------------------------------------------
 
     class Layout;
@@ -202,6 +198,7 @@ namespace acmacs
         double& coordinate(size_t point_no, number_of_dimensions_t aDimensionNo) { return operator()(point_no, aDimensionNo); }
         bool point_has_coordinates(size_t point_no) const { return operator[](point_no).exists(); }
         const std::vector<double>& as_flat_vector_double() const { return *this; }
+        std::vector<std::vector<double>> as_vector_of_vectors_double() const;
 
         void update(size_t point_no, const PointCoordinates& point)
         {

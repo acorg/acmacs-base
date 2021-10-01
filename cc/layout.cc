@@ -32,6 +32,21 @@ std::pair<std::vector<size_t>, std::vector<size_t>> acmacs::Layout::min_max_poin
 
 // ----------------------------------------------------------------------
 
+std::vector<std::vector<double>> acmacs::Layout::as_vector_of_vectors_double() const
+{
+    const size_t num_dim = *number_of_dimensions();
+    std::vector<std::vector<double>> result(number_of_points(), std::vector<double>(num_dim));
+    auto coord = Vec::begin();
+    for (auto& dest : result) {
+        std::copy(coord, coord + static_cast<difference_type>(num_dim), dest.begin());
+        coord += static_cast<difference_type>(num_dim);
+    }
+    return result;
+
+} // acmacs::Layout::as_vector_of_vectors_double
+
+// ----------------------------------------------------------------------
+
 acmacs::Area acmacs::Layout::area() const
 {
     size_t point_no = 0;
