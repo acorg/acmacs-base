@@ -77,6 +77,8 @@ namespace acmacs
         PointStyle(const PointStyle&) = default;
         PointStyle(PointStyle&&) = default;
         PointStyle& operator=(const PointStyleModified& src);
+        PointStyle& operator=(const PointStyle&) = default;
+        PointStyle& operator=(PointStyle&&) = default;
 
         PointStyle& scale(double aScale) noexcept { size(size() * aScale); return *this; }
         PointStyle& scale_outline(double aScale) noexcept { outline_width(outline_width() * aScale); return *this; }
