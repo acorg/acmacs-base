@@ -6,6 +6,9 @@
 
 #pragma GCC diagnostic push
 #ifdef __clang__
+// clang++ 13 2021-10-08
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+
 // Python.h 3.9 2020-12-06
 #pragma GCC diagnostic ignored "-Wreserved-id-macro"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
