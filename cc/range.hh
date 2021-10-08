@@ -12,7 +12,7 @@ namespace acmacs
 {
     namespace internal
     {
-        template <typename T, typename Increment> class input_iterator : public std::iterator<std::input_iterator_tag, T>
+        template <typename T, typename Increment> class input_iterator // deprecated:  : public std::iterator<std::input_iterator_tag, T>
         {
          public:
             constexpr static const T End{std::numeric_limits<T>::max()};

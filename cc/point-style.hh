@@ -73,6 +73,9 @@ namespace acmacs
     {
       public:
         virtual ~PointStyle() = default;
+        PointStyle() = default;
+        PointStyle(const PointStyle&) = default;
+        PointStyle(PointStyle&&) = default;
         PointStyle& operator=(const PointStyleModified& src);
 
         PointStyle& scale(double aScale) noexcept { size(size() * aScale); return *this; }

@@ -2,6 +2,10 @@
 
 #pragma GCC diagnostic push
 #ifdef __clang__
+// clang++ 13
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // iterator<std::input_iterator_tag, unsigned long>' is deprecated
+
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
