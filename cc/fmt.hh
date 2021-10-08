@@ -7,7 +7,8 @@
 
 #pragma GCC diagnostic push
 #ifdef __clang__
-// 8.0.1
+// 8.0.1, clang 13
+#pragma GCC diagnostic ignored "-Wreserved-identifier" // identifier '_a' is reserved because it starts with '_' at global scope (bug in clang13 ?)
 #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #pragma GCC diagnostic ignored "-Wsigned-enum-bitfield" // fmt/format.h
 #pragma GCC diagnostic ignored "-Wmissing-noreturn" // fmt/core.h
