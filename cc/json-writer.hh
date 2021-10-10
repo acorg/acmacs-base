@@ -48,10 +48,10 @@ namespace json_writer
 
       // ----------------------------------------------------------------------
 
-    enum _StartArray { start_array };
-    enum _EndArray { end_array };
-    enum _StartObject { start_object };
-    enum _EndObject { end_object };
+    enum StartArray { start_array };
+    enum EndArray { end_array };
+    enum StartObject { start_object };
+    enum EndObject { end_object };
 
     class key
     {
@@ -69,10 +69,10 @@ namespace json_writer
 
 // ----------------------------------------------------------------------
 
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartArray) { aWriter.StartArray(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndArray) { aWriter.EndArray(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_StartObject) { aWriter.StartObject(); return aWriter; }
-template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::_EndObject) { aWriter.EndObject(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::StartArray) { aWriter.StartArray(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::EndArray) { aWriter.EndArray(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::StartObject) { aWriter.StartObject(); return aWriter; }
+template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::EndObject) { aWriter.EndObject(); return aWriter; }
 
 template <typename RW> inline json_writer::writer<RW>& operator <<(json_writer::writer<RW>& aWriter, json_writer::key value) { aWriter.Key(value.as_char_ptr()); return aWriter; }
 
@@ -218,12 +218,12 @@ template <typename RW, typename Value> inline json_writer::writer<RW>& operator 
 
 namespace json_writer
 {
-    enum _Finalize { finalize };
+    enum Finalize { finalize };
 
     class pretty;
 }
 
-std::string operator << (json_writer::pretty& aWriter, json_writer::_Finalize);
+std::string operator << (json_writer::pretty& aWriter, json_writer::Finalize);
 
 namespace json_writer
 {
@@ -257,12 +257,12 @@ namespace json_writer
 
 // ----------------------------------------------------------------------
 
-inline std::string operator << (json_writer::compact& aWriter, json_writer::_Finalize)
+inline std::string operator << (json_writer::compact& aWriter, json_writer::Finalize)
 {
     return aWriter.to_string();
 }
 
-inline std::string operator << (json_writer::pretty& aWriter, json_writer::_Finalize)
+inline std::string operator << (json_writer::pretty& aWriter, json_writer::Finalize)
 {
     std::string result = aWriter.to_string();
     json_writer::insert_emacs_indent_hint(result, aWriter.indent());
