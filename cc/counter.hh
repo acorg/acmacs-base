@@ -116,6 +116,11 @@ namespace acmacs
 
         void count(char aObj) { ++counter_[static_cast<unsigned char>(aObj) - first_char]; }
         void count(char aObj, counter_t num) { counter_[static_cast<unsigned char>(aObj) - first_char] += num; }
+        template <typename Iter> void count(Iter first, Iter last)
+        {
+            for (; first != last; ++first)
+                ++counter_[static_cast<size_t>(*first) - first_char];
+        }
 
         void update(const CounterCharSome<first_char, last_char, counter_t_t>& other)
         {
