@@ -56,6 +56,3 @@ void Color::from_string(std::string_view src)
 } // Color::from_string
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
