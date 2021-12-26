@@ -234,6 +234,3 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of<
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
