@@ -66,10 +66,13 @@ void acmacs::settings::v3::Data::apply(std::string_view name, toplevel_only tlo)
         ApplyingPusher _pusher(applying_, substituted_name);
         AD_LOG(acmacs::log::settings, "apply{} \"{}\" <-- \"{}\"", tlo == toplevel_only::yes ? " (top level)"sv : ""sv, substituted_name, name);
         AD_LOG_INDENT;
-        if (const auto& val_from_data = get(substituted_name, tlo); !val_from_data.is_null()) {
+        std::string_view lookup_name{substituted_name};
+        if (lookup_name[0] == '*')
+            lookup_name.remove_prefix(1);
+        if (const auto& val_from_data = get(lookup_name, tlo); !val_from_data.is_null()) {
             apply(val_from_data);
         }
-        else if (!apply_built_in(substituted_name)) {
+        else if (!apply_built_in(lookup_name) && substituted_name[0] != '*') {
             throw error{AD_FORMAT("settings entry not found: \"{}\" (not substituted: \"{}\")", substituted_name, name)};
         }
     }
