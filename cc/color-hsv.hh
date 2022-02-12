@@ -49,6 +49,3 @@ template <> struct fmt::formatter<acmacs::color::HSV> : fmt::formatter<acmacs::f
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

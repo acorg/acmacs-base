@@ -174,12 +174,23 @@ namespace acmacs::color
 
     inline static void modify_color(Color& target, Modifier::saturation_adjust saturation)
     {
+        // const auto color_orig = target;
         HSV target_hsv{target};
-        if (*saturation < 0.0)
-            target_hsv.s += target_hsv.s * *saturation;
-        else
-            target_hsv.s += (1.0 - target_hsv.s) * *saturation;
+        // const auto hsv_org = target_hsv;
+        if (float_zero(target_hsv.s)) { // grey scale
+            if (*saturation < 0.0)
+                target_hsv.v /= - *saturation;
+            else
+                target_hsv.v *= *saturation;
+        }
+        else {
+            if (*saturation < 0.0)
+                target_hsv.s += target_hsv.s * *saturation;
+            else
+                target_hsv.s += (1.0 - target_hsv.s) * *saturation;
+        }
         target = Color{target_hsv.rgb()}.alphaI(target.alphaI());
+        // AD_DEBUG(float_zero(target_hsv.s), "saturation_adjust {} {}  {} --> {} {}", color_orig, hsv_org, *saturation, target, target_hsv);
     }
 
     inline static void modify_color(Color& target, Modifier::brightness_set brightness)
@@ -246,6 +257,3 @@ acmacs::color::Modifier::operator Color() const
 } // acmacs::color::Modifier::operator Color
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
