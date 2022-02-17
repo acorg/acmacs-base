@@ -35,7 +35,25 @@ namespace acmacs::file
 
     inline std::string brotli_compress(std::string_view input)
     {
-        return {};
+        std::string output(input.size() / 2 + 1, 0);
+        BrotliEncoderState* state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+        size_t available_in = input.size();
+        const auto* next_in = reinterpret_cast<const uint8_t*>(input.data());
+        auto* next_out = reinterpret_cast<uint8_t*>(output.data());
+        size_t available_out = output.size();
+        while (!BrotliEncoderIsFinished(state)) {
+            if (BrotliEncoderCompressStream(state, BROTLI_OPERATION_FINISH, &available_in, &next_in, &available_out, &next_out, nullptr) == BROTLI_FALSE)
+                throw BrotliError{fmt::format("BrotliCompress failed")};
+            if (available_out == 0) {
+                const auto used = output.size();
+                output.resize(used * 2, 0);
+                next_out = reinterpret_cast<uint8_t*>(output.data() + used);
+                available_out = output.size() - used;
+            }
+        }
+        BrotliEncoderDestroyInstance(state);
+        output.resize(output.size() - available_out);
+        return output;
     }
 
     inline std::string brotli_decompress(std::string_view input, bool check_if_compressed = false)
