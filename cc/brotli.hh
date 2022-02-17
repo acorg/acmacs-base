@@ -26,13 +26,6 @@ namespace acmacs::file
 
       // ----------------------------------------------------------------------
 
-    // inline bool brotli_compressed(const char* input)
-    // {
-    //     return false; // std::memcmp(input, xz_internal::sXzSig, sizeof(xz_internal::sXzSig)) == 0;
-    // }
-
-      // ----------------------------------------------------------------------
-
     inline std::string brotli_compress(std::string_view input)
     {
         std::string output(std::min(input.size() / 2 + 1, 1024ul * 1024), 0);

@@ -14,6 +14,7 @@
 #include "acmacs-base/xz.hh"
 #include "acmacs-base/bzip2.hh"
 #include "acmacs-base/gzip.hh"
+#include "acmacs-base/brotli.hh"
 #include "acmacs-base/date.hh"
 #include "acmacs-base/read-file.hh"
 #include "acmacs-base/temp-file.hh"
@@ -101,6 +102,8 @@ std::string acmacs::file::decompress_if_necessary(std::string_view aSource)
 {
     if (xz_compressed(aSource.data()))
         return xz_decompress(aSource);
+    else if (brotli_compressed(aSource))
+        return brotli_decompress(aSource);
     else if (bz2_compressed(aSource.data()))
         return bz2_decompress(aSource);
     else if (gzip_compressed(aSource.data())) {
