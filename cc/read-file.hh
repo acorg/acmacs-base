@@ -36,6 +36,7 @@ namespace acmacs::file
         operator std::string() const { return mapped_ ? decompress_if_necessary({mapped_, len_}) : decompress_if_necessary(data_); }
         size_t size() const { return mapped_ ? len_ : data_.size(); }
         const char* data() const { return mapped_ ? mapped_ : data_.data(); }
+        std::string_view raw() const { return mapped_ ? std::string_view(mapped_, len_) : std::string_view{data_}; }
         bool valid() const { return mapped_ != nullptr || !data_.empty(); }
 
      private:
@@ -57,6 +58,3 @@ namespace acmacs::file
 } // namespace acmacs::file
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

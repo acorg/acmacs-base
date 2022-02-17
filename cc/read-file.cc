@@ -270,6 +270,3 @@ std::string acmacs::file::temp::make_template(std::string prefix)
 } // acmacs::file::temp::make_template
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

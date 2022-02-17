@@ -28,6 +28,3 @@ namespace acmacs::file
 } // namespace acmacs::file
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

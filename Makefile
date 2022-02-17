@@ -25,7 +25,8 @@ TARGETS = \
   $(DIST)/test-bezier-gradient \
   $(DIST)/test-string-join \
   $(DIST)/test-string-substitute \
-  $(DIST)/test-color-modifier
+  $(DIST)/test-color-modifier \
+  $(DIST)/test-brotli
 
 all: install-acmacs-base
 
@@ -75,7 +76,7 @@ ACMACS_BASE_SOURCES =  \
 ACMACS_BASE_LIB_MAJOR = 1
 ACMACS_BASE_LIB_MINOR = 0
 ACMACS_BASE_LIB = $(DIST)/$(call shared_lib_name,libacmacsbase,$(ACMACS_BASE_LIB_MAJOR),$(ACMACS_BASE_LIB_MINOR))
-ACMACS_BASE_LDLIBS = $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(CXX_LIBS)
+ACMACS_BASE_LDLIBS = $(XZ_LIBS) $(BZ2_LIBS) $(GZ_LIBS) $(BROTLI_LIBS) $(CXX_LIBS)
 
 # ----------------------------------------------------------------------
 
@@ -108,6 +109,3 @@ $(DIST)/%: $(BUILD)/%.o | $(DIST) $(ACMACS_BASE_LIB)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(ACMACS_BASE_LIB) $(ACMACS_BASE_LDLIBS) $(AD_RPATH)
 
 # ======================================================================
-### Local Variables:
-### eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-### End:

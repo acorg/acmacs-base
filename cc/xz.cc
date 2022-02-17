@@ -77,6 +77,3 @@ static std::string process(lzma_stream* strm, std::string_view input)
 }
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
