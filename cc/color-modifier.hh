@@ -133,6 +133,3 @@ template <> struct fmt::formatter<acmacs::color::Modifier> : fmt::formatter<Colo
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

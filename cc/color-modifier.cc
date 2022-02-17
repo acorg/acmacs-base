@@ -179,9 +179,9 @@ namespace acmacs::color
         // const auto hsv_org = target_hsv;
         if (float_zero(target_hsv.s)) { // grey scale
             if (*saturation < 0.0)
-                target_hsv.v /= - *saturation;
+                target_hsv.v += (target_hsv.v - 1.0) * *saturation;
             else
-                target_hsv.v *= *saturation;
+                target_hsv.v = (target_hsv.v - *saturation) / (1.0 - *saturation);
         }
         else {
             if (*saturation < 0.0)
