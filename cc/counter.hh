@@ -246,6 +246,3 @@ template <> struct fmt::formatter<acmacs::CounterChar> : public fmt::formatter<a
 
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
