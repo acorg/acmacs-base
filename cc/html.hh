@@ -32,6 +32,3 @@ namespace acmacs::html::inline v1
 } // namespace acmacs::html::inline v1
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

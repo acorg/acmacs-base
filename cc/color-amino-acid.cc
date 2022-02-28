@@ -102,6 +102,3 @@ Color acmacs::nucleotide_color(char nuc)
 } // acmacs::nucleotide_color
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

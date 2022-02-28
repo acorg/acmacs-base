@@ -91,9 +91,3 @@ void acmacs::html::v1::Generator::add_to_body(std::string_view data)
 } // acmacs::html::v1::Generator::add_to_body
 
 // ----------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
