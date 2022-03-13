@@ -68,7 +68,7 @@ namespace acmacs::file
                 output.insert(output.end(), next_out, next_out + available_out);
         }
         BrotliDecoderDestroyInstance(state);
-        if (check_if_compressed && (result == BROTLI_DECODER_RESULT_SUCCESS || result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT))
+        if (check_if_compressed && (result == BROTLI_DECODER_RESULT_SUCCESS || result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) && !output.empty())
             return output;
         else if (result == BROTLI_DECODER_RESULT_SUCCESS && !available_in)
             return output;
@@ -80,7 +80,7 @@ namespace acmacs::file
     inline bool brotli_compressed(std::string_view input)
     {
         try {
-            brotli_decompress(input.substr(0, 100), true);
+            brotli_decompress(input.substr(0, 1000), true);
             return true;
         }
         catch (BrotliError&) {
