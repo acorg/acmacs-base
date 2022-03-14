@@ -68,7 +68,7 @@ namespace acmacs::file
                 output.insert(output.end(), next_out, next_out + available_out);
         }
         BrotliDecoderDestroyInstance(state);
-        if (check_if_compressed && (result == BROTLI_DECODER_RESULT_SUCCESS || result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) && !output.empty())
+        if (check_if_compressed && ((result == BROTLI_DECODER_RESULT_SUCCESS && !output.empty()) || result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT))
             return output;
         else if (result == BROTLI_DECODER_RESULT_SUCCESS && !available_in)
             return output;
