@@ -346,6 +346,3 @@ template <typename T, typename Tag> struct fmt::formatter<acmacs::named_string_b
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
