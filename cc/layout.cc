@@ -163,6 +163,3 @@ std::vector<std::pair<double, double>> acmacs::Layout::minmax() const
 } // acmacs::Layout::minmax
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
