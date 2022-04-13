@@ -49,6 +49,3 @@ constexpr Scaled operator*(Scaled lhs, double rhs) noexcept { return Scaled{lhs.
 constexpr Scaled operator*(Scaled lhs, Aspect rhs) noexcept { return Scaled{lhs.value() * rhs.value()}; }
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

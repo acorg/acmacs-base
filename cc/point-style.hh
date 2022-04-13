@@ -279,6 +279,3 @@ template <> struct fmt::formatter<acmacs::PointStyleModified> : fmt::formatter<a
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
