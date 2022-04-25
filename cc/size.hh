@@ -138,6 +138,3 @@ template <> struct fmt::formatter<acmacs::Size> : public fmt::formatter<acmacs::
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
