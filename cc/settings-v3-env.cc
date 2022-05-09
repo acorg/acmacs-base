@@ -164,6 +164,3 @@ void acmacs::settings::v3::detail::LoadedDataFiles::reload(Data& settings)
 } // acmacs::settings::v3::detail::LoadedDataFiles::reload
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
