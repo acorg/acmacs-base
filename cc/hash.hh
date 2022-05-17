@@ -3,16 +3,22 @@
 #pragma GCC diagnostic push
 
 #ifdef __clang__
-#pragma GCC diagnostic ignored "-Wextra-semi"
-#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
+#pragma GCC diagnostic ignored "-Wused-but-marked-unused"
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma GCC diagnostic ignored "-Wused-but-marked-unused"
+#pragma GCC diagnostic ignored "-Wextra-semi-stmt"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wunused-template"
+// M1
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+// #pragma GCC diagnostic ignored ""
 #endif
 
-#include "acmacs-base/xxhash.hpp"
+// #include "acmacs-base/xxhash.hpp"
 
-#pragma GCC diagnostic pop
+#define XXH_INLINE_ALL
+#include "acmacs-base/xxhash.h"
 
 #include "acmacs-base/fmt.hh"
 
@@ -22,11 +28,10 @@ namespace acmacs
 {
     inline std::string hash(std::string_view source)
     {
-        return fmt::format("{:08X}", xxh::xxhash<32>(source));
+        return fmt::format("{:08X}", XXH32(source.data(), source.size(), 0));
     }
 }
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
+
+#pragma GCC diagnostic pop
