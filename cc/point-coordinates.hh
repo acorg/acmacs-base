@@ -265,6 +265,3 @@ template <> struct fmt::formatter<acmacs::PointCoordinates> : public fmt::format
 };
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
