@@ -294,6 +294,3 @@ std::pair<date::year_month_day, date::year_month_day> acmacs::time_series::v2::s
 } // acmacs::time_series::v2::suggest_start_end
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
