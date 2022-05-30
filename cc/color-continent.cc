@@ -90,9 +90,3 @@ Color acmacs::continent_color_dark(std::string_view continent)
 } // acmacs::continent_color_dark
 
 // ----------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
