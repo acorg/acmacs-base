@@ -79,6 +79,8 @@ namespace acmacs::file
 
     inline bool brotli_compressed(std::string_view input)
     {
+        if (input.size() < 16)
+            return false;
         try {
             brotli_decompress(input.substr(0, 1000), true);
             return true;

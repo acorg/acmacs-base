@@ -1525,6 +1525,3 @@ namespace rjson::inline v2
 } // namespace rjson::inlinev2
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

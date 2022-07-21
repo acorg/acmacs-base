@@ -889,6 +889,3 @@ std::string rjson::v2::pretty(const array& val, emacs_indent /*emacs_indent*/, c
 } // rjson::v2::pretty
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
