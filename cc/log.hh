@@ -307,6 +307,3 @@ template <typename... Ts> AD_LOG(acmacs::log::log_key_t, fmt::format_string<Ts..
 #define AD_LOG_INDENT acmacs::log::indent _indent
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

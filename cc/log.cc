@@ -65,6 +65,3 @@ std::string acmacs::log::v1::report_enabled()
 } // acmacs::log::v1::report_enabled
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
