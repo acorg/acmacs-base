@@ -79,6 +79,3 @@ Color acmacs::color::distinct(size_t offset, distinct_t dtype)
 } // acmacs::color::distinct
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:
