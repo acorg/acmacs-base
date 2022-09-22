@@ -247,6 +247,3 @@ namespace acmacs::fmt_helper
 // template <> struct fmt::formatter<acmacs::detail::map_base_t<std::string, std::string>> : acmacs::fmt_helper::map_formatter<acmacs::detail::map_base_t<std::string, std::string>> {};
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

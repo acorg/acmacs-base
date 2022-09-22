@@ -11,6 +11,10 @@
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wshadow"
+
+// clang++15
+#pragma GCC diagnostic ignored "-Wdeprecated"
+
 #endif
 
 // #include <range/v3/core.hpp>
