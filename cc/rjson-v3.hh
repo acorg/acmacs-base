@@ -18,6 +18,7 @@
 #include <variant>
 #include <string_view>
 #include <typeinfo>
+#include <optional>
 
 #include "acmacs-base/log.hh"
 #include "acmacs-base/float.hh"
@@ -58,7 +59,7 @@ namespace rjson::v3
         const char* what() const noexcept override { return message_.data(); }
 
       private:
-        std::string message_;
+        std::string message_{};
 
     }; // class parse_error
 
@@ -84,10 +85,10 @@ namespace rjson::v3
             object& operator=(object&&) = default;
             object& operator=(const object&) = default;
 
-            /*constexpr*/ bool empty() const noexcept { return content_.empty(); }
-            /*constexpr*/ size_t size() const noexcept { return content_.size(); }
-            /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
-            /*constexpr*/ auto end() const noexcept { return content_.end(); }
+            bool empty() const noexcept { return content_.empty(); }
+            size_t size() const noexcept;
+            auto begin() const noexcept { return content_.begin(); }
+            auto end() const noexcept { return content_.end(); }
 
             void insert(std::string_view aKey, value&& aValue);
             const value& operator[](std::string_view key) const noexcept; // returns null if not found
@@ -112,10 +113,10 @@ namespace rjson::v3
             array& operator=(array&&) = default;
             array& operator=(const array&) = default;
 
-            /*constexpr*/ bool empty() const noexcept { return content_.empty(); }
-            /*constexpr*/ size_t size() const noexcept { return content_.size(); }
-            /*constexpr*/ auto begin() const noexcept { return content_.begin(); }
-            /*constexpr*/ auto end() const noexcept { return content_.end(); }
+            bool empty() const noexcept { return content_.empty(); }
+            size_t size() const noexcept;
+            auto begin() const noexcept { return content_.begin(); }
+            auto end() const noexcept { return content_.end(); }
 
             void append(value&& aValue);
             const value& operator[](size_t index) const noexcept; // returns null if out of range
@@ -126,7 +127,7 @@ namespace rjson::v3
             }
 
           private:
-            std::vector<value> content_;
+            std::vector<value> content_{};
         };
 
         class simple
@@ -138,7 +139,7 @@ namespace rjson::v3
             constexpr std::string_view _content() const noexcept { return content_; }
 
           private:
-            std::string_view content_;
+            std::string_view content_{};
         };
 
         class string : public simple
@@ -165,7 +166,7 @@ namespace rjson::v3
             }
 
           private:
-            std::optional<std::string> scontent_; // see constructor with with_content_ above
+            std::optional<std::string> scontent_{std::nullopt}; // see constructor with with_content_ above
         };
 
         class number : public simple
@@ -220,7 +221,7 @@ namespace rjson::v3
             }
 
           private:
-            bool content_;
+            bool content_{false};
         };
 
     } // namespace detail
@@ -281,7 +282,7 @@ namespace rjson::v3
       private:
         using value_base = std::variant<detail::null, detail::object, detail::array, detail::string, detail::number, detail::boolean>; // null must be the first alternative, it is the default value;
 
-        value_base value_;
+        value_base value_{detail::null{}};
 
         friend value_read parse(std::string&& data, std::string_view filename);
 
@@ -300,13 +301,13 @@ namespace rjson::v3
       private:
         value_read(std::string&& buf) : buffer_{std::move(buf)} {}
 
-        value& operator=(value&& val) // buffer_ untouched
+        value_read& operator=(value&& val) // buffer_ untouched
         {
             value::operator=(std::move(val));
             return *this;
         }
 
-        std::string buffer_;
+        std::string buffer_{};
 
         friend value_read parse(std::string&& data, std::string_view filename);
     };
@@ -553,6 +554,7 @@ namespace rjson::v3
 
     // ----------------------------------------------------------------------
 
+    inline size_t detail::object::size() const noexcept { return content_.size(); }
     inline void detail::object::insert(std::string_view aKey, value&& aValue) { content_.emplace_not_replace(aKey, std::move(aValue)); }
 
     inline const value& detail::object::operator[](std::string_view key) const noexcept
@@ -576,6 +578,7 @@ namespace rjson::v3
             return r1;
     }
 
+    inline size_t detail::array::size() const noexcept { return content_.size(); }
     inline void detail::array::append(value&& aValue) { content_.push_back(std::move(aValue)); }
 
     inline const value& detail::array::operator[](size_t index) const noexcept
@@ -674,6 +677,3 @@ namespace rjson::v3
 } // namespace rjson::v3
 
 // ----------------------------------------------------------------------
-/// Local Variables:
-/// eval: (if (fboundp 'eu-rename-buffer) (eu-rename-buffer))
-/// End:

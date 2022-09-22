@@ -5,9 +5,9 @@
 // To avoid warnings about ==  and !=
 // ISO C++20 considers use of overloaded operator '==' (with operand types 'rjson::v2::value' and 'rjson::v2::value') to be ambiguous despite
 
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
-#endif
+// #ifdef __clang__
+// #pragma GCC diagnostic ignored "-Wambiguous-reversed-operator"
+// #endif
 
 // ----------------------------------------------------------------------
 
@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <limits>
+#include <optional>
 
 #include "acmacs-base/sfinae.hh"
 #include "acmacs-base/log.hh"
@@ -124,7 +125,7 @@ namespace rjson::inline v2
         template <typename F> void for_each(F&& func);
 
       private:
-        content_t content_;
+        content_t content_{};
 
         friend std::string format(const object& val, space_after_comma, const PrettyHandler&, show_empty_values);
         friend std::string pretty(const object& val, emacs_indent, const PrettyHandler&, size_t prefix);
@@ -140,15 +141,15 @@ namespace rjson::inline v2
     {
       public:
         array() = default;
-        array(std::initializer_list<value> init) : content_(init) {}
+        array(std::initializer_list<value> init);
         template <typename Iterator> array(Iterator first, Iterator last) : content_(first, last) {}
 
         bool empty() const noexcept { return content_.empty(); }
-        size_t size() const noexcept { return content_.size(); }
+        size_t size() const noexcept;
 
         const value& get(size_t index) const noexcept; // if index out of range, returns ConstNull
         value& operator[](size_t index) noexcept;      // if index out of range, returns ConstNull
-        size_t max_index() const { return content_.size() - 1; }
+        size_t max_index() const;
 
         value& append(value&& aValue); // returns ref to inserted
         void replace(const array& to_replace);
@@ -169,7 +170,7 @@ namespace rjson::inline v2
         template <typename Func> std::optional<size_t> find_index_if(Func&& func) const;
 
       private:
-        std::vector<value> content_;
+        std::vector<value> content_{};
 
         friend std::string format(const array& val, space_after_comma, const PrettyHandler&, show_empty_values);
         friend std::string pretty(const array& val, emacs_indent, const PrettyHandler&, size_t prefix);
@@ -313,7 +314,7 @@ namespace rjson::inline v2
       private:
         using value_base = std::variant<null, const_null, object, array, std::string, number, bool>; // null must be the first alternative, it is the default value;
 
-        value_base value_;
+        value_base value_{null{}};
 
         template <typename S> const value& get1(S field_name) const noexcept; // if this is not object or field not present, returns ConstNull
 //        template <typename T> T to_integer() const;
@@ -514,6 +515,10 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_same_v<r
 
 namespace rjson::inline v2
 {
+    inline array::array(std::initializer_list<value> init) : content_(init) {}
+    inline size_t array::size() const noexcept { return content_.size(); }
+    inline size_t array::max_index() const { return content_.size() - 1; }
+
     inline const value& array::get(size_t index) const noexcept // if index out of range, returns ConstNull
     {
         if (index < content_.size())
@@ -1403,8 +1408,10 @@ namespace rjson::inline v2
             auto& ar = target[key] = array{};
             for (; first != last; ++first)
 #pragma GCC diagnostic push
-#ifdef __clang__
+#if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wimplicit-int-float-conversion"
+#elif defined(__GNUG__)
+#pragma GCC diagnostic ignored "-Wconversion"
 #endif
                 ar.append(*first);
 #pragma GCC diagnostic pop
