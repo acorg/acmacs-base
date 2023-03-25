@@ -14,7 +14,10 @@
 #pragma GCC diagnostic ignored "-Wmissing-noreturn" // fmt/core.h
 #pragma GCC diagnostic ignored "-Wundefined-func-template" // fmt/chrono.h:1182
 
-// #pragma GCC diagnostic ignored "-Wextra-semi-stmt" // fmt/format.h:1242
+// clang 16
+
+#pragma GCC diagnostic ignored "-Wunsafe-buffer-usage"
+
 // #pragma GCC diagnostic ignored "-Wsign-conversion" // fmt/format.h:2699
 // #pragma GCC diagnostic ignored "-Wdouble-promotion" // fmt/core.h:769
 // #pragma GCC diagnostic ignored "-Wshadow" // fmt/chrono.h
