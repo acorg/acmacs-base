@@ -26,6 +26,9 @@
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wundefined-reinterpret-cast"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+
+#pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
+
 #endif
 
 #include <pybind11/pybind11.h>
