@@ -44,7 +44,7 @@ template <> struct fmt::formatter<acmacs::color::HSV> : fmt::formatter<acmacs::f
 {
     template <typename FormatContext> auto format(const acmacs::color::HSV& hsv, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "hsv({:.0f}, {:.2f}, {:.2f})", hsv.h, hsv.s, hsv.v);
+        return fmt::format_to(ctx.out(), "hsv({:.0f}, {:.2f}, {:.2f})", hsv.h, hsv.s, hsv.v);
     }
 };
 

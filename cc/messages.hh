@@ -92,7 +92,7 @@ template <> struct fmt::formatter<acmacs::messages::v1::detail::position_t> : pu
     template <typename FormatContext> auto format(const acmacs::messages::v1::detail::position_t& pos, FormatContext& ctx)
     {
         if (!pos.filename.empty())
-            format_to(ctx.out(), " @@ {}:{}", pos.filename, pos.line_no);
+            fmt::format_to(ctx.out(), " @@ {}:{}", pos.filename, pos.line_no);
         return ctx.out();
     }
 };
@@ -109,7 +109,7 @@ template <> struct fmt::formatter<acmacs::messages::v1::message_t> : public fmt:
 {
     template <typename FormatContext> auto format(const acmacs::messages::v1::message_t& msg, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "{}: \"{}\"{}{}", msg.key, msg.value, msg.source, msg.code);
+        return fmt::format_to(ctx.out(), "{}: \"{}\"{}{}", msg.key, msg.value, msg.source, msg.code);
     }
 };
 

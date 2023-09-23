@@ -133,13 +133,13 @@ template <> struct fmt::formatter<acmacs::settings::v3::replace> : fmt::formatte
     {
         switch (value) {
             case acmacs::settings::v3::replace::no:
-                format_to(ctx.out(), "no");
+                fmt::format_to(ctx.out(), "no");
                 break;
             case acmacs::settings::v3::replace::yes:
-                format_to(ctx.out(), "yes");
+                fmt::format_to(ctx.out(), "yes");
                 break;
             case acmacs::settings::v3::replace::yes_or_set_at_bottom:
-                format_to(ctx.out(), "yes_or_set_at_bottom");
+                fmt::format_to(ctx.out(), "yes_or_set_at_bottom");
                 break;
         }
         return ctx.out();

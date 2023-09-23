@@ -337,7 +337,7 @@ template <typename Number, typename Tag> struct fmt::formatter<acmacs::named_num
     template <typename FormatContext> auto format(const acmacs::named_number_from_string_t<Number, Tag>& num, FormatContext& ctx) const
     {
         return std::visit(
-            [&ctx]<typename Repr>(Repr content) { return format_to(ctx.out(), "{}", content); }, num.get());
+            [&ctx]<typename Repr>(Repr content) { return fmt::format_to(ctx.out(), "{}", content); }, num.get());
     }
 };
 

@@ -88,7 +88,7 @@ template <> struct fmt::formatter<acmacs::fmt_helper::float_formatter>
 
     template <typename Val, typename FormatContext> auto format_val(Val&& val, FormatContext& ctx) const
     {
-        return format_to(ctx.out(), fmt::runtime(format_), std::forward<Val>(val));
+        return fmt::format_to(ctx.out(), fmt::runtime(format_), std::forward<Val>(val));
     }
 
   private:
@@ -104,14 +104,14 @@ template <typename T> struct fmt::formatter<T, std::enable_if_t<std::is_base_of_
 // template <> struct fmt::formatter<std::exception>
 // {
 //     template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
-//     template <typename FormatContext> auto format(const std::exception& err, FormatContext& ctx) { return format_to(ctx.out(), "{}", err.what()); }
+//     template <typename FormatContext> auto format(const std::exception& err, FormatContext& ctx) { return fmt::format_to(ctx.out(), "{}", err.what()); }
 // };
 
 // template <> struct fmt::formatter<###> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
 //     template <typename FormatCtx> auto format(const ###& value, FormatCtx& ctx)
 //     {
-//         format_to(ctx.out(), "{} {}", );
-//         return format_to(ctx.out(), "{} {}", );
+//         fmt::format_to(ctx.out(), "{} {}", );
+//         return fmt::format_to(ctx.out(), "{} {}", );
 //         return ctx.out();
 //     }
 // };
@@ -129,7 +129,7 @@ namespace fmt
 
 // ----------------------------------------------------------------------
 // memory_buffer unexpected problem
-// in 8.0 format_to(memory_buffer,...) is deprecated without clearly stating in docs
+// in 8.0 fmt::format_to(memory_buffer,...) is deprecated without clearly stating in docs
 // https://www.gitmemory.com/issue/fmtlib/fmt/2420/877703767
 // ----------------------------------------------------------------------
 

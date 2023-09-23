@@ -186,7 +186,7 @@ namespace acmacs
 // ----------------------------------------------------------------------
 
 template <> struct fmt::formatter<Color> : fmt::formatter<acmacs::fmt_default_formatter> {
-    template <typename FormatCtx> auto format(const Color& val, FormatCtx& ctx) { return format_to(ctx.out(), "{}", val.to_string()); }
+    template <typename FormatCtx> auto format(const Color& val, FormatCtx& ctx) { return fmt::format_to(ctx.out(), "{}", val.to_string()); }
 };
 
 // ----------------------------------------------------------------------

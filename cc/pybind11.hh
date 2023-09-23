@@ -46,7 +46,7 @@ namespace py = pybind11;
 template <> struct fmt::formatter<py::object> : fmt::formatter<acmacs::fmt_helper::default_formatter> {
     template <typename FormatCtx> auto format(const py::object& value, FormatCtx& ctx) const
     {
-        return format_to(ctx.out(), "{}", py::repr(value).cast<std::string>());
+        return fmt::format_to(ctx.out(), "{}", py::repr(value).cast<std::string>());
     }
 };
 

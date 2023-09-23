@@ -133,7 +133,7 @@ template <> struct fmt::formatter<acmacs::Size> : public fmt::formatter<acmacs::
 {
     template <typename FormatContext> auto format(const acmacs::Size& size, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "[{}, {}]", format_val(size.width), format_val(size.height));
+        return fmt::format_to(ctx.out(), "[{}, {}]", format_val(size.width), format_val(size.height));
     }
 };
 

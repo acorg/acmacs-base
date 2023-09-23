@@ -81,10 +81,10 @@ template <> struct fmt::formatter<acmacs::time_series::series> : public fmt::for
 {
     template <typename FormatContext> auto format(const acmacs::time_series::series& series, FormatContext& ctx)
     {
-        format_to(ctx.out(), "time-series{{");
+        fmt::format_to(ctx.out(), "time-series{{");
         for (const auto& slot : series)
-            format_to(ctx.out(), " {}..{}", slot.first, slot.after_last);
-        return format_to(ctx.out(), "}}");
+            fmt::format_to(ctx.out(), " {}..{}", slot.first, slot.after_last);
+        return fmt::format_to(ctx.out(), "}}");
     }
 };
 
@@ -109,7 +109,7 @@ template <> struct fmt::formatter<acmacs::time_series::parameters> : public fmt:
 {
     template <typename FormatContext> auto format(const acmacs::time_series::parameters& param, FormatContext& ctx)
     {
-        return format_to(ctx.out(), "time-series{{{} .. {}, {}:{}}}", param.first, param.after_last, param.intervl, param.number_of_intervals);
+        return fmt::format_to(ctx.out(), "time-series{{{} .. {}, {}:{}}}", param.first, param.after_last, param.intervl, param.number_of_intervals);
     }
 };
 
