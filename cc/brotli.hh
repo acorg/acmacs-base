@@ -79,7 +79,7 @@ namespace acmacs::file
 
     inline bool brotli_compressed(std::string_view input)
     {
-        if (input.size() < 16)
+        if (input.size() < 16 || input.substr(0, 4) == "{\n  ")
             return false;
         try {
             brotli_decompress(input.substr(0, 1000), true);

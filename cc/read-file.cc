@@ -160,7 +160,7 @@ void acmacs::file::backup(std::string_view _to_backup, std::string_view _backup_
         const auto today = date::display(date::today(), "%Y%m%d");
         for (int version = 1; version < 1000; ++version) {
             char infix[4];
-            std::sprintf(infix, "%03d", version);
+            std::snprintf(infix, 4, "%03d", version);
             fs::path new_name = backup_dir / (stem.string() + ".~" + today + '-' + infix + '~' + extension.string());
             if (!fs::exists(new_name) || version == 999) {
                 try {

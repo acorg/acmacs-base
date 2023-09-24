@@ -4,6 +4,7 @@
 
 #pragma GCC diagnostic push
 #ifdef __clang__
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator" // operator "" _y --> operator""_y
 #pragma GCC diagnostic ignored "-Wreserved-identifier" // identifier '_a' is reserved because it starts with '_' at global scope (bug in clang13 ?)
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
